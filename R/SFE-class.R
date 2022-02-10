@@ -1,0 +1,2 @@
+#' SpatialFeatureExperiment class
+#'
