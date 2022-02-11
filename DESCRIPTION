@@ -1,0 +1,23 @@
+Package: SpatialFeatureExperiment
+Type: Package
+Title: Integrating SpatielExperiment with Simple Features in sf
+Version: 0.99.0
+Authors@R: 
+    c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
+    role = c("aut", "cre"),
+    comment = c(ORCID = "0000-0002-7092-9427")),
+    person("Lior", "Pachter", email = "lpachter@caltech.edu",
+    role = c("aut", "ths"),
+    comment = c(ORCID = "0000-0002-9164-6231")))
+Description: Use the sf package to leverage the well-established and optimized
+    geospatial libraries for polygon operations for spatial omics data.
+Imports:
+    methods,
+    S4Vectors,
+    sf,
+    SingleCellExperiment,
+    SpatialExperiment,
+    SummarizedExperiment
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
