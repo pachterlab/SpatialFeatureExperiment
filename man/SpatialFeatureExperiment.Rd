@@ -14,7 +14,7 @@ SpatialFeatureExperiment(
   spatialCoordsNames = c("x", "y"),
   sample_id = "sample01",
   spotDiameter = NA_real_,
-  annotationGeometryType = NA,
+  annotationGeometryType = "MULTIPOLYGON",
   unit = "full_res_image_pixels",
   ...
 )
@@ -110,7 +110,8 @@ the same length as the list of data frames.}
 
 \item{unit}{Unit the coordinates are in. I'm thinking about using some custom
 engineering CRS's which can convert units and invert the y axis for
-Cartesian vs. image orientations.}
+Cartesian vs. image orientations. Units are also helpful when plotting
+scale bars.}
 
 \item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
 and \code{\link{SingleCellExperiment}} constructors.}

@@ -30,10 +30,10 @@
 #'   geometry of spatial annotations of the tissue, such as the tissue boundary
 #'   and pathologist annotated tissue regions.
 #' @rdname SpatialFeatureExperiment-class
+#' @include utils.R
 #' @importFrom methods setClass
 #' @importClassesFrom SpatialExperiment SpatialExperiment
-#' @importClassesFrom sf sf
-#' @exportClass
+#' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment",
          contains = "SpatialExperiment",
          slots = c(primaryGeometry = "list",
@@ -102,12 +102,13 @@ setClass("SpatialFeatureExperiment",
 #'   arguments.
 #' @param unit Unit the coordinates are in. I'm thinking about using some custom
 #'   engineering CRS's which can convert units and invert the y axis for
-#'   Cartesian vs. image orientations.
+#'   Cartesian vs. image orientations. Units are also helpful when plotting
+#'   scale bars.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @importFrom SpatialExperiment SpatialExperiment
-#' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring st_multipoint
-#' st_multilinestring st_multipolygon
+#' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
+#'   st_multipoint st_multilinestring st_multipolygon st_is_empty st_is
 #' @export
 SpatialFeatureExperiment <- function(assays, primaryGeometry,
                                      objectGeometry = list(object = make_empty_geometry()),
@@ -115,11 +116,58 @@ SpatialFeatureExperiment <- function(assays, primaryGeometry,
                                      colData = DataFrame(),
                                      rowData = NULL, spatialCoordsNames = c("x", "y"),
                                      sample_id = "sample01", spotDiameter = NA_real_,
-                                     annotationGeometryType = NA,
+                                     annotationGeometryType = "MULTIPOLYGON",
                                      unit = "full_res_image_pixels",
                                      ...) {
-  # SCE will check the validity of assays
-
+  # 1. Check the *Geometry arguments, convert them to sf if they are ordinary data frames
+  # 2. Pass everything else to the SpatialExperiment constructor
+  if (!st_is_empty(annotationGeometry[[1]])) {
+    .annot_geom_allowed <- c("POINT", "LINESTRING", "POLYGON",
+                             "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON")
+    annotationGeometryType <- match.arg(annotationGeometryType,
+                                        choices = .annot_geom_allowed,
+                                        several.ok = TRUE)
+    if (length(annotationGeometryType) == 1L) {
+      annotationGeometryType <- rep(annotationGeometryType,
+                                    length(annotationGeometry))
+    } else if (length(annotationGeometryType) != length(annotationGeometry)) {
+      stop("annotationGeometryType must be either length 1 or the same length ",
+           "as annotationGeometry.")
+    }
+  }
+  primaryGeometry2 <- lapply(primaryGeometry, .df2sf_list,
+                             spatialCoordsNames = spatialCoordsNames,
+                             spotDiameter = spotDiameter,
+                             geometryType = "POLYGON")
+  if (!st_is_empty(objectGeometry[[1]])) {
+    objectGeometry <- lapply(objectGeometry, .df2sf_list,
+                             spatialCoordsNames = spatialCoordsNames,
+                             spotDiameter = spotDiameter,
+                             geometryType = "POLYGON")
+  }
+  if (!st_is_empty(annotationGeometry[[1]])) {
+    annotationGeometry <- mapply(.df2sf_list, df = annotationGeometry,
+                                 geometryType = annotationGeometryType,
+                                 MoreArgs = list(spatialCoordsNames = spatialCoordsNames,
+                                                 spotDiameter = NA))
+  }
+  if (.is_point(primaryGeometry[[1]])) {
+    if (is(primaryGeometry[[1]], "sf")) {
+      spe_coords <- st_coordinates(primaryGeometry[[1]])
+    } else {
+      spe_coords <- as.matrix(primaryGeometry[[1]][,spatialCoordsNames])
+    }
+  }
+  spe <- SpatialExperiment(assays = assays, colData = colData,
+                           rowData = rowData, sample_id = sample_id,
+                           spatialCoords = spe_coords)
+  sfe <- .spe_to_sfe(spe, primaryGeometry2, objectGeometry, annotationGeometry,
+                     unit)
+  return(sfe)
 }
 
-# To do: unit test, validity, getters and setters
+.spe_to_sfe <- function(spe, primaryGeometry, objectGeometry,
+                        annotationGeometry, unit) {
+
+}
+# To do: unit test, validity, getters and setters, subsetting, cropping with geometry

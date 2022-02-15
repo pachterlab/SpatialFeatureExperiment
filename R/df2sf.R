@@ -117,6 +117,12 @@
   st_sf(ID = names(df_split), geometry = geometry_use, crs = NA)
 }
 
+.is_de_facto_point <- function(df) {
+  (!"ID" %in% names(df) | !anyDuplicated(df$ID)) & !"group" %in% names(df)
+}
+.is_point <- function(df) {
+  if (is(df, "sf")) st_is(df, "POINT") else .is_de_facto_point(df)
+}
 # From ordinary data frame to sf to construct SFE object
 .df2sf <- function(df, spatialCoordsNames, spotDiameter, geometryType) {
   if (any(!spatialCoordsNames %in% names(df))) {
@@ -127,9 +133,7 @@
       stop("Column ", cols_absent, " is absent.")
     }
   }
-  is_de_facto_point <- (!"ID" %in% names(df) | !anyDuplicated(df$ID)) &
-    !"group" %in% names(df)
-  if (is_de_facto_point) geometryType <- "POINT"
+  if (.is_de_facto_point(df)) geometryType <- "POINT"
   switch (geometryType,
           POINT = .df2sf_point(df, spatialCoordNames, spotDiameter, multi = FALSE),
           MULTIPOINT = .df2sf_point(df, spatialCoordNames, spotDiameter, multi = TRUE),
@@ -138,4 +142,17 @@
           POLYGON = .df2sf_polygon(df, spatialCoordNames, multi = FALSE),
           MULTIPOLYGON = .df2sf_polygon(df, spatialCoordNames, multi = TRUE)
   )
+}
+
+# Call in SFE constructor
+.df2sf_list <- function(df, spatialCoordsNames, spotDiameter, geometryType) {
+  if (!is(df, "sf") && !is.data.frame(df)) {
+    stop("Each element of the list for the *Geometry slots must be either an ",
+         "sf object or a data frame.")
+  }
+  if (is(df, "sf")) {
+    return(sf)
+  } else {
+    .df2sf(df, spatialCoordsNames, spotDiameter, geometryType)
+  }
 }
