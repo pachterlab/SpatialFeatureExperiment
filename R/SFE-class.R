@@ -31,7 +31,7 @@
 #'   and pathologist annotated tissue regions.
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
-#' @importFrom methods setClass
+#' @importFrom methods setClass new
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment",
@@ -163,6 +163,10 @@ SpatialFeatureExperiment <- function(assays, primaryGeometry,
 
 .spe_to_sfe <- function(spe, primaryGeometry, objectGeometry,
                         annotationGeometry, unit) {
-
+  old <- S4Vectors:::disableValidity()
+  if (!isTRUE(old)) {
+    S4Vectors:::disableValidity(TRUE)
+    on.exit(S4Vectors:::disableValidity(old))
+  }
 }
 # To do: unit test, validity, getters and setters, subsetting, cropping with geometry
