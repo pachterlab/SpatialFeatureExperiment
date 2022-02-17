@@ -109,6 +109,7 @@ setClass("SpatialFeatureExperiment",
 #' @importFrom SpatialExperiment SpatialExperiment
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is_empty st_is
+#'   st_coordinates st_centroid
 #' @export
 SpatialFeatureExperiment <- function(assays, primaryGeometry,
                                      objectGeometry = list(object = make_empty_geometry()),
@@ -135,10 +136,10 @@ SpatialFeatureExperiment <- function(assays, primaryGeometry,
            "as annotationGeometry.")
     }
   }
-  primaryGeometry2 <- lapply(primaryGeometry, .df2sf_list,
-                             spatialCoordsNames = spatialCoordsNames,
-                             spotDiameter = spotDiameter,
-                             geometryType = "POLYGON")
+  primaryGeometry <- lapply(primaryGeometry, .df2sf_list,
+                            spatialCoordsNames = spatialCoordsNames,
+                            spotDiameter = spotDiameter,
+                            geometryType = "POLYGON")
   if (!st_is_empty(objectGeometry[[1]])) {
     objectGeometry <- lapply(objectGeometry, .df2sf_list,
                              spatialCoordsNames = spatialCoordsNames,
@@ -151,17 +152,11 @@ SpatialFeatureExperiment <- function(assays, primaryGeometry,
                                  MoreArgs = list(spatialCoordsNames = spatialCoordsNames,
                                                  spotDiameter = NA))
   }
-  if (.is_point(primaryGeometry[[1]])) {
-    if (is(primaryGeometry[[1]], "sf")) {
-      spe_coords <- st_coordinates(primaryGeometry[[1]])
-    } else {
-      spe_coords <- as.matrix(primaryGeometry[[1]][,spatialCoordsNames])
-    }
-  }
+  spe_coords <- st_coordinates(st_centroid(primaryGeometry[[1]]))
   spe <- SpatialExperiment(assays = assays, colData = colData,
                            rowData = rowData, sample_id = sample_id,
                            spatialCoords = spe_coords)
-  sfe <- .spe_to_sfe(spe, primaryGeometry2, objectGeometry, annotationGeometry,
+  sfe <- .spe_to_sfe(spe, primaryGeometry, objectGeometry, annotationGeometry,
                      unit)
   return(sfe)
 }

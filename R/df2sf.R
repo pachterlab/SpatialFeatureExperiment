@@ -145,14 +145,21 @@
 }
 
 # Call in SFE constructor
-.df2sf_list <- function(df, spatialCoordsNames, spotDiameter, geometryType) {
-  if (!is(df, "sf") && !is.data.frame(df)) {
-    stop("Each element of the list for the *Geometry slots must be either an ",
-         "sf object or a data frame.")
+.df2sf_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
+  if (!is(x, "sf") && !is.data.frame(x) && !is.character(x)) {
+    stop("Each element of the list for the *Geometry slots must be an ",
+         "sf object, a data frame, or a string specifying a path to a file ",
+         "that can be directly read by sf::read_sf().")
   }
-  if (is(df, "sf")) {
-    return(sf)
+  if (is(x, "sf")) {
+    return(x)
+  } else if (is.data.frame(x)) {
+    return(.df2sf(x, spatialCoordsNames, spotDiameter, geometryType))
   } else {
-    .df2sf(df, spatialCoordsNames, spotDiameter, geometryType)
+    x <- normalizePath(x, mustWork = TRUE)
+    out <- read_sf(x)
+    # Still thinking about engineering CRS's, but set to NA for now.
+    st_crs(out) <- NA
+    return(out)
   }
 }
