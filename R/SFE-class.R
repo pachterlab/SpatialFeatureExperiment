@@ -81,6 +81,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @importFrom SpatialExperiment SpatialExperiment
+#' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is_empty st_is
 #'   st_coordinates st_centroid
