@@ -1,47 +1,21 @@
 #' The SpatialFeatureExperiment class
 #'
-#' This class inherits from the \code{\link{SpatialExperiment}} class, which in
-#' turn inherits from \code{\link{SingleCellExperiment}}, adding slots for
-#' Simple Feature geometries. The additional slots are documented here.
+#' This class inherits from the \code{\link{SpatialExperiment}} (SPE) class,
+#' which in turn inherits from \code{\link{SingleCellExperiment}} (SCE).
+#' \code{SpatialFeatureExperiment} stores geometries of spots or cells in
+#' \code{sf} objects which form columns of a \code{DataFrame} which is in turn a
+#' column of the \code{int_colData} \code{DataFrame} of the underlying SCE
+#' object, just like \code{reducedDim} in SCE. Geometries of the tissue outline,
+#' pathologist annotations, and objects (e.g. nuclei segmentation in a Visium
+#' dataset) are stored in \code{sf} objects in a named list called
+#' \code{geometries} in \code{int_metadata}.
 #'
-#' @slot primaryGeometry A named list of data frames specifying the geometry of
-#'   the items that are the columns of the gene count matrix, such as cells
-#'   (e.g. for MERFISH) or Visium spots. Multiple sf data frames are used when
-#'   multiple geometries are associated with each item, such as whole cell
-#'   segmentation, nuclei segmentation, and transcript localization. All of the
-#'   sf data frames must have the same number of rows and a column called "ID"
-#'   to identify each primary object such as the Visium spot barcode, the the ID
-#'   column must be in the same order in all these data frames. The data frames
-#'   should also have the same number and order of rows as there are columns in
-#'   the gene count matrix. All geometries in the \code{*Geometry} slots must be
-#'   valid geometries (see \code{\link{st_is_valid}}), as this is required for
-#'   geometry operations such as intersections and unions.
-#' @slot objectGeometry A named list of sf data frames specifying the geometry
-#'   of objects other than those in the \code{PrimaryGeometry}, such as nuclei
-#'   segmentation from the H&E image associated with a Visium dataset, where the
-#'   primary geometry would be for the Visium spots. The number of objects in
-#'   this slot can be different from that of \code{PrimaryGeometry}. Each sf
-#'   data frame here must also have an "ID" column to identify the objects. When
-#'   geometries of intersections between a \code{PrimaryGeometry} and a
-#'   \code{ObjectGeometry} or between different \code{ObjectGeometry}s are
-#'   computed, the results will be stored in this slot as new elements of the
-#'   list.
-#' @slot annotationGeometry A named list of sf data frames specifying the
-#'   geometry of spatial annotations of the tissue, such as the tissue boundary
-#'   and pathologist annotated tissue regions.
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
 #' @importFrom methods setClass new
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
-setClass("SpatialFeatureExperiment",
-         contains = "SpatialExperiment",
-         slots = c(primaryGeometry = "list",
-                   objectGeometry = "list",
-                   annotationGeometry = "list"),
-         prototype = list(primaryGeometry = list(spot = make_empty_geometry()),
-                          objectGeometry = list(object = make_empty_geometry()),
-                          annotationGeometry = list(region = make_empty_geometry())))
+setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 
 #' Constructor of SpatialFeatureExperiment object
 #'
@@ -169,4 +143,4 @@ SpatialFeatureExperiment <- function(assays, primaryGeometry,
     on.exit(S4Vectors:::disableValidity(old))
   }
 }
-# To do: unit test, validity, getters and setters, subsetting, cropping with geometry
+# To do: unit test, validity, getters and setters, show, subsetting, cropping with geometry
