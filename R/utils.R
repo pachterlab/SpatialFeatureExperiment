@@ -27,7 +27,19 @@ make_empty_geometry <- function() {
           2 = "ncol"
   )
 }
-
+.xdimfun <- function(MARGIN) {
+  switch (MARGIN,
+    1 = nrow,
+    2 = ncol
+  )
+}
+.dg_key <- function(MARGIN) {
+  switch (MARGIN,
+    1 = "rowGeometries",
+    2 = "colGeometries"
+  )
+}
+.unnamed <- "unnamed"
 # Modified from SCE to generalize to both rows and columns
 .check_dimgeo_names <- function(reference, incoming, MARGIN, withDimnames,
                                 fun='dimGeometry', vname='value') {
@@ -52,3 +64,10 @@ make_empty_geometry <- function() {
 .get_internal_all <- SingleCellExperiment:::.get_internal_all
 .set_internal_all <- SingleCellExperiment:::.set_internal_all
 .get_internal_integer <- SingleCellExperiment:::.get_internal_integer
+.get_internal_names <- SingleCellExperiment:::.get_internal_names
+.get_internal_missing <- SingleCellExperiment:::.get_internal_missing
+.get_internal_character <- SingleCellExperiment:::.get_internal_character
+.set_internal_names <- SingleCellExperiment:::.set_internal_names
+.set_internal_missing <- SingleCellExperiment:::.set_internal_missing
+.set_internal_numeric <- SingleCellExperiment:::.set_internal_numeric
+.set_internal_character <- SingleCellExperiment:::.set_internal_character

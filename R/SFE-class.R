@@ -12,7 +12,7 @@
 #'
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
-#' @importFrom methods setClass new
+#' @importFrom methods setClass new signature
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")

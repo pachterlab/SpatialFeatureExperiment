@@ -10,10 +10,10 @@ setGeneric("dimGeometry", function(x, type, MARGIN, withDimnames=TRUE) standardG
 setGeneric("dimGeometry<-", function(x, type, MARGIN, withDimnames=TRUE, value) standardGeneric("dimGeometry<-"))
 
 #' @export
-setGeneric("dimGeometryNames", function(x, MARGIN, withDimnames=TRUE) standardGeneric("dimGeometryNames"))
+setGeneric("dimGeometryNames", function(x, MARGIN) standardGeneric("dimGeometryNames"))
 
 #' @export
-setGeneric("dimGeometryNames<-", function(x, MARGIN, withDimnames=TRUE, value) standardGeneric("dimGeometryNames<-"))
+setGeneric("dimGeometryNames<-", function(x, MARGIN, value) standardGeneric("dimGeometryNames<-"))
 
 #' @export
 setGeneric("dimGeometries", function(x, MARGIN, withDimnames=TRUE) standardGeneric("dimGeometries"))
