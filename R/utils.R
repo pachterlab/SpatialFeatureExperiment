@@ -9,36 +9,16 @@ make_empty_geometry <- function() {
   st_sf(st_sfc(st_geometrycollection()))
 }
 
-.getfun <- function(MARGIN) {
-  switch (MARGIN,
-          1 = int_elementMetadata,
-          2 = int_colData
-  )
-}
-.setfun <- function(MARGIN) {
-  switch (MARGIN,
-          1 = `int_elementMetadata<-`,
-          2 = `int_colData<-`
-  )
-}
-.xdimstr <- function(MARGIN) {
-  switch (MARGIN,
-          1 = "nrow",
-          2 = "ncol"
-  )
-}
-.xdimfun <- function(MARGIN) {
-  switch (MARGIN,
-    1 = nrow,
-    2 = ncol
-  )
-}
-.dg_key <- function(MARGIN) {
-  switch (MARGIN,
-    1 = "rowGeometries",
-    2 = "colGeometries"
-  )
-}
+.getfun <- function(MARGIN) switch (MARGIN, int_elementMetadata, int_colData)
+
+.setfun <- function(MARGIN) switch (MARGIN, `int_elementMetadata<-`, `int_colData<-`)
+
+.xdimstr <- function(MARGIN) switch (MARGIN, "nrow", "ncol")
+
+.xdimfun <- function(MARGIN) switch (MARGIN, nrow, ncol)
+
+.dg_key <- function(MARGIN) switch (MARGIN, "rowGeometries", "colGeometries")
+
 .unnamed <- "unnamed"
 # Modified from SCE to generalize to both rows and columns
 .check_dimgeo_names <- function(reference, incoming, MARGIN, withDimnames,
@@ -46,10 +26,7 @@ make_empty_geometry <- function() {
   if (!is.null(incoming)) {
     rni <- rownames(incoming)
     cnr <- dimnames(reference)[[MARGIN]]
-    fun_show <- switch (MARGIN,
-      1 = "rownames",
-      2 = "colnames"
-    )
+    fun_show <- switch (MARGIN, "rownames", "colnames")
     if (withDimnames && !is.null(rni)) {
       if (!identical(cnr, rni)) {
         msg <- paste0("non-NULL 'rownames(", vname, ")' should be the same as '",
