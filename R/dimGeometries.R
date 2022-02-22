@@ -19,6 +19,24 @@
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
 #' frame with the same number of rows as size in the dimension of interest.
 #' For \code{dimGeometries}, must be a list of such \code{sf} data frames.
+#' @name dimGeometries
+#' @aliases dimGeometry dimGeometries dimGeometryNames
+#' colGeometry rowGeometry colGeometries rowGeometries
+#' colGeometryNames rowGeometryNames
+#' colGeometry<- rowGeometry<- colGeometries<- rowGeometries<-
+#' colGeometryNames<- rowGeometryNames<-
+#' dimGeometry,SpatialFeatureExperiment,missing-method
+#' dimGeometry,SpatialFeatureExperiment,numeric-method
+#' dimGeometry,SpatialFeatureExperiment,character-method
+#' dimGeometries,SpatialFeatureExperiment-method
+#' dimGeometry<- dimGeometries<- dimGeometryNames<-
+#' dimGeometry<-,SpatialFeatureExperiment,missing,ANY,ANY,sf-method
+#' dimGeometry<-,SpatialFeatureExperiment,numeric,ANY,ANY,sf-method
+#' dimGeometry<-,SpatialFeatureExperiment,character,ANY,ANY,sf-method
+#' dimGeometries<-,SpatialFeatureExperiment-method
+#' dimGeometryNames<-,SpatialFeatureExperiment,ANY,character-method
+NULL
+
 #' @rdname dimGeometries
 #' @export
 setMethod("dimGeometries", "SpatialFeatureExperiment",
