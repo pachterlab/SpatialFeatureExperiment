@@ -32,11 +32,11 @@
 #' dimGeometry,SpatialFeatureExperiment,character-method
 #' dimGeometries,SpatialFeatureExperiment-method
 #' dimGeometry<- dimGeometries<- dimGeometryNames<-
-#' dimGeometry<-,SpatialFeatureExperiment,missing,ANY,ANY,sf-method
-#' dimGeometry<-,SpatialFeatureExperiment,numeric,ANY,ANY,sf-method
-#' dimGeometry<-,SpatialFeatureExperiment,character,ANY,ANY,sf-method
+#' dimGeometry<-,SpatialFeatureExperiment,missing-method
+#' dimGeometry<-,SpatialFeatureExperiment,numeric-method
+#' dimGeometry<-,SpatialFeatureExperiment,character-method
 #' dimGeometries<-,SpatialFeatureExperiment-method
-#' dimGeometryNames<-,SpatialFeatureExperiment,ANY,character-method
+#' dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method
 NULL
 
 #' @rdname dimGeometries
@@ -92,7 +92,7 @@ setMethod("dimGeometryNames", "SpatialFeatureExperiment",
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometryNames",
-                 signature(x = "SpatialFeatureExperiment", value = "character"),
+                 c("SpatialFeatureExperiment", "numeric", "character"),
                  function(x, MARGIN, value) {
                    .set_internal_names(x, value,
                                        getfun=.getfun(MARGIN),
@@ -147,9 +147,7 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
 
 #' @rdname dimGeometries
 #' @export
-setReplaceMethod("dimGeometry",
-                 signature(x = "SpatialFeatureExperiment", type = "missing",
-                           value = "sf"),
+setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                  function(x, type, MARGIN, withDimnames=TRUE, value) {
                    .set_internal_missing(x, value,
                                          withDimnames=withDimnames,
@@ -161,10 +159,9 @@ setReplaceMethod("dimGeometry",
 
 #' @rdname dimGeometries
 #' @export
-setReplaceMethod("dimGeometry",
-                 signature(x = "SpatialFeatureExperiment", type = "numeric",
-                           value = "sf"),
-                 function(x, type, MARGIN, withDimnames=TRUE, value) {
+setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
+                 function(x, type, MARGIN, withDimnames=TRUE, ..., value) {
+                   value <- .df2sf_in_list(value, ...)
                    value <- .check_dimgeo_names(x, value, withDimnames)
                    .set_internal_numeric(x, type, value,
                                          getfun=.getfun(MARGIN),
@@ -181,11 +178,10 @@ setReplaceMethod("dimGeometry",
 
 #' @rdname dimGeometries
 #' @export
-setReplaceMethod("dimGeometry",
-                 signature(x = "SpatialFeatureExperiment", type = "character",
-                           value = "sf"),
+setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
                  function(x, type, MARGIN, withDimnames=TRUE, value) {
-                   .check_dimgeo_names(x, value, withDimnames)
+                   value <- .df2sf_in_list(value, ...)
+                   value <- .check_dimgeo_names(x, value, withDimnames)
                    .set_internal_character(x, type, value,
                                            getfun=.getfun(MARGIN),
                                            setfun=.setfun(MARGIN),
@@ -197,23 +193,6 @@ setReplaceMethod("dimGeometry",
                                            xdimstr=.xdimstr(MARGIN),
                                            vdimstr="rows",
                                            substr="type")
-                 })
-
-#' @rdname dimGeometries
-#' @export
-setReplaceMethod("dimGeometry",
-                 signature(x = "SpatialFeatureExperiment", value = "data.frame"),
-                 function(x, type, MARGIN, withDimnames=TRUE,
-                          spatialCoordsNames = c("x", "y"),
-                          spotDiameter = NA,
-                          geometryType = c("POINT", "LINESTRING", "POLYGON",
-                                           "MULTIPOINT", "MULTILINESTRING",
-                                           "MUTIPOLYGON"),
-                          value) {
-                   value <- .df2sf(value, spatialCoordsNames, spotDiameter,
-                                   geometryType)
-                   dimGeometry(x, type, MARGIN, withDimnames) <- value
-                   return(x)
                  })
 
 #' @rdname dimGeometries

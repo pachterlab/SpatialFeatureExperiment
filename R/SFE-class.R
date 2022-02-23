@@ -12,7 +12,7 @@
 #'
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
-#' @importFrom methods setClass new signature
+#' @importFrom methods setClass new
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
@@ -61,11 +61,11 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   versions. Each data frame can only specify one type of geometry. For MULTI
 #'   versions, there must be a column "group" to identify each MULTI geometry.
 #' @param annotGeometryType Character vector specifying geometry type of each
-#'   ordinary data frame in the list if \code{annotationGeometry} is specified
-#'   as such. Each element of the vector must be one of POINT, LINESTRING,
-#'   POLYGON, MULTIPOINT, MULTILINESTRING, and MULTIPOLYGON. Must be either
-#'   length 1 (same for all elements of the list) or the same length as the list
-#'   of data frames.
+#'   element of the list if \code{annotGeometry} is specified. Each element of
+#'   the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
+#'   MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
+#'   elements of the list) or the same length as the list. Ignored if the
+#'   corresponding element is an \code{sf} object.
 #' @param spotDiameter Spot diameter for technologies with arrays of spots of
 #'   fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 #'   diameter must be in the same unit as the coordinates in the *Geometry

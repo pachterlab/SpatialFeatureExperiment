@@ -24,8 +24,8 @@ LazyData: true
 RoxygenNote: 7.1.2
 Collate: 
     'AllGenerics.R'
-    'Geometries-class.R'
     'utils.R'
     'SFE-class.R'
+    'annotGeometries.R'
     'df2sf.R'
     'dimGeometries.R'

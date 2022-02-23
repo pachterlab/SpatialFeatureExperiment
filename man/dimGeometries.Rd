@@ -23,13 +23,12 @@
 \alias{dimGeometry<-}
 \alias{dimGeometries<-}
 \alias{dimGeometryNames<-}
-\alias{dimGeometry<-,SpatialFeatureExperiment,missing,ANY,ANY,sf-method}
-\alias{dimGeometry<-,SpatialFeatureExperiment,numeric,ANY,ANY,sf-method}
-\alias{dimGeometry<-,SpatialFeatureExperiment,character,ANY,ANY,sf-method}
+\alias{dimGeometry<-,SpatialFeatureExperiment,missing-method}
+\alias{dimGeometry<-,SpatialFeatureExperiment,numeric-method}
+\alias{dimGeometry<-,SpatialFeatureExperiment,character-method}
 \alias{dimGeometries<-,SpatialFeatureExperiment-method}
-\alias{dimGeometryNames<-,SpatialFeatureExperiment,ANY,character-method}
+\alias{dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method}
 \alias{dimGeometryNames,SpatialFeatureExperiment-method}
-\alias{dimGeometry<-,SpatialFeatureExperiment,ANY,ANY,ANY,data.frame-method}
 \title{Dimension geometry methods}
 \usage{
 \S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN = 2, withDimnames = TRUE)
@@ -38,7 +37,7 @@
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment}(x, MARGIN)
 
-\S4method{dimGeometryNames}{SpatialFeatureExperiment,ANY,character}(x, MARGIN) <- value
+\S4method{dimGeometryNames}{SpatialFeatureExperiment,numeric,character}(x, MARGIN) <- value
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, withDimnames = TRUE)
 
@@ -46,22 +45,11 @@
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE)
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,missing,ANY,ANY,sf}(x, type, MARGIN, withDimnames = TRUE) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, withDimnames = TRUE) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,numeric,ANY,ANY,sf}(x, type, MARGIN, withDimnames = TRUE) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, withDimnames = TRUE, ...) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,character,ANY,ANY,sf}(x, type, MARGIN, withDimnames = TRUE) <- value
-
-\S4method{dimGeometry}{SpatialFeatureExperiment,ANY,ANY,ANY,data.frame}(
-  x,
-  type,
-  MARGIN,
-  withDimnames = TRUE,
-  spatialCoordsNames = c("x", "y"),
-  spotDiameter = NA,
-  geometryType = c("POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING",
-    "MUTIPOLYGON")
-) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE) <- value
 
 colGeometry(x, type, withDimnames = TRUE)
 

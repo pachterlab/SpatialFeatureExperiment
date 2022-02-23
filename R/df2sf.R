@@ -122,9 +122,7 @@
 .is_de_facto_point <- function(df) {
   (!"ID" %in% names(df) | !anyDuplicated(df$ID)) & !"group" %in% names(df)
 }
-.is_point <- function(df) {
-  if (is(df, "sf")) st_is(df, "POINT") else .is_de_facto_point(df)
-}
+
 # From ordinary data frame to sf to construct SFE object
 .df2sf <- function(df, spatialCoordsNames, spotDiameter, geometryType) {
   if (any(!spatialCoordsNames %in% names(df))) {
@@ -151,19 +149,23 @@
                            geometryType = c("POINT", "LINESTRING", "POLYGON",
                                             "MULTIPOINT", "MULTILINESTRING",
                                             "MULTIPOLYGON")) {
-  geometryType <- match.arg(geometryType)
   if (!is(x, "sf") && !is.data.frame(x)) {
-    stop("Each element of the list for the *Geometry slots must be an ",
-         "sf object, a data frame.")
+    stop("Each element of the list for *Geometry must be an ",
+         "sf object or a data frame.")
   }
   if (is(x, "sf")) {
     return(x)
   } else if (is.data.frame(x)) {
+    geometryType <- match.arg(geometryType)
     return(.df2sf(x, spatialCoordsNames, spotDiameter, geometryType))
   }
 }
 
 .df2sf_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
+  x_is_sf <- vapply(x, function(t) is(t, "sf"), FUN.VALUE = logical(1))
+  if (all(x_is_sf)) {
+    return(x)
+  }
   if (length(geometryType) == 1L) {
     geometryType <- rep(geometryType, length(x))
   } else if (length(geometryType) != length(x)) {
@@ -174,4 +176,3 @@
          MoreArgs = list(spatialCoordsNames = spatialCoordsNames,
                          spotDiameter = spotDiameter))
 }
-
