@@ -46,7 +46,7 @@
       st_point(c(df[[spatialCoordsNames[1]]], df[[spatialCoordsNames[2]]]))
     })
     df$geometry <- st_sfc(df$geometry)
-    out <- st_sf(df, sf_column_name = "geometry")
+    out <- st_sf(df, sf_column_name = "geometry", row.names = rownames(df))
   }
   if (!is.na(spotDiameter)) {
     out$geometry <- st_buffer(out$geometry, spotDiameter/2)
@@ -93,7 +93,8 @@
     }
   }
   geometry_use <- st_sfc(geometry_use)
-  st_sf(ID = names(df_split), geometry = geometry_use, crs = NA)
+  st_sf(ID = names(df_split), geometry = geometry_use, crs = NA,
+        row.names = names(df_split))
 }
 
 .df2sf_linestring <- function(df, spatialCoordsNames, multi) {
@@ -114,7 +115,8 @@
     })
   }
   geometry_use <- st_sfc(geometry_use)
-  st_sf(ID = names(df_split), geometry = geometry_use, crs = NA)
+  st_sf(ID = names(df_split), geometry = geometry_use, crs = NA,
+        row.names = names(df_split))
 }
 
 .is_de_facto_point <- function(df) {
@@ -145,21 +147,31 @@
 }
 
 # Call in SFE constructor
-.df2sf_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
-  if (!is(x, "sf") && !is.data.frame(x) && !is.character(x)) {
+.df2sf_in_list <- function(x, spatialCoordsNames, spotDiameter,
+                           geometryType = c("POINT", "LINESTRING", "POLYGON",
+                                            "MULTIPOINT", "MULTILINESTRING",
+                                            "MULTIPOLYGON")) {
+  geometryType <- match.arg(geometryType)
+  if (!is(x, "sf") && !is.data.frame(x)) {
     stop("Each element of the list for the *Geometry slots must be an ",
-         "sf object, a data frame, or a string specifying a path to a file ",
-         "that can be directly read by sf::read_sf().")
+         "sf object, a data frame.")
   }
   if (is(x, "sf")) {
     return(x)
   } else if (is.data.frame(x)) {
     return(.df2sf(x, spatialCoordsNames, spotDiameter, geometryType))
-  } else {
-    x <- normalizePath(x, mustWork = TRUE)
-    out <- read_sf(x)
-    # Still thinking about engineering CRS's, but set to NA for now.
-    st_crs(out) <- NA
-    return(out)
   }
 }
+
+.df2sf_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
+  if (length(geometryType) == 1L) {
+    geometryType <- rep(geometryType, length(x))
+  } else if (length(geometryType) != length(x)) {
+    stop("geometryTypes must be either length 1 or the same length ",
+         "as the input list.")
+  }
+  mapply(.df2sf_in_list, df = x, geometryType = geometryType,
+         MoreArgs = list(spatialCoordsNames = spatialCoordsNames,
+                         spotDiameter = spotDiameter))
+}
+

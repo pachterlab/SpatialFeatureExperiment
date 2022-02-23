@@ -6,15 +6,15 @@
 \usage{
 SpatialFeatureExperiment(
   assays,
-  primaryGeometry,
-  objectGeometry = list(object = make_empty_geometry()),
-  annotationGeometry = list(region = make_empty_geometry()),
+  colGeometry,
+  rowGeometry = NULL,
+  annotGeometry = NULL,
   colData = DataFrame(),
   rowData = NULL,
   spatialCoordsNames = c("x", "y"),
   sample_id = "sample01",
   spotDiameter = NA_real_,
-  annotationGeometryType = "MULTIPOLYGON",
+  annotGeometryType = "POLYGON",
   unit = "full_res_image_pixels",
   ...
 )
@@ -30,10 +30,10 @@ SpatialFeatureExperiment(
     names (if present) must be consistent across elements and with the row
     names of \code{rowRanges} and \code{colData}.}
 
-\item{primaryGeometry}{Geometry of the entities that correspond to the
-columns of the gene count matrix, such as cells and Visium spots. It must
-be a named list of be one of the following: \describe{ \item{An \code{sf}
-data frame}{The geometry column specifies the geometry of the entities.}
+\item{colGeometry}{Geometry of the entities that correspond to the columns of
+the gene count matrix, such as cells and Visium spots. It must be a named
+list of be one of the following: \describe{ \item{An \code{sf} data
+frame}{The geometry column specifies the geometry of the entities.}
 \item{An ordinary data frame specifying centroids}{Column names for the
 coordinates are specified in the \code{spatialCoordsNames} argument. For
 Visium and ST, in addition to the centroid coordinate data frame, the spot
@@ -59,21 +59,16 @@ than 3 vertices will be removed. For anything other than POINTs, attributes
 of the geometry will be ignored, but they can be added later with the
 \code{AddGeometryAttr} function.}
 
-\item{objectGeometry}{Geometry of objects other than those in
-\code{primaryGeometry}, such as nuclei segmentation when the
-\code{primaryGeometry} is Visium spots. It can be specified in the same
-manner as \code{primaryGeometry}, as a named list. The data frames in the
-list don't have to specify the same number of geometries, unlike in
-\code{primaryGeometry}. The ordinary data frame must specify either POINTs
-or POLYGONs. A warning is issued if the bounding box of
-\code{objectGeometry} does not overlap that of \code{primaryGeometry}.}
+\item{rowGeometry}{Geometry associated with genes or features, which
+correspond to rows of the gene count matrix.}
 
-\item{annotationGeometry}{Geometry of annotations of the tissue, such as
-tissue boundary and pathologist annotations of histological regions. Also a
-named list as in \code{primaryGeometry}. The ordinary data frame may
-specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI versions. Each
-data frame can only specify one type of geometry. For MULTI versions, there
-must be a column "group" to identify each MULTI geometry.}
+\item{annotGeometry}{Geometry of entities that do not correspond to columns
+or rows of the gene count matrix, such as tissue boundary and pathologist
+annotations of histological regions, and nuclei segmentation in a Visium
+dataset. Also a named list as in \code{primaryGeometry}. The ordinary data
+frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
+versions. Each data frame can only specify one type of geometry. For MULTI
+versions, there must be a column "group" to identify each MULTI geometry.}
 
 \item{colData}{An optional \link{DataFrame} describing the
     samples. Row names, if present, become the column names of the
@@ -102,11 +97,12 @@ fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments.}
 
-\item{annotationGeometryType}{Character vector specifying geometry type of
-each ordinary data frame in the list if \code{annotationGeometry} is
-specified as such. Each element of the vector must be one of POINT,
-LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, and MULTIPOLYGON. Must be
-the same length as the list of data frames.}
+\item{annotGeometryType}{Character vector specifying geometry type of each
+ordinary data frame in the list if \code{annotationGeometry} is specified
+as such. Each element of the vector must be one of POINT, LINESTRING,
+POLYGON, MULTIPOINT, MULTILINESTRING, and MULTIPOLYGON. Must be either
+length 1 (same for all elements of the list) or the same length as the list
+of data frames.}
 
 \item{unit}{Unit the coordinates are in. I'm thinking about using some custom
 engineering CRS's which can convert units and invert the y axis for

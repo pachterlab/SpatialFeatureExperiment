@@ -19,6 +19,8 @@
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
 #' frame with the same number of rows as size in the dimension of interest.
 #' For \code{dimGeometries}, must be a list of such \code{sf} data frames.
+#' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} as in the
+#' constructor \code{\link{SpatialFeatureExperiment}}.
 #' @name dimGeometries
 #' @aliases dimGeometry dimGeometries dimGeometryNames
 #' colGeometry rowGeometry colGeometries rowGeometries
@@ -56,14 +58,16 @@ setMethod("dimGeometries", "SpatialFeatureExperiment",
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometries", "SpatialFeatureExperiment",
-                 function(x, MARGIN, withDimnames = TRUE, value) {
+                 function(x, MARGIN, withDimnames = TRUE, ..., value) {
+                   value <- .df2sf_list(x, ...)
                    if (withDimnames) {
                      for (v in seq_along(value)) {
-                       .check_dimgeo_names(x, value[[v]], MARGIN, withDimnames=TRUE,
-                                           vname=sprintf("value[[%s]]", v), fun='dimGeometries')
+                       value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
+                                                         withDimnames=TRUE,
+                                                         vname=sprintf("value[[%s]]", v),
+                                                         fun='dimGeometries')
                      }
                    }
-
                    .set_internal_all(x, value,
                                      getfun=.getfun(MARGIN),
                                      setfun=.setfun(MARGIN),
@@ -161,7 +165,7 @@ setReplaceMethod("dimGeometry",
                  signature(x = "SpatialFeatureExperiment", type = "numeric",
                            value = "sf"),
                  function(x, type, MARGIN, withDimnames=TRUE, value) {
-                   .check_dimgeo_names(x, value, withDimnames)
+                   value <- .check_dimgeo_names(x, value, withDimnames)
                    .set_internal_numeric(x, type, value,
                                          getfun=.getfun(MARGIN),
                                          setfun=.setfun(MARGIN),
@@ -194,8 +198,23 @@ setReplaceMethod("dimGeometry",
                                            vdimstr="rows",
                                            substr="type")
                  })
-# To do: replacement methods for ordinary data frames of a certain format.
-# Internally convert to sf
+
+#' @rdname dimGeometries
+#' @export
+setReplaceMethod("dimGeometry",
+                 signature(x = "SpatialFeatureExperiment", value = "data.frame"),
+                 function(x, type, MARGIN, withDimnames=TRUE,
+                          spatialCoordsNames = c("x", "y"),
+                          spotDiameter = NA,
+                          geometryType = c("POINT", "LINESTRING", "POLYGON",
+                                           "MULTIPOINT", "MULTILINESTRING",
+                                           "MUTIPOLYGON"),
+                          value) {
+                   value <- .df2sf(value, spatialCoordsNames, spotDiameter,
+                                   geometryType)
+                   dimGeometry(x, type, MARGIN, withDimnames) <- value
+                   return(x)
+                 })
 
 #' @rdname dimGeometries
 #' @export

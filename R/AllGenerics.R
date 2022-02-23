@@ -7,7 +7,7 @@
 setGeneric("dimGeometry", function(x, type, MARGIN, withDimnames=TRUE) standardGeneric("dimGeometry"))
 
 #' @export
-setGeneric("dimGeometry<-", function(x, type, MARGIN, withDimnames=TRUE, value) standardGeneric("dimGeometry<-"))
+setGeneric("dimGeometry<-", function(x, type, MARGIN, withDimnames=TRUE,..., value) standardGeneric("dimGeometry<-"))
 
 #' @export
 setGeneric("dimGeometryNames", function(x, MARGIN) standardGeneric("dimGeometryNames"))
@@ -19,26 +19,26 @@ setGeneric("dimGeometryNames<-", function(x, MARGIN, value) standardGeneric("dim
 setGeneric("dimGeometries", function(x, MARGIN, withDimnames=TRUE) standardGeneric("dimGeometries"))
 
 #' @export
-setGeneric("dimGeometries<-", function(x, MARGIN, withDimnames=TRUE, value) standardGeneric("dimGeometries<-"))
+setGeneric("dimGeometries<-", function(x, MARGIN, withDimnames=TRUE,..., value) standardGeneric("dimGeometries<-"))
 
-# Getters and setters for objectGeometry---------
+# Getters and setters for annotGeometry---------
 #' @export
-setGeneric("objectGeometry", function(x, type) standardGeneric("objectGeometry"))
-
-#' @export
-setGeneric("objectGeometry<-", function(x, type, value) standardGeneric("objectGeometry<-"))
+setGeneric("annotGeometry", function(x, type) standardGeneric("annotGeometry"))
 
 #' @export
-setGeneric("objectGeometryNames", function(x) standardGeneric("objectGeometryNames"))
+setGeneric("annotGeometry<-", function(x, type, value) standardGeneric("annotGeometry<-"))
 
 #' @export
-setGeneric("objectGeometryNames<-", function(x, value) standardGeneric("objectGeometryNames<-"))
+setGeneric("annotGeometryNames", function(x) standardGeneric("annotGeometryNames"))
 
 #' @export
-setGeneric("objectGeometries", function(x) standardGeneric("objectGeometries"))
+setGeneric("annotGeometryNames<-", function(x, value) standardGeneric("annotGeometryNames<-"))
 
 #' @export
-setGeneric("objectGeometries<-", function(x, value) standardGeneric("objectGeometries<-"))
+setGeneric("annotGeometries", function(x) standardGeneric("annotGeometries"))
+
+#' @export
+setGeneric("annotGeometries<-", function(x, value) standardGeneric("annotGeometries<-"))
 
 # Getters and setters for special geometries------
 #' @export

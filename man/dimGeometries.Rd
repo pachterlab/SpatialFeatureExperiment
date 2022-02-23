@@ -29,11 +29,12 @@
 \alias{dimGeometries<-,SpatialFeatureExperiment-method}
 \alias{dimGeometryNames<-,SpatialFeatureExperiment,ANY,character-method}
 \alias{dimGeometryNames,SpatialFeatureExperiment-method}
+\alias{dimGeometry<-,SpatialFeatureExperiment,ANY,ANY,ANY,data.frame-method}
 \title{Dimension geometry methods}
 \usage{
 \S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN = 2, withDimnames = TRUE)
 
-\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN, withDimnames = TRUE) <- value
+\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN, withDimnames = TRUE, ...) <- value
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment}(x, MARGIN)
 
@@ -50,6 +51,17 @@
 \S4method{dimGeometry}{SpatialFeatureExperiment,numeric,ANY,ANY,sf}(x, type, MARGIN, withDimnames = TRUE) <- value
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,character,ANY,ANY,sf}(x, type, MARGIN, withDimnames = TRUE) <- value
+
+\S4method{dimGeometry}{SpatialFeatureExperiment,ANY,ANY,ANY,data.frame}(
+  x,
+  type,
+  MARGIN,
+  withDimnames = TRUE,
+  spatialCoordsNames = c("x", "y"),
+  spotDiameter = NA,
+  geometryType = c("POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING",
+    "MUTIPOLYGON")
+) <- value
 
 colGeometry(x, type, withDimnames = TRUE)
 
@@ -84,6 +96,9 @@ columns.}
 \item{withDimnames}{Logical. If \code{TRUE}, then the dimnames (colnames or
 rownames) of the gene count matrix should correspond to row names of the
 \code{sf} data frames of interest.}
+
+\item{...}{\code{spatialCoordsNames, spotDiameter, geometryType} as in the
+constructor \code{\link{SpatialFeatureExperiment}}.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
 frame with the same number of rows as size in the dimension of interest.

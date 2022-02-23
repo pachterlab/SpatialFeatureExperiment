@@ -28,11 +28,15 @@ make_empty_geometry <- function() {
     cnr <- dimnames(reference)[[MARGIN]]
     fun_show <- switch (MARGIN, "rownames", "colnames")
     if (withDimnames && !is.null(rni)) {
-      if (!identical(cnr, rni)) {
+      if (!setequal(cnr, rni)) {
         msg <- paste0("non-NULL 'rownames(", vname, ")' should be the same as '",
                       fun_show, "(x)' for '", fun,
-                      "<-'. This will be an error in the next release of Bioconductor.")
-        warning(paste(strwrap(msg), collapse="\n"))
+                      "<-'.")
+        stop(paste(strwrap(msg), collapse="\n"))
+      } else if (!identical(cnr, rni)) {
+        # Do the reordering if they have different orders
+        rni <- rni[match(cnr, rni)]
+        incoming <- incoming[rni,]
       }
     }
   }

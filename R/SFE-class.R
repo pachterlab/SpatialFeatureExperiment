@@ -23,10 +23,10 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'
 #' @inheritParams SummarizedExperiment::SummarizedExperiment
 #' @inheritParams SpatialExperiment::SpatialExperiment
-#' @param primaryGeometry Geometry of the entities that correspond to the
-#'   columns of the gene count matrix, such as cells and Visium spots. It must
-#'   be a named list of be one of the following: \describe{ \item{An \code{sf}
-#'   data frame}{The geometry column specifies the geometry of the entities.}
+#' @param colGeometry Geometry of the entities that correspond to the columns of
+#'   the gene count matrix, such as cells and Visium spots. It must be a named
+#'   list of be one of the following: \describe{ \item{An \code{sf} data
+#'   frame}{The geometry column specifies the geometry of the entities.}
 #'   \item{An ordinary data frame specifying centroids}{Column names for the
 #'   coordinates are specified in the \code{spatialCoordsNames} argument. For
 #'   Visium and ST, in addition to the centroid coordinate data frame, the spot
@@ -51,25 +51,21 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   than 3 vertices will be removed. For anything other than POINTs, attributes
 #'   of the geometry will be ignored, but they can be added later with the
 #'   \code{AddGeometryAttr} function.
-#' @param objectGeometry Geometry of objects other than those in
-#'   \code{primaryGeometry}, such as nuclei segmentation when the
-#'   \code{primaryGeometry} is Visium spots. It can be specified in the same
-#'   manner as \code{primaryGeometry}, as a named list. The data frames in the
-#'   list don't have to specify the same number of geometries, unlike in
-#'   \code{primaryGeometry}. The ordinary data frame must specify either POINTs
-#'   or POLYGONs. A warning is issued if the bounding box of
-#'   \code{objectGeometry} does not overlap that of \code{primaryGeometry}.
-#' @param annotationGeometry Geometry of annotations of the tissue, such as
-#'   tissue boundary and pathologist annotations of histological regions. Also a
-#'   named list as in \code{primaryGeometry}. The ordinary data frame may
-#'   specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI versions. Each
-#'   data frame can only specify one type of geometry. For MULTI versions, there
-#'   must be a column "group" to identify each MULTI geometry.
-#' @param annotationGeometryType Character vector specifying geometry type of
-#'   each ordinary data frame in the list if \code{annotationGeometry} is
-#'   specified as such. Each element of the vector must be one of POINT,
-#'   LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, and MULTIPOLYGON. Must be
-#'   the same length as the list of data frames.
+#' @param rowGeometry Geometry associated with genes or features, which
+#'   correspond to rows of the gene count matrix.
+#' @param annotGeometry Geometry of entities that do not correspond to columns
+#'   or rows of the gene count matrix, such as tissue boundary and pathologist
+#'   annotations of histological regions, and nuclei segmentation in a Visium
+#'   dataset. Also a named list as in \code{primaryGeometry}. The ordinary data
+#'   frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
+#'   versions. Each data frame can only specify one type of geometry. For MULTI
+#'   versions, there must be a column "group" to identify each MULTI geometry.
+#' @param annotGeometryType Character vector specifying geometry type of each
+#'   ordinary data frame in the list if \code{annotationGeometry} is specified
+#'   as such. Each element of the vector must be one of POINT, LINESTRING,
+#'   POLYGON, MULTIPOINT, MULTILINESTRING, and MULTIPOLYGON. Must be either
+#'   length 1 (same for all elements of the list) or the same length as the list
+#'   of data frames.
 #' @param spotDiameter Spot diameter for technologies with arrays of spots of
 #'   fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 #'   diameter must be in the same unit as the coordinates in the *Geometry
@@ -83,51 +79,28 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom SpatialExperiment SpatialExperiment
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
-#'   st_multipoint st_multilinestring st_multipolygon st_is_empty st_is
-#'   st_coordinates st_centroid
+#'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
+#'   st_centroid
 #' @export
-SpatialFeatureExperiment <- function(assays, primaryGeometry,
-                                     objectGeometry = list(object = make_empty_geometry()),
-                                     annotationGeometry = list(region = make_empty_geometry()),
-                                     colData = DataFrame(),
-                                     rowData = NULL, spatialCoordsNames = c("x", "y"),
+SpatialFeatureExperiment <- function(assays, colGeometry,
+                                     rowGeometry = NULL, annotGeometry = NULL,
+                                     colData = DataFrame(), rowData = NULL,
+                                     spatialCoordsNames = c("x", "y"),
                                      sample_id = "sample01", spotDiameter = NA_real_,
-                                     annotationGeometryType = "MULTIPOLYGON",
+                                     annotGeometryType = "POLYGON",
                                      unit = "full_res_image_pixels",
                                      ...) {
-  # 1. Check the *Geometry arguments, convert them to sf if they are ordinary data frames
-  # 2. Pass everything else to the SpatialExperiment constructor
-  if (!st_is_empty(annotationGeometry[[1]])) {
-    .annot_geom_allowed <- c("POINT", "LINESTRING", "POLYGON",
-                             "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON")
-    annotationGeometryType <- match.arg(annotationGeometryType,
-                                        choices = .annot_geom_allowed,
-                                        several.ok = TRUE)
-    if (length(annotationGeometryType) == 1L) {
-      annotationGeometryType <- rep(annotationGeometryType,
-                                    length(annotationGeometry))
-    } else if (length(annotationGeometryType) != length(annotationGeometry)) {
-      stop("annotationGeometryType must be either length 1 or the same length ",
-           "as annotationGeometry.")
-    }
+  colGeometry <- .df2sf_list(colGeometry, spatialCoordsNames, spotDiameter, "POLYGON")
+  if (!is.null(rowGeometry)) {
+    rowGeometry <- .df2sf_list(rowGeometry, spatialCoordsNames, spotDiameter = NA,
+                               geometryType = "POLYGON")
   }
-  primaryGeometry <- lapply(primaryGeometry, .df2sf_list,
-                            spatialCoordsNames = spatialCoordsNames,
-                            spotDiameter = spotDiameter,
-                            geometryType = "POLYGON")
-  if (!st_is_empty(objectGeometry[[1]])) {
-    objectGeometry <- lapply(objectGeometry, .df2sf_list,
-                             spatialCoordsNames = spatialCoordsNames,
-                             spotDiameter = spotDiameter,
-                             geometryType = "POLYGON")
+  if (!is.null(annotGeometry)) {
+    annotGeometry <- .df2sf_list(annotGeometry, spatialCoordsNames,
+                                 spotDiameter = NA,
+                                 geometryType = annotGeometryType)
   }
-  if (!st_is_empty(annotationGeometry[[1]])) {
-    annotationGeometry <- mapply(.df2sf_list, df = annotationGeometry,
-                                 geometryType = annotationGeometryType,
-                                 MoreArgs = list(spatialCoordsNames = spatialCoordsNames,
-                                                 spotDiameter = NA))
-  }
-  spe_coords <- st_coordinates(st_centroid(primaryGeometry[[1]]))
+  spe_coords <- st_coordinates(st_centroid(colGeometry[[1]]))
   spe <- SpatialExperiment(assays = assays, colData = colData,
                            rowData = rowData, sample_id = sample_id,
                            spatialCoords = spe_coords)
