@@ -11,6 +11,13 @@
 #' geometries. Internally, annotation geometries are stored in
 #' \code{int_metadata}.
 #'
+#' Wrapper for getter and setter of special geometry:
+#' \describe{
+#' \item{tisseuBoundary}{Boundary of the tissue of interest, including holes.
+#' This is usually of geometry type MULTIPOLYGON, though geometries in
+#' \code{annotGeometries} can have any type supported by \code{sf}.}
+#' }
+#'
 #' @inheritParams dimGeometries
 #' @param value Value to set. For \code{annotGeometry}, must be a \code{sf} data
 #'   frame, or an ordinary data frame that can be converted to a \code{sf} data
@@ -81,3 +88,15 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "numeric"),
 #' @export
 setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "character"),
                  .ag_r)
+
+#' @rdname annotGeometries
+#' @export
+tissueBoundary <- function(x) {
+  annotGeometry(x, "tissueBoundary")
+}
+
+#' @rdname annotGeometries
+#' @export
+`tissueBoundary<-` <- function(x, value) {
+  annotGeometry(x, "tissueBoundary") <- value
+}

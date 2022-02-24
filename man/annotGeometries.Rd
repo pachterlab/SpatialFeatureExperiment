@@ -12,6 +12,8 @@
 \alias{annotGeometry<-,SpatialFeatureExperiment,missing-method}
 \alias{annotGeometry<-,SpatialFeatureExperiment,numeric-method}
 \alias{annotGeometry<-,SpatialFeatureExperiment,character-method}
+\alias{tissueBoundary}
+\alias{tissueBoundary<-}
 \title{Annotation geometry methods}
 \usage{
 \S4method{annotGeometries}{SpatialFeatureExperiment}(x)
@@ -33,6 +35,10 @@
 \S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, ...) <- value
 
 \S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, ...) <- value
+
+tissueBoundary(x)
+
+tissueBoundary(x) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -59,4 +65,12 @@ count matrix (e.g. nuclei segmentation in a Visium dataset where the columns
 are Visium spots). This page documents getters and setters for the annotation
 geometries. Internally, annotation geometries are stored in
 \code{int_metadata}.
+}
+\details{
+Wrapper for getter and setter of special geometry:
+\describe{
+\item{tisseuBoundary}{Boundary of the tissue of interest, including holes.
+This is usually of geometry type MULTIPOLYGON, though geometries in
+\code{annotGeometries} can have any type supported by \code{sf}.}
+}
 }

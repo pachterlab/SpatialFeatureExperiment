@@ -29,6 +29,16 @@
 \alias{dimGeometries<-,SpatialFeatureExperiment-method}
 \alias{dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method}
 \alias{dimGeometryNames,SpatialFeatureExperiment-method}
+\alias{spotPoly}
+\alias{spotPoly<-}
+\alias{ROIPoly}
+\alias{ROIPoly<-}
+\alias{cellSeg}
+\alias{cellSeg<-}
+\alias{nucSeg}
+\alias{nucSeg<-}
+\alias{txSpots}
+\alias{txSpots<-}
 \title{Dimension geometry methods}
 \usage{
 \S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN = 2, withDimnames = TRUE)
@@ -74,6 +84,26 @@ rowGeometries(x, withDimnames = TRUE) <- value
 rowGeometryNames(x)
 
 rowGeometryNames(x) <- value
+
+spotPoly(x, withDimnames = TRUE)
+
+spotPoly(x, withDimnames = TRUE) <- value
+
+ROIPoly(x, withDimnames = TRUE)
+
+ROIPoly(x, withDimnames = TRUE) <- value
+
+cellSeg(x, withDimnames = TRUE)
+
+cellSeg(x, withDimnames = TRUE) <- value
+
+nucSeg(x, withDimnames = TRUE)
+
+nucSeg(x, withDimnames = TRUE) <- value
+
+txSpots(x, withDimnames = TRUE)
+
+txSpots(x, withDimnames = TRUE) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -108,4 +138,26 @@ cells as there are cells in the gene count matrix. This page documents
 getters and setters for the dimension geometries. The getters and setters are
 implemented in a way similar to those of \code{reducedDims} in
 \code{SingleCellExperiment}.
+}
+\details{
+These are convenience wrappers for getters and setters of special geometries:
+\describe{
+\item{colGeometry/ies}{dimGeometry/ies with MARGIN = 2, for geometries
+associated with columns of the gene count matrix (cells/Visium spots/samples).}
+\item{rowGeometry/ies}{dimGeometry/ies with MARGIN = 1, for geometries
+associated with rows of the gene count matrix (genes/features).}
+\item{spotPoly}{Polygons of spots from technologies such as Visium, ST, and
+slide-seq, which do not correspond to cells. Centroids of the polygons are stored
+in \code{spatialCoords} of the underlying \code{SpatialExperiment} object.}
+\item{ROIPoly}{Polygons of regions of interest (ROIs) from technologies such
+as laser capture microdissection (LCM) and GeoMX DSP. These should correspond
+to columns of the gene count matrix.}
+\item{cellSeg}{Cell segmentation polygons. If the columns of the gene count
+matrix are single cells, then this is stored in \code{colGeometries}.
+Otherwise, this is stored in \code{\link{annotGeometries}}.}
+\item{nucSeg}{Similar to \code{cellSeg}, but for nuclei rather than whole
+cell.}
+\item{txSpots}{POINT or MULTIPOINT geometries of transcript spots of single
+molecular resolution technologies, stored in \code{rowGeometries}.}
+}
 }
