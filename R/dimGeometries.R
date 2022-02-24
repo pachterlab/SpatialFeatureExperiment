@@ -1,42 +1,43 @@
 #' Dimension geometry methods
 #'
-#' "Dimension geometry" refers to Simple Feature (\code{sf}) geometries associated
-#' with rows (features, genes) or columns (cells or spots) of the gene count
-#' matrix in the \code{SpatialFeatureExperiment} object. For each dimension, the
-#' number of rows in the \code{sf} data frame specifying the geometries must
-#' match the size of the dimension of interest. For example, there must be the
-#' same number of rows in the \code{sf} data frame describing cells as there are
-#' cells in the gene count matrix. This page documents getters and setters for
-#' the dimension geometries. The getters and setters are implemented in a way
-#' similar to those of \code{reducedDims} in \code{SingleCellExperiment}.
+#' "Dimension geometry" refers to Simple Feature (\code{sf}) geometries
+#' associated with rows (features, genes) or columns (cells or spots) of the
+#' gene count matrix in the \code{SpatialFeatureExperiment} object. For each
+#' dimension, the number of rows in the \code{sf} data frame specifying the
+#' geometries must match the size of the dimension of interest. For example,
+#' there must be the same number of rows in the \code{sf} data frame describing
+#' cells as there are cells in the gene count matrix. This page documents
+#' getters and setters for the dimension geometries. The getters and setters are
+#' implemented in a way similar to those of \code{reducedDims} in
+#' \code{SingleCellExperiment}.
 #'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param MARGIN As in \code{\link{apply}}. 1 stands for rows and 2 stands for
-#' columns.
+#'   columns.
 #' @param withDimnames Logical. If \code{TRUE}, then the dimnames (colnames or
-#' rownames) of the gene count matrix should correspond to row names of the
-#' \code{sf} data frames of interest.
+#'   rownames) of the gene count matrix should correspond to row names of the
+#'   \code{sf} data frames of interest.
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
-#' frame with the same number of rows as size in the dimension of interest.
-#' For \code{dimGeometries}, must be a list of such \code{sf} data frames.
-#' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} as in the
-#' constructor \code{\link{SpatialFeatureExperiment}}.
+#'   frame with the same number of rows as size in the dimension of interest.
+#'   For \code{dimGeometries}, must be a list of such \code{sf} data frames.
+#' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} passed to
+#'   \code{\link{df2sf}}. For \code{dimGeometries<-} only: \code{geometryType}
+#'   can be a character vector of the geometry type of each data frame in the
+#'   list of the same length as the list if the data frames specify different
+#'   types of geometries.
 #' @name dimGeometries
-#' @aliases dimGeometry dimGeometries dimGeometryNames
-#' colGeometry rowGeometry colGeometries rowGeometries
-#' colGeometryNames rowGeometryNames
-#' colGeometry<- rowGeometry<- colGeometries<- rowGeometries<-
-#' colGeometryNames<- rowGeometryNames<-
-#' dimGeometry,SpatialFeatureExperiment,missing-method
-#' dimGeometry,SpatialFeatureExperiment,numeric-method
-#' dimGeometry,SpatialFeatureExperiment,character-method
-#' dimGeometries,SpatialFeatureExperiment-method
-#' dimGeometry<- dimGeometries<- dimGeometryNames<-
-#' dimGeometry<-,SpatialFeatureExperiment,missing-method
-#' dimGeometry<-,SpatialFeatureExperiment,numeric-method
-#' dimGeometry<-,SpatialFeatureExperiment,character-method
-#' dimGeometries<-,SpatialFeatureExperiment-method
-#' dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method
+#' @aliases dimGeometry dimGeometries dimGeometryNames colGeometry rowGeometry
+#'   colGeometries rowGeometries colGeometryNames rowGeometryNames colGeometry<-
+#'   rowGeometry<- colGeometries<- rowGeometries<- colGeometryNames<-
+#'   rowGeometryNames<- dimGeometry,SpatialFeatureExperiment,missing-method
+#'   dimGeometry,SpatialFeatureExperiment,numeric-method
+#'   dimGeometry,SpatialFeatureExperiment,character-method
+#'   dimGeometries,SpatialFeatureExperiment-method dimGeometry<- dimGeometries<-
+#'   dimGeometryNames<- dimGeometry<-,SpatialFeatureExperiment,missing-method
+#'   dimGeometry<-,SpatialFeatureExperiment,numeric-method
+#'   dimGeometry<-,SpatialFeatureExperiment,character-method
+#'   dimGeometries<-,SpatialFeatureExperiment-method
+#'   dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method
 NULL
 
 #' @rdname dimGeometries
@@ -179,7 +180,7 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
-                 function(x, type, MARGIN, withDimnames=TRUE, value) {
+                 function(x, type, MARGIN, withDimnames=TRUE, ..., value) {
                    value <- .df2sf_in_list(value, ...)
                    value <- .check_dimgeo_names(x, value, withDimnames)
                    .set_internal_character(x, type, value,

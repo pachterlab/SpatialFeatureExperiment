@@ -49,7 +49,7 @@
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, withDimnames = TRUE, ...) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE, ...) <- value
 
 colGeometry(x, type, withDimnames = TRUE)
 
@@ -85,21 +85,25 @@ columns.}
 rownames) of the gene count matrix should correspond to row names of the
 \code{sf} data frames of interest.}
 
-\item{...}{\code{spatialCoordsNames, spotDiameter, geometryType} as in the
-constructor \code{\link{SpatialFeatureExperiment}}.}
+\item{...}{\code{spatialCoordsNames, spotDiameter, geometryType} passed to
+\code{\link{df2sf}}. For \code{dimGeometries<-} only: \code{geometryType}
+can be a character vector of the geometry type of each data frame in the
+list of the same length as the list if the data frames specify different
+types of geometries.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
 frame with the same number of rows as size in the dimension of interest.
 For \code{dimGeometries}, must be a list of such \code{sf} data frames.}
 }
 \description{
-"Dimension geometry" refers to Simple Feature (\code{sf}) geometries associated
-with rows (features, genes) or columns (cells or spots) of the gene count
-matrix in the \code{SpatialFeatureExperiment} object. For each dimension, the
-number of rows in the \code{sf} data frame specifying the geometries must
-match the size of the dimension of interest. For example, there must be the
-same number of rows in the \code{sf} data frame describing cells as there are
-cells in the gene count matrix. This page documents getters and setters for
-the dimension geometries. The getters and setters are implemented in a way
-similar to those of \code{reducedDims} in \code{SingleCellExperiment}.
+"Dimension geometry" refers to Simple Feature (\code{sf}) geometries
+associated with rows (features, genes) or columns (cells or spots) of the
+gene count matrix in the \code{SpatialFeatureExperiment} object. For each
+dimension, the number of rows in the \code{sf} data frame specifying the
+geometries must match the size of the dimension of interest. For example,
+there must be the same number of rows in the \code{sf} data frame describing
+cells as there are cells in the gene count matrix. This page documents
+getters and setters for the dimension geometries. The getters and setters are
+implemented in a way similar to those of \code{reducedDims} in
+\code{SingleCellExperiment}.
 }

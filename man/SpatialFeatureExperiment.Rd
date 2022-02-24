@@ -44,20 +44,19 @@ column "ID" to specify which vertices belong to which polygon. The
 coordinates should not be in list columns. Rather, the data frame should
 look like it is passed to \code{ggplot2::geom_polygon}. If there are holes,
 then there must also be a column "subID" that differentiates between the
-outer polygon and the holes.} \item{Path to a GeoJSON file}{For QuPath
-annotations.} } In all cases, the data frame should specify the same number
-of geometries as the number of columns in the gene count matrix. If the
-column "barcode" is present, then it will be matched to column names of the
-gene count matrix. Otherwise, the geometries are assumed to be in the same
-order as columns in the gene count matrix. If the geometries are specified
-in an ordinary data frame, then it will be converted into \code{sf}
-internally. Named list of data frames because each entity can have multiple
-geometries, such as whole cell and nuclei segmentations. The geometries are
-assumed to be POINTs for centroids and POLYGONs for segmentations. If
-polygons are specified in an ordinary data frame, then anything with fewer
-than 3 vertices will be removed. For anything other than POINTs, attributes
-of the geometry will be ignored, but they can be added later with the
-\code{AddGeometryAttr} function.}
+outer polygon and the holes.}} In all cases, the data frame should specify
+the same number of geometries as the number of columns in the gene count
+matrix. If the column "barcode" is present, then it will be matched to
+column names of the gene count matrix. Otherwise, the geometries are
+assumed to be in the same order as columns in the gene count matrix. If the
+geometries are specified in an ordinary data frame, then it will be
+converted into \code{sf} internally. Named list of data frames because each
+entity can have multiple geometries, such as whole cell and nuclei
+segmentations. The geometries are assumed to be POINTs for centroids and
+POLYGONs for segmentations. If polygons are specified in an ordinary data
+frame, then anything with fewer than 3 vertices will be removed. For
+anything other than POINTs, attributes of the geometry will be ignored, but
+they can be added later with the \code{AddGeometryAttr} function.}
 
 \item{rowGeometry}{Geometry associated with genes or features, which
 correspond to rows of the gene count matrix.}
@@ -80,12 +79,9 @@ versions, there must be a column "group" to identify each MULTI geometry.}
     \link[S4Vectors]{DataFrame} must equal the number of rows of the
     matrices in \code{assays}.}
 
-\item{spatialCoordsNames}{A \code{character} vector of column names from
-\code{\link[SpatialExperiment]{colData}} or \code{\link[SpatialExperiment]{spatialData}} containing spatial
-coordinates, which will be accessible with \code{\link[SpatialExperiment]{spatialCoords}}.
-Alternatively, the \code{spatialCoords} argument may be provided. If both
-are provided, \code{spatialCoordsNames} is given precedence, and a warning
-is returned. Default = \code{c("x", "y")}.}
+\item{spatialCoordsNames}{A \code{character} vector of column names if
+\code{*Geometry} arguments have ordinary data frames, to identify the
+columns in the ordinary data frames that specify the spatial coordinates.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -95,7 +91,7 @@ Default = \code{sample01}.}
 \item{spotDiameter}{Spot diameter for technologies with arrays of spots of
 fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
-arguments.}
+arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
 \item{annotGeometryType}{Character vector specifying geometry type of each
 element of the list if \code{annotGeometry} is specified. Each element of

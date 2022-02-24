@@ -123,8 +123,27 @@
   (!"ID" %in% names(df) | !anyDuplicated(df$ID)) & !"group" %in% names(df)
 }
 
-# From ordinary data frame to sf to construct SFE object
-.df2sf <- function(df, spatialCoordsNames, spotDiameter, geometryType) {
+#' From ordinary data frame to sf to construct SFE object
+#'
+#' While the \code{SpatialFeatureExperiment} constructor and \code{*Geometry}
+#' replacement methods can convert properly formatted ordinary data frames into
+#' \code{sf} objects which are used to store the geometries internally, the user
+#' might want to do the conversion, check if the geometry is valid, and inspect
+#' and fix any invalid geometries.
+#'
+#' @inheritParams SpatialFeatureExperiment
+#' @param df An ordinary data frame, i.e. not \code{sf}.
+#' @param spatialCoordNames Column names in \code{df} that specify spatial
+#' coordinates.
+#' @param geometryType Type of geometry to convert the ordinary data frame to.
+#' If the geometry in \code{df} is de facto points, then this argument will be
+#' ignored and the returned \code{sf} will have geometry type POINT.
+#' @return An \code{sf} object.
+#' @export
+df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
+                  geometryType = c("POINT", "LINESTRING", "POLYGON",
+                                   "MULTIPOINT", "MULTILINESTRING",
+                                   "MULTIPOLYGON")) {
   if (any(!spatialCoordsNames %in% names(df))) {
     cols_absent <- setdiff(spatialCoordsNames, names(df))
     if (length(cols_absent) > 1L) {
@@ -134,6 +153,7 @@
     }
   }
   if (.is_de_facto_point(df)) geometryType <- "POINT"
+  geometryType <- match.arg(geometryType)
   switch (geometryType,
           POINT = .df2sf_point(df, spatialCoordNames, spotDiameter, multi = FALSE),
           MULTIPOINT = .df2sf_point(df, spatialCoordNames, spotDiameter, multi = TRUE),
@@ -144,11 +164,8 @@
   )
 }
 
-# Call in SFE constructor
-.df2sf_in_list <- function(x, spatialCoordsNames, spotDiameter,
-                           geometryType = c("POINT", "LINESTRING", "POLYGON",
-                                            "MULTIPOINT", "MULTILINESTRING",
-                                            "MULTIPOLYGON")) {
+# Call in SFE constructor and *Geometries replacement methods
+.df2sf_in_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
   if (!is(x, "sf") && !is.data.frame(x)) {
     stop("Each element of the list for *Geometry must be an ",
          "sf object or a data frame.")
@@ -156,8 +173,7 @@
   if (is(x, "sf")) {
     return(x)
   } else if (is.data.frame(x)) {
-    geometryType <- match.arg(geometryType)
-    return(.df2sf(x, spatialCoordsNames, spotDiameter, geometryType))
+    return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType))
   }
 }
 

@@ -37,20 +37,19 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   coordinates should not be in list columns. Rather, the data frame should
 #'   look like it is passed to \code{ggplot2::geom_polygon}. If there are holes,
 #'   then there must also be a column "subID" that differentiates between the
-#'   outer polygon and the holes.} \item{Path to a GeoJSON file}{For QuPath
-#'   annotations.} } In all cases, the data frame should specify the same number
-#'   of geometries as the number of columns in the gene count matrix. If the
-#'   column "barcode" is present, then it will be matched to column names of the
-#'   gene count matrix. Otherwise, the geometries are assumed to be in the same
-#'   order as columns in the gene count matrix. If the geometries are specified
-#'   in an ordinary data frame, then it will be converted into \code{sf}
-#'   internally. Named list of data frames because each entity can have multiple
-#'   geometries, such as whole cell and nuclei segmentations. The geometries are
-#'   assumed to be POINTs for centroids and POLYGONs for segmentations. If
-#'   polygons are specified in an ordinary data frame, then anything with fewer
-#'   than 3 vertices will be removed. For anything other than POINTs, attributes
-#'   of the geometry will be ignored, but they can be added later with the
-#'   \code{AddGeometryAttr} function.
+#'   outer polygon and the holes.}} In all cases, the data frame should specify
+#'   the same number of geometries as the number of columns in the gene count
+#'   matrix. If the column "barcode" is present, then it will be matched to
+#'   column names of the gene count matrix. Otherwise, the geometries are
+#'   assumed to be in the same order as columns in the gene count matrix. If the
+#'   geometries are specified in an ordinary data frame, then it will be
+#'   converted into \code{sf} internally. Named list of data frames because each
+#'   entity can have multiple geometries, such as whole cell and nuclei
+#'   segmentations. The geometries are assumed to be POINTs for centroids and
+#'   POLYGONs for segmentations. If polygons are specified in an ordinary data
+#'   frame, then anything with fewer than 3 vertices will be removed. For
+#'   anything other than POINTs, attributes of the geometry will be ignored, but
+#'   they can be added later with the \code{AddGeometryAttr} function.
 #' @param rowGeometry Geometry associated with genes or features, which
 #'   correspond to rows of the gene count matrix.
 #' @param annotGeometry Geometry of entities that do not correspond to columns
@@ -66,10 +65,13 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
 #'   elements of the list) or the same length as the list. Ignored if the
 #'   corresponding element is an \code{sf} object.
+#' @param spatialCoordsNames A \code{character} vector of column names if
+#'   \code{*Geometry} arguments have ordinary data frames, to identify the
+#'   columns in the ordinary data frames that specify the spatial coordinates.
 #' @param spotDiameter Spot diameter for technologies with arrays of spots of
 #'   fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 #'   diameter must be in the same unit as the coordinates in the *Geometry
-#'   arguments.
+#'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
 #' @param unit Unit the coordinates are in. I'm thinking about using some custom
 #'   engineering CRS's which can convert units and invert the y axis for
 #'   Cartesian vs. image orientations. Units are also helpful when plotting
