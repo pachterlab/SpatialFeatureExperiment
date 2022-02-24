@@ -92,8 +92,10 @@ list of the same length as the list if the data frames specify different
 types of geometries.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
-frame with the same number of rows as size in the dimension of interest.
-For \code{dimGeometries}, must be a list of such \code{sf} data frames.}
+frame with the same number of rows as size in the dimension of interest, or
+an ordinary data frame that can be converted to such a \code{sf} data frame
+(see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
+\code{sf} or ordinary data frames.}
 }
 \description{
 "Dimension geometry" refers to Simple Feature (\code{sf}) geometries

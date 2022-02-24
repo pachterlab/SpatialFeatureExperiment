@@ -166,11 +166,11 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
 
 # Call in SFE constructor and *Geometries replacement methods
 .df2sf_in_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
-  if (!is(x, "sf") && !is.data.frame(x)) {
+  if (!is.null(x) && !is(x, "sf") && !is.data.frame(x)) {
     stop("Each element of the list for *Geometry must be an ",
          "sf object or a data frame.")
   }
-  if (is(x, "sf")) {
+  if (is(x, "sf") || is.null(x)) {
     return(x)
   } else if (is.data.frame(x)) {
     return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType))

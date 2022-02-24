@@ -18,8 +18,10 @@
 #'   rownames) of the gene count matrix should correspond to row names of the
 #'   \code{sf} data frames of interest.
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
-#'   frame with the same number of rows as size in the dimension of interest.
-#'   For \code{dimGeometries}, must be a list of such \code{sf} data frames.
+#'   frame with the same number of rows as size in the dimension of interest, or
+#'   an ordinary data frame that can be converted to such a \code{sf} data frame
+#'   (see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
+#'   \code{sf} or ordinary data frames.
 #' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} passed to
 #'   \code{\link{df2sf}}. For \code{dimGeometries<-} only: \code{geometryType}
 #'   can be a character vector of the geometry type of each data frame in the
