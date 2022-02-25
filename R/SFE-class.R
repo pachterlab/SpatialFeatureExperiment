@@ -93,6 +93,15 @@ SpatialFeatureExperiment <- function(assays, colGeometry,
                                      unit = "full_res_image_pixels",
                                      ...) {
   colGeometry <- .df2sf_list(colGeometry, spatialCoordsNames, spotDiameter, "POLYGON")
+  spe_coords <- st_coordinates(st_centroid(colGeometry[[1]]))
+  spe <- SpatialExperiment(assays = assays, colData = colData,
+                           rowData = rowData, sample_id = sample_id,
+                           spatialCoords = spe_coords, ...)
+  sfe <- .spe_to_sfe(spe, colGeometry, rowGeometry, annotGeometry, unit)
+  return(sfe)
+}
+
+.spe_to_sfe <- function(spe, colGeometry, rowGeometry, annotGeometry, unit) {
   if (!is.null(rowGeometry)) {
     rowGeometry <- .df2sf_list(rowGeometry, spatialCoordsNames, spotDiameter = NA,
                                geometryType = "POLYGON")
@@ -102,21 +111,10 @@ SpatialFeatureExperiment <- function(assays, colGeometry,
                                  spotDiameter = NA,
                                  geometryType = annotGeometryType)
   }
-  spe_coords <- st_coordinates(st_centroid(colGeometry[[1]]))
-  spe <- SpatialExperiment(assays = assays, colData = colData,
-                           rowData = rowData, sample_id = sample_id,
-                           spatialCoords = spe_coords)
-  sfe <- .spe_to_sfe(spe, primaryGeometry, objectGeometry, annotationGeometry,
-                     unit)
+  sfe <- new("SpatialFeatureExperiment", spe)
+  colGeometries(sfe) <- colGeometry
+  rowGeometries(sfe) <- rowGeometry
+  annotGeometries(sfe) <- annotGeometry
   return(sfe)
 }
-
-.spe_to_sfe <- function(spe, primaryGeometry, objectGeometry,
-                        annotationGeometry, unit) {
-  old <- S4Vectors:::disableValidity()
-  if (!isTRUE(old)) {
-    S4Vectors:::disableValidity(TRUE)
-    on.exit(S4Vectors:::disableValidity(old))
-  }
-}
-# To do: unit test, validity, getters and setters, show, subsetting, cropping with geometry
+# To do: unit test, validity, show, subsetting, cropping with geometry
