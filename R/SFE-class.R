@@ -13,6 +13,7 @@
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
 #' @importFrom methods setClass new setAs setMethod setGeneric setReplaceMethod
+#' callNextMethod
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
@@ -82,7 +83,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
-#'   st_centroid
+#'   st_centroid st_geometry_type
 #' @export
 SpatialFeatureExperiment <- function(assays, colGeometries,
                                      rowGeometries = NULL, annotGeometries = NULL,
@@ -118,4 +119,26 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
   int_metadata(sfe)$unit <- unit
   return(sfe)
 }
-# To do: unit test, show, subsetting, cropping with geometry
+# To do: unit test, cropping with geometry
+
+.names_types <- function(l) {
+  types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
+                  FUN.VALUE = character(1))
+  paste(paste(names(l), types, sep = ": "), collapse = ", ")
+}
+#' Print method for SpatialFeatureExperiment
+#'
+#' Printing summaries of \code{colGeometries}, \code{rowGeometries}, and
+#' \code{annotGeometries} in addition to what's shown for
+#' \code{SpatialExperiment}. Geometry names and types are printed.
+#'
+#' @param object A \code{SpatialFeatureExperiment} object.
+#' @return None (invisible \code{NULL}).
+#' @export
+setMethod("show", "SpatialFeatureExperiment",
+          function(object) {
+            callNextMethod()
+            cat("colGeometries:", .names_types(colGeometries(object)), "\n")
+            cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
+            cat("annotGeometries:", .names_types(annotGeometries(object)), "\n")
+          })
