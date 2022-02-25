@@ -43,3 +43,6 @@ setGeneric("annotGeometries<-", function(x, ..., value) standardGeneric("annotGe
 # Operations that only apply to SFE due to geometries------
 #' @export
 setGeneric("crop", function(x, y) standardGeneric("crop"))
+
+# Coercion
+setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpatialFeatureExperiment"))

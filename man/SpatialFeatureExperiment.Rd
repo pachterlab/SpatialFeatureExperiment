@@ -6,9 +6,9 @@
 \usage{
 SpatialFeatureExperiment(
   assays,
-  colGeometry,
-  rowGeometry = NULL,
-  annotGeometry = NULL,
+  colGeometries,
+  rowGeometries = NULL,
+  annotGeometries = NULL,
   colData = DataFrame(),
   rowData = NULL,
   spatialCoordsNames = c("x", "y"),
@@ -29,6 +29,45 @@ SpatialFeatureExperiment(
     All elements of the list must have the same dimensions, and dimension
     names (if present) must be consistent across elements and with the row
     names of \code{rowRanges} and \code{colData}.}
+
+\item{colData}{An optional \link{DataFrame} describing the
+    samples. Row names, if present, become the column names of the
+    RangedSummarizedExperiment.}
+
+\item{rowData}{A \link[S4Vectors]{DataFrame} object describing 
+    the rows. Row names, if present, become the row names of the
+    SummarizedExperiment object. The number of rows of the
+    \link[S4Vectors]{DataFrame} must equal the number of rows of the
+    matrices in \code{assays}.}
+
+\item{spatialCoordsNames}{A \code{character} vector of column names if
+\code{*Geometry} arguments have ordinary data frames, to identify the
+columns in the ordinary data frames that specify the spatial coordinates.}
+
+\item{sample_id}{A \code{character} sample identifier, which matches the
+\code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
+be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
+Default = \code{sample01}.}
+
+\item{spotDiameter}{Spot diameter for technologies with arrays of spots of
+fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
+diameter must be in the same unit as the coordinates in the *Geometry
+arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
+
+\item{annotGeometryType}{Character vector specifying geometry type of each
+element of the list if \code{annotGeometry} is specified. Each element of
+the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
+MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
+elements of the list) or the same length as the list. Ignored if the
+corresponding element is an \code{sf} object.}
+
+\item{unit}{Unit the coordinates are in. I'm thinking about using some custom
+engineering CRS's which can convert units and invert the y axis for
+Cartesian vs. image orientations. Units are also helpful when plotting
+scale bars. Ignored for now, until I find a better way to deal with it.}
+
+\item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
+and \code{\link{SingleCellExperiment}} constructors.}
 
 \item{colGeometry}{Geometry of the entities that correspond to the columns of
 the gene count matrix, such as cells and Visium spots. It must be a named
@@ -68,45 +107,6 @@ dataset. Also a named list as in \code{primaryGeometry}. The ordinary data
 frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
 versions. Each data frame can only specify one type of geometry. For MULTI
 versions, there must be a column "group" to identify each MULTI geometry.}
-
-\item{colData}{An optional \link{DataFrame} describing the
-    samples. Row names, if present, become the column names of the
-    RangedSummarizedExperiment.}
-
-\item{rowData}{A \link[S4Vectors]{DataFrame} object describing 
-    the rows. Row names, if present, become the row names of the
-    SummarizedExperiment object. The number of rows of the
-    \link[S4Vectors]{DataFrame} must equal the number of rows of the
-    matrices in \code{assays}.}
-
-\item{spatialCoordsNames}{A \code{character} vector of column names if
-\code{*Geometry} arguments have ordinary data frames, to identify the
-columns in the ordinary data frames that specify the spatial coordinates.}
-
-\item{sample_id}{A \code{character} sample identifier, which matches the
-\code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
-be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
-Default = \code{sample01}.}
-
-\item{spotDiameter}{Spot diameter for technologies with arrays of spots of
-fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
-diameter must be in the same unit as the coordinates in the *Geometry
-arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
-
-\item{annotGeometryType}{Character vector specifying geometry type of each
-element of the list if \code{annotGeometry} is specified. Each element of
-the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
-MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
-elements of the list) or the same length as the list. Ignored if the
-corresponding element is an \code{sf} object.}
-
-\item{unit}{Unit the coordinates are in. I'm thinking about using some custom
-engineering CRS's which can convert units and invert the y axis for
-Cartesian vs. image orientations. Units are also helpful when plotting
-scale bars.}
-
-\item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
-and \code{\link{SingleCellExperiment}} constructors.}
 }
 \description{
 Create a \code{SpatialFeatureExperiment} object.

@@ -12,7 +12,7 @@
 #'
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
-#' @importFrom methods setClass new
+#' @importFrom methods setClass new setAs setMethod setGeneric setReplaceMethod
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
@@ -75,7 +75,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @param unit Unit the coordinates are in. I'm thinking about using some custom
 #'   engineering CRS's which can convert units and invert the y axis for
 #'   Cartesian vs. image orientations. Units are also helpful when plotting
-#'   scale bars.
+#'   scale bars. Ignored for now, until I find a better way to deal with it.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @importFrom SpatialExperiment SpatialExperiment
@@ -84,37 +84,38 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
 #'   st_centroid
 #' @export
-SpatialFeatureExperiment <- function(assays, colGeometry,
-                                     rowGeometry = NULL, annotGeometry = NULL,
+SpatialFeatureExperiment <- function(assays, colGeometries,
+                                     rowGeometries = NULL, annotGeometries = NULL,
                                      colData = DataFrame(), rowData = NULL,
                                      spatialCoordsNames = c("x", "y"),
                                      sample_id = "sample01", spotDiameter = NA_real_,
                                      annotGeometryType = "POLYGON",
                                      unit = "full_res_image_pixels",
                                      ...) {
-  colGeometry <- .df2sf_list(colGeometry, spatialCoordsNames, spotDiameter, "POLYGON")
-  spe_coords <- st_coordinates(st_centroid(colGeometry[[1]]))
+  colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames, spotDiameter, "POLYGON")
+  spe_coords <- st_coordinates(st_centroid(colGeometries[[1]]))
   spe <- SpatialExperiment(assays = assays, colData = colData,
                            rowData = rowData, sample_id = sample_id,
                            spatialCoords = spe_coords, ...)
-  sfe <- .spe_to_sfe(spe, colGeometry, rowGeometry, annotGeometry, unit)
+  sfe <- .spe_to_sfe(spe, colGeometries, rowGeometries, annotGeometries, unit)
   return(sfe)
 }
 
-.spe_to_sfe <- function(spe, colGeometry, rowGeometry, annotGeometry, unit) {
-  if (!is.null(rowGeometry)) {
-    rowGeometry <- .df2sf_list(rowGeometry, spatialCoordsNames, spotDiameter = NA,
+.spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries, unit) {
+  if (!is.null(rowGeometries)) {
+    rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames, spotDiameter = NA,
                                geometryType = "POLYGON")
   }
-  if (!is.null(annotGeometry)) {
-    annotGeometry <- .df2sf_list(annotGeometry, spatialCoordsNames,
+  if (!is.null(annotGeometries)) {
+    annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
                                  spotDiameter = NA,
                                  geometryType = annotGeometryType)
   }
   sfe <- new("SpatialFeatureExperiment", spe)
-  colGeometries(sfe) <- colGeometry
-  rowGeometries(sfe) <- rowGeometry
-  annotGeometries(sfe) <- annotGeometry
+  colGeometries(sfe) <- colGeometries
+  rowGeometries(sfe) <- rowGeometries
+  annotGeometries(sfe) <- annotGeometries
+  int_metadata(sfe)$unit <- unit
   return(sfe)
 }
-# To do: unit test, validity, show, subsetting, cropping with geometry
+# To do: unit test, show, subsetting, cropping with geometry
