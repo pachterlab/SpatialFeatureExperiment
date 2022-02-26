@@ -84,6 +84,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
 #'   st_centroid st_geometry_type
+#' @importFrom S4Vectors DataFrame
 #' @export
 SpatialFeatureExperiment <- function(assays, colGeometries,
                                      rowGeometries = NULL, annotGeometries = NULL,

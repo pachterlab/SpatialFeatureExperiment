@@ -43,9 +43,11 @@
     out <- st_sf(group = names(df_split), geometry = geometry_use)
   } else {
     df$geometry <- lapply(seq_len(nrow(df)), function(i) {
-      st_point(c(df[[spatialCoordsNames[1]]], df[[spatialCoordsNames[2]]]))
+      st_point(c(df[[spatialCoordsNames[1]]][i], df[[spatialCoordsNames[2]]][i]))
     })
     df$geometry <- st_sfc(df$geometry)
+    # Remove the original coordinate columns
+    df[spatialCoordsNames] <- NULL
     out <- st_sf(df, sf_column_name = "geometry", row.names = rownames(df))
   }
   if (!is.na(spotDiameter)) {
@@ -133,7 +135,7 @@
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @param df An ordinary data frame, i.e. not \code{sf}.
-#' @param spatialCoordNames Column names in \code{df} that specify spatial
+#' @param spatialCoordsNames Column names in \code{df} that specify spatial
 #' coordinates.
 #' @param geometryType Type of geometry to convert the ordinary data frame to.
 #' If the geometry in \code{df} is de facto points, then this argument will be
@@ -155,12 +157,12 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
   if (.is_de_facto_point(df)) geometryType <- "POINT"
   geometryType <- match.arg(geometryType)
   switch (geometryType,
-          POINT = .df2sf_point(df, spatialCoordNames, spotDiameter, multi = FALSE),
-          MULTIPOINT = .df2sf_point(df, spatialCoordNames, spotDiameter, multi = TRUE),
-          LINESTRING = .df2sf_linestring(df, spatialCoordNames, multi = FALSE),
-          MULTILINESTRING = .df2sf_linestring(df, spatialCoordNames, multi = TRUE),
-          POLYGON = .df2sf_polygon(df, spatialCoordNames, multi = FALSE),
-          MULTIPOLYGON = .df2sf_polygon(df, spatialCoordNames, multi = TRUE)
+          POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE),
+          MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE),
+          LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE),
+          MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE),
+          POLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = FALSE),
+          MULTIPOLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = TRUE)
   )
 }
 
@@ -188,7 +190,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     stop("geometryTypes must be either length 1 or the same length ",
          "as the input list.")
   }
-  mapply(.df2sf_in_list, df = x, geometryType = geometryType,
+  mapply(.df2sf_in_list, x = x, geometryType = geometryType,
          MoreArgs = list(spatialCoordsNames = spatialCoordsNames,
-                         spotDiameter = spotDiameter))
+                         spotDiameter = spotDiameter),
+         SIMPLIFY = FALSE)
 }
