@@ -83,7 +83,7 @@ setMethod("dimGeometries", "SpatialFeatureExperiment",
 #' @export
 setReplaceMethod("dimGeometries", "SpatialFeatureExperiment",
                  function(x, MARGIN, withDimnames = TRUE, ..., value) {
-                   value <- .df2sf_list(x, ...)
+                   value <- .df2sf_list(value, ...)
                    if (withDimnames) {
                      for (v in seq_along(value)) {
                        value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
@@ -186,7 +186,8 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
                  function(x, type, MARGIN, withDimnames=TRUE, ..., value) {
                    value <- .df2sf_in_list(value, ...)
-                   value <- .check_dimgeo_names(x, value, withDimnames)
+                   value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
+                                                withDimnames = withDimnames)
                    .set_internal_numeric(x, type, value,
                                          getfun=.getfun(MARGIN),
                                          setfun=.setfun(MARGIN),
@@ -205,7 +206,8 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
                  function(x, type, MARGIN, withDimnames=TRUE, ..., value) {
                    value <- .df2sf_in_list(value, ...)
-                   value <- .check_dimgeo_names(x, value, withDimnames)
+                   value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
+                                                withDimnames = withDimnames)
                    .set_internal_character(x, type, value,
                                            getfun=.getfun(MARGIN),
                                            setfun=.setfun(MARGIN),
@@ -235,7 +237,7 @@ colGeometry <- function(x, type, withDimnames = TRUE) {
 #' @rdname dimGeometries
 #' @export
 colGeometries <- function(x, withDimnames = TRUE) {
-  dimGeometry(x, MARGIN = 2, withDimnames = withDimnames)
+  dimGeometries(x, MARGIN = 2, withDimnames = withDimnames)
 }
 
 #' @rdname dimGeometries
@@ -273,13 +275,14 @@ rowGeometry <- function(x, type, withDimnames = TRUE) {
 #' @rdname dimGeometries
 #' @export
 rowGeometries <- function(x, withDimnames = TRUE) {
-  dimGeometry(x, MARGIN = 1, withDimnames = withDimnames)
+  dimGeometries(x, MARGIN = 1, withDimnames = withDimnames)
 }
 
 #' @rdname dimGeometries
 #' @export
 `rowGeometries<-` <- function(x, withDimnames = TRUE, value) {
   dimGeometries(x, MARGIN = 1, withDimnames = withDimnames) <- value
+  x
 }
 
 #' @rdname dimGeometries
