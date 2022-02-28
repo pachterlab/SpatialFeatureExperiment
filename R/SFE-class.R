@@ -83,7 +83,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
-#'   st_centroid st_geometry_type
+#'   st_centroid st_geometry_type st_geometry
 #' @importFrom S4Vectors DataFrame
 #' @export
 SpatialFeatureExperiment <- function(assays, colGeometries,
@@ -95,15 +95,17 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
                                      unit = "full_res_image_pixels",
                                      ...) {
   colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames, spotDiameter, "POLYGON")
-  spe_coords <- st_coordinates(st_centroid(colGeometries[[1]]))
+  spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
   spe <- SpatialExperiment(assays = assays, colData = colData,
                            rowData = rowData, sample_id = sample_id,
                            spatialCoords = spe_coords, ...)
-  sfe <- .spe_to_sfe(spe, colGeometries, rowGeometries, annotGeometries, unit)
+  sfe <- .spe_to_sfe(spe, colGeometries, rowGeometries, annotGeometries,
+                     spatialCoordsNames, annotGeometryType, unit)
   return(sfe)
 }
 
-.spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries, unit) {
+.spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
+                        spatialCoordsNames, annotGeometryType, unit) {
   if (!is.null(rowGeometries)) {
     rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames, spotDiameter = NA,
                                geometryType = "POLYGON")
@@ -125,7 +127,7 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
 .names_types <- function(l) {
   types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
                   FUN.VALUE = character(1))
-  paste(paste(names(l), types, sep = ": "), collapse = ", ")
+  paste(paste0(names(l), " (", types, ")"), collapse = ", ")
 }
 #' Print method for SpatialFeatureExperiment
 #'

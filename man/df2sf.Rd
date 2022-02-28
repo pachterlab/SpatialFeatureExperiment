@@ -15,9 +15,8 @@ df2sf(
 \arguments{
 \item{df}{An ordinary data frame, i.e. not \code{sf}.}
 
-\item{spatialCoordsNames}{A \code{character} vector of column names if
-\code{*Geometry} arguments have ordinary data frames, to identify the
-columns in the ordinary data frames that specify the spatial coordinates.}
+\item{spatialCoordsNames}{Column names in \code{df} that specify spatial
+coordinates.}
 
 \item{spotDiameter}{Spot diameter for technologies with arrays of spots of
 fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
@@ -27,9 +26,6 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 \item{geometryType}{Type of geometry to convert the ordinary data frame to.
 If the geometry in \code{df} is de facto points, then this argument will be
 ignored and the returned \code{sf} will have geometry type POINT.}
-
-\item{spatialCoordNames}{Column names in \code{df} that specify spatial
-coordinates.}
 }
 \value{
 An \code{sf} object.
