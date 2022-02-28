@@ -126,6 +126,10 @@ frame with the same number of rows as size in the dimension of interest, or
 an ordinary data frame that can be converted to such a \code{sf} data frame
 (see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
 \code{sf} or ordinary data frames.}
+
+\item{type}{An integer specifying the index or string specifying the name of
+the *Geometry to query or replace. If missing, then the first item in the
+*Geometries will be returned or replaced.}
 }
 \description{
 "Dimension geometry" refers to Simple Feature (\code{sf}) geometries

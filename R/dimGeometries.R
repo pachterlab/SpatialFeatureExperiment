@@ -35,6 +35,9 @@
 #' @param withDimnames Logical. If \code{TRUE}, then the dimnames (colnames or
 #'   rownames) of the gene count matrix should correspond to row names of the
 #'   \code{sf} data frames of interest.
+#' @param type An integer specifying the index or string specifying the name of
+#' the *Geometry to query or replace. If missing, then the first item in the
+#' *Geometries will be returned or replaced.
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
 #'   frame with the same number of rows as size in the dimension of interest, or
 #'   an ordinary data frame that can be converted to such a \code{sf} data frame
