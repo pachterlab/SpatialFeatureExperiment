@@ -13,7 +13,7 @@
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
 #' @importFrom methods setClass new setAs setMethod setGeneric setReplaceMethod
-#' callNextMethod
+#' callNextMethod is
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
@@ -83,7 +83,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
-#'   st_centroid st_geometry_type st_geometry
+#'   st_centroid st_geometry_type st_geometry st_is_valid
 #' @importFrom S4Vectors DataFrame
 #' @export
 SpatialFeatureExperiment <- function(assays, colGeometries,
@@ -122,7 +122,8 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
   int_metadata(sfe)$unit <- unit
   return(sfe)
 }
-# To do: unit test, cropping with geometry
+# To do: unit test, cropping with geometry, plotting (separate package),
+# managing geometry attributes in the sf data frames
 
 .names_types <- function(l) {
   types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
