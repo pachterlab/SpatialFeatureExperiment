@@ -44,10 +44,10 @@ tissueBoundary(x) <- value
 \item{x}{A \code{SpatialFeatureExperiment} object.}
 
 \item{...}{\code{spatialCoordsNames, spotDiameter, geometryType} passed to
-\code{\link{df2sf}}. For \code{dimGeometries<-} only: \code{geometryType}
-can be a character vector of the geometry type of each data frame in the
-list of the same length as the list if the data frames specify different
-types of geometries.}
+\code{\link{df2sf}}. Defaults are the same as in \code{\link{df2sf}}. For
+\code{dimGeometries<-} only: \code{geometryType} can be a character vector
+of the geometry type of each data frame in the list of the same length as
+the list if the data frames specify different types of geometries.}
 
 \item{value}{Value to set. For \code{annotGeometry}, must be a \code{sf} data
 frame, or an ordinary data frame that can be converted to a \code{sf} data

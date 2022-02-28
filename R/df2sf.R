@@ -7,7 +7,7 @@
     stop("Column 'group' must be present when specifying ", geometryType, "s.")
   }
   if (any(!names(df) %in% c("ID", spatialCoordsNames))) {
-    warning("Geometry attributes are ignored.")
+    message("Geometry attributes are ignored.")
   }
   n_vertices <- table(df$ID)
   ids <- names(n_vertices)
@@ -167,7 +167,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
 }
 
 # Call in SFE constructor and *Geometries replacement methods
-.df2sf_in_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
+.df2sf_in_list <- function(x, spatialCoordsNames = c("x", "y"),
+                           spotDiameter = NA, geometryType = "POLYGON") {
   if (!is.null(x) && !is(x, "sf") && !is.data.frame(x)) {
     stop("Each element of the list for *Geometry must be an ",
          "sf object or a data frame.")
@@ -179,7 +180,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
   }
 }
 
-.df2sf_list <- function(x, spatialCoordsNames, spotDiameter, geometryType) {
+.df2sf_list <- function(x, spatialCoordsNames = c("x", "y"),
+                        spotDiameter = NA, geometryType = "POLYGON") {
   x_is_sf <- vapply(x, function(t) is(t, "sf"), FUN.VALUE = logical(1))
   if (all(x_is_sf)) {
     return(x)

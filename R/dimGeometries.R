@@ -12,25 +12,22 @@
 #' \code{SingleCellExperiment}.
 #'
 #' These are convenience wrappers for getters and setters of special geometries:
-#' \describe{
-#' \item{colGeometry/ies}{dimGeometry/ies with MARGIN = 2, for geometries
-#' associated with columns of the gene count matrix (cells/Visium spots/samples).}
-#' \item{rowGeometry/ies}{dimGeometry/ies with MARGIN = 1, for geometries
-#' associated with rows of the gene count matrix (genes/features).}
+#' \describe{ \item{colGeometry/ies}{dimGeometry/ies with MARGIN = 2, for
+#' geometries associated with columns of the gene count matrix (cells/Visium
+#' spots/samples).} \item{rowGeometry/ies}{dimGeometry/ies with MARGIN = 1, for
+#' geometries associated with rows of the gene count matrix (genes/features).}
 #' \item{spotPoly}{Polygons of spots from technologies such as Visium, ST, and
-#' slide-seq, which do not correspond to cells. Centroids of the polygons are stored
-#' in \code{spatialCoords} of the underlying \code{SpatialExperiment} object.}
-#' \item{ROIPoly}{Polygons of regions of interest (ROIs) from technologies such
-#' as laser capture microdissection (LCM) and GeoMX DSP. These should correspond
-#' to columns of the gene count matrix.}
-#' \item{cellSeg}{Cell segmentation polygons. If the columns of the gene count
-#' matrix are single cells, then this is stored in \code{colGeometries}.
-#' Otherwise, this is stored in \code{\link{annotGeometries}}.}
-#' \item{nucSeg}{Similar to \code{cellSeg}, but for nuclei rather than whole
-#' cell.}
-#' \item{txSpots}{POINT or MULTIPOINT geometries of transcript spots of single
-#' molecular resolution technologies, stored in \code{rowGeometries}.}
-#' }
+#' slide-seq, which do not correspond to cells. Centroids of the polygons are
+#' stored in \code{spatialCoords} of the underlying \code{SpatialExperiment}
+#' object.} \item{ROIPoly}{Polygons of regions of interest (ROIs) from
+#' technologies such as laser capture microdissection (LCM) and GeoMX DSP. These
+#' should correspond to columns of the gene count matrix.} \item{cellSeg}{Cell
+#' segmentation polygons. If the columns of the gene count matrix are single
+#' cells, then this is stored in \code{colGeometries}. Otherwise, this is stored
+#' in \code{\link{annotGeometries}}.} \item{nucSeg}{Similar to \code{cellSeg},
+#' but for nuclei rather than whole cell.} \item{txSpots}{POINT or MULTIPOINT
+#' geometries of transcript spots of single molecular resolution technologies,
+#' stored in \code{rowGeometries}.} }
 #'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param MARGIN As in \code{\link{apply}}. 1 stands for rows and 2 stands for
@@ -44,10 +41,10 @@
 #'   (see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
 #'   \code{sf} or ordinary data frames.
 #' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} passed to
-#'   \code{\link{df2sf}}. For \code{dimGeometries<-} only: \code{geometryType}
-#'   can be a character vector of the geometry type of each data frame in the
-#'   list of the same length as the list if the data frames specify different
-#'   types of geometries.
+#'   \code{\link{df2sf}}. Defaults are the same as in \code{\link{df2sf}}. For
+#'   \code{dimGeometries<-} only: \code{geometryType} can be a character vector
+#'   of the geometry type of each data frame in the list of the same length as
+#'   the list if the data frames specify different types of geometries.
 #' @name dimGeometries
 #' @aliases dimGeometry dimGeometries dimGeometryNames colGeometry rowGeometry
 #'   colGeometries rowGeometries colGeometryNames rowGeometryNames colGeometry<-
