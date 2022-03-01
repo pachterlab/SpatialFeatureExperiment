@@ -40,9 +40,23 @@ setGeneric("annotGeometries", function(x) standardGeneric("annotGeometries"))
 #' @export
 setGeneric("annotGeometries<-", function(x, ..., value) standardGeneric("annotGeometries<-"))
 
+# Coercion--------
+#' @export
+setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpatialFeatureExperiment"))
+
+# Spatial graphs--------
+#' @export
+setGeneric("spatialGraphs", function(x) standardGeneric("spatialGraphs"))
+
+#' @export
+setGeneric("spatialGraphs<-", function(x, value) standardGeneric("spatialGraphs<-"))
+
+#' @export
+setGeneric("spatialGraph", function(x, type) standardGeneric("spatialGraph"))
+
+#' @export
+setGeneric("spatialGraph<-", function(x, type, value) standardGeneric("spatialGraph<-"))
+
 # Operations that only apply to SFE due to geometries------
 #' @export
 setGeneric("crop", function(x, y) standardGeneric("crop"))
-
-# Coercion
-setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpatialFeatureExperiment"))
