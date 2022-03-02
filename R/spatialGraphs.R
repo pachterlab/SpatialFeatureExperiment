@@ -73,3 +73,7 @@ setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "numeric", "listw
 #' @export
 setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "character", "listw"),
                  .sg_r)
+
+# To do: 1. store info to reconstruct the graph after subsetting
+# 2. Eventually deal with sample_id, but assume one sample per object for now
+# Might change spatialGraph into a DataFrame with a list column for the listw
