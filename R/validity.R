@@ -56,7 +56,7 @@ setValidity("SpatialFeatureExperiment", function(object) {
   row_msg <- .check_geometries(int_elementMetadata(object)$rowGeometries, "rowGeometries")
   annot_msg <- .check_geometries(int_metadata(object)$annotGeometries, "annotGeometries")
   graph_msg <- .check_graphs(int_metadata(object)$spatialGraphs, ncol(object))
-  outs <- c(col_msg, row_msg, annot_msg)
+  outs <- c(col_msg, row_msg, annot_msg, graph_msg)
   if (length(outs)) {
     return(outs)
   } else {
