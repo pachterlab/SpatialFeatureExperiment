@@ -27,13 +27,34 @@
     return(character(0))
   }
 }
-
-.check_graphs <- function(gs, right_length, mar) {
+.check_annotgeometries <- function(x) {
+  gs <- int_metadata(x)$annotGeometries
+  ids_coldata <- as.character(unique(colData(x)$sample_id))
+  msgs <- lapply(seq_along(gs), function(i) {
+    if (!"sample_id" %in% names(gs[[i]])) {
+      paste0("Item ", i, " of annotGeometries does not have column sample_id.\n")
+    } else {
+      samples_seen <- as.character(unique(gs[[i]]$sample_id))
+      if (any(!samples_seen %in% ids_coldata)) {
+        paste0("Samples ", paste(setdiff(samples_seen, ids_coldata), collapse = ", "),
+               " in item ", i, " of annotGeometries are absent from colData.\n")
+      } else {
+        character(0)
+      }
+    }
+  })
+  return(unlist(msgs))
+}
+.check_graphs_sample <- function(gs, right_length, mar, sample_id) {
   # 1. Must be all listw objects
   # 2. colGraphs: Must all have the same length as there are columns in the gene count matrix
   # rowGraphs: Same length as number of rows
   # annotGraphs: Length is not checked but will thorw error if length doesn't match
   # that of the annotGeometry of interest.
+  # 3. spatialGraphs is a list with elements col, row, and annot.
+  # 4. Each of col, row, and annot are lists whose elements are sample_id
+  # 5. Each sample_id is a list of the listw graphs.
+  # 6. I think I should add sample_id to annotGeometries as well.
   out <- character(0)
   if (is.null(gs)) return(out)
   is_listw <- vapply(gs, is, class2 = "listw", FUN.VALUE = logical(1))
@@ -50,22 +71,47 @@
                     "Graphs must have the same length as n", mar,
                     "s of the gene count matrix.",
                    "Elements", paste(which(!is_good_length), collapse = ", "),
-                   "do not have the right length.")
+                   " in sample ", sample_id, " do not have the right length.\n")
     }
   }
   return(out)
 }
+
+.check_graphs <- function(gss, right_length, mar) {
+  # gss is a list whose elements are sample_id's
+  lapply(seq_along(gss), function(i) {
+    .check_graphs_sample(gss[[i]], right_length, mar, names(gss)[[i]])
+  })
+}
+
+.check_graph_sample_id <- function(x) {
+  ids_coldata <- as.character(unique(colData(x)$sample_id))
+  graph_sample_ids <- lapply(1:3, function(i)
+    names(int_metadata(x)$spatialGraphs[[.margin_name(i)]]))
+  graph_sample_ids <- unique(unlist(graph_sample_ids))
+  if (any(!graph_sample_ids %in% ids_coldata)) {
+    paste0("Samples ", paste(setdiff(graph_sample_ids, ids_coldata), collapse = ", "),
+           " are in the graphs but not colData.\n")
+  } else {
+    return(character(0))
+  }
+}
+
 setValidity("SpatialFeatureExperiment", function(object) {
   col_msg <- .check_geometries(int_colData(object)$colGeometries, "colGeometries")
   row_msg <- .check_geometries(int_elementMetadata(object)$rowGeometries, "rowGeometries")
   annot_msg <- .check_geometries(int_metadata(object)$annotGeometries, "annotGeometries")
+  annot_msg2 <- .check_annotgeometries(object)
   colgraph_msg <- .check_graphs(int_metadata(object)$spatialGraphs$col,
                                 ncol(object), "col")
   rowgraph_msg <- .check_graphs(int_metadata(object)$spatialGraphs$row,
                                 nrow(object), "row")
   annotgraph_msg <- .check_graphs(int_metadata(object)$spatialGraphs$annot,
                                   NA, "annot")
-  outs <- c(col_msg, row_msg, annot_msg, colgraph_msg, rowgraph_msg, annotgraph_msg)
+  id_msg <- .check_graph_sample_id(object)
+  outs <- c(col_msg, row_msg, annot_msg, annot_msg2, colgraph_msg, rowgraph_msg,
+            annotgraph_msg, id_msg)
+  outs <- unlist(outs)
   if (length(outs)) {
     return(outs)
   } else {

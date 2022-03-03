@@ -3,31 +3,37 @@
 \docType{methods}
 \name{spatialGraphs}
 \alias{spatialGraphs}
-\alias{spatialGraphs,SpatialFeatureExperiment-method}
-\alias{spatialGraphs<-,SpatialFeatureExperiment-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,numeric,missing-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,numeric,character-method}
+\alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,missing-method}
+\alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,character-method}
 \alias{spatialGraph,SpatialFeatureExperiment,missing-method}
 \alias{spatialGraph,SpatialFeatureExperiment,numeric-method}
 \alias{spatialGraph,SpatialFeatureExperiment,character-method}
-\alias{spatialGraph<-,SpatialFeatureExperiment,missing,numeric,listw-method}
-\alias{spatialGraph<-,SpatialFeatureExperiment,numeric,numeric,listw-method}
-\alias{spatialGraph<-,SpatialFeatureExperiment,character,numeric,listw-method}
+\alias{spatialGraph<-,SpatialFeatureExperiment,missing,numeric,character,listw-method}
+\alias{spatialGraph<-,SpatialFeatureExperiment,numeric,numeric,character,listw-method}
+\alias{spatialGraph<-,SpatialFeatureExperiment,character,numeric,character,listw-method}
 \title{Spatial graph methods}
 \usage{
-\S4method{spatialGraphs}{SpatialFeatureExperiment}(x, MARGIN)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,missing}(x, MARGIN, sample_id)
 
-\S4method{spatialGraphs}{SpatialFeatureExperiment}(x, MARGIN) <- value
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character}(x, MARGIN, sample_id)
 
-\S4method{spatialGraph}{SpatialFeatureExperiment,missing}(x, type, MARGIN)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,missing}(x, MARGIN, sample_id) <- value
 
-\S4method{spatialGraph}{SpatialFeatureExperiment,numeric}(x, type, MARGIN)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character}(x, MARGIN, sample_id) <- value
 
-\S4method{spatialGraph}{SpatialFeatureExperiment,character}(x, type, MARGIN)
+\S4method{spatialGraph}{SpatialFeatureExperiment,missing}(x, type, MARGIN, sample_id)
 
-\S4method{spatialGraph}{SpatialFeatureExperiment,missing,numeric,listw}(x, type, MARGIN) <- value
+\S4method{spatialGraph}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, sample_id)
 
-\S4method{spatialGraph}{SpatialFeatureExperiment,numeric,numeric,listw}(x, type, MARGIN) <- value
+\S4method{spatialGraph}{SpatialFeatureExperiment,character}(x, type, MARGIN, sample_id)
 
-\S4method{spatialGraph}{SpatialFeatureExperiment,character,numeric,listw}(x, type, MARGIN) <- value
+\S4method{spatialGraph}{SpatialFeatureExperiment,missing,numeric,character,listw}(x, type, MARGIN, sample_id) <- value
+
+\S4method{spatialGraph}{SpatialFeatureExperiment,numeric,numeric,character,listw}(x, type, MARGIN, sample_id) <- value
+
+\S4method{spatialGraph}{SpatialFeatureExperiment,character,numeric,character,listw}(x, type, MARGIN, sample_id) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -36,8 +42,17 @@
 columns. In addition, 3 stands for spatial neighborhood graphs that
 correspond to \code{annotGeometries}.}
 
-\item{value}{A \code{listw} object (\code{*Graph}), or a named list of
-\code{listw} objects (\code{*Graphs}).}
+\item{sample_id}{Name of the sample the graph is associated with. This is
+useful when multiple pieces of tissues are in the same SFE object (say for
+a joint dimension reduction and clustering) and the spatial neighborhood is
+only meaningful within the same piece of tissue. See the \code{sample_id}
+argument in \code{\link{SpatialExperiment}}.}
+
+\item{value}{A \code{listw} object (\code{*Graph}), or a named list of list
+of \code{listw} objects (\code{*Graphs}) where the names of the top level
+list are \code{sample_id}s when adding graphs for all samples in the margin
+of interest, or a list of \code{listw} objects when adding graphs for one
+sample in one margin.}
 
 \item{type}{An integer specifying the index or string specifying the name of
 the *Graph to query or replace. If missing, then the first item in the

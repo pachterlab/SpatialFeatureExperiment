@@ -52,7 +52,9 @@ the list if the data frames specify different types of geometries.}
 \item{value}{Value to set. For \code{annotGeometry}, must be a \code{sf} data
 frame, or an ordinary data frame that can be converted to a \code{sf} data
 frame (see \code{\link{df2sf}}). For \code{annotGeometries}, must be a list
-of such \code{sf} or ordinary data frames.}
+of such \code{sf} or ordinary data frames. There must be a column
+\code{sample_id} to indicate the sample the geometries are for, and the
+\code{sample_id} must also appear in \code{colData}.}
 
 \item{type}{An integer specifying the index or string specifying the name of
 the *Geometry to query or replace. If missing, then the first item in the
