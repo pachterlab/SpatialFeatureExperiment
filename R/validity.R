@@ -28,9 +28,12 @@
   }
 }
 
-.check_graphs <- function(gs, ncol) {
+.check_graphs <- function(gs, right_length, mar) {
   # 1. Must be all listw objects
-  # 2. Must all have the same length as there are columns in the gene count matrix
+  # 2. colGraphs: Must all have the same length as there are columns in the gene count matrix
+  # rowGraphs: Same length as number of rows
+  # annotGraphs: Length is not checked but will thorw error if length doesn't match
+  # that of the annotGeometry of interest.
   out <- character(0)
   if (is.null(gs)) return(out)
   is_listw <- vapply(gs, is, class2 = "listw", FUN.VALUE = logical(1))
@@ -38,13 +41,14 @@
     out <- paste("All elements of spatialGraphs must have class listw.",
                  "Elements", paste(which(!is_listw), collapse = ", "),
                  "are not of class listw.\n")
-  } else {
+  } else if (mar != "annot") {
     is_good_length <- vapply(gs, function(g) {
-      isTRUE(all.equal(ncol, length(gs$neighbours)))
+      isTRUE(all.equal(right_length, length(gs$neighbours)))
     }, FUN.VALUE = logical(1))
     if (!all(is_good_length)) {
-      out <- paste("The `neighbours` field of all elements of spatialGraphs must have the same length",
-                   "as there are columns in the gene count matrix.",
+      out <- paste0("The `neighbours` field of all elements of ", mar,
+                    "Graphs must have the same length as n", mar,
+                    "s of the gene count matrix.",
                    "Elements", paste(which(!is_good_length), collapse = ", "),
                    "do not have the right length.")
     }
@@ -55,8 +59,13 @@ setValidity("SpatialFeatureExperiment", function(object) {
   col_msg <- .check_geometries(int_colData(object)$colGeometries, "colGeometries")
   row_msg <- .check_geometries(int_elementMetadata(object)$rowGeometries, "rowGeometries")
   annot_msg <- .check_geometries(int_metadata(object)$annotGeometries, "annotGeometries")
-  graph_msg <- .check_graphs(int_metadata(object)$spatialGraphs, ncol(object))
-  outs <- c(col_msg, row_msg, annot_msg, graph_msg)
+  colgraph_msg <- .check_graphs(int_metadata(object)$spatialGraphs$col,
+                                ncol(object), "col")
+  rowgraph_msg <- .check_graphs(int_metadata(object)$spatialGraphs$row,
+                                nrow(object), "row")
+  annotgraph_msg <- .check_graphs(int_metadata(object)$spatialGraphs$annot,
+                                  NA, "annot")
+  outs <- c(col_msg, row_msg, annot_msg, colgraph_msg, rowgraph_msg, annotgraph_msg)
   if (length(outs)) {
     return(outs)
   } else {

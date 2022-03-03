@@ -49,18 +49,7 @@
 #'   of the geometry type of each data frame in the list of the same length as
 #'   the list if the data frames specify different types of geometries.
 #' @name dimGeometries
-#' @aliases dimGeometry dimGeometries dimGeometryNames colGeometry rowGeometry
-#'   colGeometries rowGeometries colGeometryNames rowGeometryNames colGeometry<-
-#'   rowGeometry<- colGeometries<- rowGeometries<- colGeometryNames<-
-#'   rowGeometryNames<- dimGeometry,SpatialFeatureExperiment,missing-method
-#'   dimGeometry,SpatialFeatureExperiment,numeric-method
-#'   dimGeometry,SpatialFeatureExperiment,character-method
-#'   dimGeometries,SpatialFeatureExperiment-method dimGeometry<- dimGeometries<-
-#'   dimGeometryNames<- dimGeometry<-,SpatialFeatureExperiment,missing-method
-#'   dimGeometry<-,SpatialFeatureExperiment,numeric-method
-#'   dimGeometry<-,SpatialFeatureExperiment,character-method
-#'   dimGeometries<-,SpatialFeatureExperiment-method
-#'   dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method
+#' @docType methods
 NULL
 
 #' @rdname dimGeometries

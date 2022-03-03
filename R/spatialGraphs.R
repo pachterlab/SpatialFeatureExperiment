@@ -17,61 +17,74 @@
 #' graph as \code{listw}.
 #'
 #' @param x A \code{SpatialFeatureExperiment} object.
+#' @param value A \code{listw} object (\code{*Graph}), or a named list of
+#'   \code{listw} objects (\code{*Graphs}).
+#' @param type An integer specifying the index or string specifying the name of
+#'   the *Graph to query or replace. If missing, then the first item in the
+#'   *Graph will be returned or replaced.
+#' @param MARGIN As in \code{\link{apply}}. 1 stands for rows and 2 stands for
+#'   columns. In addition, 3 stands for spatial neighborhood graphs that
+#'   correspond to \code{annotGeometries}.
 #' @name spatialGraphs
+#' @docType methods
 NULL
+
+.margin_name <- function(MARGIN) switch (MARGIN, "row", "col", "annot")
+.margin_len_fun <- function(MARGIN) switch(MARGIN, nrow, ncol, function(x) return(NA))
 
 #' @rdname spatialGraphs
 #' @export
 setMethod("spatialGraphs", "SpatialFeatureExperiment",
-          function(x) int_metadata(x)$spatialGraphs)
+          function(x, MARGIN) int_metadata(x)$spatialGraphs[[.margin_name(MARGIN)]])
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("spatialGraphs", "SpatialFeatureExperiment",
-                 function(x, value) {
-                   m <- .check_graphs(value, ncol(x))
+                 function(x, MARGIN, value) {
+                   m <- .check_graphs(value, .margin_len_fun(MARGIN)(x),
+                                      .margin_name(MARGIN))
                    if (!isTRUE(m)) stop(m)
-                   int_metadata(x)$spatialGraphs <- value
+                   int_metadata(x)$spatialGraphs[[.margin_name(MARGIN)]] <- value
                    x
                  })
 
 #' @rdname spatialGraphs
 #' @export
 setMethod("spatialGraph", c("SpatialFeatureExperiment", "missing"),
-          function(x, type) spatialGraph(x, 1L))
+          function(x, type, MARGIN) spatialGraph(x, 1L, MARGIN))
 
 #' @rdname spatialGraphs
 #' @export
 setMethod("spatialGraph", c("SpatialFeatureExperiment", "numeric"),
-          function(x, type) spatialGraphs(x)[[type]])
+          function(x, type, MARGIN) spatialGraphs(x, MARGIN)[[type]])
 
 #' @rdname spatialGraphs
 #' @export
 setMethod("spatialGraph", c("SpatialFeatureExperiment", "character"),
-          function(x, type) spatialGraphs(x)[[type]])
+          function(x, type, MARGIN) spatialGraphs(x, MARGIN)[[type]])
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "missing", "listw"),
-                 function(x, type, value) spatialGraph(x, 1L) <- value)
+setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "missing", "numeric", "listw"),
+                 function(x, type, MARGIN, value) spatialGraph(x, 1L, MARGIN) <- value)
 
-.sg_r <- function(x, type, value) {
-  if (length(value$neighbours) != ncol(x)) {
-    stop("The neighbours field of `value` must be the same as the number of columns",
-         " in the gene count matrix.")
+.sg_r <- function(x, type, MARGIN, value) {
+  if (MARGIN < 3 && length(value$neighbours) != .margin_len_fun(MARGIN)(x)) {
+    stop("The neighbours field of `value` must be the same as n",
+         .margin_name(MARGIN), "s of the gene count matrix.")
   }
-  int_metadata(x)$spatialGraphs[[type]] <- value
+  int_metadata(x)$spatialGraphs[[.margin_name(MARGIN)]][[type]] <- value
   return(x)
 }
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "numeric", "listw"),
+setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "numeric", "numeric", "listw"),
                  .sg_r)
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "character", "listw"),
+setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "character", "numeric", "listw"),
                  .sg_r)
 
 # To do: 1. store info to reconstruct the graph after subsetting

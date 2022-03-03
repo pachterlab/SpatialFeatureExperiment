@@ -46,16 +46,16 @@ setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpa
 
 # Spatial graphs--------
 #' @export
-setGeneric("spatialGraphs", function(x) standardGeneric("spatialGraphs"))
+setGeneric("spatialGraphs", function(x, MARGIN) standardGeneric("spatialGraphs"))
 
 #' @export
-setGeneric("spatialGraphs<-", function(x, value) standardGeneric("spatialGraphs<-"))
+setGeneric("spatialGraphs<-", function(x, MARGIN, value) standardGeneric("spatialGraphs<-"))
 
 #' @export
-setGeneric("spatialGraph", function(x, type) standardGeneric("spatialGraph"))
+setGeneric("spatialGraph", function(x, type, MARGIN) standardGeneric("spatialGraph"))
 
 #' @export
-setGeneric("spatialGraph<-", function(x, type, value) standardGeneric("spatialGraph<-"))
+setGeneric("spatialGraph<-", function(x, type, MARGIN, value) standardGeneric("spatialGraph<-"))
 
 # Operations that only apply to SFE due to geometries------
 #' @export
