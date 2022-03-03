@@ -29,6 +29,7 @@ Collate:
     'SFE-class.R'
     'annotGeometries.R'
     'coerce.R'
+    'data.R'
     'df2sf.R'
     'dimGeometries.R'
     'spatialGraphs.R'
@@ -36,3 +37,5 @@ Collate:
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Depends: 
+    R (>= 2.10)
