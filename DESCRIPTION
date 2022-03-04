@@ -17,11 +17,11 @@ Imports:
     sf,
     SingleCellExperiment,
     SpatialExperiment,
-    spdep,
     SummarizedExperiment
+Suggests:
+    spdep
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.1.2
 Collate: 
     'AllGenerics.R'
@@ -29,7 +29,6 @@ Collate:
     'SFE-class.R'
     'annotGeometries.R'
     'coerce.R'
-    'data.R'
     'df2sf.R'
     'dimGeometries.R'
     'spatialGraphs.R'
