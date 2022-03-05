@@ -52,3 +52,13 @@ make_empty_geometry <- function() {
 .set_internal_missing <- SingleCellExperiment:::.set_internal_missing
 .set_internal_numeric <- SingleCellExperiment:::.set_internal_numeric
 .set_internal_character <- SingleCellExperiment:::.set_internal_character
+
+#' Get all unique sample IDs
+#'
+#' The title is self-explanatory.
+#'
+#' @param x A \code{SpatialFeatureExperiment} object.
+#' @return A character vector of all unique entries of the \code{sample_id}
+#' column in \code{colData(x)}.
+#' @export
+sampleIDs <- function(x) unique(colData(x)$sample_id)

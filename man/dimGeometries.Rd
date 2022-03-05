@@ -57,9 +57,9 @@
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE, ...) <- value
 
-colGeometry(x, type, withDimnames = TRUE)
+colGeometry(x, type = 1L, withDimnames = TRUE)
 
-colGeometry(x, type, withDimnames = TRUE) <- value
+colGeometry(x, type = 1L, withDimnames = TRUE) <- value
 
 colGeometries(x, withDimnames = TRUE)
 
@@ -69,9 +69,9 @@ colGeometryNames(x)
 
 colGeometryNames(x) <- value
 
-rowGeometry(x, type, withDimnames = TRUE)
+rowGeometry(x, type = 1L, withDimnames = TRUE)
 
-rowGeometry(x, type, withDimnames = TRUE) <- value
+rowGeometry(x, type = 1L, withDimnames = TRUE) <- value
 
 rowGeometries(x, withDimnames = TRUE)
 

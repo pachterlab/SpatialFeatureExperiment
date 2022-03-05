@@ -17,9 +17,8 @@ Imports:
     sf,
     SingleCellExperiment,
     SpatialExperiment,
+    spdep,
     SummarizedExperiment
-Suggests:
-    spdep
 License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2

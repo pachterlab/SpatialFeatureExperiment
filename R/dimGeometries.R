@@ -212,13 +212,13 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
 
 #' @rdname dimGeometries
 #' @export
-colGeometry <- function(x, type, withDimnames = TRUE) {
+colGeometry <- function(x, type = 1L, withDimnames = TRUE) {
   dimGeometry(x, type, MARGIN = 2, withDimnames = withDimnames)
 }
 
 #' @rdname dimGeometries
 #' @export
-`colGeometry<-` <- function(x, type, withDimnames = TRUE, value) {
+`colGeometry<-` <- function(x, type = 1L, withDimnames = TRUE, value) {
   dimGeometry(x, type, MARGIN = 2, withDimnames = withDimnames) <- value
   x
 }
@@ -250,13 +250,13 @@ colGeometryNames <- function(x) {
 
 #' @rdname dimGeometries
 #' @export
-rowGeometry <- function(x, type, withDimnames = TRUE) {
+rowGeometry <- function(x, type = 1L, withDimnames = TRUE) {
   dimGeometry(x, type, MARGIN = 1, withDimnames = withDimnames)
 }
 
 #' @rdname dimGeometries
 #' @export
-`rowGeometry<-` <- function(x, type, withDimnames = TRUE, value) {
+`rowGeometry<-` <- function(x, type = 1L, withDimnames = TRUE, value) {
   dimGeometry(x, type, MARGIN = 1, withDimnames = withDimnames) <- value
   x
 }

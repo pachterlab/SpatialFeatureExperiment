@@ -46,16 +46,40 @@ setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpa
 
 # Spatial graphs--------
 #' @export
-setGeneric("spatialGraphs", function(x, MARGIN, sample_id) standardGeneric("spatialGraphs"))
+setGeneric("spatialGraphs", function(x, sample_id, MARGIN) standardGeneric("spatialGraphs"))
 
 #' @export
-setGeneric("spatialGraphs<-", function(x, MARGIN, sample_id, value) standardGeneric("spatialGraphs<-"))
+setGeneric("spatialGraphs<-", function(x, sample_id, MARGIN, value) standardGeneric("spatialGraphs<-"))
 
 #' @export
-setGeneric("spatialGraph", function(x, type, MARGIN, sample_id) standardGeneric("spatialGraph"))
+setGeneric("colGraphs", function(x, sample_id) standardGeneric("colGraphs"))
 
 #' @export
-setGeneric("spatialGraph<-", function(x, type, MARGIN, sample_id, value) standardGeneric("spatialGraph<-"))
+setGeneric("colGraphs<-", function(x, sample_id, value) standardGeneric("colGraphs<-"))
+
+#' @export
+setGeneric("rowGraphs", function(x, sample_id) standardGeneric("rowGraphs"))
+
+#' @export
+setGeneric("rowGraphs<-", function(x, sample_id, value) standardGeneric("rowGraphs<-"))
+
+#' @export
+setGeneric("annotGraphs", function(x, sample_id) standardGeneric("annotGraphs"))
+
+#' @export
+setGeneric("annotGraphs<-", function(x, sample_id, value) standardGeneric("annotGraphs<-"))
+
+#' @export
+setGeneric("spatialGraph", function(x, sample_id, type, MARGIN) standardGeneric("spatialGraph"))
+
+#' @export
+setGeneric("spatialGraph<-", function(x, sample_id, type, MARGIN, value) standardGeneric("spatialGraph<-"))
+
+#' @export
+setGeneric("spatialGraphNames", function(x, sample_id, MARGIN) standardGeneric("spatialGraphNames"))
+
+#' @export
+setGeneric("spatialGraphNames<-", function(x, sample_id, MARGIN, value) standardGeneric("spatialGraphNames<-"))
 
 # Operations that only apply to SFE due to geometries------
 #' @export
