@@ -87,7 +87,7 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
   if (!is.null(value)) {
     m <- .check_graphs(value, .margin_len_fun(MARGIN)(x),
                        .margin_name(MARGIN))
-    if (!isTRUE(m)) stop(m)
+    if (length(m)) stop(m)
   }
   int_metadata(x)$spatialGraphs[[.margin_name(MARGIN)]] <- value
   x
@@ -149,7 +149,7 @@ setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "character", "nu
                    if (!is.null(value)) {
                      m <- .check_graphs_sample(value, .margin_len_fun(MARGIN)(x),
                                                .margin_name(MARGIN), sample_id)
-                     if (!isTRUE(m)) stop(m)
+                     if (length(m)) stop(m)
                    }
                    int_metadata(x)$spatialGraphs[[.margin_name(MARGIN)]][[sample_id]] <- value
                    x

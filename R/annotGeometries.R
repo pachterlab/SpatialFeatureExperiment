@@ -40,7 +40,7 @@ setReplaceMethod("annotGeometries", "SpatialFeatureExperiment",
                    value <- .df2sf_list(value, ...)
                    int_metadata(x)$annotGeometries <- value
                    m <- .check_annotgeometries(x)
-                   if (!isTRUE(m)) stop(m)
+                   if (length(m)) stop(m)
                    return(x)
                  })
 
@@ -81,7 +81,7 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
   value <- .df2sf_in_list(value, ...)
   int_metadata(x)$annotGeometries[[type]] <- value
   m <- .check_annotgeometries(x)
-  if (!isTRUE(m)) stop(m)
+  if (length(m)) stop(m)
   return(x)
 }
 
