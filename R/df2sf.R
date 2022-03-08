@@ -6,7 +6,7 @@
   if (grepl("MULTI", geometryType) && !"group" %in% names(df)) {
     stop("Column 'group' must be present when specifying ", geometryType, "s.")
   }
-  if (any(!names(df) %in% c("ID", spatialCoordsNames))) {
+  if (any(!names(df) %in% c("ID", "subID", "sample_id", spatialCoordsNames))) {
     message("Geometry attributes are ignored.")
   }
   n_vertices <- table(df$ID)
@@ -40,7 +40,7 @@
       st_multipoint(as.matrix(x[,spatialCoordsNames]))
     })
     geometry_use <- st_sfc(geometry_use)
-    out <- st_sf(group = names(df_split), geometry = geometry_use)
+    out <- .df_split_sample_id(names(df), df_split, geometry_use)
   } else {
     df$geometry <- lapply(seq_len(nrow(df)), function(i) {
       st_point(c(df[[spatialCoordsNames[1]]][i], df[[spatialCoordsNames[2]]][i]))
@@ -60,6 +60,20 @@
   m <- as.matrix(x[,spatialCoordsNames])
   # Close the polygon
   rbind(m, m[1,])
+}
+
+.df_split_sample_id <- function(nms, df_split, geometry_use) {
+  if ("sample_id" %in% nms) {
+    sample_ids <- vapply(df_split, function(d) unique(d$sample_id),
+                         FUN.VALUE = character(1))
+    out <- st_sf(ID = names(df_split), sample_id = sample_ids,
+                 geometry = geometry_use,  crs = NA,
+                 row.names = names(df_split))
+  } else {
+    out <- st_sf(ID = names(df_split), geometry = geometry_use, crs = NA,
+                 row.names = names(df_split))
+  }
+  return(out)
 }
 .df2sf_polygon <- function(df, spatialCoordsNames, multi) {
   df <- unique(df)
@@ -95,8 +109,7 @@
     }
   }
   geometry_use <- st_sfc(geometry_use)
-  st_sf(ID = names(df_split), geometry = geometry_use, crs = NA,
-        row.names = names(df_split))
+  .df_split_sample_id(names(df), df_split, geometry_use)
 }
 
 .df2sf_linestring <- function(df, spatialCoordsNames, multi) {
@@ -117,8 +130,7 @@
     })
   }
   geometry_use <- st_sfc(geometry_use)
-  st_sf(ID = names(df_split), geometry = geometry_use, crs = NA,
-        row.names = names(df_split))
+  .df_split_sample_id(names(df), df_split, geometry_use)
 }
 
 .is_de_facto_point <- function(df) {
