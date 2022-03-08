@@ -39,6 +39,7 @@ NULL
 
 .margin_name <- function(MARGIN) switch (MARGIN, "row", "col", "annot")
 .margin_len_fun <- function(MARGIN) switch(MARGIN, nrow, ncol, function(x) return(NA))
+.margin_num <- function(name) switch(name, row = 1, col = 2, annot = 3)
 
 #' @rdname spatialGraphs
 #' @export
@@ -82,7 +83,7 @@ setMethod("rowGraphs", c("SpatialFeatureExperiment", "character"),
 setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
           function(x, sample_id) spatialGraphs(x, sample_id, 3))
 
-.set_all_graphs <- function(x, MARGIN, value) {
+.set_all_graphs_margin <- function(x, MARGIN, value) {
   if (!is.null(value)) {
     m <- .check_graphs(value, .margin_len_fun(MARGIN)(x),
                        .margin_name(MARGIN))
@@ -92,25 +93,54 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
   x
 }
 
+.set_all_graphs <- function(x, value) {
+  if (is.null(value)) {
+    int_metadata(x)$spatialGraphs <- NULL
+    return(x)
+  }
+  margins <- names(value)
+  m <- c("row", "col", "annot")
+  mar_use <- intersect(margins, m)
+  if (any(!margins %in% m)) {
+    message("Elements ", paste(setdiff(margins, m), collapse = ", "),
+            " are ignored.")
+    value <- value[mar_use]
+    if (!length(value)) {
+      warning("Names of value do not match any of row, col, or annot. ",
+              "Not changing spatialGeometries.")
+      return(x)
+    }
+    for (mar in mar_use) {
+      x <- .set_all_graphs_margin(x, .margin_num(mar), value[[mar]])
+    }
+    return(x)
+  }
+}
+
+#' @rdname spatialGraphs
+#' @export
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
+                 function(x, sample_id, MARGIN, value) .set_all_graphs(x, value))
+
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "numeric"),
-                 function(x, sample_id, MARGIN, value) .set_all_graphs(x, MARGIN, value))
+                 function(x, sample_id, MARGIN, value) .set_all_graphs_margin(x, MARGIN, value))
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("colGraphs", c("SpatialFeatureExperiment", "missing"),
-                 function(x, sample_id, value) .set_all_graphs(x, 2, value))
+                 function(x, sample_id, value) .set_all_graphs_margin(x, 2, value))
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("rowGraphs", c("SpatialFeatureExperiment", "missing"),
-                 function(x, sample_id, value) .set_all_graphs(x, 1, value))
+                 function(x, sample_id, value) .set_all_graphs_margin(x, 1, value))
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("annotGraphs", c("SpatialFeatureExperiment", "missing"),
-                 function(x, sample_id, value) .set_all_graphs(x, 3, value))
+                 function(x, sample_id, value) .set_all_graphs_margin(x, 3, value))
 
 #' @rdname spatialGraphs
 #' @export
