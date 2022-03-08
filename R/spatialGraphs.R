@@ -49,6 +49,12 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "numeric"),
 
 #' @rdname spatialGraphs
 #' @export
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
+          function(x, sample_id, MARGIN)
+            int_metadata(x)$spatialGraphs)
+
+#' @rdname spatialGraphs
+#' @export
 setMethod("colGraphs", c("SpatialFeatureExperiment", "missing"),
           function(x, sample_id) int_metadata(x)$spatialGraphs[[.margin_name(2)]])
 
@@ -283,5 +289,3 @@ setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "character",
 #' @export
 `annotGraph<-` <- function(x, sample_id, type = 1L, value)
   `spatialGraph<-`(x, sample_id, type, 3, value)
-
-# To do: 1. store info to reconstruct the graph after subsetting

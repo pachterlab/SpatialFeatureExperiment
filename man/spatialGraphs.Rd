@@ -4,6 +4,7 @@
 \name{spatialGraphs}
 \alias{spatialGraphs}
 \alias{spatialGraphs,SpatialFeatureExperiment,missing,numeric-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,missing,missing-method}
 \alias{colGraphs,SpatialFeatureExperiment,missing-method}
 \alias{rowGraphs,SpatialFeatureExperiment,missing-method}
 \alias{annotGraphs,SpatialFeatureExperiment,missing-method}
@@ -43,6 +44,8 @@
 \title{Spatial graph methods}
 \usage{
 \S4method{spatialGraphs}{SpatialFeatureExperiment,missing,numeric}(x, sample_id, MARGIN)
+
+\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, MARGIN)
 
 \S4method{colGraphs}{SpatialFeatureExperiment,missing}(x, sample_id)
 
