@@ -32,9 +32,9 @@
 
 \S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id, ...) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id, ...) <- value
 
 tissueBoundary(x)
 

@@ -45,21 +45,21 @@
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment,numeric,character}(x, MARGIN) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, withDimnames = TRUE)
+\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, withDimnames = TRUE)
+\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE)
+\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, withDimnames = TRUE) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, withDimnames = TRUE, ...) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE, ...) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, withDimnames = TRUE, ...) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE, ...) <- value
 
-colGeometry(x, type = 1L, withDimnames = TRUE)
+colGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE)
 
-colGeometry(x, type = 1L, withDimnames = TRUE) <- value
+colGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE) <- value
 
 colGeometries(x, withDimnames = TRUE)
 
@@ -69,9 +69,9 @@ colGeometryNames(x)
 
 colGeometryNames(x) <- value
 
-rowGeometry(x, type = 1L, withDimnames = TRUE)
+rowGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE)
 
-rowGeometry(x, type = 1L, withDimnames = TRUE) <- value
+rowGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE) <- value
 
 rowGeometries(x, withDimnames = TRUE)
 
@@ -81,21 +81,21 @@ rowGeometryNames(x)
 
 rowGeometryNames(x) <- value
 
-spotPoly(x, withDimnames = TRUE)
+spotPoly(x, sample_id = NULL, withDimnames = TRUE)
 
-spotPoly(x, withDimnames = TRUE) <- value
+spotPoly(x, sample_id = NULL, withDimnames = TRUE) <- value
 
-ROIPoly(x, withDimnames = TRUE)
+ROIPoly(x, sample_id = NULL, withDimnames = TRUE)
 
-ROIPoly(x, withDimnames = TRUE) <- value
+ROIPoly(x, sample_id = NULL, withDimnames = TRUE) <- value
 
-cellSeg(x, withDimnames = TRUE)
+cellSeg(x, sample_id = NULL, withDimnames = TRUE)
 
-cellSeg(x, withDimnames = TRUE) <- value
+cellSeg(x, sample_id = NULL, withDimnames = TRUE) <- value
 
-nucSeg(x, withDimnames = TRUE)
+nucSeg(x, sample_id = NULL, withDimnames = TRUE)
 
-nucSeg(x, withDimnames = TRUE) <- value
+nucSeg(x, sample_id = NULL, withDimnames = TRUE) <- value
 
 txSpots(x, withDimnames = TRUE)
 

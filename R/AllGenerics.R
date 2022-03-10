@@ -4,10 +4,10 @@
 # Getters and setters for dimGeometry--------
 # For colGeometry and rowGeometry
 #' @export
-setGeneric("dimGeometry", function(x, type, MARGIN, sample_id, withDimnames=TRUE) standardGeneric("dimGeometry"))
+setGeneric("dimGeometry", function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE) standardGeneric("dimGeometry"))
 
 #' @export
-setGeneric("dimGeometry<-", function(x, type, MARGIN, sample_id, withDimnames=TRUE,..., value) standardGeneric("dimGeometry<-"))
+setGeneric("dimGeometry<-", function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,..., value) standardGeneric("dimGeometry<-"))
 
 #' @export
 setGeneric("dimGeometryNames", function(x, MARGIN) standardGeneric("dimGeometryNames"))
