@@ -39,7 +39,7 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
           })
 
 # To do:
-# 1. Add sample_id to *Geometry getters as optional argument
+# 1. Add sample_id to *Geometry getters as optional argument. Deal with missing sample_id.
 # 2. I might make sample_id optional in the *Graphs functions as I expect most uses of SFE to only have one sample per object
 # 3. Method to crop the SFE object with any bbox or (multi)polygon.
 # 4. Deal with annotGeometries and Graphs when concatenating SFE objects.
