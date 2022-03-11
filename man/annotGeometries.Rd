@@ -24,21 +24,21 @@
 
 \S4method{annotGeometryNames}{SpatialFeatureExperiment,character}(x) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type)
+\S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type, sample_id = NULL)
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type)
+\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL)
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type)
+\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL)
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type, sample_id) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL, ...) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL, ...) <- value
 
-tissueBoundary(x)
+tissueBoundary(x, sample_id = NULL)
 
-tissueBoundary(x) <- value
+tissueBoundary(x, sample_id, ...) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}

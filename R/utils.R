@@ -62,3 +62,22 @@ make_empty_geometry <- function() {
 #' column in \code{colData(x)}.
 #' @export
 sampleIDs <- function(x) unique(colData(x)$sample_id)
+
+.reconcile_cols <- function(existing, value) {
+  # Assume that both existing and value have the geometry column
+  if (any(!names(value) %in% names(existing))) {
+    names_inter <- intersect(names(value), names(existing))
+    value <- value[,names_inter]
+  }
+  if (any(!names(existing) %in% names(value))) {
+    diff_cols <- setdiff(names(existing), names(value))
+    additional_cols <- matrix(nrow = nrow(value),
+                              ncol = length(diff_cols))
+    colnames(additional_cols) <- diff_cols
+    rownames(additional_cols) <- rownames(value)
+    additional_cols <- as.data.frame(additional_cols)
+    value <- cbind(value, additional_cols)
+    value <- value[,names(existing)]
+  }
+  value
+}

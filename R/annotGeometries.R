@@ -60,9 +60,15 @@ setReplaceMethod("annotGeometryNames", c("SpatialFeatureExperiment", "character"
 #' @rdname annotGeometries
 #' @export
 setMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
-          function(x, type) annotGeometry(x, 1L))
+          function(x, type, sample_id = NULL) annotGeometry(x, 1L, sample_id))
 
-.ag <- function(x, type) annotGeometries(x)[[type]]
+.ag <- function(x, type, sample_id = NULL) {
+  out <- int_metadata(x)$annotGeometries[[type]]
+  if (!is.null(sample_id)) {
+    out <- out[out$sample_id %in% sample_id,]
+  }
+  return(out)
+}
 
 #' @rdname annotGeometries
 #' @export
@@ -75,10 +81,21 @@ setMethod("annotGeometry", c("SpatialFeatureExperiment", "character"), .ag)
 #' @rdname annotGeometries
 #' @export
 setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
-          function(x, type, value) annotGeometry(x, 1L) <- value)
+          function(x, type, sample_id, value) annotGeometry(x, 1L, sample_id) <- value)
 
-.ag_r <- function(x, type, ..., value) {
+.ag_r <- function(x, type, sample_id = NULL, ..., value) {
   value <- .df2sf_in_list(value, ...)
+  if (!is.null(sample_id)) {
+    existing <- int_metadata(x)$annotGeometries[[type]]
+    if (!is.null(existing)) {
+      value <- .reconcile_cols(existing, value)
+      if (sample_id %in% existing$sample_id) {
+        # This is a replacement method, so do replace
+        existing <- existing[!existing$sample_id %in% sample_id,]
+      }
+      value <- rbind(existing, value)
+    }
+  }
   int_metadata(x)$annotGeometries[[type]] <- value
   m <- .check_annotgeometries(x)
   if (length(m)) stop(m)
@@ -97,12 +114,13 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "character"),
 
 #' @rdname annotGeometries
 #' @export
-tissueBoundary <- function(x) {
-  annotGeometry(x, "tissueBoundary")
+tissueBoundary <- function(x, sample_id = NULL) {
+  annotGeometry(x, "tissueBoundary", sample_id)
 }
 
 #' @rdname annotGeometries
 #' @export
-`tissueBoundary<-` <- function(x, value) {
-  annotGeometry(x, "tissueBoundary") <- value
+`tissueBoundary<-` <- function(x, sample_id, ..., value) {
+  annotGeometry(x, "tissueBoundary", sample_id, ...) <- value
+  x
 }

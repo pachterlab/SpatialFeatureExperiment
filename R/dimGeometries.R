@@ -186,6 +186,25 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                                          namefun=dimGeometryNames
                    )
                  })
+
+.geometry_partial_replace <- function(existing, value, nrow_full, rownames_full,
+                                      all_sample_ids) {
+  if (is.null(existing)) {
+    existing <- matrix(nrow = nrow_full, ncol = ncol(value),
+                       dimnames = list(rownames_full,
+                                       colnames(value)))
+    existing <- as.data.frame(existing)
+    existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
+                                       st_geometrycollection))
+    existing <- st_sf(existing, sf_column_name = "geometry")
+  } else {
+    value <- .reconcile_cols(existing, value)
+    # Not sure if the rownames would work with withDimnames
+  }
+  existing[all_sample_ids %in% sample_id,] <- value
+  existing
+}
+
 .set_geometry_id <- function(x, value, sample_id, type, MARGIN) {
   if (!is.null(sample_id)) {
     if (MARGIN == 1L) {
@@ -194,33 +213,8 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
       # Assuming that the order in value is the same as the
       # order of geometries for this sample in colGeometries
       existing <- dimGeometry(x, type, MARGIN)
-      if (is.null(existing)) {
-        existing <- matrix(nrow = ncol(x), ncol = ncol(value),
-                           dimnames = list(rownames(x),
-                                           colnames(value)))
-        existing <- as.data.frame(existing)
-        existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
-                                           st_geometrycollection))
-        existing <- st_sf(existing, sf_column_name = "geometry")
-      } else {
-        if (any(!names(value) %in% names(existing))) {
-          names_inter <- intersect(names(value), names(existing))
-          value <- value[,names_inter]
-        }
-        if (any(!names(existing) %in% names(value))) {
-          diff_cols <- setdiff(names(existing), names(value))
-          additional_cols <- matrix(nrow = nrow(value),
-                                    ncol = length(diff_cols))
-          colnames(additional_cols) <- diff_cols
-          rownames(additional_cols) <- rownames(value)
-          additional_cols <- as.data.frame(additional_cols)
-          value <- cbind(value, additional_cols)
-          value <- value[,names(existing)]
-        }
-        # Not sure if the rownames would work with withDimnames
-      }
-      existing[colData(x)$sample_id %in% sample_id,] <- value
-      value <- existing
+      value <- .geometry_partial_replace(existing, value, ncol(x), rownames(x),
+                                         colData(x)$sample_id)
     }
   }
   value
