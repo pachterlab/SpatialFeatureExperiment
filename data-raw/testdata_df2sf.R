@@ -75,11 +75,38 @@ saveRDS(ls_sf_singleton, "inst/testdata/ls_sf_singleton.rds")
 # MULTILINESTRING
 multils_df <- ls_df %>%
   mutate(group = "G")
+multils_sf_mats <- ls_df %>%
+  group_nest(ID) %>%
+  mutate(geometry = map(data, function(x) {
+    as.matrix(x[,c("x", "y")])
+  }))
+multils_sf <- st_sf(ID = "G", geometry = st_sfc(st_multilinestring(multils_sf_mats$geometry)),
+                    sf_column_name = "geometry")
+saveRDS(multils_df, "inst/testdata/multils_df.rds")
+saveRDS(multils_sf, "inst/testdata/multils_sf.rds")
 
 # POLYGON
-# Without holes
-# With holes
+# Just copied this example from the first sf vignette
+p1 <- rbind(c(0,0), c(1,0), c(3,2), c(2,4), c(1,4), c(0,0))
+p2 <- rbind(c(1,1), c(1,2), c(2,2), c(1,1))
+pol <-st_polygon(list(p1,p2))
+pol_df <- as.data.frame(rbind(p1[-6,], p2[-4,]))
+pol_df$ID <- "A"
+pol_df$subID <- c(rep("B", 5), rep("C", 3))
+pol_sf <- st_sf(ID = "A", geometry = st_sfc(pol))
+saveRDS(pol_df, "inst/testdata/pol_df.rds")
+saveRDS(pol_sf, "inst/testdata/pol_sf.rds")
+
 # Check that the geometry is POINT when the df is de facto specifying point
-# regardless of the geometryType argument.
+# regardless of the geometryType argument. Don't need extra toy examples for that.
 
 # MULTIPOLYGON
+p5 <- rbind(c(3,3), c(4,2), c(4,3), c(3,3))
+mpol <- st_multipolygon(list(list(p1,p2), list(p5)))
+mpol_df <- as.data.frame(rbind(p1[-6,], p2[-4,], p5[-4,]))
+mpol_df$ID <- c(rep("A", 8), rep("B", 3))
+mpol_df$subID <- c(rep("C", 5), rep("D", 3), rep("E", 3))
+mpol_df$group <- "F"
+mpol_sf <- st_sf(ID = "F", geometry = st_sfc(mpol))
+saveRDS(mpol_df, "inst/testdata/mpol_df.rds")
+saveRDS(mpol_sf, "inst/testdata/mpol_sf.rds")
