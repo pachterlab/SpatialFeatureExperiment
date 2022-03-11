@@ -19,6 +19,10 @@
                           MULTIPOLYGON = 3L
   )
   ids_rm <- names(n_vertices[n_vertices < min_vertices])
+  if (length(ids_rm)) {
+    warning("Removed ", length(ids_rm), " items that have fewer than the minimum of ",
+            min_vertices, " vertices for geometry type ", geometryType)
+  }
   df <- df[!df$ID %in% ids_rm,]
   if (!nrow(df)) {
     stop("All geometries have fewer than ", min_vertices, " vertices. ",
