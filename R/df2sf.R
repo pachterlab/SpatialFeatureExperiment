@@ -28,6 +28,7 @@
     stop("All geometries have fewer than ", min_vertices, " vertices. ",
          "Cannot construct ", geometryType)
   }
+  df
 }
 
 .df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi) {
@@ -38,7 +39,7 @@
     }
   }
   if (multi) {
-    .df2sf_check(df, spatialCoordsNames, "MULTIPOINT")
+    df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT")
     df_split <- split(df, df$group)
     geometry_use <- lapply(df_split, function(x) {
       st_multipoint(as.matrix(x[,spatialCoordsNames]))
@@ -82,7 +83,7 @@
 .df2sf_polygon <- function(df, spatialCoordsNames, multi) {
   df <- unique(df)
   gt <- if (multi) "MULTIPOLYGON" else "POLYGON"
-  .df2sf_check(df, spatialCoordsNames, gt)
+  df <- .df2sf_check(df, spatialCoordsNames, gt)
   if (multi) {
     df_split <- split(df, df$group)
     geometry_use <- lapply(df_split, function(x) {
@@ -119,7 +120,7 @@
 .df2sf_linestring <- function(df, spatialCoordsNames, multi) {
   df <- unique(df)
   gt <- if (multi) "MULTILINESTRING" else "LINESTRING"
-  .df2sf_check(df, spatialCoordsNames, gt)
+  df <- .df2sf_check(df, spatialCoordsNames, gt)
   if (multi) {
     df_split <- split(df, df$group)
     geometry_use <- lapply(df_split, function(x) {
