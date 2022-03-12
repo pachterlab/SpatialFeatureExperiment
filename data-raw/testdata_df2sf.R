@@ -7,8 +7,8 @@ library(tidyverse)
 # Plain points, no spotDiameter
 set.seed(29)
 pts <- matrix(runif(10), ncol = 2)
-colnames(pts) <- c("x", "y")
 pts_geometry <- st_sfc(apply(pts, 1, st_point, simplify = FALSE))
+colnames(pts) <- c("x", "y")
 pts_df <- as.data.frame(pts)
 pts_df$ID <- sample(LETTERS, 5)
 pts_sf <- st_sf(ID = pts_df$ID, geometry = pts_geometry,
@@ -32,6 +32,7 @@ multipts_sf <- multipts_df %>%
   }),
   geometry = st_sfc(geometry)) %>%
   select(-data) %>%
+  rename(ID = group) %>%
   st_sf(sf_column_name = "geometry")
 multipts_sf$sample_id <- c("sample01", "sample02", "sample02")
 saveRDS(multipts_df, "inst/testdata/multipts_df.rds")
