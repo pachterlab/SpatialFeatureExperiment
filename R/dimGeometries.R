@@ -219,10 +219,19 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
   }
   value
 }
+
+.initialize_int_dimdata <- function(x, MARGIN, withDimnames = TRUE) {
+  if (!length(dimGeometries(x, MARGIN))) {
+    dimGeometries(x, MARGIN, withDimnames = withDimnames) <- list()
+  }
+  x
+}
+
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
                  function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE, ..., value) {
+                   x <- .initialize_int_dimdata(x, MARGIN, withDimnames)
                    value <- .df2sf_in_list(value, ...)
                    value <- .set_geometry_id(x, value, sample_id, type, MARGIN)
                    value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
@@ -244,6 +253,7 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
                  function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE, ..., value) {
+                   x <- .initialize_int_dimdata(x, MARGIN, withDimnames)
                    value <- .df2sf_in_list(value, ...)
                    value <- .set_geometry_id(x, value, sample_id, type, MARGIN)
                    value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
