@@ -306,6 +306,7 @@ colGeometryNames <- function(x) {
 #' @export
 `colGeometryNames<-` <- function(x, value) {
   dimGeometryNames(x, MARGIN = 2) <- value
+  x
 }
 
 #' @rdname dimGeometries
