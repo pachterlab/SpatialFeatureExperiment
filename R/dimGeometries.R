@@ -126,7 +126,7 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                                   MARGIN = MARGIN)
           })
 
-.out_geometry_id <- function(out, MARGIN, sample_id) {
+.out_geometry_id <- function(x, out, MARGIN, sample_id) {
   if (!is.null(sample_id)) {
     if (MARGIN == 1L) {
       # OK, maybe applicable, say to crop the rowGeometries by bbox of a sample
@@ -154,7 +154,7 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
             if (withDimnames) {
               rownames(out) <- colnames(x)
             }
-            .out_geometry_id(out, MARGIN, sample_id)
+            .out_geometry_id(x, out, MARGIN, sample_id)
           })
 
 #' @rdname dimGeometries
@@ -171,7 +171,7 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
             if (withDimnames) {
               rownames(out) <- colnames(x)
             }
-            .out_geometry_id(out, MARGIN, sample_id)
+            .out_geometry_id(x, out, MARGIN, sample_id)
           })
 
 #' @rdname dimGeometries
@@ -188,33 +188,33 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                  })
 
 .geometry_partial_replace <- function(existing, value, nrow_full, rownames_full,
-                                      all_sample_ids) {
+                                      all_sample_ids, sample_id) {
   if (is.null(existing)) {
     existing <- matrix(nrow = nrow_full, ncol = ncol(value),
                        dimnames = list(rownames_full,
                                        colnames(value)))
     existing <- as.data.frame(existing)
-    existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
-                                       st_geometrycollection))
-    existing <- st_sf(existing, sf_column_name = "geometry")
+    existing$geometry <- st_sfc(lapply(seq_len(ncol(existing)),
+                                       function(t) st_geometrycollection()))
+    existing <- st_sf(existing, sf_column_name = "geometry",
+                      row.names = rownames_full)
   } else {
     value <- .reconcile_cols(existing, value)
-    # Not sure if the rownames would work with withDimnames
   }
   existing[all_sample_ids %in% sample_id,] <- value
   existing
 }
 
 .set_geometry_id <- function(x, value, sample_id, type, MARGIN) {
-  if (!is.null(sample_id)) {
+  if (!is.null(sample_id) && any(!colData(x)$sample_id %in% sample_id)) {
     if (MARGIN == 1L) {
       message("sample_id is not applicable to rowGeometries.")
     } else {
       # Assuming that the order in value is the same as the
       # order of geometries for this sample in colGeometries
-      existing <- dimGeometry(x, type, MARGIN)
-      value <- .geometry_partial_replace(existing, value, ncol(x), rownames(x),
-                                         colData(x)$sample_id)
+      existing <- .getfun(MARGIN)(x)[[type]]
+      value <- .geometry_partial_replace(existing, value, ncol(x), colnames(x),
+                                         colData(x)$sample_id, sample_id)
     }
   }
   value

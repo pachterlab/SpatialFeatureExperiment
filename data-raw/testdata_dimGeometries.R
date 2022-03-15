@@ -25,3 +25,12 @@ rownames(cg_sf) <- colnames(mat)
 cg_sf2 <- st_buffer(cg_sf, 0.05)
 saveRDS(cg_sf, "inst/testdata/cg_toy.rds")
 saveRDS(cg_sf2, "inst/testdata/cg_toy2.rds")
+
+# More than one sample_id
+spe1 <- SpatialExperiment(assays = list(counts = mat[,1:3]),
+                          sample_id = "sample01", spatialCoords = coords[1:3,])
+spe2 <- SpatialExperiment(assays = list(counts = mat[,4:5]),
+                          sample_id = "sample02", spatialCoords = coords[4:5,])
+spe_samples <- cbind(spe1, spe2)
+sfe2 <- new("SpatialFeatureExperiment", spe_samples)
+saveRDS(sfe2, "inst/testdata/sfe_multi_sample.rds")
