@@ -4,6 +4,7 @@
 # 8. Set values only for some but not all sample_ids
 library(SingleCellExperiment)
 library(S4Vectors)
+library(sf)
 sfe <- readRDS(system.file("testdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
 
 test_that("Get List of length 0 when dimGeometries are absent", {
