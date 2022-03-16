@@ -81,11 +81,11 @@ setMethod("annotGeometry", c("SpatialFeatureExperiment", "character"), .ag)
 #' @rdname annotGeometries
 #' @export
 setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
-          function(x, type, sample_id, value) annotGeometry(x, 1L, sample_id) <- value)
+          function(x, type, sample_id = NULL, value) annotGeometry(x, 1L, sample_id) <- value)
 
 .ag_r <- function(x, type, sample_id = NULL, ..., value) {
   value <- .df2sf_in_list(value, ...)
-  if (!is.null(sample_id)) {
+  if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     existing <- int_metadata(x)$annotGeometries[[type]]
     if (!is.null(existing)) {
       value <- .reconcile_cols(existing, value)
@@ -120,7 +120,7 @@ tissueBoundary <- function(x, sample_id = NULL) {
 
 #' @rdname annotGeometries
 #' @export
-`tissueBoundary<-` <- function(x, sample_id, ..., value) {
+`tissueBoundary<-` <- function(x, sample_id = NULL, ..., value) {
   annotGeometry(x, "tissueBoundary", sample_id, ...) <- value
   x
 }

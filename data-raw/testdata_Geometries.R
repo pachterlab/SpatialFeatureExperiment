@@ -1,4 +1,4 @@
-# Toy datasets to unit test dimGeometries getters and setters
+# Toy datasets to unit test *Geometries getters and setters
 library(SpatialExperiment)
 library(Matrix)
 library(sf)
@@ -34,3 +34,17 @@ spe2 <- SpatialExperiment(assays = list(counts = mat[,4:5]),
 spe_samples <- cbind(spe1, spe2)
 sfe2 <- new("SpatialFeatureExperiment", spe_samples)
 saveRDS(sfe2, "inst/testdata/sfe_multi_sample.rds")
+
+# annotGeometries
+# The difference is that the number of rows is not regulated
+ag <- st_sf(geometry = st_convex_hull(st_combine(cg_sf)),
+            sample_id = "sample01",
+            sf_column_name = "geometry")
+# For different sample_ids
+ag1 <- st_cast(st_combine(cg_sf[1:3,]), "LINESTRING")
+ag2 <- st_cast(st_combine(cg_sf[4:5,]), "LINESTRING")
+ag_samples <- st_sf(geometry = c(ag1, ag2),
+                    sample_id = c("sample01", "sample02"),
+                    sf_column_name = "geometry")
+saveRDS(ag, "inst/testdata/ag.rds")
+saveRDS(ag_samples, "inst/testdata/ag_samples.rds")

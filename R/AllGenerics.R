@@ -23,10 +23,10 @@ setGeneric("dimGeometries<-", function(x, MARGIN, withDimnames=TRUE,..., value) 
 
 # Getters and setters for annotGeometry---------
 #' @export
-setGeneric("annotGeometry", function(x, type, sample_id) standardGeneric("annotGeometry"))
+setGeneric("annotGeometry", function(x, type, sample_id = NULL) standardGeneric("annotGeometry"))
 
 #' @export
-setGeneric("annotGeometry<-", function(x, type, sample_id, ..., value) standardGeneric("annotGeometry<-"))
+setGeneric("annotGeometry<-", function(x, type, sample_id = NULL, ..., value) standardGeneric("annotGeometry<-"))
 
 #' @export
 setGeneric("annotGeometryNames", function(x) standardGeneric("annotGeometryNames"))

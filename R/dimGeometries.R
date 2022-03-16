@@ -206,7 +206,7 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
 }
 
 .set_geometry_id <- function(x, value, sample_id, type, MARGIN) {
-  if (!is.null(sample_id) && any(!colData(x)$sample_id %in% sample_id)) {
+  if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     if (MARGIN == 1L) {
       message("sample_id is not applicable to rowGeometries.")
     } else {
