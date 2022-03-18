@@ -59,15 +59,17 @@
   # 5. Each item in the data frame is a list of listw objects that corresponds
   # to the sample and margin
   out <- character(0)
+  if (is.null(gs)) return(out)
   is_listw <- vapply(gs, is, class2 = "listw", FUN.VALUE = logical(1))
   if (!all(is_listw)) {
-    out <- paste("All elements of spatialGraphs must have class listw.",
+    out <- paste("All non-NULL elements of spatialGraphs must have class listw.",
                  "Elements", paste(which(!is_listw), collapse = ", "),
                  "are not of class listw.\n")
   } else {
     is_good_length <- vapply(seq_along(gs), function(i) {
-      if (is.na(right_length)) return(true)
-      isTRUE(all.equal(right_length, length(gs[[i]]$neighbours)))
+      if (is.na(right_length)) return(TRUE)
+      isTRUE(all.equal(right_length, length(gs[[i]]$neighbours),
+                       check.attributes = FALSE))
     }, FUN.VALUE = logical(1))
     if (!all(is_good_length)) {
       out <- paste0("Graphs of ", paste(mar, collapse = ", "),
@@ -91,7 +93,7 @@
   sg <- int_metadata(x)$spatialGraphs
   if (is.null(sg)) return(character(0))
   if (is(sg, "DataFrame")) {
-    if (setequal(rownames(sg), c("row", "col", "annot"))) {
+    if (!setequal(rownames(sg), c("row", "col", "annot"))) {
       return("Row names of spatialGraphs must be 'row', 'col', and 'annot'.\n")
     }
   } else {
@@ -99,10 +101,11 @@
            "and whose rows are margins (rows, columns, annotation).\n")
   }
   # Check each column of sg, which stands for a sample_id
-  right_lengths <- c(row = nrow(x), col = ncol(x), annot = NA_integer_)
-  lapply(seq_along(sg), function(i) {
+  right_lengths <- c(row = nrow(x), col = NA_integer_, annot = NA_integer_)
+  unlist(lapply(seq_along(sg), function(i) {
+    right_lengths[["col"]] <- sum(colData(x)$sample_id == names(sg)[i])
     .check_graphs_sample(sg[, i, drop = FALSE], right_lengths)
-  })
+  }))
 }
 
 .check_graph_sample_id <- function(x) {

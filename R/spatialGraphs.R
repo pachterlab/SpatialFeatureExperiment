@@ -106,36 +106,57 @@ setMethod("rowGraphs", c("SpatialFeatureExperiment", "character"),
 setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
           function(x, sample_id) spatialGraphs(x, 3, sample_id))
 
+.fill_missing <- function(l, names_use) {
+  to_add <- setdiff(names_use, names(l))
+  l2 <- vector("list", length = length(to_add))
+  names(l2) <- to_add
+  l <- c(l, l2)
+  l <- l[names_use]
+  l
+}
+
+.initialize_spatialGraphs <- function(x) {
+  empty_col <- list(row = NULL, col = NULL, annot = NULL)
+  samples <- sampleIDs(x)
+  args_init <- list(sample1 = I(empty_col), row.names = c("row", "col", "annot"))
+  names(args_init)[1] <- samples[1]
+  df <- do.call(DataFrame, args_init)
+  if (length(samples) > 1) {
+    for (i in 2:length(samples)) {
+      df[[samples[i]]] <- empty_col
+    }
+  }
+  df
+}
 .set_graphs <- function(x, type = c("all", "sample_all", "margin_all", "one"),
                         which = NA, value) {
   if (is.null(int_metadata(x)$spatialGraphs)) {
-    empty_col <- list(row = NULL, col = NULL, annot = NULL)
-    samples <- sampleIDs(x)
-    args_init <- list(sample1 = I(empty_col), row.names = c("row", "col", "annot"))
-    names(args_init)[1] <- samples[1]
-    df <- do.call(DataFrame, args_init)
-    if (length(samples) > 1) {
-      for (i in 2:length(samples)) {
-        df[[samples[i]]] <- empty_col
-      }
-    }
+    df <- .initialize_spatialGraphs(x)
   } else {
-    df <- int_metadata(x)$spatialGraphs[c("row", "col", "annot")]
+    df <- int_metadata(x)$spatialGraphs[c("row", "col", "annot"),]
   }
+  # Like what if not all of row, col, and annot are specified?
   if (type == "all") {
-    if (!is(value, "DataFrame")) value <- as(value, "DataFrame")
+    if (!is(value, "DataFrame")) {
+      value <- lapply(value, .fill_missing, names_use = c("row", "col", "annot"))
+      value <- as(value, "DataFrame")
+      rownames(value) <- c("row", "col", "annot")
+    }
     df <- value
   } else if (type == "sample_all") {
+    value <- .fill_missing(value, names_use = c("row", "col", "annot"))
     df[[which]] <- value[c("row", "col", "annot")]
   } else if (type == "margin_all") {
     df <- df[-which,] # which should be a number. rows have been reordered
+    value <- .fill_missing(value, sampleIDs(x))
+    value <- lapply(value, function(v) I(list(v)))
     new_row <- as(value, "DataFrame")
     rownames(new_row) <- .margin_name(which)
     new_row <- new_row[,names(df)]
     df <- rbind(df, new_row)
     df <- df[c("row", "col", "annot"),]
   } else {
-    df[which[[1]], which[[2]]] <- value
+    df[which[[1]], which[[2]]] <- I(list(value))
   }
   int_metadata(x)$spatialGraphs <- df
   m <- .check_graphs(x)
@@ -217,27 +238,27 @@ setReplaceMethod("spatialGraphNames", c("SpatialFeatureExperiment",
 
 #' @rdname spatialGraphs
 #' @export
-colGraphNames <- function(x, sample_id) spatialGraphNames(x, sample_id, 2)
+colGraphNames <- function(x, sample_id) spatialGraphNames(x, 2, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-rowGraphNames <- function(x, sample_id) spatialGraphNames(x, sample_id, 1)
+rowGraphNames <- function(x, sample_id) spatialGraphNames(x, 1, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-annotGraphNames <- function(x, sample_id) spatialGraphNames(x, sample_id, 3)
+annotGraphNames <- function(x, sample_id) spatialGraphNames(x, 3, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-`colGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, sample_id, 2, value)
+`colGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, 2, sample_id, value)
 
 #' @rdname spatialGraphs
 #' @export
-`rowGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, sample_id, 1, value)
+`rowGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, 1, sample_id, value)
 
 #' @rdname spatialGraphs
 #' @export
-`annotGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, sample_id, 3, value)
+`annotGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, 3, sample_id, value)
 
 # For single listws, not in a list-------
 #' @rdname spatialGraphs
@@ -280,12 +301,30 @@ setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "missing",
   if (!is.null(value)) {
     if (!is(value, "listw")) {
       stop("value must be of class listw.")
-    } else if (MARGIN < 3 && length(value$neighbours) != .margin_len_fun(MARGIN)(x)) {
-      stop("The neighbours field of `value` must be the same as n",
-           .margin_name(MARGIN), "s of the gene count matrix.")
+    } else if (MARGIN == 1L && length(value$neighbours) != nrow(x)) {
+      stop("The neighbours field of `value` must be the same as nrows of the gene count matrix.")
+    } else if (MARGIN == 2L) {
+      right_length <- sum(colData(x)$sample_id %in% sample_id)
+      if (length(value$neighbours) != right_length) {
+        stop("The neighbours field of `value` must be the same as number of samples in this sample_id.")
+      }
     }
   }
-  int_metadata(x)$spatialGraphs[.margin_name(MARGIN), sample_id][[type]] <- value
+  if (is.null(int_metadata(x)$spatialGraphs)) {
+    df <- .initialize_spatialGraphs(x)
+    int_metadata(x)$spatialGraphs <- df
+  }
+  existing <- int_metadata(x)$spatialGraphs[.margin_name(MARGIN), sample_id][[1]]
+  if (type %in% names(existing) || is.null(value)) {
+    existing <- existing[names(existing) != type]
+  }
+  if (!is.null(value)) {
+    value <- setNames(list(value), type)
+    replacement <- c(existing, value)
+  } else {
+    replacement <- existing
+  }
+  int_metadata(x)$spatialGraphs[.margin_name(MARGIN), sample_id] <- I(list(replacement))
   return(x)
 }
 
