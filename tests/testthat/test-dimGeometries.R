@@ -1,7 +1,4 @@
 # Unit test dimGeometry/ies getters and setters
-# 5. Get values only for some but not all sample_ids
-# 6. Set to NULL
-# 8. Set values only for some but not all sample_ids
 library(SingleCellExperiment)
 library(S4Vectors)
 library(sf)
