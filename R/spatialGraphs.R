@@ -135,9 +135,10 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
   } else {
     df <- int_metadata(x)$spatialGraphs[c("row", "col", "annot"),]
   }
-  # Like what if not all of row, col, and annot are specified?
   if (type == "all") {
-    if (!is(value, "DataFrame")) {
+    if (is.null(value))
+      df <- .initialize_spatialGraphs(x)
+    else if (!is(value, "DataFrame")) {
       value <- lapply(value, .fill_missing, names_use = c("row", "col", "annot"))
       df <- DataFrame(lapply(value, I), row.names = c("row", "col", "annot"))
     }
