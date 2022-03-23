@@ -61,6 +61,7 @@ make_empty_geometry <- function() {
 #' @return A character vector of all unique entries of the \code{sample_id}
 #' column in \code{colData(x)}.
 #' @export
+#' @importFrom SummarizedExperiment colData colData<-
 sampleIDs <- function(x) unique(colData(x)$sample_id)
 
 .reconcile_cols <- function(existing, value) {
