@@ -81,6 +81,9 @@ setGeneric("spatialGraphNames", function(x, MARGIN, sample_id) standardGeneric("
 #' @export
 setGeneric("spatialGraphNames<-", function(x, MARGIN, sample_id, value) standardGeneric("spatialGraphNames<-"))
 
+#' @export
+setGeneric("findSpatialNeighbors", function(x, method, ...) standardGeneric("findSpatialNeighbors"))
+
 # Operations that only apply to SFE due to geometries------
 #' @export
 setGeneric("crop", function(x, y) standardGeneric("crop"))
