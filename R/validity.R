@@ -97,8 +97,8 @@
       return("Row names of spatialGraphs must be 'row', 'col', and 'annot'.\n")
     }
   } else {
-    return("spatialGraphs must be a DataFrame whose columns are sample_ids ",
-           "and whose rows are margins (rows, columns, annotation).\n")
+    return(paste0("spatialGraphs must be a DataFrame whose columns are sample_ids ",
+           "and whose rows are margins (rows, columns, annotation).\n"))
   }
   # Check each column of sg, which stands for a sample_id
   right_lengths <- c(row = nrow(x), col = NA_integer_, annot = NA_integer_)

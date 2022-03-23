@@ -1,5 +1,4 @@
 # Unit test spatialGraphs getters and setters
-# 9. Set to NULL
 library(SingleCellExperiment)
 sfe2 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
