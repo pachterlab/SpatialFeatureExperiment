@@ -29,7 +29,7 @@
 }
 .check_annotgeometries <- function(x) {
   gs <- int_metadata(x)$annotGeometries
-  ids_coldata <- as.character(unique(colData(x)$sample_id))
+  ids_coldata <- sampleIDs(x)
   msgs <- lapply(seq_along(gs), function(i) {
     if (!"sample_id" %in% names(gs[[i]])) {
       paste0("Item ", i, " of annotGeometries does not have column sample_id.\n")
