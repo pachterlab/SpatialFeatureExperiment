@@ -7,7 +7,7 @@
 \S4method{findSpatialNeighbors}{SpatialFeatureExperiment}(
   x,
   sample_id,
-  geometry = "spatialCoords",
+  type = "spatialCoords",
   MARGIN = 2,
   method = c("tri2nb", "knearneigh", "dnearneigh", "gabrielneigh", "relativeneigh",
     "soi.graph", "poly2nb"),
@@ -22,7 +22,7 @@
 
 \item{sample_id}{Which sample in the SFE object to use for the graph.}
 
-\item{geometry}{Name of the geometry associated with the MARGIN of interest
+\item{type}{Name of the geometry associated with the MARGIN of interest
 for which to compute the graph.}
 
 \item{MARGIN}{Just like in \code{\link{apply}}, where 1 stands for row, 2

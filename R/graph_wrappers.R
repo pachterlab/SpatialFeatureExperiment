@@ -6,11 +6,12 @@
 # 5. Diagnostic functions for graphs such as cardinality and number/proportion of singletons
 # To be made easy to call with the SFE object.
 # These internal wrapper functions return nb, which will later be converted to listw
-.get_centroids <- function(x, sample_id, geometry, MARGIN) {
-  if (geometry == "spatialCoords") {
-    return(spatialCoords(x))
+.get_centroids <- function(x, type, MARGIN, sample_id) {
+  if (type == "spatialCoords") {
+    return(spatialCoords(x)[colData(x)$sample_id %in% sample_id,])
   } else {
-    g <- spatialGraph(x, sample_id, geometry, MARGIN)
+    if (MARGIN < 3) g <- dimGeometry(x, type, MARGIN, sample_id)
+    else g <- annotGeometry(x, type, sample_id)
     if (st_is(g, "POINT")) {
       coords <- st_coordinates(st_geometry(g))
     } else {
@@ -59,7 +60,7 @@
 #'   stands for column. Here, in addition, 3 stands for annotation, to query the
 #'   \code{\link{annotGeometries}}, such as nuclei segmentation in a Visium data
 #' @param sample_id Which sample in the SFE object to use for the graph.
-#' @param geometry Name of the geometry associated with the MARGIN of interest
+#' @param type Name of the geometry associated with the MARGIN of interest
 #'   for which to compute the graph.
 #' @param method Name of function in the package \code{spdep} to use to find the
 #'   spatial neighborhood graph.
@@ -77,7 +78,7 @@
 #'   soi.graph knn2nb graph2nb nb2listw poly2nb
 #' @export
 setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
-          function(x, sample_id, geometry = "spatialCoords", MARGIN = 2,
+          function(x, sample_id, type = "spatialCoords", MARGIN = 2,
                    method = c("tri2nb", "knearneigh", "dnearneigh",
                               "gabrielneigh", "relativeneigh", "soi.graph",
                               "poly2nb"),
@@ -93,11 +94,15 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                                       poly2nb = c("row.names", "snap", "queen", "useC", "foundInBox")
             )
             args <- list(...)
+            if (!"row.names" %in% names(args) && "row.names" %in% extra_args_use) {
+              args$row.names <- colnames(x)[colData(x)$sample_id %in% sample_id]
+            }
             args <- args[names(args) %in% extra_args_use]
             if (method != "poly2nb") {
-              coords <- .get_centroids(x, sample_id, geometry, MARGIN)
+              coords <- .get_centroids(x, type, MARGIN, sample_id)
             } else {
-              coords <- dimGeometry(x, sample_id, geometry, MARGIN)
+              if (MARGIN < 3) coords <- dimGeometry(x, type, MARGIN, sample_id)
+              else coords <- annotGeometry(x, type, sample_id)
               if (!st_is(coords, "POLYGON")) {
                 stop("poly2nb can only be used on POLYGON geometries.")
               }
@@ -111,15 +116,16 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                                soi.graph = .soi_sfe,
                                poly2nb = poly2nb
             )
-            nb_out <- do.call(fun_use, c(coords = coords, args))
+            nb_out <- do.call(fun_use, c(list(coords = coords), args))
             out <- nb2listw(nb_out, glist, style, zero.policy)
             attr(out, "method") <- list(FUN = "findSpatialNeighbors",
+                                        package = "SpatialFeatureExperiment",
                                         args = c(method = method, args,
                                                  glist = glist,
                                                  style = style,
                                                  zero.policy = zero.policy,
                                                  sample_id = sample_id,
-                                                 geometry = geometry,
+                                                 type = type,
                                                  MARGIN = MARGIN))
             return(out)
           })
@@ -145,12 +151,14 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 findVisiumGraph <- function(x, sample_id, style = "W", zero.policy = NULL) {
   bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
   bcs_use2 <- sub("-\\d+$", "", bcs_use)
-  coords_use <- visium_row_col[match(bcs_use2, visium_row_col), c("col", "row")]
+  data("visium_row_col")
+  coords_use <- visium_row_col[match(bcs_use2, visium_row_col$barcode), c("col", "row")]
   # So adjacent spots are equidistant
   coords_use$row <- coords_use$row * sqrt(3)
   g <- dnearneigh(as.matrix(coords_use), d1 = 1.9, d2 = 2.1, row.names = bcs_use)
   out <- nb2listw(g, style = style, zero.policy = zero.policy)
   attr(out, "method") <- list(FUN = "findVisiumGraph",
+                              package = "SpatialFeatureExperiment",
                               args = list(style = style,
                                           zero.policy = zero.policy,
                                           sample_id = sample_id))

@@ -15,7 +15,9 @@
 
 \item{reconstruct_graph}{Logical, whether to reconstruct graph. If \code{FALSE},
 then the old graphs will be kept and a warning will be issued that the node
-indices in the graphs are no longer valid.}
+indices in the graphs are no longer valid. At present, this only works with
+the wrapper functions in this package that take in SFE objects and records
+the info required to reconstruc the graphs.}
 }
 \value{
 A subsetted \code{SpatialFeatureExperiment} object.
