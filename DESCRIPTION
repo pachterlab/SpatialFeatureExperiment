@@ -18,7 +18,8 @@ Imports:
     SingleCellExperiment,
     SpatialExperiment,
     spdep,
-    SummarizedExperiment
+    SummarizedExperiment,
+    utils
 License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2

@@ -158,8 +158,10 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
     df[which[[1]], which[[2]]] <- I(list(value))
   }
   int_metadata(x)$spatialGraphs <- df
-  m <- .check_graphs(x)
-  if (length(m)) stop(m)
+  if (!isTRUE(S4Vectors:::disableValidity())) {
+    m <- .check_graphs(x)
+    if (length(m)) stop(m)
+  }
   return(x)
 }
 

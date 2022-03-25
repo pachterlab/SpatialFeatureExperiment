@@ -119,8 +119,8 @@
     return(character(0))
   }
 }
-
-setValidity("SpatialFeatureExperiment", function(object) {
+#' @importFrom S4Vectors setValidity2
+setValidity2("SpatialFeatureExperiment", function(object) {
   col_msg <- .check_geometries(int_colData(object)$colGeometries, "colGeometries")
   row_msg <- .check_geometries(int_elementMetadata(object)$rowGeometries, "rowGeometries")
   annot_msg <- .check_geometries(int_metadata(object)$annotGeometries, "annotGeometries")
