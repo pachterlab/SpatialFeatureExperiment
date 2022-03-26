@@ -14,7 +14,7 @@ test_that("Everything in *Geometries must be sf objects", {
   int_colData(sfe)$colGeometries$coords <- cg_toy
   expect_true(validObject(sfe))
   int_colData(sfe)$colGeometries$coords <- st_drop_geometry(cg_toy)
-  expect_error(validObject(sfe), "rather than sf")
+  expect_error(validObject(sfe), "is data.frame rather")
 })
 
 test_that("Those sf objects must be valid geometries", {
