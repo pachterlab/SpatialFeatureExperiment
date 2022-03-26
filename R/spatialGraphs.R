@@ -141,7 +141,7 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
     else if (!is(value, "DataFrame")) {
       value <- lapply(value, .fill_missing, names_use = c("row", "col", "annot"))
       df <- DataFrame(lapply(value, I), row.names = c("row", "col", "annot"))
-    }
+    } else df <- value[c("row", "col", "annot"),]
   } else if (type == "sample_all") {
     value <- .fill_missing(value, names_use = c("row", "col", "annot"))
     df[[which]] <- value[c("row", "col", "annot")]

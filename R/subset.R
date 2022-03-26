@@ -7,18 +7,19 @@
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param i Row indices for subsetting.
 #' @param j column indices for subsetting.
-#' @param reconstruct_graph Logical, whether to reconstruct graph. If \code{FALSE},
-#' then the old graphs will be kept and a warning will be issued that the node
-#' indices in the graphs are no longer valid. At present, this only works with
-#' the wrapper functions in this package that take in SFE objects and records
-#' the info required to reconstruc the graphs.
+#' @param drop Logical. If \code{FALSE}, then a warning will be issued that the
+#'   node indices in the graphs are no longer valid so the row and col graphs
+#'   affected by subsetting are dropped. At present, this only works with the
+#'   wrapper functions in this package that take in SFE objects and records the
+#'   info required to reconstruc the graphs. While this argument is ignored for
+#'   \code{SummarizedExperiment}
 #' @importFrom methods callNextMethod
 #' @importFrom utils getFromNamespace
 #' @return A subsetted \code{SpatialFeatureExperiment} object.
 #' @name SpatialFeatureExperiment-subset
 #' @export
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
-          function(x, i, j, ..., reconstruct_graphs = TRUE, drop = FALSE) {
+          function(x, i, j, ..., drop = FALSE) {
             # Because the extra graphs and sample_ids result into invalid object
             old <- S4Vectors:::disableValidity()
             if (!isTRUE(old)) {
@@ -31,38 +32,39 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
               cn[colData(x)$sample_id %in% s]
             })
             # Subset the matrix and col and rowData
-            x <- callNextMethod()
-
+            # Suppress because `drop` will be used
+            suppressWarnings(x <- callNextMethod())
+            sample_ids <- sampleIDs(x)
             # Subset annotGeometries based on sample_id
             if (!is.null(annotGeometries(x))) {
               ag_sub <- annotGeometries(x)
+              #browser()
               for (g in seq_along(ag_sub)) {
                 ag_ind <- ag_sub[[g]]
                 ag_ind <- ag_ind[ag_ind$sample_id %in% sample_ids,]
-                if (nrow(ag_ind == 0L)) ag_ind <- NULL
+                if (nrow(ag_ind) == 0L) ag_ind <- NULL
                 ag_sub[[g]] <- ag_ind
               }
               annotGeometries(x) <- ag_sub
             }
             # Subset *Graphs based on sample_id and reconstruct row and colGraphs
             if (!is.null(spatialGraphs(x))) {
-              graphs_sub <- spatialGraphs(x)
+              graphs_sub <- int_metadata(x)$spatialGraphs
               graphs_sub <- graphs_sub[,names(graphs_sub) %in% sampleIDs(x)]
-              if (reconstruct_graphs) {
+              if (!drop) {
                 # Check which graphs need to be reconstructed
                 # Wouldn't need reconstruction if the barcodes within one sample
                 # are still in the same order
                 cn2 <- colnames(x)
-                sample_ids <- sampleIDs(x)
                 new_sample_colnames <- lapply(sample_ids, function(s) {
                   cn2[colData(x)$sample_id %in% s]
                 })
                 old_sample_compare <- old_sample_colnames[sample_ids0 %in% sample_ids]
-                samples_reconstruct <- mapply(function(old, new) isTRUE(all.equal(old, new)),
+                samples_reconstruct <- mapply(function(old, new) !isTRUE(all.equal(old, new)),
                                               old = old_sample_compare,
                                               new = new_sample_colnames,
                                               SIMPLIFY = TRUE)
-                for (s in samples_reconstruct) {
+                for (s in which(samples_reconstruct)) {
                   for (m in 1:2) { # Not reconstructing annotGraphs
                     # Not sure what to do differently with rowGraphs yet
                     for (g in seq_along(graphs_sub[[s]][[m]])) {
@@ -77,7 +79,7 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
                         if (requireNamespace(method_info$package, quietly = TRUE)) {
                           fun <- getFromNamespace(method_info$FUN, method_info$package)
                           graphs_sub[[s]][[m]][[g]] <- do.call(fun,
-                                                               c(x = x, method_info$args))
+                                                               c(list(x = x), method_info$args))
                         } else {
                           warning("Package ", method_info$package, " used to construct graph for sample ",
                                   names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
@@ -91,7 +93,7 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
                 }
                 spatialGraphs(x) <- graphs_sub
               } else {
-                warning("Node indices in the graphs are no longer valid after subsetting. ",
+                message("Node indices in the graphs are no longer valid after subsetting. ",
                         "Dropping all row and col graphs.")
                 spatialGraphs(x) <- graphs_sub
                 spatialGraphs(x, MARGIN = 1) <- NULL

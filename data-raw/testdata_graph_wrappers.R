@@ -2,6 +2,7 @@
 library(tidyverse)
 library(spdep)
 library(Matrix)
+library(SpatialExperiment)
 devtools::load_all()
 data("visium_row_col")
 coords <- visium_row_col %>%
@@ -9,9 +10,19 @@ coords <- visium_row_col %>%
 coords_mat <- as.matrix(coords[,c("col", "row")])
 # make hexagonal grid
 coords_mat[,"row"] <- coords_mat[,"row"] * sqrt(3)
-g <- dnearneigh(coords_mat, 1.9, 2.1)
-g_listw <- nb2listw(g)
-saveRDS(g_listw, "inst/testdata/colgraph_visium.rds")
+# Make two samples, physical rows 1 and 2 go to the first one
+sample01_ind <- coords_mat[,"row"] < 2.5 * sqrt(3)
+g1 <- nb2listw(dnearneigh(coords_mat[sample01_ind,], 1.9, 2.1,
+                          row.names = coords$barcode[sample01_ind]))
+g2 <- nb2listw(dnearneigh(coords_mat[!sample01_ind,], 1.9, 2.1))
+attr(g1, "method") <- list(FUN = "findVisiumGraph",
+                           package = "SpatialFeatureExperiment",
+                           args = list(style = "W",
+                                       zero.policy = NULL,
+                                       sample_id = "sample01"))
+# g2 doesn't have the attributes on purpose for unit test purposes
+saveRDS(g1, "inst/testdata/colgraph_visium.rds")
+saveRDS(g2, "inst/testdata/colgraph_visium2.rds")
 
 set.seed(29)
 col_inds <- sample(1:13, 5)
@@ -20,8 +31,22 @@ values <- sample(1:10, 5)
 mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 rownames(mat) <- sample(LETTERS, 2)
 colnames(mat) <- coords$barcode
-spe <- SpatialExperiment(assays = list(counts = mat),
+spe1 <- SpatialExperiment(assays = list(counts = mat[,sample01_ind]),
                          sample_id = "sample01",
-                         spatialCoords = coords_mat)
+                         spatialCoords = coords_mat[sample01_ind,])
+spe2 <- SpatialExperiment(assays = list(counts = mat[,!sample01_ind]),
+                          sample_id = "sample02",
+                          spatialCoords = coords_mat[!sample01_ind,])
+spe <- cbind(spe1, spe2)
 sfe <- new("SpatialFeatureExperiment", spe)
 saveRDS(sfe, "inst/testdata/sfe_visium.rds")
+
+# Graph when one vertex is removed
+g1_sub <- nb2listw(dnearneigh(spatialCoords(spe1)[-1,], 1.9, 2.1,
+                              row.names = colnames(spe1)[-1]))
+attr(g1_sub, "method") <- list(FUN = "findVisiumGraph",
+                               package = "SpatialFeatureExperiment",
+                               args = list(style = "W",
+                                           zero.policy = NULL,
+                                           sample_id = "sample01"))
+saveRDS(g1_sub, "inst/testdata/colgraph_visium_sub.rds")
