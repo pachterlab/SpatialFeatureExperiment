@@ -6,7 +6,7 @@
   if (grepl("MULTI", geometryType) && !"group" %in% names(df)) {
     stop("Column 'group' must be present when specifying ", geometryType, "s.")
   }
-  if (any(!names(df) %in% c("ID", "subID", "sample_id", spatialCoordsNames))) {
+  if (any(!names(df) %in% c("ID", "subID", "sample_id", "group", spatialCoordsNames))) {
     message("Geometry attributes are ignored.")
   }
   n_vertices <- table(df$ID)
