@@ -2,9 +2,10 @@
 % Please edit documentation in R/subset.R
 \name{SpatialFeatureExperiment-subset}
 \alias{SpatialFeatureExperiment-subset}
+\alias{[,SpatialFeatureExperiment,ANY,ANY,ANY-method}
 \title{Subsetting SpatialFeatureExperiment objects}
 \usage{
-\S4method{[}{SpatialFeatureExperiment,ANY,ANY,ANY}(x, i, j, ..., reconstruct_graphs = TRUE, drop = FALSE)
+\S4method{[}{SpatialFeatureExperiment,ANY,ANY,ANY}(x, i, j, ..., drop = FALSE)
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -13,11 +14,14 @@
 
 \item{j}{column indices for subsetting.}
 
-\item{reconstruct_graph}{Logical, whether to reconstruct graph. If \code{FALSE},
-then the old graphs will be kept and a warning will be issued that the node
-indices in the graphs are no longer valid. At present, this only works with
-the wrapper functions in this package that take in SFE objects and records
-the info required to reconstruc the graphs.}
+\item{...}{Passed to the \code{SingleCellExperiment} method of \code{[}.}
+
+\item{drop}{Logical. If \code{FALSE}, then a warning will be issued that the
+node indices in the graphs are no longer valid so the row and col graphs
+affected by subsetting are dropped. At present, this only works with the
+wrapper functions in this package that take in SFE objects and records the
+info required to reconstruc the graphs. While this argument is ignored for
+\code{SummarizedExperiment}}
 }
 \value{
 A subsetted \code{SpatialFeatureExperiment} object.

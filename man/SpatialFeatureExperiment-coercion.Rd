@@ -2,6 +2,7 @@
 % Please edit documentation in R/coerce.R
 \name{SpatialFeatureExperiment-coercion}
 \alias{SpatialFeatureExperiment-coercion}
+\alias{toSpatialFeatureExperiment}
 \alias{toSpatialFeatureExperiment,SpatialExperiment-method}
 \title{SpatialFeatureExperiment coercion methods}
 \usage{
@@ -14,6 +15,9 @@
 )
 }
 \arguments{
+\item{x}{A \code{SpatialExperiment} object to be coerced to a
+\code{SpatialFeatureExperiment} object.}
+
 \item{colGeometries}{Geometry of the entities that correspond to the columns of
 the gene count matrix, such as cells and Visium spots. It must be a named
 list of be one of the following: \describe{ \item{An \code{sf} data

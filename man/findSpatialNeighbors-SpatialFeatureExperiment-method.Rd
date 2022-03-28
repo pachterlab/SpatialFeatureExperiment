@@ -2,6 +2,7 @@
 % Please edit documentation in R/graph_wrappers.R
 \name{findSpatialNeighbors,SpatialFeatureExperiment-method}
 \alias{findSpatialNeighbors,SpatialFeatureExperiment-method}
+\alias{findSpatialNeighbors}
 \title{Find spatial neighborhood graph}
 \usage{
 \S4method{findSpatialNeighbors}{SpatialFeatureExperiment}(

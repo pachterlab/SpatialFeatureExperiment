@@ -34,6 +34,11 @@
 #'   only meaningful within the same piece of tissue. See the \code{sample_id}
 #'   argument in \code{\link{SpatialExperiment}}.
 #' @name spatialGraphs
+#' @aliases rowGraphs rowGraphs<- spatialGraph spatialGraph<- spatialGraphNames
+#' colGraphs colGraphs<- spatialGraphNames<- spatialGraphs<- annotGraphs
+#' annotGraphs<-
+#' @importFrom methods as validObject show
+#' @importFrom stats setNames
 #' @docType methods
 NULL
 

@@ -26,6 +26,8 @@
 #'   \code{sample_id} to indicate the sample the geometries are for, and the
 #'   \code{sample_id} must also appear in \code{colData}.
 #' @name annotGeometries
+#' @aliases annotGeometries<- annotGeometry annotGeometry<- annotGeometryNames
+#' annotGeometryNames<-
 NULL
 
 #' @rdname annotGeometries

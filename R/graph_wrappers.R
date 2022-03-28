@@ -76,6 +76,7 @@
 #'   some nodes in the graph will no longer be present.
 #' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh
 #'   soi.graph knn2nb graph2nb nb2listw poly2nb
+#' @aliases findSpatialNeighbors
 #' @export
 setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
           function(x, sample_id, type = "spatialCoords", MARGIN = 2,
@@ -151,7 +152,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 findVisiumGraph <- function(x, sample_id, style = "W", zero.policy = NULL) {
   bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
   bcs_use2 <- sub("-\\d+$", "", bcs_use)
-  data("visium_row_col")
+  visium_row_col <- SpatialFeatureExperiment::visium_row_col
   coords_use <- visium_row_col[match(bcs_use2, visium_row_col$barcode), c("col", "row")]
   # So adjacent spots are equidistant
   coords_use$row <- coords_use$row * sqrt(3)

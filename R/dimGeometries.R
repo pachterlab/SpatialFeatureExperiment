@@ -32,6 +32,7 @@
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param MARGIN As in \code{\link{apply}}. 1 stands for rows and 2 stands for
 #'   columns.
+#' @param sample_id Sample ID to get or set geometries.
 #' @param withDimnames Logical. If \code{TRUE}, then the dimnames (colnames or
 #'   rownames) of the gene count matrix should correspond to row names of the
 #'   \code{sf} data frames of interest.
@@ -49,6 +50,8 @@
 #'   of the geometry type of each data frame in the list of the same length as
 #'   the list if the data frames specify different types of geometries.
 #' @name dimGeometries
+#' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
+#' dimGeometryNames<-
 #' @docType methods
 NULL
 

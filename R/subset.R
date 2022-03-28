@@ -13,10 +13,12 @@
 #'   wrapper functions in this package that take in SFE objects and records the
 #'   info required to reconstruc the graphs. While this argument is ignored for
 #'   \code{SummarizedExperiment}
+#' @param ... Passed to the \code{SingleCellExperiment} method of \code{[}.
 #' @importFrom methods callNextMethod
 #' @importFrom utils getFromNamespace
 #' @return A subsetted \code{SpatialFeatureExperiment} object.
 #' @name SpatialFeatureExperiment-subset
+#' @aliases [,SpatialFeatureExperiment,ANY,ANY,ANY-method
 #' @export
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
           function(x, i, j, ..., drop = FALSE) {

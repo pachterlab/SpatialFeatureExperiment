@@ -3,6 +3,17 @@
 \docType{methods}
 \name{spatialGraphs}
 \alias{spatialGraphs}
+\alias{rowGraphs}
+\alias{rowGraphs<-}
+\alias{spatialGraph}
+\alias{spatialGraph<-}
+\alias{spatialGraphNames}
+\alias{colGraphs}
+\alias{colGraphs<-}
+\alias{spatialGraphNames<-}
+\alias{spatialGraphs<-}
+\alias{annotGraphs}
+\alias{annotGraphs<-}
 \alias{spatialGraphs,SpatialFeatureExperiment,missing,missing-method}
 \alias{spatialGraphs,SpatialFeatureExperiment,numeric,missing-method}
 \alias{spatialGraphs,SpatialFeatureExperiment,missing,character-method}

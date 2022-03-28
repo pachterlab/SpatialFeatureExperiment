@@ -2,6 +2,11 @@
 % Please edit documentation in R/annotGeometries.R
 \name{annotGeometries}
 \alias{annotGeometries}
+\alias{annotGeometries<-}
+\alias{annotGeometry}
+\alias{annotGeometry<-}
+\alias{annotGeometryNames}
+\alias{annotGeometryNames<-}
 \alias{annotGeometries,SpatialFeatureExperiment-method}
 \alias{annotGeometries<-,SpatialFeatureExperiment-method}
 \alias{annotGeometryNames,SpatialFeatureExperiment-method}
@@ -59,6 +64,8 @@ of such \code{sf} or ordinary data frames. There must be a column
 \item{type}{An integer specifying the index or string specifying the name of
 the *Geometry to query or replace. If missing, then the first item in the
 *Geometries will be returned or replaced.}
+
+\item{sample_id}{Sample ID to get or set geometries.}
 }
 \description{
 "Annotation geometry" refers to Simple Feature (\code{sf}) geometries NOT

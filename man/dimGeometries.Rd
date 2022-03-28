@@ -3,6 +3,11 @@
 \docType{methods}
 \name{dimGeometries}
 \alias{dimGeometries}
+\alias{dimGeometries<-}
+\alias{dimGeometry}
+\alias{dimGeometry<-}
+\alias{dimGeometryNames}
+\alias{dimGeometryNames<-}
 \alias{dimGeometries,SpatialFeatureExperiment-method}
 \alias{dimGeometries<-,SpatialFeatureExperiment-method}
 \alias{dimGeometryNames,SpatialFeatureExperiment-method}
@@ -126,6 +131,8 @@ an ordinary data frame that can be converted to such a \code{sf} data frame
 \item{type}{An integer specifying the index or string specifying the name of
 the *Geometry to query or replace. If missing, then the first item in the
 *Geometries will be returned or replaced.}
+
+\item{sample_id}{Sample ID to get or set geometries.}
 }
 \description{
 "Dimension geometry" refers to Simple Feature (\code{sf}) geometries
