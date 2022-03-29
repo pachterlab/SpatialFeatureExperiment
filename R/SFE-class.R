@@ -24,9 +24,9 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'
 #' @inheritParams SummarizedExperiment::SummarizedExperiment
 #' @inheritParams SpatialExperiment::SpatialExperiment
-#' @param colGeometries Geometry of the entities that correspond to the columns of
-#'   the gene count matrix, such as cells and Visium spots. It must be a named
-#'   list of be one of the following: \describe{ \item{An \code{sf} data
+#' @param colGeometries Geometry of the entities that correspond to the columns
+#'   of the gene count matrix, such as cells and Visium spots. It must be a
+#'   named list of one of the following: \describe{ \item{An \code{sf} data
 #'   frame}{The geometry column specifies the geometry of the entities.}
 #'   \item{An ordinary data frame specifying centroids}{Column names for the
 #'   coordinates are specified in the \code{spatialCoordsNames} argument. For
@@ -60,7 +60,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   versions. Each data frame can only specify one type of geometry. For MULTI
 #'   versions, there must be a column "group" to identify each MULTI geometry.
 #' @param spatialGraphs A named list of \code{listw} objects (see \code{spdep})
-#' for spatial neighborhood graphs.
+#'   for spatial neighborhood graphs.
 #' @param annotGeometryType Character vector specifying geometry type of each
 #'   element of the list if \code{annotGeometry} is specified. Each element of
 #'   the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
@@ -70,6 +70,16 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @param spatialCoordsNames A \code{character} vector of column names if
 #'   \code{*Geometries} arguments have ordinary data frames, to identify the
 #'   columns in the ordinary data frames that specify the spatial coordinates.
+#'   If \code{colGeometries} is not specified, then this argument will behave as
+#'   in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+#'   precedence if provided.
+#' @param spatialCoords A numeric matrix containing columns of spatial
+#'   coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+#'   centroids of the entities represented by the columns of the gene count
+#'   matrix. If \code{colGeometries} is also specified, then it will be given
+#'   priority and a warning is issued. Otherwise, the \code{sf} representation
+#'   of the centroids will be stored in the \code{colGeometry} called
+#'   \code{centroids}.
 #' @param spotDiameter Spot diameter for technologies with arrays of spots of
 #'   fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 #'   diameter must be in the same unit as the coordinates in the *Geometry
@@ -82,26 +92,39 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @importFrom SpatialExperiment SpatialExperiment
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
-#' int_metadata<- int_elementMetadata<- int_colData<-
+#'   int_metadata<- int_elementMetadata<- int_colData<-
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
 #'   st_centroid st_geometry_type st_geometry st_is_valid st_geometrycollection
 #' @importFrom S4Vectors DataFrame
 #' @export
-SpatialFeatureExperiment <- function(assays, colGeometries,
-                                     rowGeometries = NULL, annotGeometries = NULL,
+SpatialFeatureExperiment <- function(assays,
                                      colData = DataFrame(), rowData = NULL,
+                                     sample_id = "sample01",
                                      spatialCoordsNames = c("x", "y"),
-                                     sample_id = "sample01", spotDiameter = NA_real_,
+                                     spatialCoords = NULL,
+                                     colGeometries = NULL, rowGeometries = NULL,
+                                     annotGeometries = NULL,
+                                     spotDiameter = NA_real_,
                                      annotGeometryType = "POLYGON",
                                      spatialGraphs = NULL,
                                      unit = "full_res_image_pixels",
                                      ...) {
-  colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames, spotDiameter, "POLYGON")
-  spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
-  spe <- SpatialExperiment(assays = assays, colData = colData,
-                           rowData = rowData, sample_id = sample_id,
-                           spatialCoords = spe_coords, ...)
+  if (is.null(colGeometries)) {
+    spe <- SpatialExperiment(assays = assays, colData = colData,
+                             rowData = rowData, sample_id = sample_id,
+                             spatialCoords = spatialCoords,
+                             spatialCoordsNames = spatialCoordsNames,...)
+  } else {
+    if (!is.null(spatialCoords)) {
+      warning("Ignoring spatialCoords; coordinates are specified in colGeometries.")
+    }
+    colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames, spotDiameter, "POLYGON")
+    spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
+    spe <- SpatialExperiment(assays = assays, colData = colData,
+                             rowData = rowData, sample_id = sample_id,
+                             spatialCoords = spe_coords, ...)
+  }
   sfe <- .spe_to_sfe(spe, colGeometries, rowGeometries, annotGeometries,
                      spatialCoordsNames, annotGeometryType,
                      spatialGraphs, unit)
@@ -111,6 +134,9 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
                         unit) {
+  if (is.null(colGeometries)) {
+    colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
+  }
   if (!is.null(rowGeometries)) {
     rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames, spotDiameter = NA,
                                geometryType = "POLYGON")
