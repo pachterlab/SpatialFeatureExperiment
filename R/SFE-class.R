@@ -147,18 +147,32 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
 setMethod("show", "SpatialFeatureExperiment",
           function(object) {
             callNextMethod()
-            cat("\nGeometries:\n")
-            cat("colGeometries:", .names_types(colGeometries(object)), "\n")
-            cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
-            cat("annotGeometries:", .names_types(annotGeometries(object)), "\n")
+            skip_geometries <- length(colGeometries(object)) < 1 &
+              length(rowGeometries(object)) < 1 &
+              is.null(annotGeometries(object))
+            if (!skip_geometries) {
+              cat("\nGeometries:\n")
+              if (length(colGeometries(object)))
+                cat("colGeometries:", .names_types(colGeometries(object)), "\n")
+              if (length(rowGeometries(object)))
+                cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
+              if (!is.null(annotGeometries(object)))
+                cat("annotGeometries:", .names_types(annotGeometries(object)), "\n")
+            }
             # What to do with the graphs?
-            cat("\nGraphs:")
-            df <- int_metadata(object)$spatialGraphs
-            for (s in colnames(df)) {
-              cat("\n", s, ": ", sep = "")
-              out <- vapply(rownames(df), function(r) {
-                paste0(r, ": ", paste(names(df[r,s][[1]]), collapse = ", "))
-              }, FUN.VALUE = character(1))
-              cat(paste(out, collapse = "; "))
+            if (!is.null(int_metadata(object)$spatialGraphs)) {
+              cat("\nGraphs:")
+              df <- int_metadata(object)$spatialGraphs
+              for (s in colnames(df)) {
+                cat("\n", s, ": ", sep = "")
+                out <- vapply(rownames(df), function(r) {
+                  l <- df[r,s][[1]]
+                  if (length(l)) {
+                    paste0(r, ": ", paste(names(l), collapse = ", "))
+                  } else NA_character_
+                }, FUN.VALUE = character(1))
+                out <- out[!is.na(out)]
+                cat(paste(out, collapse = "; "))
+              }
             }
           })
