@@ -128,13 +128,13 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
   int_metadata(sfe)$unit <- unit
   return(sfe)
 }
-# To do: unit test, cropping with geometry, plotting (separate package)
 
 .names_types <- function(l) {
   types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
                   FUN.VALUE = character(1))
   paste(paste0(names(l), " (", types, ")"), collapse = ", ")
 }
+
 #' Print method for SpatialFeatureExperiment
 #'
 #' Printing summaries of \code{colGeometries}, \code{rowGeometries}, and
@@ -147,7 +147,18 @@ SpatialFeatureExperiment <- function(assays, colGeometries,
 setMethod("show", "SpatialFeatureExperiment",
           function(object) {
             callNextMethod()
+            cat("\nGeometries:\n")
             cat("colGeometries:", .names_types(colGeometries(object)), "\n")
             cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
             cat("annotGeometries:", .names_types(annotGeometries(object)), "\n")
+            # What to do with the graphs?
+            cat("\nGraphs:")
+            df <- int_metadata(object)$spatialGraphs
+            for (s in colnames(df)) {
+              cat("\n", s, ": ", sep = "")
+              out <- vapply(rownames(df), function(r) {
+                paste0(r, ": ", paste(names(df[r,s][[1]]), collapse = ", "))
+              }, FUN.VALUE = character(1))
+              cat(paste(out, collapse = "; "))
+            }
           })
