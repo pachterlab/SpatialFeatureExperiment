@@ -24,19 +24,25 @@
 #' @aliases toSpatialFeatureExperiment
 NULL
 
+.sc2cg <- function(coords_use) {
+  cg_sfc <- apply(coords_use, 1, st_point, simplify = FALSE)
+  st_sf(geometry = cg_sfc, row.names = rownames(coords_use))
+}
 setAs(from = "SpatialExperiment", to = "SpatialFeatureExperiment",
       function(from) {
         cg <- int_colData(from)[["colGeometries"]]
         if (is.null(cg)) {
           coords_use <- spatialCoords(from)
-          cg_sfc <- apply(coords_use, 1, st_point, simplify = FALSE)
-          cg <- st_sf(geometry = cg_sfc, row.names = rownames(coords_use))
+          cg <- .sc2cg(coords_use)
           int_colData(from)[["colGeometries"]] <- make_zero_col_DFrame(nrow(int_colData(from)))
           int_colData(from)$colGeometries$centroids <- cg
+          from
         }
         .spe_to_sfe(from, int_colData(from)[["colGeometries"]],
                     int_elementMetadata(from)[["rowGeometries"]],
                     int_metadata(from)[["annotGeometries"]],
+                    spatialCoordsNames(from), "POLYGON",
+                    int_metadata(from)[["spatialGraphs"]],
                     int_metadata(from)[["unit"]])
       })
 
@@ -44,7 +50,9 @@ setAs(from = "SpatialExperiment", to = "SpatialFeatureExperiment",
 #' @export
 setMethod("toSpatialFeatureExperiment", "SpatialExperiment",
           function(x, colGeometries = NULL, rowGeometries = NULL,
-                   annotGeometries = NULL, unit = NULL) {
+                   annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
+                   annotGeometryType = "POLYGON",
+                   spatialGraphs = NULL, unit = NULL) {
             if (is.null(colGeometries)) {
               colGeometries <- int_colData(x)$colGeometries
             }
@@ -54,5 +62,10 @@ setMethod("toSpatialFeatureExperiment", "SpatialExperiment",
             if (is.null(annotGeometries)) {
               annotGeometries <- int_metadata(x)$annotGeometries
             }
-            .spe_to_sfe(x, colGeometries, rowGeometries, annotGeometries, unit)
+            if (is.null(spatialGraphs)) {
+              spatialGraphs <- int_metadata(x)$spatialGraphs
+            }
+            .spe_to_sfe(x, colGeometries, rowGeometries, annotGeometries,
+                        spatialCoordsNames, annotGeometryType,
+                        spatialGraphs, unit)
           })
