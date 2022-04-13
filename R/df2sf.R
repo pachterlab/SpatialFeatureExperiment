@@ -52,7 +52,7 @@
     })
     df$geometry <- st_sfc(df$geometry)
     # Remove the original coordinate columns
-    df[spatialCoordsNames] <- NULL
+    df[,spatialCoordsNames] <- NULL
     out <- st_sf(df, sf_column_name = "geometry", row.names = rownames(df))
   }
   if (!is.na(spotDiameter)) {
@@ -151,7 +151,8 @@
 #' and fix any invalid geometries.
 #'
 #' @inheritParams SpatialFeatureExperiment
-#' @param df An ordinary data frame, i.e. not \code{sf}.
+#' @param df An ordinary data frame, i.e. not \code{sf}. Or a matrix that can be
+#' converted to a data frame.
 #' @param spatialCoordsNames Column names in \code{df} that specify spatial
 #' coordinates.
 #' @param geometryType Type of geometry to convert the ordinary data frame to.
@@ -163,6 +164,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                   geometryType = c("POINT", "LINESTRING", "POLYGON",
                                    "MULTIPOINT", "MULTILINESTRING",
                                    "MULTIPOLYGON")) {
+  if (is.matrix(df)) df <- as.data.frame(df)
   if (any(!spatialCoordsNames %in% names(df))) {
     cols_absent <- setdiff(spatialCoordsNames, names(df))
     if (length(cols_absent) > 1L) {

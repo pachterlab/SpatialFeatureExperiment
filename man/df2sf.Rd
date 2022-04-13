@@ -13,7 +13,8 @@ df2sf(
 )
 }
 \arguments{
-\item{df}{An ordinary data frame, i.e. not \code{sf}.}
+\item{df}{An ordinary data frame, i.e. not \code{sf}. Or a matrix that can be
+converted to a data frame.}
 
 \item{spatialCoordsNames}{Column names in \code{df} that specify spatial
 coordinates.}

@@ -365,6 +365,25 @@ spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
   x
 }
 
+#' Add Visium spot polygons to colGeometry
+#'
+#' For adding the spot polygons to SFE objects converted from SPE.
+#'
+#' @inheritParams dimGeometries
+#' @inheritParams SpatialFeatureExperiment
+#' @return A SFE object with a new colGeometry called spotPoly, which has
+#' polygons of the spots.
+#' @importFrom SpatialExperiment spatialCoordsNames
+#' @export
+addVisiumSpotPoly <- function(x, spotDiameter) {
+  df <- as.data.frame(spatialCoords(x))
+  names(df) <- spatialCoordsNames(x)
+  rownames(df) <- colnames(x)
+  spotPoly(x) <- df2sf(df, names(df), spotDiameter = spotDiameter,
+                       geometryType = "POINT")
+  x
+}
+
 #' @rdname dimGeometries
 #' @export
 ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {

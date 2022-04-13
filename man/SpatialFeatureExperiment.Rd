@@ -6,13 +6,14 @@
 \usage{
 SpatialFeatureExperiment(
   assays,
-  colGeometries,
-  rowGeometries = NULL,
-  annotGeometries = NULL,
   colData = DataFrame(),
   rowData = NULL,
-  spatialCoordsNames = c("x", "y"),
   sample_id = "sample01",
+  spatialCoordsNames = c("x", "y"),
+  spatialCoords = NULL,
+  colGeometries = NULL,
+  rowGeometries = NULL,
+  annotGeometries = NULL,
   spotDiameter = NA_real_,
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
@@ -31,9 +32,39 @@ SpatialFeatureExperiment(
     names (if present) must be consistent across elements and with the row
     names of \code{rowRanges} and \code{colData}.}
 
-\item{colGeometries}{Geometry of the entities that correspond to the columns of
-the gene count matrix, such as cells and Visium spots. It must be a named
-list of be one of the following: \describe{ \item{An \code{sf} data
+\item{colData}{An optional \link{DataFrame} describing the
+    samples. Row names, if present, become the column names of the
+    RangedSummarizedExperiment.}
+
+\item{rowData}{A \link[S4Vectors]{DataFrame} object describing 
+    the rows. Row names, if present, become the row names of the
+    SummarizedExperiment object. The number of rows of the
+    \link[S4Vectors]{DataFrame} must equal the number of rows of the
+    matrices in \code{assays}.}
+
+\item{sample_id}{A \code{character} sample identifier, which matches the
+\code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
+be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
+Default = \code{sample01}.}
+
+\item{spatialCoordsNames}{A \code{character} vector of column names if
+\code{*Geometries} arguments have ordinary data frames, to identify the
+columns in the ordinary data frames that specify the spatial coordinates.
+If \code{colGeometries} is not specified, then this argument will behave as
+in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+precedence if provided.}
+
+\item{spatialCoords}{A numeric matrix containing columns of spatial
+coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+centroids of the entities represented by the columns of the gene count
+matrix. If \code{colGeometries} is also specified, then it will be given
+priority and a warning is issued. Otherwise, the \code{sf} representation
+of the centroids will be stored in the \code{colGeometry} called
+\code{centroids}.}
+
+\item{colGeometries}{Geometry of the entities that correspond to the columns
+of the gene count matrix, such as cells and Visium spots. It must be a
+named list of one of the following: \describe{ \item{An \code{sf} data
 frame}{The geometry column specifies the geometry of the entities.}
 \item{An ordinary data frame specifying centroids}{Column names for the
 coordinates are specified in the \code{spatialCoordsNames} argument. For
@@ -68,25 +99,6 @@ dataset. Also a named list as in \code{colGeometries}. The ordinary data
 frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
 versions. Each data frame can only specify one type of geometry. For MULTI
 versions, there must be a column "group" to identify each MULTI geometry.}
-
-\item{colData}{An optional \link{DataFrame} describing the
-    samples. Row names, if present, become the column names of the
-    RangedSummarizedExperiment.}
-
-\item{rowData}{A \link[S4Vectors]{DataFrame} object describing 
-    the rows. Row names, if present, become the row names of the
-    SummarizedExperiment object. The number of rows of the
-    \link[S4Vectors]{DataFrame} must equal the number of rows of the
-    matrices in \code{assays}.}
-
-\item{spatialCoordsNames}{A \code{character} vector of column names if
-\code{*Geometries} arguments have ordinary data frames, to identify the
-columns in the ordinary data frames that specify the spatial coordinates.}
-
-\item{sample_id}{A \code{character} sample identifier, which matches the
-\code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
-be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
-Default = \code{sample01}.}
 
 \item{spotDiameter}{Spot diameter for technologies with arrays of spots of
 fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The

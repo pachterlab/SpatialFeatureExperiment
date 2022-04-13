@@ -11,6 +11,9 @@
   colGeometries = NULL,
   rowGeometries = NULL,
   annotGeometries = NULL,
+  spatialCoordsNames = c("x", "y"),
+  annotGeometryType = "POLYGON",
+  spatialGraphs = NULL,
   unit = NULL
 )
 }
@@ -18,9 +21,9 @@
 \item{x}{A \code{SpatialExperiment} object to be coerced to a
 \code{SpatialFeatureExperiment} object.}
 
-\item{colGeometries}{Geometry of the entities that correspond to the columns of
-the gene count matrix, such as cells and Visium spots. It must be a named
-list of be one of the following: \describe{ \item{An \code{sf} data
+\item{colGeometries}{Geometry of the entities that correspond to the columns
+of the gene count matrix, such as cells and Visium spots. It must be a
+named list of one of the following: \describe{ \item{An \code{sf} data
 frame}{The geometry column specifies the geometry of the entities.}
 \item{An ordinary data frame specifying centroids}{Column names for the
 coordinates are specified in the \code{spatialCoordsNames} argument. For
@@ -55,6 +58,23 @@ dataset. Also a named list as in \code{colGeometries}. The ordinary data
 frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
 versions. Each data frame can only specify one type of geometry. For MULTI
 versions, there must be a column "group" to identify each MULTI geometry.}
+
+\item{spatialCoordsNames}{A \code{character} vector of column names if
+\code{*Geometries} arguments have ordinary data frames, to identify the
+columns in the ordinary data frames that specify the spatial coordinates.
+If \code{colGeometries} is not specified, then this argument will behave as
+in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+precedence if provided.}
+
+\item{annotGeometryType}{Character vector specifying geometry type of each
+element of the list if \code{annotGeometry} is specified. Each element of
+the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
+MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
+elements of the list) or the same length as the list. Ignored if the
+corresponding element is an \code{sf} object.}
+
+\item{spatialGraphs}{A named list of \code{listw} objects (see \code{spdep})
+for spatial neighborhood graphs.}
 
 \item{unit}{Unit the coordinates are in. I'm thinking about using some custom
 engineering CRS's which can convert units and invert the y axis for
