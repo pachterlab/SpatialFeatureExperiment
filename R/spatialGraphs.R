@@ -50,7 +50,7 @@ NULL
                         which = NA) {
   gss <- int_metadata(x)$spatialGraphs
   if (is.null(gss)) return(NULL)
-  gss <- gss[c("row", "col", "annot"),]
+  gss <- gss[c("row", "col", "annot"), , drop = FALSE]
   switch (type,
     all = as.list(gss),
     sample_all = as.list(gss[,which]),
@@ -146,7 +146,7 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
     else if (!is(value, "DataFrame")) {
       value <- lapply(value, .fill_missing, names_use = c("row", "col", "annot"))
       df <- DataFrame(lapply(value, I), row.names = c("row", "col", "annot"))
-    } else df <- value[c("row", "col", "annot"),]
+    } else df <- value[c("row", "col", "annot"), , drop = FALSE]
   } else if (type == "sample_all") {
     value <- .fill_missing(value, names_use = c("row", "col", "annot"))
     df[[which]] <- value[c("row", "col", "annot")]

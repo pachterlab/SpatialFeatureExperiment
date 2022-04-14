@@ -40,7 +40,6 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
             # Subset annotGeometries based on sample_id
             if (!is.null(annotGeometries(x))) {
               ag_sub <- annotGeometries(x)
-              #browser()
               for (g in seq_along(ag_sub)) {
                 ag_ind <- ag_sub[[g]]
                 ag_ind <- ag_ind[ag_ind$sample_id %in% sample_ids,]
@@ -52,7 +51,7 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
             # Subset *Graphs based on sample_id and reconstruct row and colGraphs
             if (!is.null(spatialGraphs(x))) {
               graphs_sub <- int_metadata(x)$spatialGraphs
-              graphs_sub <- graphs_sub[,names(graphs_sub) %in% sampleIDs(x)]
+              graphs_sub <- graphs_sub[,names(graphs_sub) %in% sampleIDs(x), drop = FALSE]
               if (!drop) {
                 # Check which graphs need to be reconstructed
                 # Wouldn't need reconstruction if the barcodes within one sample

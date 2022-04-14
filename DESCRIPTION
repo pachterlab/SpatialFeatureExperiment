@@ -12,6 +12,7 @@ Authors@R:
 Description: Use the sf package to leverage the well-established and optimized
     geospatial libraries for polygon operations for spatial omics data.
 Imports:
+    BiocGenerics,
     methods,
     S4Vectors,
     sf,
@@ -29,6 +30,7 @@ Collate:
     'utils.R'
     'SFE-class.R'
     'annotGeometries.R'
+    'cbind.R'
     'coerce.R'
     'data.R'
     'df2sf.R'

@@ -34,6 +34,14 @@ g_sub <- readRDS(system.file("testdata/colgraph_visium_sub.rds",
 colGraph(sfe_visium, "foo", "sample01") <- g_visium
 colGraph(sfe_visium, "bar", "sample02") <- g_visium2
 
+test_that("Retain correct spatialGraphs structure when one entire sample is left", {
+  sfe_visium1 <- sfe_visium[,colData(sfe_visium)$sample_id == "sample01"]
+  sgr <- int_metadata(sfe_visium1)[["spatialGraphs"]]
+  expect_true(is(sgr, "DataFrame"))
+  expect_equal(names(sgr), "sample01")
+  expect_true(is(spatialGraph(sfe_visium1, "foo", 2, "sample01"), "listw"))
+})
+
 test_that("Correctly reconstruct the graphs when they need to be reconstructed", {
   # Remove one item from sample01
   sfe_visium <- sfe_visium[,-1]
