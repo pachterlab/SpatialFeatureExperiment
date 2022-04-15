@@ -64,6 +64,18 @@ make_empty_geometry <- function() {
 #' @importFrom SummarizedExperiment colData colData<-
 sampleIDs <- function(x) unique(colData(x)$sample_id)
 
+.check_sample_id <- function(x, sample_id) {
+  if (is.null(sample_id)) {
+    sample_id <- sampleIDs(x)
+    if (length(sample_id) > 1L) {
+      stop("sample_id must be specified")
+    }
+  } else if (!sample_id %in% sampleIDs(x)) {
+    stop("Sample ", sample_id, " is absent from the SFE object.")
+  }
+  sample_id
+}
+
 .reconcile_cols <- function(existing, value) {
   # Assume that both existing and value have the geometry column
   if (any(!names(value) %in% names(existing))) {

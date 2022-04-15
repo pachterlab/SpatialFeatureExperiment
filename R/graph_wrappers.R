@@ -79,12 +79,13 @@
 #' @aliases findSpatialNeighbors
 #' @export
 setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
-          function(x, sample_id, type = "spatialCoords", MARGIN = 2,
+          function(x, sample_id = NULL, type = "spatialCoords", MARGIN = 2,
                    method = c("tri2nb", "knearneigh", "dnearneigh",
                               "gabrielneigh", "relativeneigh", "soi.graph",
                               "poly2nb"),
                    glist = NULL, style = "W", zero.policy = NULL, ...) {
             method <- match.arg(method)
+            sample_id <- .check_sample_id(x, sample_id)
             extra_args_use <- switch (method,
                                       tri2nb = "row.names",
                                       knearneigh = c("k", "use_kd_tree"),
