@@ -90,13 +90,13 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   scale bars. Ignored for now, until I find a better way to deal with it.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
-#' @importFrom SpatialExperiment SpatialExperiment
+#' @importFrom SpatialExperiment SpatialExperiment spatialCoords<-
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #'   int_metadata<- int_elementMetadata<- int_colData<-
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
 #'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
 #'   st_centroid st_geometry_type st_geometry st_is_valid st_geometrycollection
-#' @importFrom S4Vectors DataFrame
+#' @importFrom S4Vectors DataFrame SimpleList
 #' @export
 SpatialFeatureExperiment <- function(assays,
                                      colData = DataFrame(), rowData = NULL,
@@ -110,11 +110,17 @@ SpatialFeatureExperiment <- function(assays,
                                      spatialGraphs = NULL,
                                      unit = "full_res_image_pixels",
                                      ...) {
+  if (!length(colData)) {
+    colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
+  }
+  if (any(!spatialCoordsNames %in% names(colData)))
+    scn_use <- NULL
+  else scn_use <- spatialCoordsNames
   if (is.null(colGeometries)) {
     spe <- SpatialExperiment(assays = assays, colData = colData,
                              rowData = rowData, sample_id = sample_id,
                              spatialCoords = spatialCoords,
-                             spatialCoordsNames = spatialCoordsNames,...)
+                             spatialCoordsNames = scn_use,...)
   } else {
     if (!is.null(spatialCoords)) {
       warning("Ignoring spatialCoords; coordinates are specified in colGeometries.")
@@ -123,19 +129,24 @@ SpatialFeatureExperiment <- function(assays,
     spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
     spe <- SpatialExperiment(assays = assays, colData = colData,
                              rowData = rowData, sample_id = sample_id,
-                             spatialCoords = spe_coords, ...)
+                             spatialCoords = spe_coords,
+                             spatialCoordsNames = NULL, ...)
   }
+  rownames(spatialCoords(spe)) <- colnames(assays[[1]])
   sfe <- .spe_to_sfe(spe, colGeometries, rowGeometries, annotGeometries,
                      spatialCoordsNames, annotGeometryType,
-                     spatialGraphs, unit)
+                     spatialGraphs, spotDiameter, unit)
   return(sfe)
 }
 
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
-                        unit) {
+                        spotDiameter, unit) {
   if (is.null(colGeometries)) {
-    colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
+    if (!is.na(spotDiameter)) {
+      colGeometries <- list(spotPoly = st_buffer(.sc2cg(spatialCoords(spe)),
+                                                 dist = spotDiameter/2))
+    } else colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
   }
   if (!is.null(rowGeometries)) {
     rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames, spotDiameter = NA,
