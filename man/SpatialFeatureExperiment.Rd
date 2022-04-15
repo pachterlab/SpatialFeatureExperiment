@@ -125,12 +125,13 @@ and \code{\link{SingleCellExperiment}} constructors.}
 }
 \value{
 A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
-is specified, then a \code{colGeometry} called "centroids" will be made, which
-is essentially the spatial coordinates as sf POINTs. If \code{spotDiameter} is
-specified, but not \code{colGeometries}, then the spatial coordinates will be
-buffered by half the diameter to get spots with the desired diameter, and the
-resulting \code{colGeometry} will be called "spotPoly", for which there's a
-convenience getter and setter, \code{\link{spotPoly}}.
+  is specified, then a \code{colGeometry} called "centroids" will be made,
+  which is essentially the spatial coordinates as sf POINTs. If
+  \code{spotDiameter} is specified, but not \code{colGeometries}, then the
+  spatial coordinates will be buffered by half the diameter to get spots with
+  the desired diameter, and the resulting \code{colGeometry} will be called
+  "spotPoly", for which there's a convenience getter and setter,
+  \code{\link{spotPoly}}.
 }
 \description{
 Create a \code{SpatialFeatureExperiment} object.

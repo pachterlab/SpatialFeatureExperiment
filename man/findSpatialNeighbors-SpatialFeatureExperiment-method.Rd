@@ -7,7 +7,7 @@
 \usage{
 \S4method{findSpatialNeighbors}{SpatialFeatureExperiment}(
   x,
-  sample_id,
+  sample_id = NULL,
   type = "spatialCoords",
   MARGIN = 2,
   method = c("tri2nb", "knearneigh", "dnearneigh", "gabrielneigh", "relativeneigh",

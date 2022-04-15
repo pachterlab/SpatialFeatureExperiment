@@ -73,7 +73,8 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing"),
 #' @rdname spatialGraphs
 #' @export
 setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "character"),
-          function(x, MARGIN, sample_id) .get_graphs(x, "sample_all", sample_id))
+          function(x, MARGIN, sample_id = NULL)
+            .get_graphs(x, "sample_all", sample_id))
 
 #' @rdname spatialGraphs
 #' @export
@@ -98,18 +99,18 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character")
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("colGraphs", c("SpatialFeatureExperiment", "character"),
-          function(x, sample_id) spatialGraphs(x, 2, sample_id))
+setMethod("colGraphs", c("SpatialFeatureExperiment", "ANY"),
+          function(x, sample_id = NULL) spatialGraphs(x, 2, sample_id))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("rowGraphs", c("SpatialFeatureExperiment", "character"),
-          function(x, sample_id) spatialGraphs(x, 1, sample_id))
+setMethod("rowGraphs", c("SpatialFeatureExperiment", "ANY"),
+          function(x, sample_id = NULL) spatialGraphs(x, 1, sample_id))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
-          function(x, sample_id) spatialGraphs(x, 3, sample_id))
+setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY"),
+          function(x, sample_id = NULL) spatialGraphs(x, 3, sample_id))
 
 .fill_missing <- function(l, names_use) {
   to_add <- setdiff(names_use, names(l))
@@ -184,6 +185,14 @@ setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "miss
 
 #' @rdname spatialGraphs
 #' @export
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "NULL"),
+                 function(x, MARGIN, sample_id, value) {
+                   sample_id <- .check_sample_id(x, sample_id)
+                   .set_graphs(x, "sample_all", which = sample_id, value = value)
+                 })
+
+#' @rdname spatialGraphs
+#' @export
 setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "character"),
                  function(x, MARGIN, sample_id, value)
                    .set_graphs(x, "sample_all", which = sample_id, value = value))
@@ -230,80 +239,89 @@ setReplaceMethod("annotGraphs", c("SpatialFeatureExperiment", "character"),
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphNames", c("SpatialFeatureExperiment", "numeric", "character"),
-          function(x, MARGIN, sample_id) names(spatialGraphs(x, MARGIN, sample_id)))
+setMethod("spatialGraphNames", c("SpatialFeatureExperiment", "numeric", "ANY"),
+          function(x, MARGIN, sample_id) {
+            sample_id <- .check_sample_id(x, sample_id)
+            names(spatialGraphs(x, MARGIN, sample_id))
+          })
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("spatialGraphNames", c("SpatialFeatureExperiment",
-                                        "numeric", "character", "character"),
-                 function(x, MARGIN, sample_id, value) {
+                                        "numeric", "ANY", "character"),
+                 function(x, MARGIN, sample_id = NULL, value) {
+                   sample_id <- .check_sample_id(x, sample_id)
                    names(spatialGraphs(x, MARGIN, sample_id)) <- value
                    x
                  })
 
 #' @rdname spatialGraphs
 #' @export
-colGraphNames <- function(x, sample_id) spatialGraphNames(x, 2, sample_id)
+colGraphNames <- function(x, sample_id = NULL) spatialGraphNames(x, 2, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-rowGraphNames <- function(x, sample_id) spatialGraphNames(x, 1, sample_id)
+rowGraphNames <- function(x, sample_id = NULL) spatialGraphNames(x, 1, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-annotGraphNames <- function(x, sample_id) spatialGraphNames(x, 3, sample_id)
+annotGraphNames <- function(x, sample_id = NULL) spatialGraphNames(x, 3, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-`colGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, 2, sample_id, value)
+`colGraphNames<-` <- function(x, sample_id = NULL, value) `spatialGraphNames<-`(x, 2, sample_id, value)
 
 #' @rdname spatialGraphs
 #' @export
-`rowGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, 1, sample_id, value)
+`rowGraphNames<-` <- function(x, sample_id = NULL, value) `spatialGraphNames<-`(x, 1, sample_id, value)
 
 #' @rdname spatialGraphs
 #' @export
-`annotGraphNames<-` <- function(x, sample_id, value) `spatialGraphNames<-`(x, 3, sample_id, value)
+`annotGraphNames<-` <- function(x, sample_id = NULL, value) `spatialGraphNames<-`(x, 3, sample_id, value)
 
 # For single listws, not in a list-------
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraph", c("SpatialFeatureExperiment", "missing", "numeric", "character"),
-          function(x, type, MARGIN, sample_id) spatialGraph(x, 1L, MARGIN, sample_id))
+setMethod("spatialGraph", c("SpatialFeatureExperiment", "missing", "numeric"),
+          function(x, type, MARGIN, sample_id = NULL) spatialGraph(x, 1L, MARGIN, sample_id))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraph", c("SpatialFeatureExperiment", "numeric", "numeric", "character"),
-          function(x, type, MARGIN, sample_id)
-            spatialGraphs(x, MARGIN, sample_id)[[type]])
+setMethod("spatialGraph", c("SpatialFeatureExperiment", "numeric", "numeric"),
+          function(x, type, MARGIN, sample_id = NULL) {
+            sample_id <- .check_sample_id(x, sample_id)
+            spatialGraphs(x, MARGIN, sample_id)[[type]]
+          })
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraph", c("SpatialFeatureExperiment", "character", "numeric", "character"),
-          function(x, type, MARGIN, sample_id)
-            spatialGraphs(x, MARGIN, sample_id)[[type]])
+setMethod("spatialGraph", c("SpatialFeatureExperiment", "character", "numeric"),
+          function(x, type, MARGIN, sample_id = NULL) {
+            sample_id <- .check_sample_id(x, sample_id)
+            spatialGraphs(x, MARGIN, sample_id)[[type]]
+          })
 
 #' @rdname spatialGraphs
 #' @export
-colGraph <- function(x, type = 1L, sample_id) spatialGraph(x, type, 2, sample_id)
+colGraph <- function(x, type = 1L, sample_id = NULL) spatialGraph(x, type, 2, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-rowGraph <- function(x, type = 1L, sample_id) spatialGraph(x, type, 1, sample_id)
+rowGraph <- function(x, type = 1L, sample_id = NULL) spatialGraph(x, type, 1, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
-annotGraph <- function(x, type = 1L, sample_id) spatialGraph(x, type, 3, sample_id)
+annotGraph <- function(x, type = 1L, sample_id = NULL) spatialGraph(x, type, 3, sample_id)
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "missing",
-                                   "numeric", "character"),
-                 function(x, type, MARGIN, sample_id, value)
+                                   "numeric"),
+                 function(x, type, MARGIN, sample_id = NULL, value)
                    `spatialGraph<-`(x, 1L, MARGIN, sample_id, value))
 
-.sg_r <- function(x, type, MARGIN, sample_id, value) {
+.sg_r <- function(x, type, MARGIN, sample_id = NULL, value) {
+  sample_id <- .check_sample_id(x, sample_id)
   if (!is.null(value)) {
     if (!is(value, "listw")) {
       stop("value must be of class listw.")
@@ -337,26 +355,26 @@ setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment", "missing",
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment",
-                                   "numeric", "numeric", "character"),
+                                   "numeric", "numeric"),
                  .sg_r)
 
 #' @rdname spatialGraphs
 #' @export
 setReplaceMethod("spatialGraph", c("SpatialFeatureExperiment",
-                                   "character", "numeric", "character"),
+                                   "character", "numeric"),
                  .sg_r)
 
 #' @rdname spatialGraphs
 #' @export
-`colGraph<-` <- function(x, type = 1L, sample_id, value)
+`colGraph<-` <- function(x, type = 1L, sample_id = NULL, value)
   `spatialGraph<-`(x, type, 2, sample_id, value)
 
 #' @rdname spatialGraphs
 #' @export
-`rowGraph<-` <- function(x, type = 1L, sample_id, value)
+`rowGraph<-` <- function(x, type = 1L, sample_id = NULL, value)
   `spatialGraph<-`(x, type, 1, sample_id, value)
 
 #' @rdname spatialGraphs
 #' @export
-`annotGraph<-` <- function(x, type = 1L, sample_id, value)
+`annotGraph<-` <- function(x, type = 1L, sample_id = NULL, value)
   `spatialGraph<-`(x, type, 3, sample_id, value)

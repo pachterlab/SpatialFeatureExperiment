@@ -4,7 +4,7 @@
 \alias{findVisiumGraph}
 \title{Find spatial neighborhood graphs for Visium spots}
 \usage{
-findVisiumGraph(x, sample_id, style = "W", zero.policy = NULL)
+findVisiumGraph(x, sample_id = NULL, style = "W", zero.policy = NULL)
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object with Visium data. Column
