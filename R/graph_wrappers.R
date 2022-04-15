@@ -150,7 +150,8 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 #' be the order of barcodes within the sample in the gene count matrix.
 #' @importFrom spdep dnearneigh nb2listw
 #' @export
-findVisiumGraph <- function(x, sample_id, style = "W", zero.policy = NULL) {
+findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL) {
+  sample_id <- .check_sample_id(x, sample_id)
   bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
   bcs_use2 <- sub("-\\d+$", "", bcs_use)
   visium_row_col <- SpatialFeatureExperiment::visium_row_col
