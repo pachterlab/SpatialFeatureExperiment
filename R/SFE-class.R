@@ -90,6 +90,14 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   scale bars. Ignored for now, until I find a better way to deal with it.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
+#' @return A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
+#'   is specified, then a \code{colGeometry} called "centroids" will be made,
+#'   which is essentially the spatial coordinates as sf POINTs. If
+#'   \code{spotDiameter} is specified, but not \code{colGeometries}, then the
+#'   spatial coordinates will be buffered by half the diameter to get spots with
+#'   the desired diameter, and the resulting \code{colGeometry} will be called
+#'   "spotPoly", for which there's a convenience getter and setter,
+#'   \code{\link{spotPoly}}.
 #' @importFrom SpatialExperiment SpatialExperiment spatialCoords<-
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #'   int_metadata<- int_elementMetadata<- int_colData<-
