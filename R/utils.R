@@ -68,7 +68,7 @@ sampleIDs <- function(x) unique(colData(x)$sample_id)
   if (is.null(sample_id)) {
     sample_id <- sampleIDs(x)
     if (length(sample_id) > 1L) {
-      stop("sample_id must be specified")
+      stop("There are more than one sample in this object. sample_id must be specified")
     }
   } else if (!sample_id %in% sampleIDs(x)) {
     stop("Sample ", sample_id, " is absent from the SFE object.")
