@@ -45,6 +45,7 @@ setAs(from = "SpatialExperiment", to = "SpatialFeatureExperiment",
                     int_metadata(from)[["annotGeometries"]],
                     spatialCoordsNames(from), "POLYGON",
                     int_metadata(from)[["spatialGraphs"]],
+                    spotDiameter = NA,
                     int_metadata(from)[["unit"]])
       })
 
@@ -54,7 +55,7 @@ setMethod("toSpatialFeatureExperiment", "SpatialExperiment",
           function(x, colGeometries = NULL, rowGeometries = NULL,
                    annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
                    annotGeometryType = "POLYGON",
-                   spatialGraphs = NULL, unit = NULL) {
+                   spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
             if (is.null(colGeometries)) {
               colGeometries <- int_colData(x)$colGeometries
             }

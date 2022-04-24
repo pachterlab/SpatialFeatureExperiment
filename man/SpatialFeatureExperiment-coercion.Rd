@@ -14,6 +14,7 @@
   spatialCoordsNames = c("x", "y"),
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
+  spotDiameter = NA,
   unit = NULL
 )
 }
@@ -75,6 +76,11 @@ corresponding element is an \code{sf} object.}
 
 \item{spatialGraphs}{A named list of \code{listw} objects (see \code{spdep})
 for spatial neighborhood graphs.}
+
+\item{spotDiameter}{Spot diameter for technologies with arrays of spots of
+fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
+diameter must be in the same unit as the coordinates in the *Geometry
+arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
 \item{unit}{Unit the coordinates are in. I'm thinking about using some custom
 engineering CRS's which can convert units and invert the y axis for
