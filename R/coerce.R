@@ -70,5 +70,5 @@ setMethod("toSpatialFeatureExperiment", "SpatialExperiment",
             }
             .spe_to_sfe(x, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType,
-                        spatialGraphs, unit)
+                        spatialGraphs, spotDiameter, unit)
           })

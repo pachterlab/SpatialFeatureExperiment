@@ -132,6 +132,7 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY"),
       df[[samples[i]]] <- empty_col
     }
   }
+  names(df) <- gsub("X", "", names(df))
   df
 }
 .set_graphs <- function(x, type = c("all", "sample_all", "margin_all", "one"),
