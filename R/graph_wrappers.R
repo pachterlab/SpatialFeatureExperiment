@@ -12,7 +12,7 @@
   } else {
     if (MARGIN < 3) g <- dimGeometry(x, type, MARGIN, sample_id)
     else g <- annotGeometry(x, type, sample_id)
-    if (st_is(g, "POINT")) {
+    if (st_geometry_type(g, FALSE) == "POINT") {
       coords <- st_coordinates(st_geometry(g))
     } else {
       coords <- st_coordinates(st_centroid(st_geometry(g)))
@@ -96,7 +96,8 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                                       poly2nb = c("row.names", "snap", "queen", "useC", "foundInBox")
             )
             args <- list(...)
-            if (!"row.names" %in% names(args) && "row.names" %in% extra_args_use) {
+            if (!"row.names" %in% names(args) &&
+                "row.names" %in% extra_args_use && MARGIN < 3) {
               args$row.names <- colnames(x)[colData(x)$sample_id %in% sample_id]
             }
             args <- args[names(args) %in% extra_args_use]
@@ -105,7 +106,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
             } else {
               if (MARGIN < 3) coords <- dimGeometry(x, type, MARGIN, sample_id)
               else coords <- annotGeometry(x, type, sample_id)
-              if (!st_is(coords, "POLYGON")) {
+              if (st_geometry_type(coords, FALSE) != "POLYGON") {
                 stop("poly2nb can only be used on POLYGON geometries.")
               }
             }

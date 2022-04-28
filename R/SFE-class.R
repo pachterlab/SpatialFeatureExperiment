@@ -102,7 +102,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #'   int_metadata<- int_elementMetadata<- int_colData<-
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
-#'   st_multipoint st_multilinestring st_multipolygon st_is st_coordinates
+#'   st_multipoint st_multilinestring st_multipolygon st_coordinates
 #'   st_centroid st_geometry_type st_geometry st_is_valid st_geometrycollection
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @export
