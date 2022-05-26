@@ -61,6 +61,7 @@ setMethod("cbind", "SpatialFeatureExperiment",
             out <- do.call(
               callNextMethod,
               c(args, list(deparse.level = deparse.level)))
+            colnames(out) <- make.unique(colnames(out), sep = "-")
             # Combine the annotGeometries
             has_ag <- vapply(args, function(a) !is.null(annotGeometries(a)),
                              FUN.VALUE = logical(1))
