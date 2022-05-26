@@ -126,13 +126,12 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY"),
   samples <- sampleIDs(x)
   args_init <- list(sample1 = I(empty_col), row.names = c("row", "col", "annot"))
   names(args_init)[1] <- samples[1]
-  df <- do.call(DataFrame, args_init)
+  df <- do.call(DataFrame, c(args_init, list(check.names = FALSE)))
   if (length(samples) > 1) {
     for (i in 2:length(samples)) {
       df[[samples[i]]] <- empty_col
     }
   }
-  names(df) <- gsub("X", "", names(df))
   df
 }
 .set_graphs <- function(x, type = c("all", "sample_all", "margin_all", "one"),
