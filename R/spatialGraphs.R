@@ -229,7 +229,7 @@ setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "char
 setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character",
                                     "character"),
                  function(x, MARGIN, sample_id, name, value) {
-                   sample_id <- .check_sample_id(x, sample_id)
+                   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
                    for (s in sample_id) {
                      spatialGraph(x, type = name, MARGIN = MARGIN, sample_id = s) <- value[[s]]
                    }
