@@ -55,19 +55,19 @@ setGeneric("spatialGraphs<-", function(x, MARGIN, sample_id, name, value) standa
 setGeneric("colGraphs", function(x, sample_id) standardGeneric("colGraphs"))
 
 #' @export
-setGeneric("colGraphs<-", function(x, sample_id, value) standardGeneric("colGraphs<-"))
+setGeneric("colGraphs<-", function(x, sample_id, name, value) standardGeneric("colGraphs<-"))
 
 #' @export
 setGeneric("rowGraphs", function(x, sample_id) standardGeneric("rowGraphs"))
 
 #' @export
-setGeneric("rowGraphs<-", function(x, sample_id, value) standardGeneric("rowGraphs<-"))
+setGeneric("rowGraphs<-", function(x, sample_id, name, value) standardGeneric("rowGraphs<-"))
 
 #' @export
 setGeneric("annotGraphs", function(x, sample_id) standardGeneric("annotGraphs"))
 
 #' @export
-setGeneric("annotGraphs<-", function(x, sample_id, value) standardGeneric("annotGraphs<-"))
+setGeneric("annotGraphs<-", function(x, sample_id, name, value) standardGeneric("annotGraphs<-"))
 
 #' @export
 setGeneric("spatialGraph", function(x, type, MARGIN, sample_id) standardGeneric("spatialGraph"))

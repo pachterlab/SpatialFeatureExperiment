@@ -61,8 +61,9 @@ sampleIDs <- function(x) unique(colData(x)$sample_id)
     }
   } else if (sample_id == "all") {
     sample_id <- sampleIDs(x)
-  } else if (!sample_id %in% sampleIDs(x)) {
-    stop("Sample ", sample_id, " is absent from the SFE object.")
+  } else if (!all(sample_id %in% sampleIDs(x))) {
+    sample_show <- setdiff(sample_id, sampleIDs(x))
+    stop("Sample(s) ", paste(sample_show, sep = ","), " is/are absent from the SFE object.")
   }
   if (one) {
     if (length(sample_id) > 1L)
