@@ -70,6 +70,15 @@ test_that("Set all items in one margin and one sample_id", {
   expect_equal(df[2,2][[1]]$bar, cgr2)
 })
 
+test_that("Set graph of the same name for multiple sample_ids", {
+  value <- list(sample01 = cgr1, sample02 = cgr2)
+  spatialGraphs(sfe2, MARGIN = 2L, sample_id = "all", name = "foo") <- value
+  expect_equal(spatialGraphNames(sfe2, 2, "sample01"), "foo")
+  expect_equal(spatialGraphNames(sfe2, 2, "sample02"), "foo")
+  expect_equal(spatialGraph(sfe2, "foo", 2, "sample01"), cgr1)
+  expect_equal(spatialGraph(sfe2, "foo", 2, "sample02"), cgr2)
+})
+
 test_that("Set one item in one margin and one sample_id", {
   spatialGraph(sfe2, "foo", 3L, "sample01") <- agr1
   df <- int_metadata(sfe2)$spatialGraphs

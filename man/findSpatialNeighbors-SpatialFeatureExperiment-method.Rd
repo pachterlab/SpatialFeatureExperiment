@@ -21,10 +21,12 @@
 \arguments{
 \item{x}{A \code{\link{SpatialFeatureExperiment}} object.}
 
-\item{sample_id}{Which sample in the SFE object to use for the graph.}
+\item{sample_id}{Which sample in the SFE object to use for the graph. Can
+also be "all", which means this function will compute the graph for all
+samples independently.}
 
-\item{type}{Name of the geometry associated with the MARGIN of interest
-for which to compute the graph.}
+\item{type}{Name of the geometry associated with the MARGIN of interest for
+which to compute the graph.}
 
 \item{MARGIN}{Just like in \code{\link{apply}}, where 1 stands for row, 2
 stands for column. Here, in addition, 3 stands for annotation, to query the
@@ -46,11 +48,13 @@ arguments about using longitude and latitude, which are irrelevant, are
 ignored. The \code{longlat} argument is hard coded to \code{FALSE}.}
 }
 \value{
-A \code{listw} object representing the graph, with an attribute
-  "method" recording the function used to build the graph, its arguments, and
-  information about the geometry for which the graph was built. The attribute
-  is used to reconstruct the graphs when the SFE object is subsetted since
-  some nodes in the graph will no longer be present.
+For one sample, then a \code{listw} object representing the graph,
+  with an attribute "method" recording the function used to build the graph,
+  its arguments, and information about the geometry for which the graph was
+  built. The attribute is used to reconstruct the graphs when the SFE object
+  is subsetted since some nodes in the graph will no longer be present. If
+  sample_id = "all" or has length > 1, then a named list of \code{listw}
+  objects, whose names are the sample_ids.
 }
 \description{
 This function wraps all spatial neighborhood graphs implemented in the

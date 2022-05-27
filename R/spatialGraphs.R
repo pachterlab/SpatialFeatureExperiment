@@ -173,28 +173,28 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY"),
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
-                 function(x, MARGIN, sample_id, value)
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "missing", "missing"),
+                 function(x, MARGIN, sample_id, name, value)
                    .set_graphs(x, "all", value = value))
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing"),
-                 function(x, MARGIN, sample_id, value)
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing", "missing"),
+                 function(x, MARGIN, sample_id, name, value)
                    .set_graphs(x, "margin_all", which = MARGIN, value = value))
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "NULL"),
-                 function(x, MARGIN, sample_id, value) {
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "NULL", "missing"),
+                 function(x, MARGIN, sample_id, name, value) {
                    sample_id <- .check_sample_id(x, sample_id)
                    .set_graphs(x, "sample_all", which = sample_id, value = value)
                  })
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "character"),
-                 function(x, MARGIN, sample_id, value)
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "character", "missing"),
+                 function(x, MARGIN, sample_id, name, value)
                    .set_graphs(x, "sample_all", which = sample_id, value = value))
 
 #' @rdname spatialGraphs
@@ -217,10 +217,24 @@ setReplaceMethod("annotGraphs", c("SpatialFeatureExperiment", "missing"),
 
 #' @rdname spatialGraphs
 #' @export
-setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character"),
-                 function(x, MARGIN, sample_id, value)
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character", "missing"),
+                 function(x, MARGIN, sample_id, name, value)
                    .set_graphs(x, "one", which = list(MARGIN, sample_id),
                                value = value))
+
+# I should write another method to add graphs of the same name to each sample_id
+# when multiple sample_ids are specified.
+#' @rdname spatialGraphs
+#' @export
+setReplaceMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character",
+                                    "character"),
+                 function(x, MARGIN, sample_id, name, value) {
+                   sample_id <- .check_sample_id(x, sample_id)
+                   for (s in sample_id) {
+                     spatialGraph(x, type = name, MARGIN = MARGIN, sample_id = s) <- value[[s]]
+                   }
+                   x
+                 })
 
 #' @rdname spatialGraphs
 #' @export

@@ -59,9 +59,11 @@
 #' @param MARGIN Just like in \code{\link{apply}}, where 1 stands for row, 2
 #'   stands for column. Here, in addition, 3 stands for annotation, to query the
 #'   \code{\link{annotGeometries}}, such as nuclei segmentation in a Visium data
-#' @param sample_id Which sample in the SFE object to use for the graph.
-#' @param type Name of the geometry associated with the MARGIN of interest
-#'   for which to compute the graph.
+#' @param sample_id Which sample in the SFE object to use for the graph. Can
+#'   also be "all", which means this function will compute the graph for all
+#'   samples independently.
+#' @param type Name of the geometry associated with the MARGIN of interest for
+#'   which to compute the graph.
 #' @param method Name of function in the package \code{spdep} to use to find the
 #'   spatial neighborhood graph.
 #' @param ... Extra arguments passed to the \code{spdep} function stated in the
@@ -69,11 +71,13 @@
 #'   \code{d2}, \code{nnmult}, \code{sym}, and \code{quadsegs}. Note that any
 #'   arguments about using longitude and latitude, which are irrelevant, are
 #'   ignored. The \code{longlat} argument is hard coded to \code{FALSE}.
-#' @return A \code{listw} object representing the graph, with an attribute
-#'   "method" recording the function used to build the graph, its arguments, and
-#'   information about the geometry for which the graph was built. The attribute
-#'   is used to reconstruct the graphs when the SFE object is subsetted since
-#'   some nodes in the graph will no longer be present.
+#' @return For one sample, then a \code{listw} object representing the graph,
+#'   with an attribute "method" recording the function used to build the graph,
+#'   its arguments, and information about the geometry for which the graph was
+#'   built. The attribute is used to reconstruct the graphs when the SFE object
+#'   is subsetted since some nodes in the graph will no longer be present. If
+#'   sample_id = "all" or has length > 1, then a named list of \code{listw}
+#'   objects, whose names are the sample_ids.
 #' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh
 #'   soi.graph knn2nb graph2nb nb2listw poly2nb
 #' @aliases findSpatialNeighbors
