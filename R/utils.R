@@ -62,8 +62,13 @@ sampleIDs <- function(x) unique(colData(x)$sample_id)
   } else if (sample_id == "all") {
     sample_id <- sampleIDs(x)
   } else if (!all(sample_id %in% sampleIDs(x))) {
+    sample_use <- intersect(sample_id, sampleIDs(x))
+    if (!length(sample_use)) {
+      stop("None of the samples is present in the SFE object.")
+    }
     sample_show <- setdiff(sample_id, sampleIDs(x))
-    stop("Sample(s) ", paste(sample_show, sep = ","), " is/are absent from the SFE object.")
+    warning("Sample(s) ", paste(sample_show, sep = ","), " is/are absent from the SFE object.")
+    sample_id <- sample_use
   }
   if (one) {
     if (length(sample_id) > 1L)

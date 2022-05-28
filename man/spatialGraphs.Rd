@@ -28,14 +28,17 @@
 \alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,missing,missing-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,NULL,missing-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,missing,character,missing-method}
-\alias{colGraphs<-,SpatialFeatureExperiment,missing-method}
-\alias{rowGraphs<-,SpatialFeatureExperiment,missing-method}
-\alias{annotGraphs<-,SpatialFeatureExperiment,missing-method}
+\alias{colGraphs<-,SpatialFeatureExperiment,missing,missing-method}
+\alias{rowGraphs<-,SpatialFeatureExperiment,missing,missing-method}
+\alias{annotGraphs<-,SpatialFeatureExperiment,missing,missing-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,character,missing-method}
+\alias{colGraphs<-,SpatialFeatureExperiment,character,missing-method}
+\alias{rowGraphs<-,SpatialFeatureExperiment,character,missing-method}
+\alias{annotGraphs<-,SpatialFeatureExperiment,character,missing-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,character,character-method}
-\alias{colGraphs<-,SpatialFeatureExperiment,character-method}
-\alias{rowGraphs<-,SpatialFeatureExperiment,character-method}
-\alias{annotGraphs<-,SpatialFeatureExperiment,character-method}
+\alias{colGraphs<-,SpatialFeatureExperiment,character,character-method}
+\alias{rowGraphs<-,SpatialFeatureExperiment,character,character-method}
+\alias{annotGraphs<-,SpatialFeatureExperiment,character,character-method}
 \alias{spatialGraphNames,SpatialFeatureExperiment,numeric-method}
 \alias{spatialGraphNames<-,SpatialFeatureExperiment,numeric,ANY,character-method}
 \alias{colGraphNames}
@@ -86,21 +89,27 @@
 
 \S4method{spatialGraphs}{SpatialFeatureExperiment,missing,character,missing}(x, MARGIN, sample_id, name) <- value
 
-\S4method{colGraphs}{SpatialFeatureExperiment,missing}(x, sample_id) <- value
+\S4method{colGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, name) <- value
 
-\S4method{rowGraphs}{SpatialFeatureExperiment,missing}(x, sample_id) <- value
+\S4method{rowGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, name) <- value
 
-\S4method{annotGraphs}{SpatialFeatureExperiment,missing}(x, sample_id) <- value
+\S4method{annotGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, name) <- value
 
 \S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character,missing}(x, MARGIN, sample_id, name) <- value
 
+\S4method{colGraphs}{SpatialFeatureExperiment,character,missing}(x, sample_id, name) <- value
+
+\S4method{rowGraphs}{SpatialFeatureExperiment,character,missing}(x, sample_id, name) <- value
+
+\S4method{annotGraphs}{SpatialFeatureExperiment,character,missing}(x, sample_id, name) <- value
+
 \S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character,character}(x, MARGIN, sample_id, name) <- value
 
-\S4method{colGraphs}{SpatialFeatureExperiment,character}(x, sample_id) <- value
+\S4method{colGraphs}{SpatialFeatureExperiment,character,character}(x, sample_id, name) <- value
 
-\S4method{rowGraphs}{SpatialFeatureExperiment,character}(x, sample_id) <- value
+\S4method{rowGraphs}{SpatialFeatureExperiment,character,character}(x, sample_id, name) <- value
 
-\S4method{annotGraphs}{SpatialFeatureExperiment,character}(x, sample_id) <- value
+\S4method{annotGraphs}{SpatialFeatureExperiment,character,character}(x, sample_id, name) <- value
 
 \S4method{spatialGraphNames}{SpatialFeatureExperiment,numeric}(x, MARGIN, sample_id)
 
@@ -154,6 +163,10 @@ useful when multiple pieces of tissues are in the same SFE object (say for
 a joint dimension reduction and clustering) and the spatial neighborhood is
 only meaningful within the same piece of tissue. See the \code{sample_id}
 argument in \code{\link{SpatialExperiment}}.}
+
+\item{name}{Name of the graphs to add to each sample_id; used in the
+\code{spatialGraphs} replacement method as it must be character while
+\code{type} can be either an integer index or a name.}
 
 \item{value}{A \code{listw} object (\code{*Graph}), or a named list of list
 of \code{listw} objects (\code{*Graphs}) where the names of the top level

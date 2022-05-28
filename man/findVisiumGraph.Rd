@@ -11,16 +11,25 @@ findVisiumGraph(x, sample_id = NULL, style = "W", zero.policy = NULL)
 names of the gene count matrix must be Visium barcodes, which may have a
 numeric suffix to distinguish between samples (e.g. "AAACAACGAATAGTTC-1").}
 
-\item{sample_id}{String specifying the sample, as in \code{sample_id} in
-\code{colData}, for which the graph is to be constructed.}
+\item{sample_id}{Which sample(s) in the SFE object to use for the graph. Can
+also be "all", which means this function will compute the graph for all
+samples independently.}
 
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 }
 \value{
-A \code{listw} object for the neighborhood graph. The node index will
-be the order of barcodes within the sample in the gene count matrix.
+For one sample, then a \code{listw} object representing the graph,
+  with an attribute "method" recording the function used to build the graph,
+  its arguments, and information about the geometry for which the graph was
+  built. The attribute is used to reconstruct the graphs when the SFE object
+  is subsetted since some nodes in the graph will no longer be present. If
+  sample_id = "all" or has length > 1, then a named list of \code{listw}
+  objects, whose names are the sample_ids. To add the list for multiple
+  samples to a SFE object, specify the \code{name} argument in the
+  \code{\link{spatialGraphs}} replacement method, so graph of the same name
+  will be added to the SFE object for each sample.
 }
 \description{
 Visium spots are arranged in a hexagonal grid. This function uses the known

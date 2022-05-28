@@ -40,6 +40,35 @@
   graph2nb(g, sym = sym, row.names = row.names)
 }
 
+.comp_graph_sample <- function(x, sample_id, type, MARGIN, method,
+                               args, extra_args_use, style, zero.policy) {
+  if (!"row.names" %in% names(args) &&
+      "row.names" %in% extra_args_use && MARGIN < 3) {
+    args$row.names <- colnames(x)[colData(x)$sample_id == sample_id]
+  }
+  if (method != "poly2nb") {
+    coords <- .get_centroids(x, type, MARGIN, sample_id)
+  } else {
+    if (MARGIN < 3) coords <- dimGeometry(x, type, MARGIN, sample_id)
+    else coords <- annotGeometry(x, type, sample_id)
+    if (st_geometry_type(coords, FALSE) != "POLYGON") {
+      stop("poly2nb can only be used on POLYGON geometries.")
+    }
+  }
+  nb_out <- do.call(fun_use, c(list(coords = coords), args))
+  out <- nb2listw(nb_out, glist, style, zero.policy)
+  attr(out, "method") <- list(FUN = "findSpatialNeighbors",
+                              package = "SpatialFeatureExperiment",
+                              args = c(method = method, args,
+                                       glist = glist,
+                                       style = style,
+                                       zero.policy = zero.policy,
+                                       sample_id = sample_id,
+                                       type = type,
+                                       MARGIN = MARGIN))
+  out
+}
+
 #' Find spatial neighborhood graph
 #'
 #' This function wraps all spatial neighborhood graphs implemented in the
@@ -59,7 +88,7 @@
 #' @param MARGIN Just like in \code{\link{apply}}, where 1 stands for row, 2
 #'   stands for column. Here, in addition, 3 stands for annotation, to query the
 #'   \code{\link{annotGeometries}}, such as nuclei segmentation in a Visium data
-#' @param sample_id Which sample in the SFE object to use for the graph. Can
+#' @param sample_id Which sample(s) in the SFE object to use for the graph. Can
 #'   also be "all", which means this function will compute the graph for all
 #'   samples independently.
 #' @param type Name of the geometry associated with the MARGIN of interest for
@@ -77,7 +106,11 @@
 #'   built. The attribute is used to reconstruct the graphs when the SFE object
 #'   is subsetted since some nodes in the graph will no longer be present. If
 #'   sample_id = "all" or has length > 1, then a named list of \code{listw}
-#'   objects, whose names are the sample_ids.
+#'   objects, whose names are the sample_ids. To add the list for multiple
+#'   samples to a SFE object, specify the \code{name} argument in the
+#'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
+#'   will be added to the SFE object for each sample. (need to write examples
+#'   and vignettes to make this really clear.)
 #' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh
 #'   soi.graph knn2nb graph2nb nb2listw poly2nb
 #' @aliases findSpatialNeighbors
@@ -89,7 +122,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                               "poly2nb"),
                    glist = NULL, style = "W", zero.policy = NULL, ...) {
             method <- match.arg(method)
-            sample_id <- .check_sample_id(x, sample_id)
+            sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             extra_args_use <- switch (method,
                                       tri2nb = "row.names",
                                       knearneigh = c("k", "use_kd_tree"),
@@ -100,20 +133,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                                       poly2nb = c("row.names", "snap", "queen", "useC", "foundInBox")
             )
             args <- list(...)
-            if (!"row.names" %in% names(args) &&
-                "row.names" %in% extra_args_use && MARGIN < 3) {
-              args$row.names <- colnames(x)[colData(x)$sample_id %in% sample_id]
-            }
             args <- args[names(args) %in% extra_args_use]
-            if (method != "poly2nb") {
-              coords <- .get_centroids(x, type, MARGIN, sample_id)
-            } else {
-              if (MARGIN < 3) coords <- dimGeometry(x, type, MARGIN, sample_id)
-              else coords <- annotGeometry(x, type, sample_id)
-              if (st_geometry_type(coords, FALSE) != "POLYGON") {
-                stop("poly2nb can only be used on POLYGON geometries.")
-              }
-            }
             fun_use <- switch (method,
                                tri2nb = tri2nb,
                                knearneigh = .knn_sfe,
@@ -123,40 +143,20 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                                soi.graph = .soi_sfe,
                                poly2nb = poly2nb
             )
-            nb_out <- do.call(fun_use, c(list(coords = coords), args))
-            out <- nb2listw(nb_out, glist, style, zero.policy)
-            attr(out, "method") <- list(FUN = "findSpatialNeighbors",
-                                        package = "SpatialFeatureExperiment",
-                                        args = c(method = method, args,
-                                                 glist = glist,
-                                                 style = style,
-                                                 zero.policy = zero.policy,
-                                                 sample_id = sample_id,
-                                                 type = type,
-                                                 MARGIN = MARGIN))
+            if (length(sample_id) == 1L) {
+              out <- .comp_graph_sample(x, sample_id, type, MARGIN, method,
+                                        args, extra_args_use, style, zero.policy)
+            } else {
+              out <- lapply(sample_id, function(s) {
+                .comp_graph_sample(x, s, type, MARGIN, method,
+                                   args, extra_args_use, style, zero.policy)
+              })
+              names(out) <- sample_id
+            }
             return(out)
           })
 
-#' Find spatial neighborhood graphs for Visium spots
-#'
-#' Visium spots are arranged in a hexagonal grid. This function uses the known
-#' locations of the Visium barcodes to construct a neighborhood graph, so
-#' adjacent spots are connected by edges. Since the known rows and columns of
-#' the spots are used, the unit the spot centroid coordinates are in does not
-#' matter.
-#'
-#' @inheritParams spdep::nb2listw
-#' @param x A \code{SpatialFeatureExperiment} object with Visium data. Column
-#'   names of the gene count matrix must be Visium barcodes, which may have a
-#'   numeric suffix to distinguish between samples (e.g. "AAACAACGAATAGTTC-1").
-#' @param sample_id String specifying the sample, as in \code{sample_id} in
-#'   \code{colData}, for which the graph is to be constructed.
-#' @return A \code{listw} object for the neighborhood graph. The node index will
-#' be the order of barcodes within the sample in the gene count matrix.
-#' @importFrom spdep dnearneigh nb2listw
-#' @export
-findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL) {
-  sample_id <- .check_sample_id(x, sample_id)
+.comp_visium_graph <- function(x, sample_id, style, zero.policy) {
   bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
   bcs_use2 <- sub("-\\d+$", "", bcs_use)
   visium_row_col <- SpatialFeatureExperiment::visium_row_col
@@ -170,5 +170,43 @@ findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL
                               args = list(style = style,
                                           zero.policy = zero.policy,
                                           sample_id = sample_id))
+  out
+}
+
+#' Find spatial neighborhood graphs for Visium spots
+#'
+#' Visium spots are arranged in a hexagonal grid. This function uses the known
+#' locations of the Visium barcodes to construct a neighborhood graph, so
+#' adjacent spots are connected by edges. Since the known rows and columns of
+#' the spots are used, the unit the spot centroid coordinates are in does not
+#' matter.
+#'
+#' @inheritParams spdep::nb2listw
+#' @param x A \code{SpatialFeatureExperiment} object with Visium data. Column
+#'   names of the gene count matrix must be Visium barcodes, which may have a
+#'   numeric suffix to distinguish between samples (e.g. "AAACAACGAATAGTTC-1").
+#' @param sample_id Which sample(s) in the SFE object to use for the graph. Can
+#'   also be "all", which means this function will compute the graph for all
+#'   samples independently.
+#' @importFrom spdep dnearneigh nb2listw
+#' @return For one sample, then a \code{listw} object representing the graph,
+#'   with an attribute "method" recording the function used to build the graph,
+#'   its arguments, and information about the geometry for which the graph was
+#'   built. The attribute is used to reconstruct the graphs when the SFE object
+#'   is subsetted since some nodes in the graph will no longer be present. If
+#'   sample_id = "all" or has length > 1, then a named list of \code{listw}
+#'   objects, whose names are the sample_ids. To add the list for multiple
+#'   samples to a SFE object, specify the \code{name} argument in the
+#'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
+#'   will be added to the SFE object for each sample.
+#' @export
+findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL) {
+  sample_id <- .check_sample_id(x, sample_id)
+  if (length(sample_id) == 1L) {
+    out <- .comp_visium_graph(x, sample_id, style, zero.policy)
+  } else {
+    out <- lapply(sample_id, function(s) .comp_visium_graph(x, s, style, zero.policy))
+    names(out) <- sample_id
+  }
   return(out)
 }
