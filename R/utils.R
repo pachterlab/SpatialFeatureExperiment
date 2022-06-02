@@ -59,7 +59,7 @@ sampleIDs <- function(x) unique(colData(x)$sample_id)
     if (length(sample_id) > 1L) {
       stop("There are more than one sample in this object. sample_id must be specified")
     }
-  } else if (sample_id == "all") {
+  } else if (identical(sample_id, "all")) {
     sample_id <- sampleIDs(x)
   } else if (!all(sample_id %in% sampleIDs(x))) {
     sample_use <- intersect(sample_id, sampleIDs(x))
