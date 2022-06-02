@@ -130,6 +130,7 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
           })
 
 .out_geometry_id <- function(x, out, MARGIN, sample_id) {
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (!is.null(sample_id)) {
     if (MARGIN == 1L) {
       # OK, maybe applicable, say to crop the rowGeometries by bbox of a sample

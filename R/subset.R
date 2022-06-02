@@ -104,7 +104,3 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
             validObject(x)
             return(x)
           })
-
-# To do:
-# 3. Method to crop the SFE object with any bbox or (multi)polygon.
-# 4. Deal with annotGeometries and Graphs when concatenating SFE objects.
