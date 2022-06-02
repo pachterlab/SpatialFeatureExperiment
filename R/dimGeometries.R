@@ -210,6 +210,7 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
 }
 
 .set_geometry_id <- function(x, value, sample_id, type, MARGIN) {
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     if (MARGIN == 1L) {
       message("sample_id is not applicable to rowGeometries.")
@@ -380,8 +381,9 @@ addVisiumSpotPoly <- function(x, spotDiameter) {
   df <- as.data.frame(spatialCoords(x))
   names(df) <- spatialCoordsNames(x)
   rownames(df) <- colnames(x)
-  spotPoly(x) <- df2sf(df, names(df), spotDiameter = spotDiameter,
-                       geometryType = "POINT")
+  spotPoly(x, sample_id = "all") <- df2sf(df, names(df),
+                                          spotDiameter = spotDiameter,
+                                          geometryType = "POINT")
   x
 }
 
