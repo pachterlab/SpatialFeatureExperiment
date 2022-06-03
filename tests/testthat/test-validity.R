@@ -29,15 +29,11 @@ test_that("All sample_ids in annotGeometries must be present in colData", {
 })
 
 test_that("All graphs must be listw objects", {
-  int_metadata(sfe)$spatialGraphs <- SpatialFeatureExperiment:::.initialize_spatialGraphs(sfe)
-  int_metadata(sfe)$spatialGraphs[3,1] <- I(list(list(foo = "bar")))
-  expect_error(validObject(sfe), "must have class listw")
+  expect_error(spatialGraphs(sfe, MARGIN = 3, sample_id = "sample01") <- list(foo = "bar"), "must have class listw")
 })
 
 test_that("All row and col graphs must have the right number of nodes", {
-  int_metadata(sfe)$spatialGraphs <- SpatialFeatureExperiment:::.initialize_spatialGraphs(sfe)
-  int_metadata(sfe)$spatialGraphs[2,1] <- I(list(list(foo = cgr1)))
-  expect_error(validObject(sfe), "do not have the right length")
+  expect_error(spatialGraphs(sfe, MARGIN = 2, sample_id = "sample01") <- list(foo = cgr1), "do not have the right length")
 })
 
 test_that("The spatialGraphs field must have the right structure", {

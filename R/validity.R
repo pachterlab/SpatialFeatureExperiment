@@ -89,14 +89,6 @@
 .check_graphs <- function(x) {
   sg <- int_metadata(x)$spatialGraphs
   if (is.null(sg)) return(character(0))
-  if (is(sg, "DataFrame")) {
-    if (!setequal(rownames(sg), c("row", "col", "annot"))) {
-      return("Row names of spatialGraphs must be 'row', 'col', and 'annot'.\n")
-    }
-  } else {
-    return(paste0("spatialGraphs must be a DataFrame whose columns are sample_ids ",
-           "and whose rows are margins (rows, columns, annotation).\n"))
-  }
   # Check each column of sg, which stands for a sample_id
   right_lengths <- c(row = nrow(x), col = NA_integer_, annot = NA_integer_)
   unlist(lapply(seq_along(sg), function(i) {
@@ -116,15 +108,29 @@
     return(character(0))
   }
 }
+
+.check_graph_str <- function(x) {
+  sg <- int_metadata(x)$spatialGraphs
+  if (is.null(sg)) return(character(0))
+  if (is(sg, "DataFrame")) {
+    if (!setequal(rownames(sg), c("row", "col", "annot"))) {
+      return("Row names of spatialGraphs must be 'row', 'col', and 'annot'.\n")
+    }
+  } else {
+    return(paste0("spatialGraphs must be a DataFrame whose columns are sample_ids ",
+                  "and whose rows are margins (rows, columns, annotation).\n"))
+  }
+}
+
 #' @importFrom S4Vectors setValidity2
 setValidity2("SpatialFeatureExperiment", function(object) {
   col_msg <- .check_geometries(int_colData(object)$colGeometries, "colGeometries")
   row_msg <- .check_geometries(int_elementMetadata(object)$rowGeometries, "rowGeometries")
   annot_msg <- .check_geometries(int_metadata(object)$annotGeometries, "annotGeometries")
   annot_msg2 <- .check_annotgeometries(object)
-  graphs_msg <- .check_graphs(object)
+  graph_msg <- .check_graph_str(object)
   id_msg <- .check_graph_sample_id(object)
-  outs <- c(col_msg, row_msg, annot_msg, annot_msg2, graphs_msg, id_msg)
+  outs <- c(col_msg, row_msg, annot_msg, annot_msg2, graph_msg, id_msg)
   outs <- unlist(outs)
   if (length(outs)) {
     return(outs)
