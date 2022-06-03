@@ -65,6 +65,7 @@ setMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
           function(x, type, sample_id = NULL) annotGeometry(x, 1L, sample_id))
 
 .ag <- function(x, type, sample_id = NULL) {
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   out <- int_metadata(x)$annotGeometries[[type]]
   if (!is.null(sample_id)) {
     out <- out[out$sample_id %in% sample_id,]
@@ -86,6 +87,7 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
           function(x, type, sample_id = NULL, value) annotGeometry(x, 1L, sample_id) <- value)
 
 .ag_r <- function(x, type, sample_id = NULL, ..., value) {
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   value <- .df2sf_in_list(value, ...)
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     existing <- int_metadata(x)$annotGeometries[[type]]
