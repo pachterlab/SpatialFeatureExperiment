@@ -14,16 +14,7 @@ test_that("Everything in *Geometries must be sf objects", {
   int_colData(sfe)$colGeometries$coords <- cg_toy
   expect_true(validObject(sfe))
   int_colData(sfe)$colGeometries$coords <- st_drop_geometry(cg_toy)
-  expect_error(validObject(sfe), "is data.frame rather")
-})
-
-test_that("Those sf objects must be valid geometries", {
-  # invalid polygon from sf's example
-  p1 <- st_as_sfc("POLYGON((0 0, 0 10, 10 0, 10 10, 0 0))")
-  ag_invalid <- st_sf(geometry = p1, sample_id = "sample01",
-                      sf_column_name = "geometry")
-  int_metadata(sfe)$annotGeometries$foo <- ag_invalid
-  expect_error(validObject(sfe), "invalid")
+  expect_error(validObject(sfe), "rather\\s+than\\s+sf")
 })
 
 test_that("All sample_ids in annotGeometries must be present in colData", {
