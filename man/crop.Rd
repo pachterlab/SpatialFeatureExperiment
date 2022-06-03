@@ -8,6 +8,7 @@ crop(
   x,
   y = NULL,
   colGeometryName = 1L,
+  sample_id = NULL,
   pred = st_intersects,
   xmin = NULL,
   xmax = NULL,
@@ -18,12 +19,19 @@ crop(
 \arguments{
 \item{x}{An SFE object.}
 
-\item{y}{An object of class \code{sf}, \code{sfc}, or \code{sfg} with which
-to crop the SFE object. Optional if \code{xmin}, \code{xmax}, \code{ymin},
-and \code{ymax} are specified for a bounding box.}
+\item{y}{An object of class \code{sf} with which to crop the SFE object.
+Optional if \code{xmin}, \code{xmax}, \code{ymin}, and \code{ymax} are
+specified for a bounding box.}
 
 \item{colGeometryName}{Column geometry to used to indicate which cells/spots
 to keep.}
+
+\item{sample_id}{Samples to crop. Can be multiple samples, or "all", which
+means all samples. For multiple samples, \code{y} may have column
+\code{sample_id} indicating which geometry subsets which sample. Only
+samples included in the \code{sample_id} column are subsetted. If there is
+no \code{sample_id} column or \code{y} is not specified, then the same
+geometry or bounding box is used to subset all samples.}
 
 \item{pred}{A geometric binary predicate function to indicate which
 cells/spots to keep, defaults to \code{\link{st_intersects}}.}
