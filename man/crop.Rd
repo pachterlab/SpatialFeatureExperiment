@@ -10,6 +10,7 @@ crop(
   colGeometryName = 1L,
   sample_id = NULL,
   pred = st_intersects,
+  op = st_intersection,
   xmin = NULL,
   xmax = NULL,
   ymin = NULL,
@@ -19,9 +20,9 @@ crop(
 \arguments{
 \item{x}{An SFE object.}
 
-\item{y}{An object of class \code{sf} with which to crop the SFE object.
-Optional if \code{xmin}, \code{xmax}, \code{ymin}, and \code{ymax} are
-specified for a bounding box.}
+\item{y}{An object of class \code{sf}, \code{sfg}, or \code{sfc} with which
+to crop the SFE object. Optional if \code{xmin}, \code{xmax}, \code{ymin},
+and \code{ymax} are specified for a bounding box.}
 
 \item{colGeometryName}{Column geometry to used to indicate which cells/spots
 to keep.}
@@ -31,10 +32,14 @@ means all samples. For multiple samples, \code{y} may have column
 \code{sample_id} indicating which geometry subsets which sample. Only
 samples included in the \code{sample_id} column are subsetted. If there is
 no \code{sample_id} column or \code{y} is not specified, then the same
-geometry or bounding box is used to subset all samples.}
+geometry or bounding box is used to subset all samples specified in the
+\code{sample_id} argument.}
 
 \item{pred}{A geometric binary predicate function to indicate which
 cells/spots to keep, defaults to \code{\link{st_intersects}}.}
+
+\item{op}{A geometric operation function to crop the geometries in the SFE
+object. Defaults to \code{\link{st_intersection}}.}
 
 \item{xmin}{Minimum x coordinate of bounding box. Ignored if \code{y} is
 specified.}
@@ -52,5 +57,7 @@ An SFE object.
 Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
 with a geometric predicate function (usually intersects) with another
 geometry of interest. This can be used to subset an SFE object with a tissue
-boundary or histological region polygon, or crop away empty spaces.
+boundary or histological region polygon, or crop away empty spaces. After
+cropping, not only will the cells/spots be subsetted, but also all geometries
+will be cropped.
 }

@@ -24,17 +24,55 @@ st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 #' @export
 st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
 
+.crop_geometry <- function(g, y, samples_use, op, id_col = "id") {
+  # g has column sample_id as in colGeometry and annotGeometry
+  # g should also have row names if it is colGeometry
+  if (!id_col %in% names(g)) {
+    rm_id <- TRUE
+    if (!is.null(rownames(g))) {
+      g[[id_col]] <- rownames(g)
+    } else {
+      g[[id_col]] <- as.character(seq_len(nrow(g)))
+    }
+  } else rm_id <- FALSE
+  gs <- split(g, g$sample_id)
+  gs_sub <- lapply(names(gs), function(s) {
+    if (s %in% samples_use) {
+      if ("sample_id" %in% names(y))
+        y_use <- y[y$sample_id == s,]
+      else y_use <- y
+      .g <- gs[[s]][,c("geometry", id_col)]
+      st_agr(.g) <- "constant"
+      o <- op(.g, st_union(y_use))
+      # Aggregate in case cropping broke some items into multiple pieces
+      if (any(!rownames(o) %in% rownames(.g))) {
+        o <- aggregate(o, by = setNames(list(id = o[[id_col]]), id_col),
+                       FUN = unique)
+      }
+      merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
+    }
+    else gs[[s]]
+  })
+  gs_sub <- do.call(rbind, gs_sub)
+  gs_sub <- gs_sub[,names(g)]
+  rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
+  if (rm_id) gs_sub[[id_col]] <- NULL
+  gs_sub
+}
+
 #' Crop an SFE object with a geometry
 #'
 #' Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
 #' with a geometric predicate function (usually intersects) with another
 #' geometry of interest. This can be used to subset an SFE object with a tissue
-#' boundary or histological region polygon, or crop away empty spaces.
+#' boundary or histological region polygon, or crop away empty spaces. After
+#' cropping, not only will the cells/spots be subsetted, but also all geometries
+#' will be cropped.
 #'
 #' @param x An SFE object.
-#' @param y An object of class \code{sf} with which to crop the SFE object.
-#'   Optional if \code{xmin}, \code{xmax}, \code{ymin}, and \code{ymax} are
-#'   specified for a bounding box.
+#' @param y An object of class \code{sf}, \code{sfg}, or \code{sfc} with which
+#'   to crop the SFE object. Optional if \code{xmin}, \code{xmax}, \code{ymin},
+#'   and \code{ymax} are specified for a bounding box.
 #' @param colGeometryName Column geometry to used to indicate which cells/spots
 #'   to keep.
 #' @param sample_id Samples to crop. Can be multiple samples, or "all", which
@@ -42,22 +80,26 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
 #'   \code{sample_id} indicating which geometry subsets which sample. Only
 #'   samples included in the \code{sample_id} column are subsetted. If there is
 #'   no \code{sample_id} column or \code{y} is not specified, then the same
-#'   geometry or bounding box is used to subset all samples.
+#'   geometry or bounding box is used to subset all samples specified in the
+#'   \code{sample_id} argument.
 #' @param pred A geometric binary predicate function to indicate which
 #'   cells/spots to keep, defaults to \code{\link{st_intersects}}.
+#' @param op A geometric operation function to crop the geometries in the SFE
+#'   object. Defaults to \code{\link{st_intersection}}.
 #' @param xmin Minimum x coordinate of bounding box. Ignored if \code{y} is
 #'   specified.
 #' @param xmax Maximum x coordinate of bounding box.
 #' @param ymin Minimum y coordinate of bounding box.
 #' @param ymax Maximum y coordinate of bounding box.
 #' @return An SFE object.
+#' @importFrom sf st_intersection st_union st_agr
 #' @export
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
-                 pred = st_intersects, xmin = NULL, xmax = NULL, ymin = NULL,
-                 ymax = NULL) {
+                 pred = st_intersects, op = st_intersection, xmin = NULL,
+                 xmax = NULL, ymin = NULL, ymax = NULL) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  if (!is(y, "sf")) {
-    stop("y must be a sf object")
+  if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
+    stop("y must be a sf, sfc, or sfg object")
   }
   if (is.null(y)) {
     y <- st_sf(geometry = st_as_sfc(st_bbox(c(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
@@ -66,21 +108,48 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   }
   cg <- colGeometry(x, type = colGeometryName, sample_id = "all", withDimnames = TRUE)
   if ("sample_id" %in% names(y)) {
-    samples_use <- unique(y$sample_id)
-    cgs <- split(cg, colData(x)$sample_id)
-    preds <- lapply(names(cgs), function(s) {
-      if (s %in% sample_id && s %in% y$sample_id) {
-        st_any_pred(cgs[[s]], y[y$sample_id == s,], pred)
-      } else {
-        rep(TRUE, nrow(cgs[[s]]))
-      }
-    })
-    preds <- unlist(preds)
+    samples_use <- intersect(unique(y$sample_id), sample_id)
   } else {
-    preds <- st_any_pred(cg, y, pred)
+    samples_use <- sample_id
   }
-  x[, preds]
+  cgs <- split(cg, colData(x)$sample_id)
+  preds <- lapply(names(cgs), function(s) {
+    if (s %in% samples_use) {
+      if ("sample_id" %in% names(y))
+        y_use <- y[y$sample_id == s,]
+      else y_use <- y
+      o <- st_any_pred(cgs[[s]], y_use, pred)
+      names(o) <- rownames(cgs[[s]])
+    } else {
+      o <- rep(TRUE, nrow(cgs[[s]]))
+      names(o) <- rownames(cgs[[s]])
+    }
+    o
+  })
+  preds <- unlist(preds)
+  preds <- preds[colnames(x)]
+  out <- x[, preds] # colGeometries should have already been subsetted here
+  # Also actually crop all geometries for the samples of interest. Leave rowGeometry alone for now.
+  colGeometries(out) <- lapply(colGeometries(out), .crop_geometry, y = y,
+                               samples_use = samples_use, op = op)
+  annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry, y = y,
+                                 samples_use = samples_use, op = op)
+  out
 }
 
-# To do: A function to remove white space. Basically just crop by bbox of a geometry of interest.
-# But have a function to reduce boilerplate.
+#' Remove empty space
+#'
+#' For each sample independently, anything outside the bounding box of all
+#' colGeometries and annotGeometries is removed, and the coordinates are changed
+#' to within the bounding box. So when using geom_sf for plotting, different
+#' samples will have more comparable coordinates, as free scales can't be used
+#' when facetting geom_sf.
+#'
+#' @inheritParams crop
+#' @return An SFE object with empty space removed.
+#' @note Unlike other functions in this package, this function operates on all
+#' samples by default.
+#' @export
+removeEmptySpace <- function(sfe, sample_id = "all") {
+
+}
