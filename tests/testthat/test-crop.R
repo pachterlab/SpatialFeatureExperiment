@@ -20,12 +20,21 @@ test_that("Find bbox of samples", {
   bbox1 <- bbox(sfe_visium, "sample01")
   expect_equal(st_bbox(cg1), bbox1)
   bboxes <- bbox(sfe_visium, "all")
-  expect_s3_class(bboxes, "matrix")
+  expect_true(is.matrix(bboxes))
+  expect_true(is.numeric(bboxes))
   expect_equal(colnames(bboxes), c("sample01", "sample02"))
   expect_equal(rownames(bboxes), c("xmin", "ymin", "xmax", "ymax"))
+  expect_true(all(!is.na(bboxes)))
 })
 
 test_that("Remove empty space", {
   sfe_moved <- removeEmptySpace(sfe_visium, sample_id = "all")
-
+  bboxes <- int_metadata(sfe_moved)$orig_bbox
+  expect_true(is.matrix(bboxes))
+  expect_true(is.numeric(bboxes))
+  expect_equal(colnames(bboxes), c("sample01", "sample02"))
+  expect_equal(rownames(bboxes), c("xmin", "ymin", "xmax", "ymax"))
+  expect_true(all(!is.na(bboxes)))
+  new_bboxes <- bbox(sfe_moved, "all")
+  expect_true(all(abs(new_bboxes[c("xmin", "ymin"), c("sample01", "sample02")]) < .Machine$double.eps))
 })

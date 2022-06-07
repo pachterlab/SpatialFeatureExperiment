@@ -191,13 +191,15 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
   # colGeometries
   for (n in colGeometryNames(sfe)) {
     cg <- colGeometry(sfe, n, sample_id = sample_id)
-    colGeometry(sfe, n, sample_id = sample_id) <- cg + v
+    cg$geometry <- cg$geometry + v
+    colGeometry(sfe, n, sample_id = sample_id) <- cg
   }
   # annotGeometries
   if (!is.null(annotGeometries(sfe))) {
     for (n in annotGeometryNames(sfe)) {
       ag <- annotGeometry(sfe, n, sample_id = sample_id)
-      annotGeometry(sfe, n, sample_id = sample_id) <- ag + v
+      ag$geometry <- ag$geometry + v
+      annotGeometry(sfe, n, sample_id = sample_id) <- ag
     }
   }
   sfe
@@ -223,11 +225,21 @@ removeEmptySpace <- function(sfe, sample_id = "all") {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   bboxes <- bbox(sfe, sample_id)
   if (length(sample_id) == 1L) {
-    sfe <- .translate(sfe, sample_id, v = bboxes[c("xmin", "ymin")])
+    sfe <- .translate(sfe, sample_id, v = -bboxes[c("xmin", "ymin")])
   } else {
     for (s in sample_id) {
-      sfe <- .translate(sfe, s, v = bboxes[c("xmin", "ymin"), s])
+      sfe <- .translate(sfe, s, v = -bboxes[c("xmin", "ymin"), s])
     }
+  }
+  if (!is.null(int_metadata(sfe)$orig_bbox)) {
+    int_metadata(sfe)$orig_bbox <- bboxes
+  } else {
+    if (!is.matrix(bboxes)) {
+      bboxes <- matrix(bboxes, ncol = 1)
+      rownames(bboxes) <- c("xmin", "ymin", "xmax", "ymax")
+      colnames(bboxes) <- sample_id
+    }
+    int_metadata(sfe)$orig_bbox <- cbind(int_metadata(sfe)$orig_bbox, bboxes)
   }
   sfe
 }
