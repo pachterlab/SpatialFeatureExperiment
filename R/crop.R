@@ -141,9 +141,11 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,])
   cgs_union <- Reduce(st_union, cgs)
   ags <- annotGeometries(sfe)
-  ags <- lapply(ags, function(g) g[g$sample_id == sample_id,])
-  ags_union <- Reduce(st_union, ags)
-  all_union <- st_union(cgs_union, ags_union)
+  if (!is.null(ags)) {
+    ags <- lapply(ags, function(g) g[g$sample_id == sample_id,])
+    ags_union <- Reduce(st_union, ags)
+    all_union <- st_union(cgs_union, ags_union)
+  } else all_union <- cgs_union
   st_bbox(all_union)
 }
 
@@ -165,7 +167,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
 #' @aliases bbox
 #' @importFrom sf st_bbox
 #' @export
-setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id) {
+setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   out <- lapply(sample_id, .bbox_sample, sfe = sfe)
   if (length(out) == 1L) {
@@ -177,24 +179,50 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id) {
   out
 })
 
+.translate <- function(sfe, sample_id, v) {
+  # spatialCoords
+  inds <- colData(sfe)$sample_id == sample_id
+  spatialCoords(sfe)[inds,] <- spatialCoords(sfe)[inds,] + v
+  # colGeometries
+  for (n in colGeometryNames(sfe)) {
+    cg <- colGeometry(sfe, n, sample_id = sample_id)
+    colGeometry(sfe, n, sample_id = sample_id) <- cg + v
+  }
+  # annotGeometries
+  if (!is.null(annotGeometries(sfe))) {
+    for (n in annotGeometryNames(sfe)) {
+      ag <- annotGeometry(sfe, n, sample_id = sample_id)
+      annotGeometry(sfe, n, sample_id = sample_id) <- ag + v
+    }
+  }
+  sfe
+}
+
+# Burning question: What to do with rowGeometry? I suppose I can require that
+# the geometries are specified separately for each sample. I'll deal with that
+# later. Perhaps much later, as I don't see it relevant to Visium.
+
 #' Remove empty space
 #'
-#' For each sample independently, anything outside the bounding box of all
-#' colGeometries and annotGeometries is removed, and the coordinates are changed
-#' to within the bounding box. So when using geom_sf for plotting, different
-#' samples will have more comparable coordinates, as free scales can't be used
-#' when facetting geom_sf. The coordinates of the original bounding boxes are
-#' added to internal metadata so if new geometries are added, their coordinates
-#' can be shifted to match the rest of the object.
+#' For each sample independently, all geometries and \code{spatialCoords} are
+#' translated so the origin is at the minimum coordinates of the bounding box
+#' of all geometries of the sample. This way coordinates of different samples
+#' will be more comparable.
 #'
 #' @inheritParams crop
 #' @return An SFE object with empty space removed.
 #' @note Unlike other functions in this package, this function operates on all
 #' samples by default.
-# @export
+#' @export
 removeEmptySpace <- function(sfe, sample_id = "all") {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-  col_bboxes <- lapply(sample_id, function(s) {
-
-  })
+  bboxes <- bbox(sfe, sample_id)
+  if (length(sample_id) == 1L) {
+    sfe <- .translate(sfe, sample_id, v = bboxes[c("xmin", "ymin")])
+  } else {
+    for (s in sample_id) {
+      sfe <- .translate(sfe, s, v = bboxes[c("xmin", "ymin"), s])
+    }
+  }
+  sfe
 }

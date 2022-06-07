@@ -19,11 +19,10 @@ geometry or bounding box is used to subset all samples specified in the
 An SFE object with empty space removed.
 }
 \description{
-For each sample independently, anything outside the bounding box of all
-colGeometries and annotGeometries is removed, and the coordinates are changed
-to within the bounding box. So when using geom_sf for plotting, different
-samples will have more comparable coordinates, as free scales can't be used
-when facetting geom_sf.
+For each sample independently, all geometries and \code{spatialCoords} are
+translated so the origin is at the minimum coordinates of the bounding box
+of all geometries of the sample. This way coordinates of different samples
+will be more comparable.
 }
 \note{
 Unlike other functions in this package, this function operates on all

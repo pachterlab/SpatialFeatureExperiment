@@ -5,7 +5,7 @@
 \alias{bbox}
 \title{Find bounding box of SFE objects}
 \usage{
-\S4method{bbox}{SpatialFeatureExperiment}(sfe, sample_id)
+\S4method{bbox}{SpatialFeatureExperiment}(sfe, sample_id = NULL)
 }
 \arguments{
 \item{sfe}{A \code{SpatialFeatureExperiment} object.}
