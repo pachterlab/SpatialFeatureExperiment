@@ -221,7 +221,7 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
     } else {
       # Assuming that the order in value is the same as the
       # order of geometries for this sample in colGeometries
-      existing <- .getfun(MARGIN)(x)[[type]]
+      existing <- .getfun(MARGIN)(x)[[.dg_key(MARGIN)]][[type]]
       value <- .geometry_partial_replace(existing, value, ncol(x), colnames(x),
                                          colData(x)$sample_id, sample_id)
     }
@@ -383,7 +383,6 @@ spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 #' @export
 addVisiumSpotPoly <- function(x, spotDiameter) {
   df <- as.data.frame(spatialCoords(x))
-  names(df) <- spatialCoordsNames(x)
   rownames(df) <- colnames(x)
   spotPoly(x, sample_id = "all") <- df2sf(df, names(df),
                                           spotDiameter = spotDiameter,
