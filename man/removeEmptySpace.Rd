@@ -7,13 +7,9 @@
 removeEmptySpace(sfe, sample_id = "all")
 }
 \arguments{
-\item{sample_id}{Samples to crop. Can be multiple samples, or "all", which
-means all samples. For multiple samples, \code{y} may have column
-\code{sample_id} indicating which geometry subsets which sample. Only
-samples included in the \code{sample_id} column are subsetted. If there is
-no \code{sample_id} column or \code{y} is not specified, then the same
-geometry or bounding box is used to subset all samples specified in the
-\code{sample_id} argument.}
+\item{sfe}{An SFE object.}
+
+\item{sample_id}{Sample to remove empty space.}
 }
 \value{
 An SFE object with empty space removed.

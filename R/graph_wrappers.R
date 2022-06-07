@@ -41,7 +41,8 @@
 }
 
 .comp_graph_sample <- function(x, sample_id, type, MARGIN, method,
-                               args, extra_args_use, style, zero.policy) {
+                               args, extra_args_use, glist, style,
+                               zero.policy, fun_use) {
   if (!"row.names" %in% names(args) &&
       "row.names" %in% extra_args_use && MARGIN < 3) {
     args$row.names <- colnames(x)[colData(x)$sample_id == sample_id]
@@ -145,11 +146,13 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
             )
             if (length(sample_id) == 1L) {
               out <- .comp_graph_sample(x, sample_id, type, MARGIN, method,
-                                        args, extra_args_use, style, zero.policy)
+                                        args, extra_args_use, glist, style,
+                                        zero.policy, fun_use)
             } else {
               out <- lapply(sample_id, function(s) {
                 .comp_graph_sample(x, s, type, MARGIN, method,
-                                   args, extra_args_use, style, zero.policy)
+                                   args, extra_args_use, glist, style,
+                                   zero.policy, fun_use)
               })
               names(out) <- sample_id
             }

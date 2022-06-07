@@ -17,7 +17,8 @@
 #' from the \code{sgbp} results which indicate which item in \code{y} each item
 #' in \code{x} intersects, which might not always be relevant.
 #' @export
-#' @importFrom sf st_intersects
+#' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc
+#' @importFrom stats aggregate
 st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 
 #' @rdname st_any_pred
@@ -216,7 +217,8 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 #' of all geometries of the sample. This way coordinates of different samples
 #' will be more comparable.
 #'
-#' @inheritParams crop
+#' @param sfe An SFE object.
+#' @param sample_id Sample to remove empty space.
 #' @return An SFE object with empty space removed.
 #' @note Unlike other functions in this package, this function operates on all
 #' samples by default.
