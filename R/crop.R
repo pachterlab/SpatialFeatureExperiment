@@ -137,19 +137,64 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   out
 }
 
+.bbox_sample <- function(sfe, sample_id) {
+  cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,])
+  cgs_union <- Reduce(st_union, cgs)
+  ags <- annotGeometries(sfe)
+  ags <- lapply(ags, function(g) g[g$sample_id == sample_id,])
+  ags_union <- Reduce(st_union, ags)
+  all_union <- st_union(cgs_union, ags_union)
+  st_bbox(all_union)
+}
+
+#' Find bounding box of SFE objects
+#'
+#' Find bounding box of the union of all \code{colGeometries} and
+#' \code{annotGeometries} of each sample in the SFE object. This can be used to
+#' remove empty space so the tissue and geometries have one corner at the origin
+#' so all samples will be on comparable coordinates.
+#'
+#' @param sfe A \code{SpatialFeatureExperiment} object.
+#' @param sample_id Sample(s) whose bounding box(es) to find. The bounding box
+#'   would be for the union of all \code{colGeometries} and
+#'   \code{annotGeometries} associated with each sample.
+#' @return For one sample, then a named vector with names \code{xmin},
+#'   \code{ymin}, \code{xmax}, and \code{ymax} specifying the bounding box. For
+#'   multiple samples, then a matrix whose columns are samples and whose rows
+#'   delineate the bounding box.
+#' @aliases bbox
+#' @importFrom sf st_bbox
+#' @export
+setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id) {
+  sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+  out <- lapply(sample_id, .bbox_sample, sfe = sfe)
+  if (length(out) == 1L) {
+    out <- out[[1]]
+  } else {
+    out <- do.call(cbind, out)
+    colnames(out) <- sample_id
+  }
+  out
+})
+
 #' Remove empty space
 #'
 #' For each sample independently, anything outside the bounding box of all
 #' colGeometries and annotGeometries is removed, and the coordinates are changed
 #' to within the bounding box. So when using geom_sf for plotting, different
 #' samples will have more comparable coordinates, as free scales can't be used
-#' when facetting geom_sf.
+#' when facetting geom_sf. The coordinates of the original bounding boxes are
+#' added to internal metadata so if new geometries are added, their coordinates
+#' can be shifted to match the rest of the object.
 #'
 #' @inheritParams crop
 #' @return An SFE object with empty space removed.
 #' @note Unlike other functions in this package, this function operates on all
 #' samples by default.
-#' @export
+# @export
 removeEmptySpace <- function(sfe, sample_id = "all") {
+  sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+  col_bboxes <- lapply(sample_id, function(s) {
 
+  })
 }

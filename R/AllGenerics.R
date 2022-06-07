@@ -84,6 +84,7 @@ setGeneric("spatialGraphNames<-", function(x, MARGIN, sample_id, value) standard
 #' @export
 setGeneric("findSpatialNeighbors", function(x, ...) standardGeneric("findSpatialNeighbors"))
 
-# Operations that only apply to SFE due to geometries------
-# @export
-#setGeneric("crop", function(x, y) standardGeneric("crop"))
+# Have this generic and S4 dispatch to avoid conflict with sp::bbox
+# Will change if this causes trouble
+#' @export
+setGeneric("bbox", function(sfe, sample_id) standardGeneric("bbox"))
