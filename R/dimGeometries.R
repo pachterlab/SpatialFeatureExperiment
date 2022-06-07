@@ -137,7 +137,11 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
       # I'll consider that later.
       message("sample_id is not applicable to rowGeometries.")
     } else if (MARGIN == 2L) {
-      out <- out[colData(x)$sample_id %in% sample_id,]
+      # Somehow I lose the rownames after row subsetting
+      inds <- colData(x)$sample_id %in% sample_id
+      rns <- rownames(out)[inds]
+      out <- out[inds,]
+      rownames(out) <- rns
     } else {
       out <- out[out$sample_id %in% sample_id,]
     }

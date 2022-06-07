@@ -24,7 +24,7 @@ st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 #' @export
 st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
 
-.crop_geometry <- function(g, y, samples_use, op, id_col = "id") {
+.crop_geometry <- function(g, y, samples_use, op, sample_col = NULL, id_col = "id") {
   # g has column sample_id as in colGeometry and annotGeometry
   # g should also have row names if it is colGeometry
   if (!id_col %in% names(g)) {
@@ -35,6 +35,7 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
       g[[id_col]] <- as.character(seq_len(nrow(g)))
     }
   } else rm_id <- FALSE
+  if (!is.null(sample_col)) g$sample_id <- sample_col
   gs <- split(g, g$sample_id)
   gs_sub <- lapply(names(gs), function(s) {
     if (s %in% samples_use) {
@@ -112,6 +113,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   } else {
     samples_use <- sample_id
   }
+  cg$barcode <- colnames(x)
   cgs <- split(cg, colData(x)$sample_id)
   preds <- lapply(names(cgs), function(s) {
     if (s %in% samples_use) {
@@ -119,10 +121,10 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
         y_use <- y[y$sample_id == s,]
       else y_use <- y
       o <- st_any_pred(cgs[[s]], y_use, pred)
-      names(o) <- rownames(cgs[[s]])
+      names(o) <- cgs[[s]]$barcode
     } else {
       o <- rep(TRUE, nrow(cgs[[s]]))
-      names(o) <- rownames(cgs[[s]])
+      names(o) <- cgs[[s]]$barcode
     }
     o
   })
@@ -131,11 +133,14 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   out <- x[, preds] # colGeometries should have already been subsetted here
   # Also actually crop all geometries for the samples of interest. Leave rowGeometry alone for now.
   colGeometries(out) <- lapply(colGeometries(out), .crop_geometry, y = y,
-                               samples_use = samples_use, op = op)
+                               samples_use = samples_use, op = op,
+                               id_col = "barcode", sample_col = colData(out)$sample_id)
   annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry, y = y,
                                  samples_use = samples_use, op = op)
   out
 }
+
+# To do: Give a warning and remove samples that are completely removed by cropping
 
 .bbox_sample <- function(sfe, sample_id) {
   cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,])
