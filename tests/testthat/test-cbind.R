@@ -8,7 +8,7 @@ colGraph(sfe_visium, "visium1", "sample01") <- g_visium
 colGraph(sfe_visium, "visium2", "sample02") <- g_visium2
 ag_samples <- readRDS(system.file("testdata/ag_samples.rds",
                                   package = "SpatialFeatureExperiment"))
-annotGeometry(sfe_visium, "foo") <- ag_samples
+annotGeometry(sfe_visium, "foo", sample_id = "all") <- ag_samples
 sfe_visium1 <- sfe_visium[,colData(sfe_visium)$sample_id == "sample01"]
 sfe_visium2 <- sfe_visium[,colData(sfe_visium)$sample_id == "sample02"]
 
