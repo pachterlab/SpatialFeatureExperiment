@@ -138,10 +138,13 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
                                id_col = "barcode", sample_col = colData(out)$sample_id)
   annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry, y = y,
                                  samples_use = samples_use, op = op)
+  samples_rmed <- setdiff(sample_id, sampleIDs(out))
+  if (length(samples_rmed)) {
+    warning("Sample(s) ", paste(samples_rmed, collapse = ", "),
+            " was/were removed by the cropping.")
+  }
   out
 }
-
-# To do: Give a warning and remove samples that are completely removed by cropping
 
 .bbox_sample <- function(sfe, sample_id) {
   cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,])
