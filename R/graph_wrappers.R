@@ -204,7 +204,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 #'   will be added to the SFE object for each sample.
 #' @export
 findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL) {
-  sample_id <- .check_sample_id(x, sample_id)
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (length(sample_id) == 1L) {
     out <- .comp_visium_graph(x, sample_id, style, zero.policy)
   } else {
