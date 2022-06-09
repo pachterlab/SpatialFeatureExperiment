@@ -58,7 +58,7 @@ NULL
     all = as.list(gss),
     sample_all = as.list(gss[,which]),
     margin_all = as.list(gss[which,]),
-    one = gss[which[[1]], which[[2]]][[1]]
+    one = {out <- gss[which[[1]], which[[2]]]; if (length(out) > 1L) as.list(out) else out[[1]]}
   )
 }
 
@@ -75,9 +75,11 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing"),
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "character"),
-          function(x, MARGIN, sample_id = NULL)
-            .get_graphs(x, "sample_all", sample_id))
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "ANY"),
+          function(x, MARGIN, sample_id = NULL) {
+            sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+            .get_graphs(x, "sample_all", sample_id)
+          })
 
 #' @rdname spatialGraphs
 #' @export
@@ -97,8 +99,10 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "missing"),
 #' @rdname spatialGraphs
 #' @export
 setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character"),
-          function(x, MARGIN, sample_id)
-            .get_graphs(x, "one", list(MARGIN, sample_id)))
+          function(x, MARGIN, sample_id) {
+            sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+            .get_graphs(x, "one", list(MARGIN, sample_id))
+          })
 
 #' @rdname spatialGraphs
 #' @export

@@ -16,7 +16,7 @@
 \alias{annotGraphs<-}
 \alias{spatialGraphs,SpatialFeatureExperiment,missing,missing-method}
 \alias{spatialGraphs,SpatialFeatureExperiment,numeric,missing-method}
-\alias{spatialGraphs,SpatialFeatureExperiment,missing,character-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,missing,ANY-method}
 \alias{colGraphs,SpatialFeatureExperiment,missing-method}
 \alias{rowGraphs,SpatialFeatureExperiment,missing-method}
 \alias{annotGraphs,SpatialFeatureExperiment,missing-method}
@@ -65,7 +65,7 @@
 
 \S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,missing}(x, MARGIN, sample_id)
 
-\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,character}(x, MARGIN, sample_id = NULL)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,ANY}(x, MARGIN, sample_id = NULL)
 
 \S4method{colGraphs}{SpatialFeatureExperiment,missing}(x, sample_id)
 
