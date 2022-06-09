@@ -62,6 +62,79 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
   gs_sub
 }
 
+.annot_fun <- function(x, y, colGeometryName, samples_use = NULL, fun = st_any_pred, ...) {
+  cg <- colGeometry(x, type = colGeometryName, sample_id = samples_use,
+                    withDimnames = TRUE)
+  cg$barcode <- rownames(cg)
+  cgs <- split(cg, colData(x)$sample_id[colData(x)$sample_id %in% samples_use])
+  out <- lapply(names(cgs), function(s) {
+    if ("sample_id" %in% names(y))
+      y_use <- y[y$sample_id == s,]
+    else y_use <- y
+    o <- fun(cgs[[s]], y_use, ...)
+    names(o) <- cgs[[s]]$barcode
+    o
+  })
+  out <- Reduce(c, out)
+  out <- out[rownames(cg)]
+  out
+}
+
+#' Binary predicates for geometry of each cell/spot and annotation
+#'
+#' This function finds binary predicates for the geometry of each cell/spot
+#' (i.e. \code{colGeometry}) and an annotation geometry for each sample. For
+#' example, whether each Visium spot intersects with the tissue boundary in each
+#' sample.
+#'
+#' @param sfe An SFE object.
+#' @param colGeometryName Name of column geometry for the predicate.
+#' @param annotGeometryName Name of annotation geometry for the predicate.
+#' @param sample_id Which sample(s) to operate on. Can be "all" to indicate all
+#'   samples.
+#' @param pred Predicate function to use, defaults to
+#'   \code{\link{st_intersects}}.
+#' @return A logical vector of the same length as the number of columns in the
+#'   sample(s) of interest, with barcodes (or corresponding column names of sfe)
+#'   as names.
+#' @export
+#' @seealso annotOp
+annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
+                      sample_id = NULL, pred = st_intersects) {
+  sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+  ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
+  .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
+             fun = st_any_pred, pred = pred)
+}
+
+#' Binary operations for geometry of each cell/spot and annotation
+#'
+#' Just like \code{\link{annotPred}}, but performs the operation rather than
+#' predicate. For example, this function would return the geometry of the
+#' intersections between each Visium spot and the tissue boundary for each
+#' sample, rather than whether each Visium spot intersects the tissue boundary.
+#' In case one cell/spot gets broken up into multiple geometries, the union of
+#' those geometries will be taken, so each cell/spot will only get one geometry.
+#'
+#' @inheritParams annotPred
+#' @param op A binary operation function for the geometries. Defaults to
+#' \code{\link{st_intersection}}.
+#' @return A \code{sf} data frame with \code{geometry} column containing the
+#' geometries and corresponding column names of sfe as row names.
+#' @export
+#' @seealso annotPred
+annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
+                    sample_id = NULL, op = st_intersection) {
+  sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+  ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
+  cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id)
+  out <- .crop_geometry(cg, ag, samples_use = sample_id, op = op,
+                        sample_col = colData(sfe)$sample_id[colData(sfe)$sample_id %in% sample_id],
+                        id_col = "barcode")
+  if (!"sample_id" %in% names(cg)) out$sample_id <- NULL
+  out
+}
+
 #' Crop an SFE object with a geometry
 #'
 #' Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
@@ -108,30 +181,20 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
                                             crs = NA)),
                sf_column_name = "geometry")
   }
-  cg <- colGeometry(x, type = colGeometryName, sample_id = "all", withDimnames = TRUE)
   if ("sample_id" %in% names(y)) {
     samples_use <- intersect(unique(y$sample_id), sample_id)
   } else {
     samples_use <- sample_id
   }
-  cg$barcode <- colnames(x)
-  cgs <- split(cg, colData(x)$sample_id)
-  preds <- lapply(names(cgs), function(s) {
-    if (s %in% samples_use) {
-      if ("sample_id" %in% names(y))
-        y_use <- y[y$sample_id == s,]
-      else y_use <- y
-      o <- st_any_pred(cgs[[s]], y_use, pred)
-      names(o) <- cgs[[s]]$barcode
-    } else {
-      o <- rep(TRUE, nrow(cgs[[s]]))
-      names(o) <- cgs[[s]]$barcode
-    }
-    o
-  })
-  preds <- unlist(preds)
+  preds <- .annot_fun(x, y, colGeometryName, samples_use = samples_use, fun = st_any_pred,
+                      pred = pred)
+  # Don't remove anything from other samples
+  other_bcs <- setdiff(colnames(x), names(preds))
+  other_samples <- setNames(rep(TRUE, length(other_bcs)), other_bcs)
+  preds <- c(preds, other_samples)
   preds <- preds[colnames(x)]
-  out <- x[, preds] # colGeometries should have already been subsetted here
+  out <- x[, preds]
+  # colGeometries should have already been subsetted here
   # Also actually crop all geometries for the samples of interest. Leave rowGeometry alone for now.
   colGeometries(out) <- lapply(colGeometries(out), .crop_geometry, y = y,
                                samples_use = samples_use, op = op,
