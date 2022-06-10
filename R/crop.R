@@ -50,14 +50,16 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
       if (any(!rownames(o) %in% rownames(.g))) {
         o <- aggregate(o, by = setNames(list(id = o[[id_col]]), id_col),
                        FUN = unique)
-        # Convert st_GEOMETRY to a more specific type
-        o <- st_cast(o)
       }
       merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
     }
     else gs[[s]]
   })
   gs_sub <- do.call(rbind, gs_sub)
+  # Convert st_GEOMETRY to a more specific type
+  if (st_geometry_type(gs_sub, by_geometry = FALSE)) {
+    gs_sub <- st_cast(gs_sub)
+  }
   gs_sub <- gs_sub[,names(g)]
   rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
   if (rm_id) gs_sub[[id_col]] <- NULL
