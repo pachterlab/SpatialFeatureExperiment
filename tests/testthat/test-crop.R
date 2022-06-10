@@ -8,11 +8,21 @@ bbox_use2 <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
   sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all")
-  expect_true(all(st_any_pred(spotPoly(sfe_cropped, "all"), bbox_use, pred = st_covered_by)))
+  cg <- spotPoly(sfe_cropped, "all")
+  expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
+  expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
   sfe_cropped2 <- crop(sfe_visium, y = bbox_use2, sample_id = "sample01")
   expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use, pred = st_covered_by)))
   expect_false(all(st_any_pred(spotPoly(sfe_cropped2, "sample02"), bbox_use, pred = st_covered_by)))
   expect_equal(sum(st_any_intersects(spotPoly(sfe_cropped2, "sample02"), bbox_use)), 2)
+})
+
+test_that("When a geometry is broken into multiple pieces", {
+  notch <- st_as_sfc(st_bbox(c(xmin = 0, xmax = 1.5, ymin = 1.7, ymax = 1.9)))
+  bbox_use3 <- st_difference(bbox_use, notch)
+  sfe_cropped3 <- crop(sfe_visium, bbox_use3, sample_id = "sample01")
+  cg <- spotPoly(sfe_cropped3, "all")
+  expect_true(st_geometry_type(cg, by_geometry = FALSE) == "MULTIPOLYGON")
 })
 
 annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_use2
