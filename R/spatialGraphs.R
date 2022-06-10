@@ -80,8 +80,8 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing", "
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "ANY", "missing"),
-          function(x, MARGIN, sample_id = NULL, name) {
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "character", "missing"),
+          function(x, MARGIN, sample_id, name) {
             sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             .get_graphs(x, "sample_all", sample_id)
           })
