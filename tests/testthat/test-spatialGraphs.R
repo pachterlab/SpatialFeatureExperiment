@@ -117,18 +117,18 @@ test_that("Get all applicable sample_ids and margins", {
 test_that("Get all applicable sample_ids in one margin", {
   out_mar1 <- spatialGraphs(sfe2, 1)
   expect_equal(names(out_mar1), c("sample01", "sample02"))
-  expect_true(is.null(out_mar1$sample01$row))
-  expect_true(is.null(out_mar1$sample02$row))
+  expect_true(is.null(out_mar1$sample01))
+  expect_true(is.null(out_mar1$sample02))
 
   out_mar2 <- spatialGraphs(sfe2, 2)
   expect_equal(names(out_mar2), c("sample01", "sample02"))
-  expect_equal(names(out_mar2$sample01$col), "foo")
-  expect_equal(out_mar2$sample02$col$bar, cgr2)
+  expect_equal(names(out_mar2$sample01), "foo")
+  expect_equal(out_mar2$sample02$bar, cgr2)
 
   out_mar3 <- spatialGraphs(sfe2, 3)
   expect_equal(names(out_mar3), c("sample01", "sample02"))
-  expect_equal(names(out_mar3$sample01$annot), "bar")
-  expect_equal(out_mar3$sample02$annot$foo, agr2)
+  expect_equal(names(out_mar3$sample01), "bar")
+  expect_equal(out_mar3$sample02$foo, agr2)
 })
 
 test_that("Set all applicable margins in one sample_id", {

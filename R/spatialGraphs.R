@@ -57,67 +57,84 @@ NULL
   switch (type,
     all = as.list(gss),
     sample_all = as.list(gss[,which]),
-    margin_all = as.list(gss[which,]),
-    one = {out <- gss[which[[1]], which[[2]]]; if (length(out) > 1L) as.list(out) else out[[1]]}
+    # Get rid of the layer of list indicating margin
+    margin_all = lapply(as.list(gss[which,]), function(o) o[[1]]),
+    one = {
+      out <- gss[which[[1]], which[[2]]]
+      if (length(out) > 1L) {
+        lapply(as.list(out), function(o) o[[1]])
+      } else out[[1]]}
   )
 }
 
 # For lists of listw objects--------
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
-          function(x, MARGIN, sample_id) .get_graphs(x, "all"))
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "missing", "missing"),
+          function(x, MARGIN, sample_id, name) .get_graphs(x, "all"))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing"),
-          function(x, MARGIN, sample_id) .get_graphs(x, "margin_all", MARGIN))
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "missing", "missing"),
+          function(x, MARGIN, sample_id, name) .get_graphs(x, "margin_all", MARGIN))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "ANY"),
-          function(x, MARGIN, sample_id = NULL) {
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "missing", "ANY", "missing"),
+          function(x, MARGIN, sample_id = NULL, name) {
             sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             .get_graphs(x, "sample_all", sample_id)
           })
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("colGraphs", c("SpatialFeatureExperiment", "missing"),
-          function(x, sample_id) spatialGraphs(x, MARGIN = 2))
+setMethod("colGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
+          function(x, sample_id, name) spatialGraphs(x, MARGIN = 2))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("rowGraphs", c("SpatialFeatureExperiment", "missing"),
-          function(x, sample_id) spatialGraphs(x, MARGIN = 1))
+setMethod("rowGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
+          function(x, sample_id, name) spatialGraphs(x, MARGIN = 1))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("annotGraphs", c("SpatialFeatureExperiment", "missing"),
-          function(x, sample_id) spatialGraphs(x, MARGIN = 3))
+setMethod("annotGraphs", c("SpatialFeatureExperiment", "missing", "missing"),
+          function(x, sample_id, name) spatialGraphs(x, MARGIN = 3))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character"),
-          function(x, MARGIN, sample_id) {
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character", "missing"),
+          function(x, MARGIN, sample_id, name) {
             sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             .get_graphs(x, "one", list(MARGIN, sample_id))
           })
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("colGraphs", c("SpatialFeatureExperiment", "ANY"),
-          function(x, sample_id = NULL) spatialGraphs(x, 2, sample_id))
+setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character", "character"),
+          function(x, MARGIN, sample_id, name) {
+            sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+            out <- .get_graphs(x, "one", list(MARGIN, sample_id))
+            # Get rid of the layer of list indicating name as it's known
+            out <- lapply(out, function(o) o[[name]])
+            out <- out[vapply(out, function(o) !is.null(o), FUN.VALUE = logical(1))]
+            out
+          })
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("rowGraphs", c("SpatialFeatureExperiment", "ANY"),
-          function(x, sample_id = NULL) spatialGraphs(x, 1, sample_id))
+setMethod("colGraphs", c("SpatialFeatureExperiment", "ANY", "missing"),
+          function(x, sample_id = NULL, name) spatialGraphs(x, 2, sample_id))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY"),
-          function(x, sample_id = NULL) spatialGraphs(x, 3, sample_id))
+setMethod("rowGraphs", c("SpatialFeatureExperiment", "ANY", "missing"),
+          function(x, sample_id = NULL, name) spatialGraphs(x, 1, sample_id))
+
+#' @rdname spatialGraphs
+#' @export
+setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY", "missing"),
+          function(x, sample_id = NULL, name) spatialGraphs(x, 3, sample_id))
 
 .fill_missing <- function(l, names_use) {
   to_add <- setdiff(names_use, names(l))

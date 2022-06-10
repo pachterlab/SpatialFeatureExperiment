@@ -46,25 +46,25 @@ setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpa
 
 # Spatial graphs--------
 #' @export
-setGeneric("spatialGraphs", function(x, MARGIN, sample_id) standardGeneric("spatialGraphs"))
+setGeneric("spatialGraphs", function(x, MARGIN, sample_id, name) standardGeneric("spatialGraphs"))
 
 #' @export
 setGeneric("spatialGraphs<-", function(x, MARGIN, sample_id, name, value) standardGeneric("spatialGraphs<-"))
 
 #' @export
-setGeneric("colGraphs", function(x, sample_id) standardGeneric("colGraphs"))
+setGeneric("colGraphs", function(x, sample_id, name) standardGeneric("colGraphs"))
 
 #' @export
 setGeneric("colGraphs<-", function(x, sample_id, name, value) standardGeneric("colGraphs<-"))
 
 #' @export
-setGeneric("rowGraphs", function(x, sample_id) standardGeneric("rowGraphs"))
+setGeneric("rowGraphs", function(x, sample_id, name) standardGeneric("rowGraphs"))
 
 #' @export
 setGeneric("rowGraphs<-", function(x, sample_id, name, value) standardGeneric("rowGraphs<-"))
 
 #' @export
-setGeneric("annotGraphs", function(x, sample_id) standardGeneric("annotGraphs"))
+setGeneric("annotGraphs", function(x, sample_id, name) standardGeneric("annotGraphs"))
 
 #' @export
 setGeneric("annotGraphs<-", function(x, sample_id, name, value) standardGeneric("annotGraphs<-"))
