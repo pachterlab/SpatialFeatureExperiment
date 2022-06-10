@@ -17,7 +17,7 @@
 #' from the \code{sgbp} results which indicate which item in \code{y} each item
 #' in \code{x} intersects, which might not always be relevant.
 #' @export
-#' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc
+#' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
 #' @importFrom stats aggregate
 st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 
@@ -41,15 +41,17 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
   gs_sub <- lapply(names(gs), function(s) {
     if (s %in% samples_use) {
       if ("sample_id" %in% names(y))
-        y_use <- y[y$sample_id == s,]
-      else y_use <- y
+        y_use <- st_geometry(y[y$sample_id == s,])
+      else y_use <- st_geometry(y)
       .g <- gs[[s]][,c("geometry", id_col)]
       st_agr(.g) <- "constant"
-      o <- op(.g, st_union(y_use))
+      o <- op(.g, y_use)
       # Aggregate in case cropping broke some items into multiple pieces
       if (any(!rownames(o) %in% rownames(.g))) {
         o <- aggregate(o, by = setNames(list(id = o[[id_col]]), id_col),
                        FUN = unique)
+        # Convert st_GEOMETRY to a more specific type
+        o <- st_cast(o)
       }
       merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
     }
