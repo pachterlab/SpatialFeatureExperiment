@@ -123,18 +123,33 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character",
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("colGraphs", c("SpatialFeatureExperiment", "ANY", "missing"),
-          function(x, sample_id = NULL, name) spatialGraphs(x, 2, sample_id))
+setMethod("colGraphs", c("SpatialFeatureExperiment", "character", "missing"),
+          function(x, sample_id, name) spatialGraphs(x, 2, sample_id))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("rowGraphs", c("SpatialFeatureExperiment", "ANY", "missing"),
-          function(x, sample_id = NULL, name) spatialGraphs(x, 1, sample_id))
+setMethod("colGraphs", c("SpatialFeatureExperiment", "character", "character"),
+          function(x, sample_id, name) spatialGraphs(x, 2, sample_id, name))
 
 #' @rdname spatialGraphs
 #' @export
-setMethod("annotGraphs", c("SpatialFeatureExperiment", "ANY", "missing"),
-          function(x, sample_id = NULL, name) spatialGraphs(x, 3, sample_id))
+setMethod("rowGraphs", c("SpatialFeatureExperiment", "character", "missing"),
+          function(x, sample_id, name) spatialGraphs(x, 1, sample_id))
+
+#' @rdname spatialGraphs
+#' @export
+setMethod("rowGraphs", c("SpatialFeatureExperiment", "character", "character"),
+          function(x, sample_id, name) spatialGraphs(x, 1, sample_id, name))
+
+#' @rdname spatialGraphs
+#' @export
+setMethod("annotGraphs", c("SpatialFeatureExperiment", "character", "missing"),
+          function(x, sample_id, name) spatialGraphs(x, 3, sample_id))
+
+#' @rdname spatialGraphs
+#' @export
+setMethod("annotGraphs", c("SpatialFeatureExperiment", "character", "character"),
+          function(x, sample_id, name) spatialGraphs(x, 3, sample_id, name))
 
 .fill_missing <- function(l, names_use) {
   to_add <- setdiff(names_use, names(l))

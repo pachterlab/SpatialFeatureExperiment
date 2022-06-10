@@ -14,16 +14,20 @@
 \alias{spatialGraphs<-}
 \alias{annotGraphs}
 \alias{annotGraphs<-}
-\alias{spatialGraphs,SpatialFeatureExperiment,missing,missing-method}
-\alias{spatialGraphs,SpatialFeatureExperiment,numeric,missing-method}
-\alias{spatialGraphs,SpatialFeatureExperiment,missing,ANY-method}
-\alias{colGraphs,SpatialFeatureExperiment,missing-method}
-\alias{rowGraphs,SpatialFeatureExperiment,missing-method}
-\alias{annotGraphs,SpatialFeatureExperiment,missing-method}
-\alias{spatialGraphs,SpatialFeatureExperiment,numeric,character-method}
-\alias{colGraphs,SpatialFeatureExperiment,ANY-method}
-\alias{rowGraphs,SpatialFeatureExperiment,ANY-method}
-\alias{annotGraphs,SpatialFeatureExperiment,ANY-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,missing,missing,missing-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,numeric,missing,missing-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,missing,ANY,missing-method}
+\alias{colGraphs,SpatialFeatureExperiment,missing,missing-method}
+\alias{rowGraphs,SpatialFeatureExperiment,missing,missing-method}
+\alias{annotGraphs,SpatialFeatureExperiment,missing,missing-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,numeric,character,missing-method}
+\alias{spatialGraphs,SpatialFeatureExperiment,numeric,character,character-method}
+\alias{colGraphs,SpatialFeatureExperiment,character,missing-method}
+\alias{colGraphs,SpatialFeatureExperiment,character,character-method}
+\alias{rowGraphs,SpatialFeatureExperiment,character,missing-method}
+\alias{rowGraphs,SpatialFeatureExperiment,character,character-method}
+\alias{annotGraphs,SpatialFeatureExperiment,character,missing-method}
+\alias{annotGraphs,SpatialFeatureExperiment,character,character-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,missing,missing,missing-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,missing,missing-method}
 \alias{spatialGraphs<-,SpatialFeatureExperiment,numeric,NULL,missing-method}
@@ -61,25 +65,33 @@
 \alias{annotGraph<-}
 \title{Spatial graph methods}
 \usage{
-\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,missing}(x, MARGIN, sample_id)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,missing,missing}(x, MARGIN, sample_id, name)
 
-\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,missing}(x, MARGIN, sample_id)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,missing,missing}(x, MARGIN, sample_id, name)
 
-\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,ANY}(x, MARGIN, sample_id = NULL)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,missing,ANY,missing}(x, MARGIN, sample_id = NULL, name)
 
-\S4method{colGraphs}{SpatialFeatureExperiment,missing}(x, sample_id)
+\S4method{colGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, name)
 
-\S4method{rowGraphs}{SpatialFeatureExperiment,missing}(x, sample_id)
+\S4method{rowGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, name)
 
-\S4method{annotGraphs}{SpatialFeatureExperiment,missing}(x, sample_id)
+\S4method{annotGraphs}{SpatialFeatureExperiment,missing,missing}(x, sample_id, name)
 
-\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character}(x, MARGIN, sample_id)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character,missing}(x, MARGIN, sample_id, name)
 
-\S4method{colGraphs}{SpatialFeatureExperiment,ANY}(x, sample_id = NULL)
+\S4method{spatialGraphs}{SpatialFeatureExperiment,numeric,character,character}(x, MARGIN, sample_id, name)
 
-\S4method{rowGraphs}{SpatialFeatureExperiment,ANY}(x, sample_id = NULL)
+\S4method{colGraphs}{SpatialFeatureExperiment,character,missing}(x, sample_id, name)
 
-\S4method{annotGraphs}{SpatialFeatureExperiment,ANY}(x, sample_id = NULL)
+\S4method{colGraphs}{SpatialFeatureExperiment,character,character}(x, sample_id, name)
+
+\S4method{rowGraphs}{SpatialFeatureExperiment,character,missing}(x, sample_id, name)
+
+\S4method{rowGraphs}{SpatialFeatureExperiment,character,character}(x, sample_id, name)
+
+\S4method{annotGraphs}{SpatialFeatureExperiment,character,missing}(x, sample_id, name)
+
+\S4method{annotGraphs}{SpatialFeatureExperiment,character,character}(x, sample_id, name)
 
 \S4method{spatialGraphs}{SpatialFeatureExperiment,missing,missing,missing}(x, MARGIN, sample_id, name) <- value
 
