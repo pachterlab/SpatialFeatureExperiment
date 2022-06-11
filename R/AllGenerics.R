@@ -7,7 +7,7 @@
 setGeneric("dimGeometry", function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE) standardGeneric("dimGeometry"))
 
 #' @export
-setGeneric("dimGeometry<-", function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,..., value) standardGeneric("dimGeometry<-"))
+setGeneric("dimGeometry<-", function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE, translate = TRUE,..., value) standardGeneric("dimGeometry<-"))
 
 #' @export
 setGeneric("dimGeometryNames", function(x, MARGIN) standardGeneric("dimGeometryNames"))
@@ -19,14 +19,14 @@ setGeneric("dimGeometryNames<-", function(x, MARGIN, value) standardGeneric("dim
 setGeneric("dimGeometries", function(x, MARGIN, withDimnames=TRUE) standardGeneric("dimGeometries"))
 
 #' @export
-setGeneric("dimGeometries<-", function(x, MARGIN, withDimnames=TRUE,..., value) standardGeneric("dimGeometries<-"))
+setGeneric("dimGeometries<-", function(x, MARGIN, withDimnames=TRUE, translate = TRUE, ..., value) standardGeneric("dimGeometries<-"))
 
 # Getters and setters for annotGeometry---------
 #' @export
 setGeneric("annotGeometry", function(x, type, sample_id = NULL) standardGeneric("annotGeometry"))
 
 #' @export
-setGeneric("annotGeometry<-", function(x, type, sample_id = NULL, ..., value) standardGeneric("annotGeometry<-"))
+setGeneric("annotGeometry<-", function(x, type, sample_id = NULL, translate = TRUE, ..., value) standardGeneric("annotGeometry<-"))
 
 #' @export
 setGeneric("annotGeometryNames", function(x) standardGeneric("annotGeometryNames"))
@@ -38,7 +38,7 @@ setGeneric("annotGeometryNames<-", function(x, value) standardGeneric("annotGeom
 setGeneric("annotGeometries", function(x) standardGeneric("annotGeometries"))
 
 #' @export
-setGeneric("annotGeometries<-", function(x, ..., value) standardGeneric("annotGeometries<-"))
+setGeneric("annotGeometries<-", function(x, translate = TRUE,..., value) standardGeneric("annotGeometries<-"))
 
 # Coercion--------
 #' @export

@@ -37,8 +37,13 @@
 #'   rownames) of the gene count matrix should correspond to row names of the
 #'   \code{sf} data frames of interest.
 #' @param type An integer specifying the index or string specifying the name of
-#' the *Geometry to query or replace. If missing, then the first item in the
-#' *Geometries will be returned or replaced.
+#'   the *Geometry to query or replace. If missing, then the first item in the
+#'   *Geometries will be returned or replaced.
+#' @param translate Logical. Only used if \code{\link{removeEmptySpace}} has
+#'   been run of the SFE object. If that's the case, this argument indicates
+#'   whether the new value to be assigned to the geometry is in the coordinates
+#'   prior to removal of empty space so it should be translated to match the new
+#'   coordinates after removing empty space. Default to \code{TRUE}.
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
 #'   frame with the same number of rows as size in the dimension of interest, or
 #'   an ordinary data frame that can be converted to such a \code{sf} data frame
@@ -51,7 +56,7 @@
 #'   the list if the data frames specify different types of geometries.
 #' @name dimGeometries
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
-#' dimGeometryNames<-
+#'   dimGeometryNames<-
 #' @docType methods
 NULL
 
@@ -71,10 +76,17 @@ setMethod("dimGeometries", "SpatialFeatureExperiment",
             value
           })
 
+.translate_value <- function(x, translate, value) {
+  if (translate && !is.null(int_metadata(x)$orig_bbox)) {
+    value$geometry <- value$geometry - int_metadata(x)$orig_bbox[c("xmin", "ymin")]
+  }
+  value
+}
+
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometries", "SpatialFeatureExperiment",
-                 function(x, MARGIN, withDimnames = TRUE, ..., value) {
+                 function(x, MARGIN, withDimnames = TRUE, translate = TRUE,..., value) {
                    value <- .df2sf_list(value, ...)
                    if (withDimnames) {
                      for (v in seq_along(value)) {
@@ -82,6 +94,7 @@ setReplaceMethod("dimGeometries", "SpatialFeatureExperiment",
                                                          withDimnames=TRUE,
                                                          vname=sprintf("value[[%s]]", v),
                                                          fun='dimGeometries')
+                       value[[v]] <- .translate_value(x, translate, value[[v]])
                      }
                    }
                    .set_internal_all(x, value,
@@ -185,7 +198,8 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
-                 function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE, value) {
+                 function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,
+                          translate = TRUE, value) {
                    .set_internal_missing(x, value,
                                          withDimnames=withDimnames,
                                          MARGIN = MARGIN,
@@ -239,12 +253,14 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
-                 function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE, ..., value) {
+                 function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,
+                          translate = TRUE, ..., value) {
                    x <- .initialize_int_dimdata(x, MARGIN, withDimnames)
                    value <- .df2sf_in_list(value, ...)
                    value <- .set_geometry_id(x, value, sample_id, type, MARGIN)
                    value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
                                                 withDimnames = withDimnames)
+                   value <- .translate_value(x, translate, value)
                    .set_internal_numeric(x, type, value,
                                          getfun=.getfun(MARGIN),
                                          setfun=.setfun(MARGIN),
@@ -261,12 +277,14 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
-                 function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE, ..., value) {
+                 function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,
+                          translate = TRUE, ..., value) {
                    x <- .initialize_int_dimdata(x, MARGIN, withDimnames)
                    value <- .df2sf_in_list(value, ...)
                    value <- .set_geometry_id(x, value, sample_id, type, MARGIN)
                    value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
                                                 withDimnames = withDimnames)
+                   value <- .translate_value(x, translate, value)
                    .set_internal_character(x, type, value,
                                            getfun=.getfun(MARGIN),
                                            setfun=.setfun(MARGIN),
@@ -288,9 +306,11 @@ colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`colGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE, value) {
+`colGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE,
+                            translate = TRUE, value) {
   `dimGeometry<-`(x, type, MARGIN = 2, sample_id = sample_id,
-                  withDimnames = withDimnames, value = value)
+                  withDimnames = withDimnames, translate = translate,
+                  value = value)
 }
 
 #' @rdname dimGeometries
@@ -301,8 +321,9 @@ colGeometries <- function(x, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`colGeometries<-` <- function(x, withDimnames = TRUE, value) {
-  `dimGeometries<-`(x, MARGIN = 2, withDimnames = withDimnames, value = value)
+`colGeometries<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
+  `dimGeometries<-`(x, MARGIN = 2, withDimnames = withDimnames,
+                    translate = translate, value = value)
 }
 
 #' @rdname dimGeometries
@@ -326,9 +347,10 @@ rowGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`rowGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE, value) {
+`rowGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE,
+                            translate = TRUE, value) {
   `dimGeometry<-`(x, type, MARGIN = 1, sample_id = sample_id,
-              withDimnames = withDimnames, value = value)
+                  withDimnames = withDimnames, translate = translate, value = value)
   x
 }
 
@@ -340,8 +362,8 @@ rowGeometries <- function(x, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`rowGeometries<-` <- function(x, withDimnames = TRUE, value) {
-  dimGeometries(x, MARGIN = 1, withDimnames = withDimnames) <- value
+`rowGeometries<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
+  dimGeometries(x, MARGIN = 1, withDimnames = withDimnames, translate = translate) <- value
   x
 }
 
@@ -366,8 +388,10 @@ spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`spotPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE, value) {
-  colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id) <- value
+`spotPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                         translate = TRUE, value) {
+  colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id,
+              translate = translate) <- value
   x
 }
 
@@ -384,9 +408,8 @@ spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 addVisiumSpotPoly <- function(x, spotDiameter) {
   df <- as.data.frame(spatialCoords(x))
   rownames(df) <- colnames(x)
-  spotPoly(x, sample_id = "all") <- df2sf(df, names(df),
-                                          spotDiameter = spotDiameter,
-                                          geometryType = "POINT")
+  spotPoly(x, sample_id = "all", translate = FALSE) <-
+    df2sf(df, names(df),spotDiameter = spotDiameter, geometryType = "POINT")
   x
 }
 
@@ -398,8 +421,10 @@ ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`ROIPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE, value) {
-  colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id) <- value
+`ROIPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                        translate = TRUE, value) {
+  colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id,
+              translate = translate) <- value
   x
 }
 
@@ -411,11 +436,12 @@ ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
   }
 }
 
-.set_col_then_annot <- function(x, name, sample_id, withDimnames, value) {
+.set_col_then_annot <- function(x, name, sample_id, withDimnames, translate,
+                                value) {
   if (name %in% colGeometryNames(x)) {
-    colGeometry(x, name, sample_id, withDimnames) <- value
+    colGeometry(x, name, sample_id, withDimnames, translate) <- value
   } else {
-    annotGeometry(x, name, sample_id) <- value
+    annotGeometry(x, name, sample_id, translate) <- value
   }
   return(x)
 }
@@ -428,8 +454,10 @@ cellSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`cellSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE, value) {
-  .set_col_then_annot(x, "cellSeg", sample_id, withDimnames, value)
+`cellSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                        translate = TRUE, value) {
+  .set_col_then_annot(x, "cellSeg", sample_id, withDimnames,
+                      translate = translate, value)
 }
 
 #' @rdname dimGeometries
@@ -440,8 +468,9 @@ nucSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`nucSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE, value) {
-  .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, value)
+`nucSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                       translate = TRUE, value) {
+  .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, translate, value)
 }
 
 #' @rdname dimGeometries
@@ -452,7 +481,7 @@ txSpots <- function(x, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-`txSpots<-` <- function(x, withDimnames = TRUE, value) {
-  rowGeometry(x, "txSpots", withDimnames) <- value
+`txSpots<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
+  rowGeometry(x, "txSpots", withDimnames, translate) <- value
   x
 }

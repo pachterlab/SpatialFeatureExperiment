@@ -44,7 +44,7 @@
 \usage{
 \S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN = 2, withDimnames = TRUE)
 
-\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN, withDimnames = TRUE, ...) <- value
+\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN, withDimnames = TRUE, translate = TRUE, ...) <- value
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment}(x, MARGIN)
 
@@ -56,19 +56,48 @@
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(
+  x,
+  type,
+  MARGIN,
+  sample_id = NULL,
+  withDimnames = TRUE,
+  translate = TRUE
+) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE, ...) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(
+  x,
+  type,
+  MARGIN,
+  sample_id = NULL,
+  withDimnames = TRUE,
+  translate = TRUE,
+  ...
+) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE, ...) <- value
+\S4method{dimGeometry}{SpatialFeatureExperiment,character}(
+  x,
+  type,
+  MARGIN,
+  sample_id = NULL,
+  withDimnames = TRUE,
+  translate = TRUE,
+  ...
+) <- value
 
 colGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE)
 
-colGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE) <- value
+colGeometry(
+  x,
+  type = 1L,
+  sample_id = NULL,
+  withDimnames = TRUE,
+  translate = TRUE
+) <- value
 
 colGeometries(x, withDimnames = TRUE)
 
-colGeometries(x, withDimnames = TRUE) <- value
+colGeometries(x, withDimnames = TRUE, translate = TRUE) <- value
 
 colGeometryNames(x)
 
@@ -76,11 +105,17 @@ colGeometryNames(x) <- value
 
 rowGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE)
 
-rowGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE) <- value
+rowGeometry(
+  x,
+  type = 1L,
+  sample_id = NULL,
+  withDimnames = TRUE,
+  translate = TRUE
+) <- value
 
 rowGeometries(x, withDimnames = TRUE)
 
-rowGeometries(x, withDimnames = TRUE) <- value
+rowGeometries(x, withDimnames = TRUE, translate = TRUE) <- value
 
 rowGeometryNames(x)
 
@@ -88,23 +123,23 @@ rowGeometryNames(x) <- value
 
 spotPoly(x, sample_id = NULL, withDimnames = TRUE)
 
-spotPoly(x, sample_id = NULL, withDimnames = TRUE) <- value
+spotPoly(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
 
 ROIPoly(x, sample_id = NULL, withDimnames = TRUE)
 
-ROIPoly(x, sample_id = NULL, withDimnames = TRUE) <- value
+ROIPoly(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
 
 cellSeg(x, sample_id = NULL, withDimnames = TRUE)
 
-cellSeg(x, sample_id = NULL, withDimnames = TRUE) <- value
+cellSeg(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
 
 nucSeg(x, sample_id = NULL, withDimnames = TRUE)
 
-nucSeg(x, sample_id = NULL, withDimnames = TRUE) <- value
+nucSeg(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
 
 txSpots(x, withDimnames = TRUE)
 
-txSpots(x, withDimnames = TRUE) <- value
+txSpots(x, withDimnames = TRUE, translate = TRUE) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -115,6 +150,12 @@ columns.}
 \item{withDimnames}{Logical. If \code{TRUE}, then the dimnames (colnames or
 rownames) of the gene count matrix should correspond to row names of the
 \code{sf} data frames of interest.}
+
+\item{translate}{Logical. Only used if \code{\link{removeEmptySpace}} has
+been run of the SFE object. If that's the case, this argument indicates
+whether the new value to be assigned to the geometry is in the coordinates
+prior to removal of empty space so it should be translated to match the new
+coordinates after removing empty space. Default to \code{TRUE}.}
 
 \item{...}{\code{spatialCoordsNames, spotDiameter, geometryType} passed to
 \code{\link{df2sf}}. Defaults are the same as in \code{\link{df2sf}}. For

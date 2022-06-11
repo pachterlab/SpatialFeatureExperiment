@@ -115,10 +115,15 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character",
           function(x, MARGIN, sample_id, name) {
             sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             out <- .get_graphs(x, "one", list(MARGIN, sample_id))
-            # Get rid of the layer of list indicating name as it's known
-            out <- lapply(out, function(o) o[[name]])
-            out <- out[vapply(out, function(o) !is.null(o), FUN.VALUE = logical(1))]
-            out
+            if (length(out) == 1L) {
+              names(out) <- sample_id
+              return(out)
+            } else {
+              # Get rid of the layer of list indicating name as it's known
+              out <- lapply(out, function(o) o[[name]])
+              out <- out[vapply(out, function(o) !is.null(o), FUN.VALUE = logical(1))]
+              out
+            }
           })
 
 #' @rdname spatialGraphs

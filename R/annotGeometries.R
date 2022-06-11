@@ -38,8 +38,9 @@ setMethod("annotGeometries", "SpatialFeatureExperiment",
 #' @rdname annotGeometries
 #' @export
 setReplaceMethod("annotGeometries", "SpatialFeatureExperiment",
-                 function(x, ..., value) {
+                 function(x, translate = TRUE, ..., value) {
                    value <- .df2sf_list(value, ...)
+                   value <- lapply(value, .translate_value, x = x, translate = translate)
                    int_metadata(x)$annotGeometries <- value
                    m <- .check_annotgeometries(x)
                    if (length(m)) stop(m)
@@ -86,7 +87,7 @@ setMethod("annotGeometry", c("SpatialFeatureExperiment", "character"), .ag)
 setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
           function(x, type, sample_id = NULL, value) annotGeometry(x, 1L, sample_id) <- value)
 
-.ag_r <- function(x, type, sample_id = NULL, ..., value) {
+.ag_r <- function(x, type, sample_id = NULL, translate = TRUE, ..., value) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   value <- .df2sf_in_list(value, ...)
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
@@ -100,6 +101,7 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
       value <- rbind(existing, value)
     }
   }
+  value <- .translate_value(x, translate, value)
   int_metadata(x)$annotGeometries[[type]] <- value
   m <- .check_annotgeometries(x)
   if (length(m)) stop(m)
@@ -124,7 +126,7 @@ tissueBoundary <- function(x, sample_id = NULL) {
 
 #' @rdname annotGeometries
 #' @export
-`tissueBoundary<-` <- function(x, sample_id = NULL, ..., value) {
-  annotGeometry(x, "tissueBoundary", sample_id, ...) <- value
+`tissueBoundary<-` <- function(x, sample_id = NULL, translate = TRUE, ..., value) {
+  annotGeometry(x, "tissueBoundary", sample_id, translate, ...) <- value
   x
 }

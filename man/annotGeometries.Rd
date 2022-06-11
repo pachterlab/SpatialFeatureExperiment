@@ -23,7 +23,7 @@
 \usage{
 \S4method{annotGeometries}{SpatialFeatureExperiment}(x)
 
-\S4method{annotGeometries}{SpatialFeatureExperiment}(x, ...) <- value
+\S4method{annotGeometries}{SpatialFeatureExperiment}(x, translate = TRUE, ...) <- value
 
 \S4method{annotGeometryNames}{SpatialFeatureExperiment}(x)
 
@@ -37,16 +37,22 @@
 
 \S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type, sample_id = NULL) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL, translate = TRUE, ...) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL, translate = TRUE, ...) <- value
 
 tissueBoundary(x, sample_id = NULL)
 
-tissueBoundary(x, sample_id = NULL, ...) <- value
+tissueBoundary(x, sample_id = NULL, translate = TRUE, ...) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
+
+\item{translate}{Logical. Only used if \code{\link{removeEmptySpace}} has
+been run of the SFE object. If that's the case, this argument indicates
+whether the new value to be assigned to the geometry is in the coordinates
+prior to removal of empty space so it should be translated to match the new
+coordinates after removing empty space. Default to \code{TRUE}.}
 
 \item{...}{\code{spatialCoordsNames, spotDiameter, geometryType} passed to
 \code{\link{df2sf}}. Defaults are the same as in \code{\link{df2sf}}. For
