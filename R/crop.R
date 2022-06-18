@@ -136,6 +136,7 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                         sample_col = colData(sfe)$sample_id[colData(sfe)$sample_id %in% sample_id],
                         id_col = "barcode")
   if (!"sample_id" %in% names(cg)) out$sample_id <- NULL
+  out <- out[colnames(sfe),]
   out
 }
 
