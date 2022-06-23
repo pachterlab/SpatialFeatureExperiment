@@ -14,6 +14,7 @@ Description: Use the sf package to leverage the well-established and optimized
 Imports:
     BiocGenerics,
     methods,
+    rjson,
     S4Vectors,
     sf,
     SingleCellExperiment,
@@ -37,6 +38,7 @@ Collate:
     'df2sf.R'
     'dimGeometries.R'
     'graph_wrappers.R'
+    'read.R'
     'spatialGraphs.R'
     'subset.R'
     'validity.R'
