@@ -10,12 +10,14 @@ read10xVisiumSFE(
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
   images = "lowres",
-  load = TRUE
+  load = TRUE,
+  style = "W",
+  zero.policy = NULL
 )
 }
 \arguments{
 \item{samples}{a character vector specifying one or more directories, 
-each corresponding to a 10x Genomics Visium sample (see Details);
+each corresponding to a 10x Genomics Visium sample (see details);
 if provided, names will be used as sample identifiers}
 
 \item{sample_id}{character string specifying unique sample identifiers,
@@ -34,6 +36,10 @@ Valid values are \code{"lowres", "hires", "fullres", "detected", "aligned"}}
 
 \item{load}{logical; should the image(s) be loaded into memory
 as a \code{grob}? If FALSE, will store the path/URL instead.}
+
+\item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
+
+\item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 }
 \value{
 A SpatialFeatureExperiment object
@@ -41,5 +47,8 @@ A SpatialFeatureExperiment object
 \description{
 Read Space Ranger output as a SpatialFeatureExperiment object, where spots
 are represented with polygons in the colGeometry called "spotPoly". Other
-geometries can be added later after the dataset is read.
+geometries can be added later after the dataset is read. If \code{data =
+"filtered"}, then spatial neighborhood graphs of the spots are also computed
+and stored in the colGraph called "visium" in all samples for downstream
+spatial analyses.
 }

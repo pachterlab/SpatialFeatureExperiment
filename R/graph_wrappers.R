@@ -161,7 +161,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 
 .comp_visium_graph <- function(x, sample_id, style, zero.policy) {
   bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
-  bcs_use2 <- sub("[-\\d]+$", "", bcs_use)
+  bcs_use2 <- sub("[-\\d]+$", "", bcs_use, perl = TRUE)
   visium_row_col <- SpatialFeatureExperiment::visium_row_col
   coords_use <- visium_row_col[match(bcs_use2, visium_row_col$barcode), c("col", "row")]
   # So adjacent spots are equidistant
