@@ -178,13 +178,13 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
                  pred = st_intersects, op = st_intersection, xmin = NULL,
                  xmax = NULL, ymin = NULL, ymax = NULL) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
-    stop("y must be a sf, sfc, or sfg object")
-  }
   if (is.null(y)) {
     y <- st_sf(geometry = st_as_sfc(st_bbox(c(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
                                             crs = NA)),
                sf_column_name = "geometry")
+  }
+  if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
+    stop("y must be a sf, sfc, or sfg object")
   }
   if ("sample_id" %in% names(y)) {
     samples_use <- intersect(unique(y$sample_id), sample_id)
