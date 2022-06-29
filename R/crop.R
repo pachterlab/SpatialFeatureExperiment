@@ -18,6 +18,7 @@
 #' in \code{x} intersects, which might not always be relevant.
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
+#' st_is_empty
 #' @importFrom stats aggregate
 st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 
@@ -25,7 +26,8 @@ st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 #' @export
 st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
 
-.crop_geometry <- function(g, y, samples_use, op, sample_col = NULL, id_col = "id") {
+.crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
+                           id_col = "id", remove_empty = FALSE) {
   # g has column sample_id as in colGeometry and annotGeometry
   # g should also have row names if it is colGeometry
   if (!id_col %in% names(g)) {
@@ -57,12 +59,13 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
   })
   gs_sub <- do.call(rbind, gs_sub)
   # Convert st_GEOMETRY to a more specific type
-  if (st_geometry_type(gs_sub, by_geometry = FALSE)) {
+  if (st_geometry_type(gs_sub, by_geometry = FALSE) == "GEOMETRY") {
     gs_sub <- st_cast(gs_sub)
   }
   gs_sub <- gs_sub[,names(g)]
   rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
   if (rm_id) gs_sub[[id_col]] <- NULL
+  if (remove_empty) gs_sub <- gs_sub[!st_is_empty(gs_sub),]
   gs_sub
 }
 
@@ -124,7 +127,9 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @param op A binary operation function for the geometries. Defaults to
 #' \code{\link{st_intersection}}.
 #' @return A \code{sf} data frame with \code{geometry} column containing the
-#' geometries and corresponding column names of sfe as row names.
+#' geometries and corresponding column names of sfe as row names. There is no
+#' guarantee that the returned geometries are valid or preserve the geometry
+#' class (e.g. when the intersection of polygons result into a line of a point).
 #' @export
 #' @seealso annotPred
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
@@ -171,7 +176,8 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @param xmax Maximum x coordinate of bounding box.
 #' @param ymin Minimum y coordinate of bounding box.
 #' @param ymax Maximum y coordinate of bounding box.
-#' @return An SFE object.
+#' @return An SFE object. There is no guarantee that the geometries after
+#' cropping are still all valid or preserve the original geometry class.
 #' @importFrom sf st_intersection st_union st_agr
 #' @export
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
@@ -205,7 +211,8 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
                                samples_use = samples_use, op = op,
                                id_col = "barcode", sample_col = colData(out)$sample_id)
   annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry, y = y,
-                                 samples_use = samples_use, op = op)
+                                 samples_use = samples_use, op = op,
+                                 remove_empty = TRUE)
   samples_rmed <- setdiff(sample_id, sampleIDs(out))
   if (length(samples_rmed)) {
     warning("Sample(s) ", paste(samples_rmed, collapse = ", "),
