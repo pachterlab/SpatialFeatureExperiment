@@ -26,7 +26,11 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
 \item{geometryType}{Type of geometry to convert the ordinary data frame to.
 If the geometry in \code{df} is de facto points, then this argument will be
-ignored and the returned \code{sf} will have geometry type POINT.}
+ignored and the returned \code{sf} will have geometry type POINT. For any
+geometry type where one geometry is specified by multiple coordinates, the
+data frame \code{df} must have a column "ID" specifying which coordinate
+belongs to which geometry. For MULTI* geometries, there must be a "group"
+column specifying which coordinates for which MULTI geometry.}
 }
 \value{
 An \code{sf} object.
