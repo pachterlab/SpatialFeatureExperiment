@@ -20,6 +20,11 @@
 #' @name SpatialFeatureExperiment-subset
 #' @aliases [,SpatialFeatureExperiment,ANY,ANY,ANY-method
 #' @export
+#' @examples
+#' # Just like subsetting matrices and SingleCellExperiment
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' sfe_subset <- sfe[1:10, 1:10]
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
           function(x, i, j, ..., drop = FALSE) {
             # Because the extra graphs and sample_ids result into invalid object

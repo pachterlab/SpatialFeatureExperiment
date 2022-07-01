@@ -206,3 +206,58 @@ but for nuclei rather than whole cell.} \item{txSpots}{POINT or MULTIPOINT
 geometries of transcript spots of single molecular resolution technologies,
 stored in \code{rowGeometries}.} }
 }
+\examples{
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+
+# Get all column geometries as a named list
+# Use MARGIN = 1 or rowGeometry/ies for rowGeometries
+cgs <- dimGeometries(sfe, MARGIN = 2)
+# Or equivalently
+cgs <- colGeometries(sfe)
+
+# Set all column geometries with a named list
+dimGeometries(sfe, MARGIN = 2) <- cgs
+# Or equivalently
+colGeometries(sfe) <- cgs
+
+# Get names of column geometries
+cgns <- dimGeometryNames(sfe, MARGIN = 2)
+cgns <- colGeometryNames(sfe)
+
+# Set column geometry names
+dimGeometryNames(sfe, MARGIN = 2) <- cgns
+colGeometryNames(sfe) <- cgns
+
+# Get a specific column geometry by name
+spots <- dimGeometry(sfe, "spotPoly", MARGIN = 2)
+spots <- colGeometry(sfe, "spotPoly")
+# Or equivalently, the wrapper specifically for Visium spot polygons,
+# for the name "spotPoly"
+spots <- spotPoly(sfe)
+# Other colGeometry wrappers for specific names:
+# ROIPoly (for LCM and GeoMX DSP), cellSeg and nucSeg (for MERFISH; would
+# query annotGeometries for Visium)
+# rowGeometry wrappers for specific names: txSpots (MERFISH transcript spots)
+# By index
+spots <- colGeometry(sfe, 1L)
+
+# Multiple samples, only get geometries for one sample
+sfe2 <- McKellarMuscleData("small2")
+sfe_combined <- cbind(sfe, sfe2)
+spots1 <- colGeometry(sfe, "spotPoly", sample_id = "Vis5A")
+spots2 <- spotPoly(sfe_combined, sample_id = "sample02")
+# Get geometries for multiple samples
+spots3 <- spotPoly(sfe_combined, sample_id = c("Vis5A", "sample02"))
+# All samples
+spots3 <- spotPoly(sfe_combined, sample_id = "all")
+
+# Set specific column geometry by name
+colGeometry(sfe, "foobar") <- spots
+# Or use wrapper
+spotPoly(sfe) <- spots
+# Specify sample_id
+colGeometry(sfe_combined, "foobar", sample_id = "Vis5A") <- spots1
+# Only entries for the specified sample are set.
+foobar <- colGeometry(sfe_combined, "foobar")
+}

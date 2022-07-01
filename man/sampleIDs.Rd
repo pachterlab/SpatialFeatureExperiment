@@ -16,3 +16,8 @@ column in \code{colData(x)}.
 \description{
 The title is self-explanatory.
 }
+\examples{
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+sampleIDs(sfe)
+}

@@ -93,3 +93,40 @@ This is usually of geometry type MULTIPOLYGON, though geometries in
 \code{annotGeometries} can have any type supported by \code{sf}.}
 }
 }
+\examples{
+# Example dataset
+library(SFEData)
+sfe_small <- McKellarMuscleData(dataset = "small")
+
+# Get all annotation geometries, returning a named list
+annotGeometries(sfe_small)
+
+# Set all annotation geometries, in a named list
+toy <- readRDS(system.file("testdata/sfe_toy.rds",
+               package = "SpatialFeatureExperiment"))
+ag <- readRDS(system.file("testdata/ag.rds",
+                          package = "SpatialFeatureExperiment"))
+annotGeometries(toy) <- list(hull = ag)
+
+# Get names of annotation geometries
+annotGeometryNames(sfe_small)
+
+# Set names of annotation geometries
+annotGeometryNames(toy) <- "foo"
+
+# Get a specific annotation geometry by name
+# sample_id is optional when there is only one sample present
+nuclei <- annotGeometry(sfe_small, type = "nuclei", sample_id = "Vis5A")
+
+# Get a specific annotation geometry by index
+tb <- annotGeometry(sfe_small, type = 1L)
+
+# Set a specific annotation geometry
+annotGeometry(sfe_small, type = "nuclei2") <- nuclei
+
+# Special convenience function for tissue boundaries
+# Getter
+tb <- tissueBoundary(sfe_small, sample_id = "Vis5A")
+# Setter
+tissueBoundary(sfe_small, sample_id = "Vis5A") <- tb
+}

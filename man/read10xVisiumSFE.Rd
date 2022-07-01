@@ -17,7 +17,7 @@ read10xVisiumSFE(
 }
 \arguments{
 \item{samples}{a character vector specifying one or more directories, 
-each corresponding to a 10x Genomics Visium sample (see details);
+each corresponding to a 10x Genomics Visium sample (see Details);
 if provided, names will be used as sample identifiers}
 
 \item{sample_id}{character string specifying unique sample identifiers,
@@ -51,4 +51,19 @@ geometries can be added later after the dataset is read. If \code{data =
 "filtered"}, then spatial neighborhood graphs of the spots are also computed
 and stored in the colGraph called "visium" in all samples for downstream
 spatial analyses.
+}
+\examples{
+library(SpatialExperiment) # Just for the example directory
+dir <- system.file(
+  file.path("extdata", "10xVisium"),
+  package = "SpatialExperiment")
+
+sample_ids <- c("section1", "section2")
+samples <- file.path(dir, sample_ids, "outs")
+
+list.files(samples[1])
+list.files(file.path(samples[1], "spatial"))
+file.path(samples[1], "raw_feature_bc_matrix")
+(sfe <- read10xVisiumSFE(samples, sample_ids, type = "sparse", data = "raw",
+                         load = FALSE))
 }

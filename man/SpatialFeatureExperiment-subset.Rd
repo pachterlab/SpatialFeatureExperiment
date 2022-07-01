@@ -31,3 +31,9 @@ The method for SFE reconstructs the spatial graphs when the SFE object is
 subsetted as the \code{listw} objects encodes the nodes with indices which
 are no longer valid after subsetting as some nodes are no longer present.
 }
+\examples{
+# Just like subsetting matrices and SingleCellExperiment
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+sfe_subset <- sfe[1:10, 1:10]
+}

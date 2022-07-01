@@ -17,3 +17,8 @@ Printing summaries of \code{colGeometries}, \code{rowGeometries}, and
 \code{annotGeometries} in addition to what's shown for
 \code{SpatialExperiment}. Geometry names and types are printed.
 }
+\examples{
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+sfe # The show method is implicitly called
+}

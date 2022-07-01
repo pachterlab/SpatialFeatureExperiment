@@ -22,6 +22,13 @@
 #' @importFrom SpatialExperiment spatialCoords
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
+#' @examples
+#' library(SpatialExperiment)
+#' example(read10xVisium)
+#' # There can't be suplicate barcodes
+#' colnames(spe) <- make.unique(colnames(spe), sep = "-")
+#' rownames(spatialCoords(spe)) <- colnames(spe)
+#' sfe <- toSpatialFeatureExperiment(spe)
 NULL
 
 .sc2cg <- function(coords_use) {

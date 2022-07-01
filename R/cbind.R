@@ -50,6 +50,11 @@
 #' @return A combined SFE object.
 #' @importFrom BiocGenerics cbind
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe_small <- McKellarMuscleData(dataset = "small")
+#' sfe_small2 <- McKellarMuscleData(dataset = "small2")
+#' sfe2 <- cbind(sfe_small, sfe_small2)
 setMethod("cbind", "SpatialFeatureExperiment",
           function(..., deparse.level = 1) {
             old <- S4Vectors:::disableValidity()

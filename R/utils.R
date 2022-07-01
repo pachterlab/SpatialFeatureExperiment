@@ -51,6 +51,10 @@
 #' column in \code{colData(x)}.
 #' @export
 #' @importFrom SummarizedExperiment colData colData<-
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' sampleIDs(sfe)
 sampleIDs <- function(x) unique(colData(x)$sample_id)
 
 .check_sample_id <- function(x, sample_id, one = TRUE) {

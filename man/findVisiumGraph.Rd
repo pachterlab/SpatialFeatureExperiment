@@ -38,3 +38,12 @@ adjacent spots are connected by edges. Since the known rows and columns of
 the spots are used, the unit the spot centroid coordinates are in does not
 matter.
 }
+\examples{
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+g <- findVisiumGraph(g)
+# For multiple samples, returns named list
+sfe2 <- McKellarMuscleData(dataset = "small2")
+sfe_combined <- cbind(sfe, sfe2)
+gs <- findVisiumGraph(sfe, sample_id = "all")
+}

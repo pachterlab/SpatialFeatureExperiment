@@ -21,3 +21,14 @@ polygons of the spots.
 \description{
 For adding the spot polygons to SFE objects converted from SPE.
 }
+\examples{
+library(SpatialExperiment)
+example(read10xVisium)
+# There can't be suplicate barcodes
+colnames(spe) <- make.unique(colnames(spe), sep = "-")
+rownames(spatialCoords(spe)) <- colnames(spe)
+sfe <- toSpatialFeatureExperiment(spe)
+# A hypothetical spot diameter; check the scalefactors_json.json file for
+# actual diameter in pixels in full resolution image.
+sfe <- addVisiumSpotPoly(sfe, spotDiameter = 80)
+}

@@ -43,6 +43,56 @@
 #' @importFrom methods as validObject show
 #' @importFrom stats setNames
 #' @docType methods
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' g1 <- findVisiumGraph(sfe)
+#' g2 <- findSpatialNeighbors(sfe)
+#'
+#' # Set all graphs of a margin by a named list
+#' spatialGraphs(sfe, MARGIN = 2L, sample_id = "Vis5A") <-
+#'   list(tri2nb = g2, visium = g1)
+#' # Or equivalently
+#' colGraphs(sfe, sample_id = "Vis5A") <- list(tri2nb = g2, visium = g1)
+#'
+#' # Get all graphs of a margin, returning a named list
+#' gs <- spatialGraphs(sfe, MARGIN = 2L)
+#' # Or equivalently
+#' gs <- colGraphs(sfe)
+#'
+#' # Set graph of the same name and same margin for multiple samples
+#' # Each sample has a separate graph
+#' sfe2 <- McKellarMuscleData("small2")
+#' sfe_combined <- cbind(sfe, sfe2)
+#' colGraphs(sfe_combined, name = "visium", sample_id = "all") <-
+#'   findVisiumGraph(sfe_combined, sample_id = "all")
+#'
+#' # Get graph names
+#' spatialGraphNames(sfe, MARGIN = 2L, sample_id = "Vis5A")
+#' # Or equivalently (sample_id optional as only one sample is present)
+#' colGraphNames(sfe)
+#'
+#' # Set graph names
+#' spatialGraphNames(sfe, MARGIN = 2L) <- c("foo", "bar")
+#' colGraphNames(sfe) <- c("tri2nb", "visium")
+#'
+#' # MARGIN = 1 means rowGraphs; MARGIN = 3 means annotation graphs (annotGraphs)
+#' # for both getters and setters
+#'
+#' # Set single graph by
+#' # Spatial graph for myofibers
+#' g_myofiber <- findSpatialNeighbors(sfe, type = "myofiber_simplified",
+#'                                    MARGIN = 3L, method = "poly2nb")
+#' spatialGraph(sfe, type = "myofiber", MARGIN = 3L) <- g_myofiber
+#' # Or equivalently
+#' annotGraph(sfe, "myofiber") <- g_myofiber
+#'
+#' # Get a specific graph by name
+#' g <- spatialGraph(sfe, "myofiber", MARGIN = 3L)
+#' g2 <- spatialGraph(sfe, "visium", MARGIN = 2L)
+#' # Or equivalently
+#' g <- annotGraph(sfe, "myofiber")
+#' g2 <- colGraph(sfe, "visium")
 NULL
 
 .margin_name <- function(MARGIN) switch (MARGIN, "row", "col", "annot")

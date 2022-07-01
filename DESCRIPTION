@@ -33,10 +33,10 @@ Collate:
     'annotGeometries.R'
     'cbind.R'
     'coerce.R'
-    'crop.R'
     'data.R'
     'df2sf.R'
     'dimGeometries.R'
+    'geometry_operation.R'
     'graph_wrappers.R'
     'read.R'
     'spatialGraphs.R'
@@ -55,4 +55,3 @@ biocViews:
     DataRepresentation,
     Transcriptomics,
     Spatial
-    

@@ -13,6 +13,20 @@
 #' @importFrom rjson fromJSON
 #' @return A SpatialFeatureExperiment object
 #' @export
+#' @examples
+#' library(SpatialExperiment) # Just for the example directory
+#' dir <- system.file(
+#'   file.path("extdata", "10xVisium"),
+#'   package = "SpatialExperiment")
+#'
+#' sample_ids <- c("section1", "section2")
+#' samples <- file.path(dir, sample_ids, "outs")
+#'
+#' list.files(samples[1])
+#' list.files(file.path(samples[1], "spatial"))
+#' file.path(samples[1], "raw_feature_bc_matrix")
+#' (sfe <- read10xVisiumSFE(samples, sample_ids, type = "sparse", data = "raw",
+#'                          load = FALSE))
 read10xVisiumSFE <- function(samples = "",
                              sample_id = paste0("sample", sprintf("%02d", seq_along(samples))),
                              type = c("HDF5", "sparse"),
