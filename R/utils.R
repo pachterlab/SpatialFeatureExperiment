@@ -46,7 +46,7 @@
 #'
 #' The title is self-explanatory.
 #'
-#' @param x A \code{SpatialFeatureExperiment} object.
+#' @param sfe A \code{SpatialFeatureExperiment} object.
 #' @return A character vector of all unique entries of the \code{sample_id}
 #' column in \code{colData(x)}.
 #' @export
@@ -55,7 +55,39 @@
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
 #' sampleIDs(sfe)
-sampleIDs <- function(x) unique(colData(x)$sample_id)
+sampleIDs <- function(sfe) unique(colData(sfe)$sample_id)
+
+#' Change sample IDs
+#'
+#' Change sample IDs in all fields of the SFE object where sample IDs are
+#' present, not just the colData.
+#'
+#' @inheritParams sampleIDs
+#' @param replacement A named character vector whose names are the existing
+#'   sample IDs to be changed and whose values are the corresponding
+#'   replacements.
+#' @return An SFE object.
+#' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' sfe <- changeSampleIDs(sfe, c(Vis5A = "sample01"))
+#' sampleIDs(sfe)
+changeSampleIDs <- function(sfe, replacement) {
+  for (i in seq_along(replacement)) {
+    colData(sfe)$sample_id[colData(sfe)$sample_id == names(replacement)[i]] <- replacement[i]
+    gs_names <- names(int_metadata(sfe)$spatialGraphs)
+    names(int_metadata(sfe)$spatialGraphs)[gs_names == names(replacement)[i]] <- replacement[i]
+    if (length(int_metadata(sfe)$annotGeometries)) {
+      for (n in names(int_metadata(sfe)$annotGeometries)) {
+        ag <- int_metadata(sfe)$annotGeometries[[n]]
+        ind <- ag$sample_id == names(replacement)[i]
+        int_metadata(sfe)$annotGeometries[[n]]$sample_id[ind] <- replacement[i]
+      }
+    }
+  }
+  sfe
+}
 
 .check_sample_id <- function(x, sample_id, one = TRUE) {
   if (is.null(sample_id)) {

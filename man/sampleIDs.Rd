@@ -4,10 +4,10 @@
 \alias{sampleIDs}
 \title{Get all unique sample IDs}
 \usage{
-sampleIDs(x)
+sampleIDs(sfe)
 }
 \arguments{
-\item{x}{A \code{SpatialFeatureExperiment} object.}
+\item{sfe}{A \code{SpatialFeatureExperiment} object.}
 }
 \value{
 A character vector of all unique entries of the \code{sample_id}
