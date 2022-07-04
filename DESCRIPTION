@@ -43,6 +43,7 @@ Collate:
     'subset.R'
     'validity.R'
 Suggests: 
+    BiocStyle,
     knitr,
     Matrix,
     rmarkdown,
