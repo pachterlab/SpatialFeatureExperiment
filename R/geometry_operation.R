@@ -12,19 +12,36 @@
 #' @param y Another object of class \code{sf}, \code{sfc}, or \code{sfg}.
 #' @param pred A geometric binary predicate function, such as \code{\link{st_intersects}}.
 #' It should return an object of class \code{sgbp}, for sparse predicates.
-#' @return A logical vector indicating whether each geometry in \code{x} intersects
+#' @return For \code{st_any_*}, a logical vector indicating whether each geometry in \code{x} intersects
 #' (or other predicates such as is covered by) anything in \code{y}. Simplified
 #' from the \code{sgbp} results which indicate which item in \code{y} each item
-#' in \code{x} intersects, which might not always be relevant.
+#' in \code{x} intersects, which might not always be relevant. For \code{st_n_*},
+#' an integer vector indicating the number of geometries in y returns TRUE for
+#' each geometry in x.
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
-#' st_is_empty
+#' st_is_empty st_disjoint
 #' @importFrom stats aggregate
+#' @examples
+#' pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
+#' pol <- st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
+#' st_any_pred(pts, pol, pred = st_disjoint)
+#' st_any_intersects(pts, pol)
+#' st_n_pred(pts, pol, pred = st_disjoint)
+#' st_n_intersects(pts, pol)
 st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
 
 #' @rdname st_any_pred
 #' @export
 st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
+
+#' @rdname st_any_pred
+#' @export
+st_n_pred <- function(x, y, pred) lengths(pred(x, y))
+
+#' @rdname st_any_pred
+#' @export
+st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 
 .crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
                            id_col = "id", remove_empty = FALSE) {
@@ -101,17 +118,38 @@ st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
 #'   samples.
 #' @param pred Predicate function to use, defaults to
 #'   \code{\link{st_intersects}}.
-#' @return A logical vector of the same length as the number of columns in the
-#'   sample(s) of interest, with barcodes (or corresponding column names of sfe)
-#'   as names.
+#' @return For \code{annotPred}, a logical vector of the same length as the
+#'   number of columns in the sample(s) of interest, with barcodes (or
+#'   corresponding column names of sfe) as names. For \code{annotNPred}, a
+#'   numeric vector of the same length as the number of columns in the sample(s)
+#'   of interest with barcodes as names, indicating the number of geometries
+#'   in the \code{annotGeometry} of interest returns TRUE for the predicate for
+#'   each each geometry in the \code{colGeometry} of interest.
 #' @export
 #' @seealso annotOp
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' # Whether each spot is in tissue
+#' in_tissue <- annotPred(sfe, "spotPoly", annotGeometryName = "tissueBoundary")
+#' # How many nuclei are there in each Visium spot
+#' n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                       sample_id = NULL, pred = st_intersects) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
   .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
              fun = st_any_pred, pred = pred)
+}
+
+#' @rdname annotPred
+#' @export
+annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
+                      sample_id = NULL, pred = st_intersects) {
+  sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+  ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
+  .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
+             fun = st_n_pred, pred = pred)
 }
 
 #' Binary operations for geometry of each cell/spot and annotation
@@ -132,6 +170,11 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' class (e.g. when the intersection of polygons result into a line of a point).
 #' @export
 #' @seealso annotPred
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' # Get the intersection of myofibers with each Visium spot
+#' myofibers_on_spots <- annotOp(sfe, "spotPoly", annotGeometryName = "myofiber_simplified")
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                     sample_id = NULL, op = st_intersection) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
@@ -160,13 +203,13 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   and \code{ymax} are specified for a bounding box.
 #' @param colGeometryName Column geometry to used to indicate which cells/spots
 #'   to keep.
-#' @param sample_id Samples to crop. Can be multiple samples, or "all", which
-#'   means all samples. For multiple samples, \code{y} may have column
-#'   \code{sample_id} indicating which geometry subsets which sample. Only
-#'   samples included in the \code{sample_id} column are subsetted. If there is
-#'   no \code{sample_id} column or \code{y} is not specified, then the same
-#'   geometry or bounding box is used to subset all samples specified in the
-#'   \code{sample_id} argument.
+#' @param sample_id Samples to crop. Optional when only one sample is present.
+#'   Can be multiple samples, or "all", which means all samples. For multiple
+#'   samples, \code{y} may have column \code{sample_id} indicating which
+#'   geometry subsets which sample. Only samples included in the
+#'   \code{sample_id} column are subsetted. If there is no \code{sample_id}
+#'   column or \code{y} is not specified, then the same geometry or bounding box
+#'   is used to subset all samples specified in the \code{sample_id} argument.
 #' @param pred A geometric binary predicate function to indicate which
 #'   cells/spots to keep, defaults to \code{\link{st_intersects}}.
 #' @param op A geometric operation function to crop the geometries in the SFE
@@ -177,15 +220,27 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @param ymin Minimum y coordinate of bounding box.
 #' @param ymax Maximum y coordinate of bounding box.
 #' @return An SFE object. There is no guarantee that the geometries after
-#' cropping are still all valid or preserve the original geometry class.
+#'   cropping are still all valid or preserve the original geometry class.
 #' @importFrom sf st_intersection st_union st_agr
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' # Subset sfe to only keep spots on tissue
+#' sfe_on_tissue <- crop(sfe, tissueBoundary(sfe), colGeometryName = "spotPoly",
+#'                       sample_id = "Vis5A")
+#' # Subset sfe to only keep what's within a bounding box
+#' # All geometries will be cropped
+#' # sample_id is optional when only one sample is present
+#' sfe_cropped <- crop(sfe, colGeometryName = "spotPoly",
+#'                     xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500)
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
                  pred = st_intersects, op = st_intersection, xmin = NULL,
                  xmax = NULL, ymin = NULL, ymax = NULL) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (is.null(y)) {
-    y <- st_sf(geometry = st_as_sfc(st_bbox(c(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+    y <- st_sf(geometry = st_as_sfc(st_bbox(c(xmin = xmin, xmax = xmax,
+                                              ymin = ymin, ymax = ymax),
                                             crs = NA)),
                sf_column_name = "geometry")
   }
@@ -225,7 +280,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,])
   cgs_union <- Reduce(st_union, cgs)
   ags <- annotGeometries(sfe)
-  if (!is.null(ags)) {
+  if (length(ags)) {
     ags <- lapply(ags, function(g) g[g$sample_id == sample_id,])
     ags_union <- Reduce(st_union, ags)
     all_union <- st_union(cgs_union, ags_union)
@@ -251,6 +306,10 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
 #' @aliases bbox
 #' @importFrom sf st_bbox
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' bbox(sfe, sample_id = "Vis5A")
 setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   out <- lapply(sample_id, .bbox_sample, sfe = sfe)
@@ -301,6 +360,13 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 #' @note Unlike other functions in this package, this function operates on all
 #' samples by default.
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("full")
+#' # Only keep spots on tissue
+#' sfe2 <- crop(sfe, tissueBoundary(sfe))
+#' # Move the coordinates of the tissue
+#' sfe2 <- removeEmptySpace(sfe2)
 removeEmptySpace <- function(sfe, sample_id = "all") {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   bboxes <- bbox(sfe, sample_id)

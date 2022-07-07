@@ -106,6 +106,25 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   st_centroid st_geometry_type st_geometry st_is_valid st_geometrycollection
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @export
+#' @examples
+#' data("visium_row_col")
+#' coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6,]
+#' coords1$row <- coords1$row * sqrt(3)
+#' cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
+#'
+#' set.seed(29)
+#' col_inds <- sample(1:13, 13)
+#' row_inds <- sample(1:5, 13, replace = TRUE)
+#' values <- sample(1:5, 13, replace = TRUE)
+#' mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
+#' colnames(mat) <- coords1$barcode
+#' rownames(mat) <- sample(LETTERS, 5)
+#' rownames(cg) <- colnames(mat)
+#'
+#' sfe <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
+#'                                 spatialCoordsNames = c("col", "row"),
+#'                                 spotDiameter = 0.7)
+#' sfe2 <- SpatialFeatureExperiment(list(counts = mat), colGeometries = list(foo = cg))
 SpatialFeatureExperiment <- function(assays,
                                      colData = DataFrame(), rowData = NULL,
                                      sample_id = "sample01",
@@ -189,6 +208,10 @@ SpatialFeatureExperiment <- function(assays,
 #' @param object A \code{SpatialFeatureExperiment} object.
 #' @return None (invisible \code{NULL}).
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' sfe # The show method is implicitly called
 setMethod("show", "SpatialFeatureExperiment",
           function(object) {
             callNextMethod()

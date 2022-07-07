@@ -19,3 +19,9 @@ On top of the \code{cbind} method of \code{SpatialExperiment}, this method is
 needed to properly merge the \code{spatialGraphs} field in the different SFE
 objects.
 }
+\examples{
+library(SFEData)
+sfe_small <- McKellarMuscleData(dataset = "small")
+sfe_small2 <- McKellarMuscleData(dataset = "small2")
+sfe2 <- cbind(sfe_small, sfe_small2)
+}

@@ -57,8 +57,7 @@ For one sample, then a \code{listw} object representing the graph,
   objects, whose names are the sample_ids. To add the list for multiple
   samples to a SFE object, specify the \code{name} argument in the
   \code{\link{spatialGraphs}} replacement method, so graph of the same name
-  will be added to the SFE object for each sample. (need to write examples
-  and vignettes to make this really clear.)
+  will be added to the SFE object for each sample.
 }
 \description{
 This function wraps all spatial neighborhood graphs implemented in the
@@ -72,4 +71,15 @@ graph in the \code{spdep}, \code{spatialreg}, and \code{adespatial}. The edge
 weights of the graph in the \code{listw} object are by default style W (see
 \code{\link{nb2listw}}) and the unweighted neighbor list is in the
 \code{neighbours} field of the \code{listw} object.
+}
+\examples{
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+# sample_id is optional when only one sample is present
+g <- findSpatialNeighbors(sfe, sample_id = "Vis5A")
+attr(g, "method")
+# Returns named list for multiple samples
+sfe2 <- McKellarMuscleData(dataset = "small2")
+sfe_combined <- cbind(sfe, sfe2)
+gs <- findSpatialNeighbors(sfe, sample_id = "all")
 }

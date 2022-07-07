@@ -103,3 +103,11 @@ using \code{toSpatialFeatureExperiment}. For now coercion only works for
 \code{SpatialExperiment}. I'll deal with \code{Seurat} and
 \code{SingleCellExperiment} later.
 }
+\examples{
+library(SpatialExperiment)
+example(read10xVisium)
+# There can't be suplicate barcodes
+colnames(spe) <- make.unique(colnames(spe), sep = "-")
+rownames(spatialCoords(spe)) <- colnames(spe)
+sfe <- toSpatialFeatureExperiment(spe)
+}

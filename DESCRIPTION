@@ -33,16 +33,17 @@ Collate:
     'annotGeometries.R'
     'cbind.R'
     'coerce.R'
-    'crop.R'
     'data.R'
     'df2sf.R'
     'dimGeometries.R'
+    'geometry_operation.R'
     'graph_wrappers.R'
     'read.R'
     'spatialGraphs.R'
     'subset.R'
     'validity.R'
 Suggests: 
+    BiocStyle,
     knitr,
     Matrix,
     rmarkdown,
@@ -50,5 +51,8 @@ Suggests:
 Config/testthat/edition: 3
 Depends: 
     R (>= 3.5.0)
-LazyData: TRUE
 VignetteBuilder: knitr
+biocViews:
+    DataRepresentation,
+    Transcriptomics,
+    Spatial

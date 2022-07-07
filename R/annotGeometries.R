@@ -28,6 +28,42 @@
 #' @name annotGeometries
 #' @aliases annotGeometries<- annotGeometry annotGeometry<- annotGeometryNames
 #' annotGeometryNames<-
+#' @examples
+#' # Example dataset
+#' library(SFEData)
+#' sfe_small <- McKellarMuscleData(dataset = "small")
+#'
+#' # Get all annotation geometries, returning a named list
+#' annotGeometries(sfe_small)
+#'
+#' # Set all annotation geometries, in a named list
+#' toy <- readRDS(system.file("testdata/sfe_toy.rds",
+#'                package = "SpatialFeatureExperiment"))
+#' ag <- readRDS(system.file("testdata/ag.rds",
+#'                           package = "SpatialFeatureExperiment"))
+#' annotGeometries(toy) <- list(hull = ag)
+#'
+#' # Get names of annotation geometries
+#' annotGeometryNames(sfe_small)
+#'
+#' # Set names of annotation geometries
+#' annotGeometryNames(toy) <- "foo"
+#'
+#' # Get a specific annotation geometry by name
+#' # sample_id is optional when there is only one sample present
+#' nuclei <- annotGeometry(sfe_small, type = "nuclei", sample_id = "Vis5A")
+#'
+#' # Get a specific annotation geometry by index
+#' tb <- annotGeometry(sfe_small, type = 1L)
+#'
+#' # Set a specific annotation geometry
+#' annotGeometry(sfe_small, type = "nuclei2") <- nuclei
+#'
+#' # Special convenience function for tissue boundaries
+#' # Getter
+#' tb <- tissueBoundary(sfe_small, sample_id = "Vis5A")
+#' # Setter
+#' tissueBoundary(sfe_small, sample_id = "Vis5A") <- tb
 NULL
 
 #' @rdname annotGeometries
@@ -89,6 +125,9 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
 
 .ag_r <- function(x, type, sample_id = NULL, translate = TRUE, ..., value) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+  if (length(sampleIDs(x)) == 1L && !"sample_id" %in% names(value)) {
+    value$sample_id <- sample_id
+  }
   value <- .df2sf_in_list(value, ...)
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     existing <- int_metadata(x)$annotGeometries[[type]]

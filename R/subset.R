@@ -11,7 +11,7 @@
 #'   node indices in the graphs are no longer valid so the row and col graphs
 #'   affected by subsetting are dropped. At present, this only works with the
 #'   wrapper functions in this package that take in SFE objects and records the
-#'   info required to reconstruc the graphs. While this argument is ignored for
+#'   info required to reconstruct the graphs. While this argument is ignored for
 #'   \code{SummarizedExperiment}
 #' @param ... Passed to the \code{SingleCellExperiment} method of \code{[}.
 #' @importFrom methods callNextMethod
@@ -20,6 +20,11 @@
 #' @name SpatialFeatureExperiment-subset
 #' @aliases [,SpatialFeatureExperiment,ANY,ANY,ANY-method
 #' @export
+#' @examples
+#' # Just like subsetting matrices and SingleCellExperiment
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' sfe_subset <- sfe[1:10, 1:10]
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
           function(x, i, j, ..., drop = FALSE) {
             # Because the extra graphs and sample_ids result into invalid object

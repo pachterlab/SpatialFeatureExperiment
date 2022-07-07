@@ -110,12 +110,21 @@
 #'   objects, whose names are the sample_ids. To add the list for multiple
 #'   samples to a SFE object, specify the \code{name} argument in the
 #'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
-#'   will be added to the SFE object for each sample. (need to write examples
-#'   and vignettes to make this really clear.)
+#'   will be added to the SFE object for each sample.
 #' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh
 #'   soi.graph knn2nb graph2nb nb2listw poly2nb
 #' @aliases findSpatialNeighbors
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' # sample_id is optional when only one sample is present
+#' g <- findSpatialNeighbors(sfe, sample_id = "Vis5A")
+#' attr(g, "method")
+#' # Returns named list for multiple samples
+#' sfe2 <- McKellarMuscleData(dataset = "small2")
+#' sfe_combined <- cbind(sfe, sfe2)
+#' gs <- findSpatialNeighbors(sfe, sample_id = "all")
 setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
           function(x, sample_id = NULL, type = "spatialCoords", MARGIN = 2,
                    method = c("tri2nb", "knearneigh", "dnearneigh",
@@ -203,6 +212,14 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 #'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
 #'   will be added to the SFE object for each sample.
 #' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' g <- findVisiumGraph(g)
+#' # For multiple samples, returns named list
+#' sfe2 <- McKellarMuscleData(dataset = "small2")
+#' sfe_combined <- cbind(sfe, sfe2)
+#' gs <- findVisiumGraph(sfe, sample_id = "all")
 findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (length(sample_id) == 1L) {
