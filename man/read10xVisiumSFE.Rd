@@ -17,7 +17,7 @@ read10xVisiumSFE(
 }
 \arguments{
 \item{samples}{a character vector specifying one or more directories, 
-each corresponding to a 10x Genomics Visium sample (see Details);
+each corresponding to a 10x Genomics Visium sample (see details);
 if provided, names will be used as sample identifiers}
 
 \item{sample_id}{character string specifying unique sample identifiers,
