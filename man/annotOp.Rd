@@ -27,7 +27,9 @@ samples.}
 }
 \value{
 A \code{sf} data frame with \code{geometry} column containing the
-geometries and corresponding column names of sfe as row names.
+geometries and corresponding column names of sfe as row names. There is no
+guarantee that the returned geometries are valid or preserve the geometry
+class (e.g. when the intersection of polygons result into a line of a point).
 }
 \description{
 Just like \code{\link{annotPred}}, but performs the operation rather than

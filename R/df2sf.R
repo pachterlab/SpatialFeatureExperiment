@@ -139,7 +139,7 @@
 }
 
 .is_de_facto_point <- function(df) {
-  (!"ID" %in% names(df) | !anyDuplicated(df$ID)) & !"group" %in% names(df)
+  (!"ID" %in% names(df) || !anyDuplicated(df$ID)) && !"group" %in% names(df)
 }
 
 #' From ordinary data frame to sf to construct SFE object

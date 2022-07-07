@@ -51,7 +51,8 @@ specified.}
 \item{ymax}{Maximum y coordinate of bounding box.}
 }
 \value{
-An SFE object.
+An SFE object. There is no guarantee that the geometries after
+cropping are still all valid or preserve the original geometry class.
 }
 \description{
 Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
