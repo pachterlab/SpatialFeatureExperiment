@@ -87,6 +87,9 @@ engineering CRS's which can convert units and invert the y axis for
 Cartesian vs. image orientations. Units are also helpful when plotting
 scale bars. Ignored for now, until I find a better way to deal with it.}
 }
+\value{
+An SFE object
+}
 \description{
 The \code{SpatialFeatureExperiment} class inherits from
 \code{SpatialExperiment}, which in turn inherits from

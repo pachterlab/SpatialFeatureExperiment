@@ -11,12 +11,10 @@
 #' geometries. Internally, annotation geometries are stored in
 #' \code{int_metadata}.
 #'
-#' Wrapper for getter and setter of special geometry:
-#' \describe{
+#' Wrapper for getter and setter of special geometry: \describe{
 #' \item{tisseuBoundary}{Boundary of the tissue of interest, including holes.
 #' This is usually of geometry type MULTIPOLYGON, though geometries in
-#' \code{annotGeometries} can have any type supported by \code{sf}.}
-#' }
+#' \code{annotGeometries} can have any type supported by \code{sf}.} }
 #'
 #' @inheritParams dimGeometries
 #' @param value Value to set. For \code{annotGeometry}, must be a \code{sf} data
@@ -25,9 +23,12 @@
 #'   of such \code{sf} or ordinary data frames. There must be a column
 #'   \code{sample_id} to indicate the sample the geometries are for, and the
 #'   \code{sample_id} must also appear in \code{colData}.
+#' @return Getters for multiple geometries return a named list. Getters for
+#'   names return a character vector of the names. Getters for single geometries
+#'   return an \code{sf} data frame. Setters return an SFE object.
 #' @name annotGeometries
 #' @aliases annotGeometries<- annotGeometry annotGeometry<- annotGeometryNames
-#' annotGeometryNames<-
+#'   annotGeometryNames<-
 #' @examples
 #' # Example dataset
 #' library(SFEData)

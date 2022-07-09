@@ -137,6 +137,7 @@ A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
 Create a \code{SpatialFeatureExperiment} object.
 }
 \examples{
+library(Matrix)
 data("visium_row_col")
 coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6,]
 coords1$row <- coords1$row * sqrt(3)

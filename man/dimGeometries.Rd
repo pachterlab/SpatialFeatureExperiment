@@ -175,6 +175,11 @@ the *Geometry to query or replace. If missing, then the first item in the
 
 \item{sample_id}{Sample ID to get or set geometries.}
 }
+\value{
+Getters for multiple geometries return a named list. Getters for names
+  return a character vector of the names. Getters for single geometries
+  return an \code{sf} data frame. Setters return an SFE object.
+}
 \description{
 "Dimension geometry" refers to Simple Feature (\code{sf}) geometries
 associated with rows (features, genes) or columns (cells or spots) of the
@@ -259,5 +264,5 @@ spotPoly(sfe) <- spots
 # Specify sample_id
 colGeometry(sfe_combined, "foobar", sample_id = "Vis5A") <- spots1
 # Only entries for the specified sample are set.
-foobar <- colGeometry(sfe_combined, "foobar")
+foobar <- colGeometry(sfe_combined, "foobar", sample_id = "sample02")
 }

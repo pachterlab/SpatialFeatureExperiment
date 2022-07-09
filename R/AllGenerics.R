@@ -46,40 +46,40 @@ setGeneric("toSpatialFeatureExperiment", function(x, ...) standardGeneric("toSpa
 
 # Spatial graphs--------
 #' @export
-setGeneric("spatialGraphs", function(x, MARGIN, sample_id, name) standardGeneric("spatialGraphs"))
+setGeneric("spatialGraphs", function(x, MARGIN, sample_id = NULL, name) standardGeneric("spatialGraphs"))
 
 #' @export
-setGeneric("spatialGraphs<-", function(x, MARGIN, sample_id, name, value) standardGeneric("spatialGraphs<-"))
+setGeneric("spatialGraphs<-", function(x, MARGIN, sample_id = NULL, name, value) standardGeneric("spatialGraphs<-"))
 
 #' @export
-setGeneric("colGraphs", function(x, sample_id, name) standardGeneric("colGraphs"))
+setGeneric("colGraphs", function(x, sample_id = NULL, name) standardGeneric("colGraphs"))
 
 #' @export
-setGeneric("colGraphs<-", function(x, sample_id, name, value) standardGeneric("colGraphs<-"))
+setGeneric("colGraphs<-", function(x, sample_id = NULL, name, value) standardGeneric("colGraphs<-"))
 
 #' @export
-setGeneric("rowGraphs", function(x, sample_id, name) standardGeneric("rowGraphs"))
+setGeneric("rowGraphs", function(x, sample_id = NULL, name) standardGeneric("rowGraphs"))
 
 #' @export
-setGeneric("rowGraphs<-", function(x, sample_id, name, value) standardGeneric("rowGraphs<-"))
+setGeneric("rowGraphs<-", function(x, sample_id = NULL, name, value) standardGeneric("rowGraphs<-"))
 
 #' @export
-setGeneric("annotGraphs", function(x, sample_id, name) standardGeneric("annotGraphs"))
+setGeneric("annotGraphs", function(x, sample_id = NULL, name) standardGeneric("annotGraphs"))
 
 #' @export
-setGeneric("annotGraphs<-", function(x, sample_id, name, value) standardGeneric("annotGraphs<-"))
+setGeneric("annotGraphs<-", function(x, sample_id = NULL, name, value) standardGeneric("annotGraphs<-"))
 
 #' @export
-setGeneric("spatialGraph", function(x, type, MARGIN, sample_id) standardGeneric("spatialGraph"))
+setGeneric("spatialGraph", function(x, type, MARGIN, sample_id = NULL) standardGeneric("spatialGraph"))
 
 #' @export
-setGeneric("spatialGraph<-", function(x, type, MARGIN, sample_id, value) standardGeneric("spatialGraph<-"))
+setGeneric("spatialGraph<-", function(x, type, MARGIN, sample_id = NULL, value) standardGeneric("spatialGraph<-"))
 
 #' @export
-setGeneric("spatialGraphNames", function(x, MARGIN, sample_id) standardGeneric("spatialGraphNames"))
+setGeneric("spatialGraphNames", function(x, MARGIN, sample_id = NULL) standardGeneric("spatialGraphNames"))
 
 #' @export
-setGeneric("spatialGraphNames<-", function(x, MARGIN, sample_id, value) standardGeneric("spatialGraphNames<-"))
+setGeneric("spatialGraphNames<-", function(x, MARGIN, sample_id = NULL, value) standardGeneric("spatialGraphNames<-"))
 
 #' @export
 setGeneric("findSpatialNeighbors", function(x, ...) standardGeneric("findSpatialNeighbors"))
@@ -87,4 +87,4 @@ setGeneric("findSpatialNeighbors", function(x, ...) standardGeneric("findSpatial
 # Have this generic and S4 dispatch to avoid conflict with sp::bbox
 # Will change if this causes trouble
 #' @export
-setGeneric("bbox", function(sfe, sample_id) standardGeneric("bbox"))
+setGeneric("bbox", function(sfe, sample_id = NULL) standardGeneric("bbox"))

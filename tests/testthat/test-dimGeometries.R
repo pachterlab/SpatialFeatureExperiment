@@ -64,7 +64,8 @@ sfe3 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
 
 test_that("colGeometry setter for one of the two samples (not already present)", {
   # colGeometry not already present
-  colGeometry(sfe3, type = "coords", sample_id = "sample01") <- cg_toy[1:3,]
+  colGeometry(sfe3, type = "coords", sample_id = "sample01",
+              withDimnames = FALSE) <- cg_toy[1:3,]
   expect_equal(int_colData(sfe3)$colGeometries$coords[1:3,], cg_toy[1:3,])
   expect_true(all(st_is_empty(int_colData(sfe3)$colGeometries$coords[4:5,])))
 })

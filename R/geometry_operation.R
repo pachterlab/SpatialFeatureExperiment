@@ -23,6 +23,7 @@
 #' st_is_empty st_disjoint
 #' @importFrom stats aggregate
 #' @examples
+#' library(sf)
 #' pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
 #' pol <- st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
 #' st_any_pred(pts, pol, pred = st_disjoint)
@@ -184,7 +185,8 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                         sample_col = colData(sfe)$sample_id[colData(sfe)$sample_id %in% sample_id],
                         id_col = "barcode")
   if (!"sample_id" %in% names(cg)) out$sample_id <- NULL
-  out <- out[colnames(sfe),]
+  out <- out[rownames(cg),]
+  rownames(out) <- rownames(cg)
   out
 }
 
@@ -277,15 +279,19 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
 }
 
 .bbox_sample <- function(sfe, sample_id) {
-  cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,])
-  cgs_union <- Reduce(st_union, cgs)
+  cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,,drop = FALSE])
+  cgs_bboxes <- lapply(cgs, st_bbox)
   ags <- annotGeometries(sfe)
   if (length(ags)) {
     ags <- lapply(ags, function(g) g[g$sample_id == sample_id,])
-    ags_union <- Reduce(st_union, ags)
-    all_union <- st_union(cgs_union, ags_union)
-  } else all_union <- cgs_union
-  st_bbox(all_union)
+    ags_bboxes <- lapply(ags, st_bbox)
+    all_bboxes <- c(cgs_bboxes, ags_bboxes)
+  } else all_bboxes <- cgs_bboxes
+  all_bboxes <- do.call(rbind, all_bboxes)
+  c(xmin = min(all_bboxes[,"xmin"], na.rm = TRUE),
+    ymin = min(all_bboxes[,"ymin"], na.rm = TRUE),
+    xmax = max(all_bboxes[,"xmax"], na.rm = TRUE),
+    ymax = max(all_bboxes[,"ymax"], na.rm = TRUE))
 }
 
 #' Find bounding box of SFE objects
@@ -362,11 +368,12 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 #' @export
 #' @examples
 #' library(SFEData)
+#' library(SingleCellExperiment)
 #' sfe <- McKellarMuscleData("full")
 #' # Only keep spots on tissue
-#' sfe2 <- crop(sfe, tissueBoundary(sfe))
+#' sfe <- sfe[,colData(sfe)$in_tissue]
 #' # Move the coordinates of the tissue
-#' sfe2 <- removeEmptySpace(sfe2)
+#' sfe <- removeEmptySpace(sfe)
 removeEmptySpace <- function(sfe, sample_id = "all") {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   bboxes <- bbox(sfe, sample_id)

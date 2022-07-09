@@ -9,6 +9,9 @@
 #'
 #' @inheritParams SpatialExperiment::read10xVisium
 #' @inheritParams findVisiumGraph
+#' @param type Either "HDF5", and the matrix will be represented as
+#'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
+#'   \code{dgCMatrix}.
 #' @importFrom SpatialExperiment read10xVisium
 #' @importFrom rjson fromJSON
 #' @return A SpatialFeatureExperiment object

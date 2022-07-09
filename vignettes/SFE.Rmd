@@ -27,7 +27,6 @@ knitr::opts_chunk$set(
 `SpatialFeatureExperiment` (SFE) is a new [S4](http://adv-r.had.co.nz/S4.html) class built on top of [`SpatialExperiment`](https://bioconductor.org/packages/release/bioc/html/SpatialExperiment.html) (SPE). `SpatialFeatureExperiment` incorporates geometries and geometry operations with the [`sf`](https://cran.r-project.org/web/packages/sf/index.html) package. Examples of supported geometries are Visium spots represented with polygons corresponding to their size, cell or nuclei segmentation polygons, tissue boundary polygons, pathologist annotation of histological regions, and transcript spots of genes. Using `sf`, `SpatialFeatureExperiment` leverages well-established and optimized C++ libraries underlying `sf` for geometry operations, including algorithms for for determining whether geometries intersect, finding intersection geometries, buffering geometries with margins, etc. A schematic of the SFE object is shown below:
 
 ```{r, echo=FALSE, out.width = "100%", fig.cap="Schematics of the SFE object", fig.alt="SpatialFeatureExperiment expands on SpatialExperiment by adding column, row, and annotation geometries and spatial graphs. This is explained in detail in the following paragraphs."}
-# Burning question: Alt text
 knitr::include_graphics("sfe_schematics.png")
 ```
 
@@ -62,6 +61,10 @@ Column and row geometries can be get or set with the `dimGeometries` or `dimGeom
 ```{r}
 # Get Visium spot polygons
 (spots <- dimGeometry(sfe, "spotPoly", MARGIN = 2))
+```
+
+```{r}
+plot(st_geometry(spots))
 ```
 
 ```{r}
@@ -111,6 +114,9 @@ Annotation geometries can be get or set with `annotGeometries` or `annotGeometry
 # Getter, by name or index
 (tb <- annotGeometry(sfe, "tissueBoundary"))
 ```
+```{r}
+plot(st_geometry(tb))
+```
 
 ```{r}
 # Setter, by name or index
@@ -152,14 +158,18 @@ tissueBoundary(sfe) <- tb
 ## Spatial graphs
 Column, row, and annotation spatial graphs can be get or set with `spatialGraphs` and `spatialGraph` functions. Similar to `dimGeometr*` functions, `spatialGraph*` functions have a `MARGIN` argument. However, since internally, row and column geometries are implemented very differently from annotation geometries, while row, column, and annotation graphs are implemented the same way, for the `spatialGraph*` functions, `MARGIN = 1` means rows, `MARGIN = 2` means columns, and `MARGIN = 3` means annotation. Similar to `dimGeometry*` functions, there are `rowGraph*`, `colGraph*`, and `annotGraph*` getter and setter functions for each margin. 
 
-This package wraps functions in the `spdep` package to find spatial neighborhood graphs.
+This package wraps functions in the `spdep` package to find spatial neighborhood graphs. In this example, triangulation is used to find the spatial graph; many other methods are also supported, such as k nearest neighbors, distance based neighbors, and polygon contiguity.
 ```{r}
 (g <- findSpatialNeighbors(sfe, MARGIN = 2, method = "tri2nb"))
 ```
 
 ```{r}
+plot(g, coords = spatialCoords(sfe))
+```
+
+```{r}
 # Set graph by name
-spatialGraph(sfe, "graph1", MARGIN = 2L) <- g
+spatialGraph(sfe, "graph1", MARGIN = 2) <- g
 # Or equivalently
 colGraph(sfe, "graph1") <- g
 ```
@@ -169,11 +179,16 @@ colGraph(sfe, "graph1") <- g
 g <- spatialGraph(sfe, "graph1", MARGIN = 2L)
 # Or equivalently
 g <- colGraph(sfe, "graph1")
+g
 ```
 
 For Visium, spatial neighborhood graph of the hexagonal grid can be found with the known locations of the barcodes.
 ```{r}
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
+```
+
+```{r}
+plot(colGraph(sfe, "visium"), coords = spatialCoords(sfe))
 ```
 
 All graphs of the SFE object, or if specified, of the margin of interest, can be get or set with `spatialGraphs` and the margin specific wrappers.
@@ -195,6 +210,7 @@ SFE inherits from SPE, and with geometries and spatial graphs, `sample_id` is ev
 # Construct toy dataset with 2 samples
 sfe1 <- McKellarMuscleData(dataset = "small")
 sfe2 <- McKellarMuscleData(dataset = "small2")
+spotPoly(sfe2)$sample_id <- "sample02"
 (sfe_combined <- cbind(sfe1, sfe2))
 ```
 
@@ -265,7 +281,6 @@ values <- sample(1:5, 13, replace = TRUE)
 mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 colnames(mat) <- coords1$barcode
 rownames(mat) <- sample(LETTERS, 5)
-rownames(cg) <- colnames(mat)
 ```
 
 That should be sufficient to create an SPE object, and an SFE object, even though no `sf` data frame was constructed for the geometries. The constructor behaves similarly to the SPE constructor. The centroid coordinates of the Visium spots in the toy example can be converted into spot polygons with the `spotDiameter` argument. Spot diameter in pixels in full resolution image can be found in the `scalefactors_json.json` file in Space Ranger output.
@@ -281,6 +296,7 @@ Geometries can also be supplied in the constructor.
 ```{r}
 # Convert regular data frame with coordinates to sf data frame
 cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
+rownames(cg) <- colnames(mat)
 sfe3 <- SpatialFeatureExperiment(list(counts = mat), colGeometries = list(foo = cg))
 ```
 
@@ -313,6 +329,12 @@ spe <- read10xVisium(samples, sample_ids, type = "sparse", data = "raw",
   images = "lowres", load = FALSE)
 ```
 
+For the coercion, column names must not be duplicate.
+```{r}
+colnames(spe) <- make.unique(colnames(spe), sep = "-")
+rownames(spatialCoords(spe)) <- colnames(spe)
+```
+
 ```{r}
 (sfe3 <- toSpatialFeatureExperiment(spe))
 ```
@@ -326,7 +348,12 @@ sfe_combined <- cbind(sfe1, sfe2)
 
 The SFE object can also be subsetted like a matrix, like an SCE object. More complexity arises when it comes to the spatial graphs. The `drop` argument of the SFE method `[` determines what to do with the spatial graphs. If `drop = TRUE`, then all spatial graphs will be removed, since the graphs with nodes and edges that have been removed are no longer valid. If `drop = FALSE`, which is the default, then the spatial graphs will be reconstructed with the remaining nodes after subsetting. Reconstruction would only work when the original graphs were constructed with `findSpatialNeighbors` or `findVisiumGraph` in this package, which records the method and parameters used to construct the graphs. If reconstruction fails, then a waning will be issued and the graphs removed.
 ```{r}
-(sfe_subset <- sfe[1:10, 1:10])
+(sfe_subset <- sfe[1:10, 1:10, drop = TRUE])
+```
+
+```{r, eval=FALSE}
+# Will give warning because graph reconstruction fails
+sfe_subset <- sfe[1:10, 1:10]
 ```
 
 ## Geometric
@@ -342,6 +369,8 @@ plot(spotPoly(sfe), col = "gray", add = TRUE)
 ```{r}
 sfe_in_tissue <- crop(sfe, y = tissueBoundary(sfe), colGeometryName = "spotPoly")
 ```
+
+Note that for large datasets with many geometries, cropping can take a while to run.
 
 ```{r}
 # After

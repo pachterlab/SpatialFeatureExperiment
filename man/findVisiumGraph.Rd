@@ -41,7 +41,7 @@ matter.
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
-g <- findVisiumGraph(g)
+g <- findVisiumGraph(sfe)
 # For multiple samples, returns named list
 sfe2 <- McKellarMuscleData(dataset = "small2")
 sfe_combined <- cbind(sfe, sfe2)

@@ -17,16 +17,16 @@ read10xVisiumSFE(
 }
 \arguments{
 \item{samples}{a character vector specifying one or more directories, 
-each corresponding to a 10x Genomics Visium sample (see details);
+each corresponding to a 10x Genomics Visium sample (see Details);
 if provided, names will be used as sample identifiers}
 
 \item{sample_id}{character string specifying unique sample identifiers,
 one for each directory specified via \code{samples}; 
 ignored if \code{!is.null(names(samples))}}
 
-\item{type}{character string specifying 
-the type of format to read count data from
-(see \code{\link{read10xCounts}})}
+\item{type}{Either "HDF5", and the matrix will be represented as
+\code{TENxMatrix}, or "sparse", and the matrix will be read as a
+\code{dgCMatrix}.}
 
 \item{data}{character string specifying whether to read in
 filtered (spots mapped to tissue) or raw data (all spots).}

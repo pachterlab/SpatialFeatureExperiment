@@ -54,6 +54,9 @@
 #'   \code{dimGeometries<-} only: \code{geometryType} can be a character vector
 #'   of the geometry type of each data frame in the list of the same length as
 #'   the list if the data frames specify different types of geometries.
+#' @return Getters for multiple geometries return a named list. Getters for names
+#'   return a character vector of the names. Getters for single geometries
+#'   return an \code{sf} data frame. Setters return an SFE object.
 #' @name dimGeometries
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
 #'   dimGeometryNames<-
@@ -111,7 +114,7 @@
 #' # Specify sample_id
 #' colGeometry(sfe_combined, "foobar", sample_id = "Vis5A") <- spots1
 #' # Only entries for the specified sample are set.
-#' foobar <- colGeometry(sfe_combined, "foobar")
+#' foobar <- colGeometry(sfe_combined, "foobar", sample_id = "sample02")
 NULL
 
 #' @rdname dimGeometries
@@ -270,10 +273,11 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                        dimnames = list(rownames_full,
                                        colnames(value)))
     existing <- as.data.frame(existing)
-    existing$geometry <- st_sfc(lapply(seq_len(ncol(existing)),
+    existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
                                        function(t) st_geometrycollection()))
     existing <- st_sf(existing, sf_column_name = "geometry",
                       row.names = rownames_full)
+    existing <- existing[,colnames(value)]
   } else {
     value <- .reconcile_cols(existing, value)
   }

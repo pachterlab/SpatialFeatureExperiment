@@ -9,8 +9,12 @@ Authors@R:
     person("Lior", "Pachter", email = "lpachter@caltech.edu",
     role = c("aut", "ths"),
     comment = c(ORCID = "0000-0002-9164-6231")))
-Description: Use the sf package to leverage the well-established and optimized
-    geospatial libraries for polygon operations for spatial omics data.
+Description: A new S4 class integrating Simple Features with the R package sf
+    to bring geospatial data analysis methods based on vector data to
+    spatial transcriptomics. Also implements management of spatial neighborhood
+    graphs and geometric operations. This pakage builds upon SpatialExperiment
+    and SingleCellExperiment, hence methods for these parent classes can still
+    be used.
 Imports:
     BiocGenerics,
     methods,
@@ -23,7 +27,7 @@ Imports:
     SummarizedExperiment,
     stats,
     utils
-License: GPL (>= 3)
+License: GPL-3
 Encoding: UTF-8
 RoxygenNote: 7.2.0
 Collate: 
@@ -44,13 +48,15 @@ Collate:
     'validity.R'
 Suggests: 
     BiocStyle,
+    DropletUtils,
     knitr,
     Matrix,
     rmarkdown,
+    SFEData,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 
-    R (>= 3.5.0)
+    R (>= 4.2.0)
 VignetteBuilder: knitr
 biocViews:
     DataRepresentation,

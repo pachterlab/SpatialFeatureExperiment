@@ -26,9 +26,10 @@ samples by default.
 }
 \examples{
 library(SFEData)
+library(SingleCellExperiment)
 sfe <- McKellarMuscleData("full")
 # Only keep spots on tissue
-sfe2 <- crop(sfe, tissueBoundary(sfe))
+sfe <- sfe[,colData(sfe)$in_tissue]
 # Move the coordinates of the tissue
-sfe2 <- removeEmptySpace(sfe2)
+sfe <- removeEmptySpace(sfe)
 }

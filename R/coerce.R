@@ -18,6 +18,7 @@
 #' @inheritParams SpatialFeatureExperiment
 #' @param x A \code{SpatialExperiment} object to be coerced to a
 #' \code{SpatialFeatureExperiment} object.
+#' @return An SFE object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords
 #' @name SpatialFeatureExperiment-coercion

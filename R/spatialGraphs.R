@@ -37,6 +37,9 @@
 #'   only meaningful within the same piece of tissue. See the \code{sample_id}
 #'   argument in \code{\link{SpatialExperiment}}.
 #' @name spatialGraphs
+#' @return Getters for multiple geometries return a named list. Getters for
+#'   names return a character vector of the names. Getters for single geometries
+#'   return an \code{sf} data frame. Setters return an SFE object.
 #' @aliases rowGraphs rowGraphs<- spatialGraph spatialGraph<- spatialGraphNames
 #'   colGraphs colGraphs<- spatialGraphNames<- spatialGraphs<- annotGraphs
 #'   annotGraphs<-
@@ -82,7 +85,7 @@
 #' # Set single graph by
 #' # Spatial graph for myofibers
 #' g_myofiber <- findSpatialNeighbors(sfe, type = "myofiber_simplified",
-#'                                    MARGIN = 3L, method = "poly2nb")
+#'                                    MARGIN = 3L)
 #' spatialGraph(sfe, type = "myofiber", MARGIN = 3L) <- g_myofiber
 #' # Or equivalently
 #' annotGraph(sfe, "myofiber") <- g_myofiber
@@ -233,7 +236,7 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character", "character")
   if (is.null(int_metadata(x)$spatialGraphs)) {
     df <- .initialize_spatialGraphs(x)
   } else {
-    df <- int_metadata(x)$spatialGraphs[c("row", "col", "annot"),]
+    df <- int_metadata(x)$spatialGraphs[c("row", "col", "annot"),,drop = FALSE]
   }
   if (type == "all") {
     if (is.null(value))
@@ -246,14 +249,14 @@ setMethod("annotGraphs", c("SpatialFeatureExperiment", "character", "character")
     value <- .fill_missing(value, names_use = c("row", "col", "annot"))
     df[[which]] <- value[c("row", "col", "annot")]
   } else if (type == "margin_all") {
-    df <- df[-which,] # which should be a number. rows have been reordered
+    df <- df[-which,,drop = FALSE] # which should be a number. rows have been reordered
     value <- .fill_missing(value, sampleIDs(x))
     value <- lapply(value, function(v) I(list(v)))
     new_row <- as(value, "DataFrame")
     rownames(new_row) <- .margin_name(which)
-    new_row <- new_row[,names(df)]
+    new_row <- new_row[,names(df), drop = FALSE]
     df <- rbind(df, new_row)
-    df <- df[c("row", "col", "annot"),]
+    df <- df[c("row", "col", "annot"),,drop = FALSE]
   } else {
     df[which[[1]], which[[2]]] <- I(list(value))
   }

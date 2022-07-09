@@ -24,7 +24,11 @@
 #' # Just like subsetting matrices and SingleCellExperiment
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
+#' sfe_subset <- sfe[1:10, 1:10, drop = TRUE]
+#' # Gives warning as graph reconstruction fails
+#' \dontrun{
 #' sfe_subset <- sfe[1:10, 1:10]
+#' }
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
           function(x, i, j, ..., drop = FALSE) {
             # Because the extra graphs and sample_ids result into invalid object
@@ -79,18 +83,27 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
                         warning("Graph reconstruction info is missing for sample ",
                                 names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
                                 names(graphs_sub[[s]][[m]])[g], ". ",
-                                "Dropping graph.")
+                                "Dropping graph.\n")
                         graphs_sub[[s]][[m]][[g]] <- NULL
                       } else {
                         if (requireNamespace(method_info$package, quietly = TRUE)) {
                           fun <- getFromNamespace(method_info$FUN, method_info$package)
-                          graphs_sub[[s]][[m]][[g]] <- do.call(fun,
-                                                               c(list(x = x), method_info$args))
+                          if ("row.names" %in% names(method_info$args)) {
+                            method_info$args[["row.names"]] <- method_info$args[["row.names"]][j]
+                          }
+                          tryCatch(graphs_sub[[s]][[m]][[g]] <-
+                                     do.call(fun, c(list(x = x), method_info$args)),
+                                   error = function(e) {
+                                     warning("Graph reconstruction failed for sample ", names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
+                                             names(graphs_sub[[s]][[m]])[g], ": ", e,
+                                             "Dropping graph.\n")
+                                     graphs_sub[[s]][[m]][[g]] <- NULL
+                                   })
                         } else {
                           warning("Package ", method_info$package, " used to construct graph for sample ",
                                   names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
                                   names(graphs_sub[[s]][[m]])[g], " is not installed. ",
-                                  "Dropping graph.")
+                                  "Dropping graph.\n")
                           graphs_sub[[s]][[m]][[g]] <- NULL
                         }
                       }

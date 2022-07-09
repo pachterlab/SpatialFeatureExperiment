@@ -73,6 +73,11 @@ the *Geometry to query or replace. If missing, then the first item in the
 
 \item{sample_id}{Sample ID to get or set geometries.}
 }
+\value{
+Getters for multiple geometries return a named list. Getters for
+  names return a character vector of the names. Getters for single geometries
+  return an \code{sf} data frame. Setters return an SFE object.
+}
 \description{
 "Annotation geometry" refers to Simple Feature (\code{sf}) geometries NOT
 associated with rows (features, genes) or columns (cells or spots) of the
@@ -86,12 +91,10 @@ geometries. Internally, annotation geometries are stored in
 \code{int_metadata}.
 }
 \details{
-Wrapper for getter and setter of special geometry:
-\describe{
+Wrapper for getter and setter of special geometry: \describe{
 \item{tisseuBoundary}{Boundary of the tissue of interest, including holes.
 This is usually of geometry type MULTIPOLYGON, though geometries in
-\code{annotGeometries} can have any type supported by \code{sf}.}
-}
+\code{annotGeometries} can have any type supported by \code{sf}.} }
 }
 \examples{
 # Example dataset

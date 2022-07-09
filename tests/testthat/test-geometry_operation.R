@@ -47,7 +47,7 @@ test_that("annotOp", {
 test_that("Find bbox of samples", {
   cg1 <- spotPoly(sfe_visium, "sample01")
   bbox1 <- bbox(sfe_visium, "sample01")
-  expect_equal(st_bbox(st_union(cg1, bbox_use)), bbox1)
+  expect_equal(st_bbox(st_union(cg1, bbox_use)), bbox1, ignore_attr = c("class", "crs"))
   bboxes <- bbox(sfe_visium, "all")
   expect_true(is.matrix(bboxes))
   expect_true(is.numeric(bboxes))
