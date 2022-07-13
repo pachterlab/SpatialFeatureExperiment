@@ -87,21 +87,30 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
   gs_sub
 }
 
-.annot_fun <- function(x, y, colGeometryName, samples_use = NULL, fun = st_any_pred, ...) {
+.annot_fun <- function(x, y, colGeometryName, samples_use = NULL, fun = st_any_pred,
+                       return_df = FALSE, ...) {
   cg <- colGeometry(x, type = colGeometryName, sample_id = samples_use,
                     withDimnames = TRUE)
   cg$barcode <- rownames(cg)
+  cg <- cg[, c("barcode", "geometry")]
   cgs <- split(cg, colData(x)$sample_id[colData(x)$sample_id %in% samples_use])
   out <- lapply(names(cgs), function(s) {
     if ("sample_id" %in% names(y))
       y_use <- y[y$sample_id == s,]
     else y_use <- y
     o <- fun(cgs[[s]], y_use, ...)
-    names(o) <- cgs[[s]]$barcode
+    if (!return_df) names(o) <- cgs[[s]]$barcode
+    else rownames(o) <- cgs[[s]]$barcode
     o
   })
-  out <- Reduce(c, out)
-  out <- out[rownames(cg)]
+  if (!return_df) {
+    out <- Reduce(c, out)
+    out <- out[rownames(cg)]
+  } else {
+    out <- do.call(rbind, out)
+    out <- out[rownames(cg),]
+    out$barcode <- NULL
+  }
   out
 }
 
@@ -190,6 +199,52 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
   out
 }
 
+.annot_summ <- function(x, y, pred, summary_fun) {
+  out <- st_drop_geometry(st_join(x, y, join = pred))
+  barcodes <- out$barcode
+  out <- out[,names(out) != "barcode", drop = FALSE]
+  aggregate(out, list(barcode = barcodes), FUN = summary_fun, simplify = TRUE, drop = FALSE)
+}
+
+#' Summarize attributes of an annotGeometry for each cell/spot
+#'
+#' In SFE objects, the annotation geometries don't have to correspond to the
+#' dimensions of the gene count matrix, so there generally is no one to one
+#' mapping between annotation geometries and cells/spots. However, it may be
+#' interesting to relate attributes of annotation geometries to cell/spots so
+#' the attributes can be related to gene expression. This function summarizes
+#' attributes of an \code{annotGeometry} for each cell/spot by a geometric
+#' predicate with a \code{colGeometry}.
+#'
+#' @inheritParams annotPred
+#' @param annotColNames Character, column names of the \code{annotGeometry} of
+#'   interest, to indicate the columns to summarize. Columns that are absent
+#'   from the \code{annotGeometry} are removed. The column cannot be "geometry"
+#'   or "barcode".
+#' @param summary_fun Function for the summary, defaults to \code{mean}.
+#' @return A data frame whose row names are the relevant column names of
+#'   \code{sfe}, and each column of which is the summary of each column
+#'   specified in \code{annotColName}.
+#' @export
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' s <- annotSummary(sfe, "spotPoly", "myofiber_simplified",
+#'                   annotColNames = c("area", "convexity"))
+annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
+                         annotColNames = 1L, sample_id = NULL,
+                         pred = st_intersects, summary_fun = mean) {
+  sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+  ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
+  cols_use <- intersect(annotColNames, names(ag)[!names(ag) %in% c("barcode", "geometry")])
+  if (!length(cols_use))
+    stop("None of the columns specified in annotColNames is present in the annotGeometry ",
+         annotGeometryName)
+  ag <- ag[,cols_use] # Geometry is sticky
+  .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
+             fun = .annot_summ, pred = pred, summary_fun = summary_fun,
+             return_df = TRUE)
+}
 #' Crop an SFE object with a geometry
 #'
 #' Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}

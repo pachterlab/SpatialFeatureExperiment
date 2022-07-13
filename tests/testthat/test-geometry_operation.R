@@ -67,3 +67,14 @@ test_that("Remove empty space", {
   new_bboxes <- bbox(sfe_moved, "all")
   expect_true(all(abs(new_bboxes[c("xmin", "ymin"), c("sample01", "sample02")]) < .Machine$double.eps))
 })
+
+library(SFEData)
+sfe <- McKellarMuscleData("small")
+
+test_that("annotSummary", {
+  out <- annotSummary(sfe, "spotPoly", "myofiber_simplified", "area")
+  expect_s3_class(out, "data.frame")
+  expect_equal(rownames(out), colnames(sfe))
+  expect_equal(names(out), "area")
+  expect_true(is.numeric(out$area))
+})
