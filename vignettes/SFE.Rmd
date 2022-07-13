@@ -359,7 +359,7 @@ sfe_subset <- sfe[1:10, 1:10]
 ## Geometric
 Just like `sf` data frames, SFE objects can be subsetted by a geometry and a predicate relating geometries. For example, if all Visium spots were read into an SFE object regardless of whether they are in tissue, and the `tissueBoundary` annotation geometry is provided, then the tissue boundary geometry can be used to subset the SFE object to obtain a new SFE object with only spots on tissue. Loupe does not give the tissue boundary polygon; such polygon can be obtained by thresholding the H&E image and converting the mask into polygons with OpenCV or the `terra` R package, or by manual annotation in QuPath or LabKit (the latter needs to be converted into polygon). 
 
-Use the `crop` function to directly get the subsetted SFE object.
+Use the `crop` function to directly get the subsetted SFE object. Note that in this version of this package, `crop` does NOT crop the image.
 ```{r}
 # Before
 plot(st_geometry(tissueBoundary(sfe)))

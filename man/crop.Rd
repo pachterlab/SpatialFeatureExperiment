@@ -62,6 +62,9 @@ boundary or histological region polygon, or crop away empty spaces. After
 cropping, not only will the cells/spots be subsetted, but also all geometries
 will be cropped.
 }
+\note{
+In this version, this function does NOT crop the image.
+}
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData("small")

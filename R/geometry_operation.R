@@ -278,6 +278,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @param ymax Maximum y coordinate of bounding box.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
+#' @note In this version, this function does NOT crop the image.
 #' @importFrom sf st_intersection st_union st_agr
 #' @export
 #' @examples
