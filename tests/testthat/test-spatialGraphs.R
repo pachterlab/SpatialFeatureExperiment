@@ -144,6 +144,30 @@ test_that("Get all items in one margin and one sample_id", {
   expect_true(is.list(out))
   expect_equal(names(out), "bar")
   expect_equal(out$bar, agr1)
+  # Make sure that it still works for one sample
+  # I got into some troubles with this
+  sfe <- sfe2[,colData(sfe2)$sample_id == "sample01"]
+  out <- spatialGraphs(sfe2, 3, "sample01")
+  expect_true(is.list(out))
+  expect_equal(names(out), "bar")
+  expect_equal(out$bar, agr1)
+})
+
+test_that("Get graphs of the same name from multiple samples", {
+  colGraph(sfe2, "foo", sample_id = "sample02") <- cgr2
+  out <- spatialGraphs(sfe2, 2, sample_id = "all", name = "foo")
+  expect_true(is.list(out))
+  expect_equal(length(out), 2L)
+  expect_equal(names(out), c("sample01", "sample02"))
+  expect_s3_class(out[[1]], "listw")
+  expect_s3_class(out[[2]], "listw")
+  # Still works with one sample
+  sfe <- sfe2[,colData(sfe2)$sample_id == "sample01"]
+  out <- spatialGraphs(sfe, 2, sample_id = "sample01", name = "foo")
+  expect_true(is.list(out))
+  expect_equal(length(out), 1L)
+  expect_equal(names(out), "sample01")
+  expect_s3_class(out[[1]], "listw")
 })
 
 test_that("Get one item in one margin and one sample_id", {
