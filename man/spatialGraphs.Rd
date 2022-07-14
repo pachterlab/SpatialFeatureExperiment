@@ -191,9 +191,9 @@ the *Graph to query or replace. If missing, then the first item in the
 *Graph will be returned or replaced.}
 }
 \value{
-Getters for multiple geometries return a named list. Getters for
-  names return a character vector of the names. Getters for single geometries
-  return an \code{sf} data frame. Setters return an SFE object.
+Getters for multiple graphs return a named list. Getters for
+  names return a character vector of the names. Getters for single graphs
+  return a \code{listw} object. Setters return an SFE object.
 }
 \description{
 Spatial neighborhood graphs as \code{spdep}'s \code{listw} objects are stored

@@ -37,9 +37,9 @@
 #'   only meaningful within the same piece of tissue. See the \code{sample_id}
 #'   argument in \code{\link{SpatialExperiment}}.
 #' @name spatialGraphs
-#' @return Getters for multiple geometries return a named list. Getters for
-#'   names return a character vector of the names. Getters for single geometries
-#'   return an \code{sf} data frame. Setters return an SFE object.
+#' @return Getters for multiple graphs return a named list. Getters for
+#'   names return a character vector of the names. Getters for single graphs
+#'   return a \code{listw} object. Setters return an SFE object.
 #' @aliases rowGraphs rowGraphs<- spatialGraph spatialGraph<- spatialGraphNames
 #'   colGraphs colGraphs<- spatialGraphNames<- spatialGraphs<- annotGraphs
 #'   annotGraphs<-
