@@ -114,9 +114,13 @@ NULL
     margin_all = lapply(as.list(gss[which,]), function(o) o[[1]]),
     one = {
       out <- gss[which[[1]], which[[2]]]
-      if (length(out) > 1L) {
+      if (length(which[[2]]) > 1L) {
+        # Multiple samples
         lapply(as.list(out), function(o) o[[1]])
-      } else out[[1]]}
+      } else {
+        out[[1]]
+      }
+    }
   )
 }
 
@@ -168,15 +172,14 @@ setMethod("spatialGraphs", c("SpatialFeatureExperiment", "numeric", "character",
           function(x, MARGIN, sample_id, name) {
             sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             out <- .get_graphs(x, "one", list(MARGIN, sample_id))
-            if (length(out) == 1L) {
-              names(out) <- sample_id
-              return(out)
-            } else {
-              # Get rid of the layer of list indicating name as it's known
+            # Get rid of the layer of list indicating name as it's known
+            if (length(sample_id) > 1L) {
               out <- lapply(out, function(o) o[[name]])
               out <- out[vapply(out, function(o) !is.null(o), FUN.VALUE = logical(1))]
-              out
+            } else {
+              out <- setNames(list(out[[name]]), sample_id)
             }
+            out
           })
 
 #' @rdname spatialGraphs

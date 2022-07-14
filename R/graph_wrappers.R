@@ -1,17 +1,25 @@
-# Compute and manage spatial neighborhood graphs
-# Giotto can do triangulation, knn, but spdep has more methods
-# I don't think Seurat uses the spatial graph
-# 2. Remember polygon contiguity. Also try st_is_within_distance
-# 4. Check distribution of distance between spots in units associated with the SFE object.
-# 5. Diagnostic functions for graphs such as cardinality and number/proportion of singletons
-# To be made easy to call with the SFE object.
-# These internal wrapper functions return nb, which will later be converted to listw
+.rm_empty_geometries <- function(g, MARGIN) {
+  empty_inds <- st_is_empty(g)
+  if (MARGIN < 3) {
+    if (any(empty_inds))
+      stop("Empty geometries found in dimGeometry.")
+  } else {
+    g <- g[!empty_inds,]
+  }
+  g
+}
+
 .get_centroids <- function(x, type, MARGIN, sample_id) {
   if (type == "spatialCoords") {
     return(spatialCoords(x)[colData(x)$sample_id %in% sample_id,])
   } else {
+    # What to do with empty geometries?
+    # Throw error for empty dimGeometries, since each item must have a geometry
+    # Need a more helpful error message
+    # Remove empty geometries for annotGeometries
     if (MARGIN < 3) g <- dimGeometry(x, type, MARGIN, sample_id)
     else g <- annotGeometry(x, type, sample_id)
+    g <- .rm_empty_geometries(g, MARGIN)
     if (st_geometry_type(g, FALSE) == "POINT") {
       coords <- st_coordinates(st_geometry(g))
     } else {
@@ -49,14 +57,17 @@
   }
   if (method != "poly2nb") {
     coords <- .get_centroids(x, type, MARGIN, sample_id)
+    nb_out <- do.call(fun_use, c(list(coords = coords), args))
   } else {
     if (MARGIN < 3) coords <- dimGeometry(x, type, MARGIN, sample_id)
     else coords <- annotGeometry(x, type, sample_id)
+    coords <- .rm_empty_geometries(coords, MARGIN)
     if (st_geometry_type(coords, FALSE) != "POLYGON") {
       stop("poly2nb can only be used on POLYGON geometries.")
     }
+    nb_out <- do.call(fun_use, c(list(pl = coords), args))
   }
-  nb_out <- do.call(fun_use, c(list(coords = coords), args))
+
   out <- nb2listw(nb_out, glist, style, zero.policy)
   attr(out, "method") <- list(FUN = "findSpatialNeighbors",
                               package = "SpatialFeatureExperiment",
