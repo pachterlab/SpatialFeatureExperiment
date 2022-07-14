@@ -225,6 +225,7 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @return A data frame whose row names are the relevant column names of
 #'   \code{sfe}, and each column of which is the summary of each column
 #'   specified in \code{annotColName}.
+#' @importFrom sf st_join
 #' @export
 #' @examples
 #' library(SFEData)
