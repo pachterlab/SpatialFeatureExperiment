@@ -26,7 +26,7 @@ jobs:
         with:
           use-public-rspm: true
       - name: Install Bioc devel
-        run: install.packages("BiocManager"); BiocManager::install(version = "devel")
+        run: install.packages("BiocManager"); BiocManager::install(version = "devel", ask = FALSE)
         shell: Rscript {0}
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
