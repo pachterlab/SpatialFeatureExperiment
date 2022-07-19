@@ -30,8 +30,8 @@ jobs:
           extra-packages: any::pkgdown, pachterlab/SFEData, local::.
           needs: website
       - name: Install SFEData
-         run: pak::pkg_install("pachterlab/SFEData")
-         shell: Rscript {0}
+        run: pak::pkg_install("pachterlab/SFEData")
+        shell: Rscript {0}
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = TRUE, install = TRUE)
         shell: Rscript {0}
