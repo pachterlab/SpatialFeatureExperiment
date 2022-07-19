@@ -52,10 +52,9 @@ Suggests:
     knitr,
     Matrix,
     rmarkdown,
+    pachterlab/SFEData,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Remotes:
-    pachterlab/SFEData
 Depends: 
     R (>= 4.2.0)
 VignetteBuilder: knitr
