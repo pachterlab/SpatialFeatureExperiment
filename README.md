@@ -27,4 +27,4 @@ The development version of SpatialFeatureExperiment can be installed from [GitHu
 devtools::install_github("pachterlab/SpatialFeatureExperiment")
 ```
 
-This package will be submitted to Bioconductor. Documentation of the development version can be accessed [on this website](https://pachterlab.github.io/SpatialFeatureExperiment/dev/). 
+This package has been submitted to Bioconductor. Documentation of the development version can be accessed [on this website](https://pachterlab.github.io/SpatialFeatureExperiment/dev/). 
