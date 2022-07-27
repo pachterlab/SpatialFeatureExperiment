@@ -77,6 +77,7 @@ setMethod("annotGeometries", "SpatialFeatureExperiment",
 setReplaceMethod("annotGeometries", "SpatialFeatureExperiment",
                  function(x, translate = TRUE, ..., value) {
                    value <- .df2sf_list(value, ...)
+                   value <- lapply(value, .rm_empty_geometries, MARGIN = 3)
                    value <- lapply(value, .translate_value, x = x, translate = translate)
                    int_metadata(x)$annotGeometries <- value
                    m <- .check_annotgeometries(x)
@@ -130,6 +131,7 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
     value$sample_id <- sample_id
   }
   value <- .df2sf_in_list(value, ...)
+  value <- .rm_empty_geometries(value, MARGIN = 3)
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     existing <- int_metadata(x)$annotGeometries[[type]]
     if (!is.null(existing)) {
