@@ -68,7 +68,7 @@
       <img src="" class="logo" alt=""><h1>Introduction to the SpatialFeatureExperiment class</h1>
                         <h4 data-toc-skip class="author">Lambda Moses, Lior Pachter</h4>
             
-            <h4 data-toc-skip class="date">Jul 19, 2022</h4>
+            <h4 data-toc-skip class="date">Jul 27, 2022</h4>
       
       
       <div class="d-none name"><code>SFE.Rmd</code></div>
@@ -179,7 +179,7 @@ Schematics of the SFE object
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example dataset</span></span>
 <span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/McKellarMuscleData.html" class="external-link">McKellarMuscleData</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"small"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; snapshotDate(): 2022-07-15</span></span>
+<span><span class="co">#&gt; snapshotDate(): 2022-07-22</span></span>
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
@@ -409,11 +409,11 @@ Schematics of the SFE object
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Construct toy dataset with 2 samples</span></span>
 <span><span class="va">sfe1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/McKellarMuscleData.html" class="external-link">McKellarMuscleData</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"small"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; snapshotDate(): 2022-07-15</span></span>
+<span><span class="co">#&gt; snapshotDate(): 2022-07-22</span></span>
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
 <span><span class="va">sfe2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/McKellarMuscleData.html" class="external-link">McKellarMuscleData</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"small2"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; snapshotDate(): 2022-07-15</span></span>
+<span><span class="co">#&gt; snapshotDate(): 2022-07-22</span></span>
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
 <span><span class="fu"><a href="../reference/dimGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe2</span><span class="op">)</span><span class="op">$</span><span class="va">sample_id</span> <span class="op">&lt;-</span> <span class="st">"sample02"</span></span>
@@ -841,7 +841,7 @@ Schematics of the SFE object
 <span><span class="co">#&gt;   [5] rprojroot_2.0.3               scuttle_1.7.2                </span></span>
 <span><span class="co">#&gt;   [7] XVector_0.37.0                fs_1.5.2                     </span></span>
 <span><span class="co">#&gt;   [9] proxy_0.4-27                  bit64_4.0.5                  </span></span>
-<span><span class="co">#&gt;  [11] AnnotationDbi_1.59.1          interactiveDisplayBase_1.35.0</span></span>
+<span><span class="co">#&gt;  [11] AnnotationDbi_1.58.0          interactiveDisplayBase_1.34.0</span></span>
 <span><span class="co">#&gt;  [13] fansi_1.0.3                   codetools_0.2-18             </span></span>
 <span><span class="co">#&gt;  [15] R.methodsS3_1.8.2             sparseMatrixStats_1.9.0      </span></span>
 <span><span class="co">#&gt;  [17] cachem_1.0.6                  knitr_1.39                   </span></span>
@@ -851,20 +851,20 @@ Schematics of the SFE object
 <span><span class="co">#&gt;  [25] httr_1.4.3                    BiocManager_1.30.18          </span></span>
 <span><span class="co">#&gt;  [27] compiler_4.2.0                dqrng_0.3.0                  </span></span>
 <span><span class="co">#&gt;  [29] assertthat_0.2.1              fastmap_1.1.0                </span></span>
-<span><span class="co">#&gt;  [31] limma_3.53.4                  cli_3.3.0                    </span></span>
+<span><span class="co">#&gt;  [31] limma_3.53.5                  cli_3.3.0                    </span></span>
 <span><span class="co">#&gt;  [33] later_1.3.0                   s2_1.1.0                     </span></span>
 <span><span class="co">#&gt;  [35] htmltools_0.5.3               tools_4.2.0                  </span></span>
 <span><span class="co">#&gt;  [37] glue_1.6.2                    GenomeInfoDbData_1.2.8       </span></span>
 <span><span class="co">#&gt;  [39] dplyr_1.0.9                   rappdirs_0.3.3               </span></span>
 <span><span class="co">#&gt;  [41] wk_0.6.0                      Rcpp_1.0.9                   </span></span>
 <span><span class="co">#&gt;  [43] jquerylib_0.1.4               pkgdown_2.0.6                </span></span>
-<span><span class="co">#&gt;  [45] raster_3.5-21                 Biostrings_2.65.1            </span></span>
+<span><span class="co">#&gt;  [45] raster_3.5-21                 Biostrings_2.64.0            </span></span>
 <span><span class="co">#&gt;  [47] vctrs_0.4.1                   rhdf5filters_1.9.0           </span></span>
-<span><span class="co">#&gt;  [49] spdep_1.2-4                   ExperimentHub_2.5.0          </span></span>
+<span><span class="co">#&gt;  [49] spdep_1.2-4                   ExperimentHub_2.4.0          </span></span>
 <span><span class="co">#&gt;  [51] DelayedMatrixStats_1.19.0     xfun_0.31                    </span></span>
 <span><span class="co">#&gt;  [53] stringr_1.4.0                 beachmat_2.13.4              </span></span>
 <span><span class="co">#&gt;  [55] mime_0.12                     lifecycle_1.0.1              </span></span>
-<span><span class="co">#&gt;  [57] terra_1.5-34                  AnnotationHub_3.5.0          </span></span>
+<span><span class="co">#&gt;  [57] terra_1.6-3                   AnnotationHub_3.4.0          </span></span>
 <span><span class="co">#&gt;  [59] edgeR_3.39.3                  zlibbioc_1.43.0              </span></span>
 <span><span class="co">#&gt;  [61] promises_1.2.0.1              ragg_1.2.2                   </span></span>
 <span><span class="co">#&gt;  [63] parallel_4.2.0                rhdf5_2.41.1                 </span></span>
@@ -884,9 +884,9 @@ Schematics of the SFE object
 <span><span class="co">#&gt;  [91] R6_2.5.1                      magick_2.7.3                 </span></span>
 <span><span class="co">#&gt;  [93] generics_0.1.3                DelayedArray_0.23.0          </span></span>
 <span><span class="co">#&gt;  [95] DBI_1.1.3                     pillar_1.8.0                 </span></span>
-<span><span class="co">#&gt;  [97] units_0.8-0                   KEGGREST_1.37.3              </span></span>
+<span><span class="co">#&gt;  [97] units_0.8-0                   KEGGREST_1.36.3              </span></span>
 <span><span class="co">#&gt;  [99] RCurl_1.98-1.7                sp_1.5-0                     </span></span>
-<span><span class="co">#&gt; [101] tibble_3.1.7                  crayon_1.5.1                 </span></span>
+<span><span class="co">#&gt; [101] tibble_3.1.8                  crayon_1.5.1                 </span></span>
 <span><span class="co">#&gt; [103] DropletUtils_1.17.0           KernSmooth_2.23-20           </span></span>
 <span><span class="co">#&gt; [105] utf8_1.2.2                    BiocFileCache_2.5.0          </span></span>
 <span><span class="co">#&gt; [107] rmarkdown_2.14                locfit_1.5-9.6               </span></span>
