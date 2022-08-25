@@ -139,6 +139,46 @@ the *Geometry to query or replace. If missing, then the first item in the
   object with the desired field set.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Toy example</span></span></span>
+<span class="r-in"><span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"testdata/sfe_toy.rds"</span>, package <span class="op">=</span> <span class="st">"SpatialFeatureExperiment"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">29</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">toy_res1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">5</span>, ncol <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>                   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"meow"</span>, <span class="st">"purr"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">toy_res2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">10</span>, lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">5</span>, ncol <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>                   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sassy"</span>, <span class="st">"tortitude"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Set multiple items</span></span></span>
+<span class="r-in"><span><span class="fu">localResults</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>foo <span class="op">=</span> <span class="va">toy_res1</span>, bar <span class="op">=</span> <span class="va">toy_res2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Get multiple items</span></span></span>
+<span class="r-in"><span><span class="fu">localResults</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> List of length 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> names(2): foo bar</span>
+<span class="r-in"><span><span class="co"># Set one item by name (can also be by index)</span></span></span>
+<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"foo"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">toy_res1</span></span></span>
+<span class="r-in"><span><span class="co"># Get one item</span></span></span>
+<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"foo"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         meow       purr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y -1.2833712  2.1104419</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> H -1.2634498 -0.5214171</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> S  0.2146729 -0.9300566</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> G  0.9469490  0.4193712</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> X -1.1750246  1.1111370</span>
+<span class="r-in"><span><span class="co"># Get names</span></span></span>
+<span class="r-in"><span><span class="fu">localResultNames</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "foo" "bar"</span>
+<span class="r-in"><span><span class="co"># sample_id argument is mandatory when there're multiple samples</span></span></span>
+<span class="r-in"><span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"testdata/sfe_multi_sample.rds"</span>,</span></span>
+<span class="r-in"><span>                package <span class="op">=</span> <span class="st">"SpatialFeatureExperiment"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe3</span>, type <span class="op">=</span> <span class="st">"foo"</span>, sample_id <span class="op">=</span> <span class="st">"sample01"</span>,</span></span>
+<span class="r-in"><span>            withDimnames <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">toy_res1</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe3</span>, <span class="st">"foo"</span>, sample_id <span class="op">=</span> <span class="st">"sample01"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         meow       purr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y -1.2833712  2.1104419</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> H -1.2634498 -0.5214171</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> S  0.2146729 -0.9300566</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 
