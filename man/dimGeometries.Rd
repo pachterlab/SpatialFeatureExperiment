@@ -62,7 +62,8 @@
   MARGIN,
   sample_id = NULL,
   withDimnames = TRUE,
-  translate = TRUE
+  translate = TRUE,
+  ...
 ) <- value
 
 \S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(

@@ -88,3 +88,22 @@ setGeneric("findSpatialNeighbors", function(x, ...) standardGeneric("findSpatial
 # Will change if this causes trouble
 #' @export
 setGeneric("bbox", function(sfe, sample_id = NULL) standardGeneric("bbox"))
+
+# Local results--------------
+#' @export
+setGeneric("localResults", function(x, withDimnames = TRUE) standardGeneric("localResults"))
+
+#' @export
+setGeneric("localResults<-", function(x, withDimnames = TRUE, value) standardGeneric("localResults<-"))
+
+#' @export
+setGeneric("localResult", function(x, type, sample_id = NULL, withDimnames = TRUE) standardGeneric("localResult"))
+
+#' @export
+setGeneric("localResult<-", function(x, type, sample_id = NULL, withDimnames = TRUE, value) standardGeneric("localResult<-"))
+
+#' @export
+setGeneric("localResultNames", function(x) standardGeneric("localResultNames"))
+
+#' @export
+setGeneric("localResultNames<-", function(x, value) standardGeneric("localResultNames<-"))
