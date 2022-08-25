@@ -94,7 +94,7 @@ setGeneric("bbox", function(sfe, sample_id = NULL) standardGeneric("bbox"))
 setGeneric("localResults", function(x, withDimnames = TRUE, ...) standardGeneric("localResults"))
 
 #' @export
-setGeneric("localResults<-", function(x, withDimnames = TRUE, value, ...) standardGeneric("localResults<-"))
+setGeneric("localResults<-", function(x, withDimnames = TRUE, ..., value) standardGeneric("localResults<-"))
 
 #' @export
 setGeneric("localResult", function(x, type, sample_id = NULL, withDimnames = TRUE) standardGeneric("localResult"))

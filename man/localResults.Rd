@@ -72,3 +72,28 @@ associated with the braoder SFE object, so they should have a place within
 the object. The \code{localResults} field in the SFE object stores these
 results that has a value for each spatial location.
 }
+\examples{
+# Toy example
+sfe <- readRDS(system.file("testdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+set.seed(29)
+toy_res1 <- matrix(rnorm(10), nrow = 5, ncol = 2,
+                   dimnames = list(colnames(sfe), c("meow", "purr")))
+toy_res2 <- matrix(rpois(10, lambda = 2), nrow = 5, ncol = 2,
+                   dimnames = list(colnames(sfe), c("sassy", "tortitude")))
+# Set multiple items
+localResults(sfe) <- list(foo = toy_res1, bar = toy_res2)
+# Get multiple items
+localResults(sfe)
+# Set one item by name (can also be by index)
+localResult(sfe, "foo") <- toy_res1
+# Get one item
+localResult(sfe, "foo")
+# Get names
+localResultNames(sfe)
+# sample_id argument is mandatory when there're multiple samples
+sfe3 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
+                package = "SpatialFeatureExperiment"))
+localResult(sfe3, type = "foo", sample_id = "sample01",
+            withDimnames = FALSE) <- toy_res1[1:3,]
+localResult(sfe3, "foo", sample_id = "sample01")
+}
