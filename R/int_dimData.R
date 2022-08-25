@@ -119,19 +119,18 @@
 
 .reconcile_cols <- function(existing, value) {
   # Assume that both existing and value have the geometry column
-  if (any(!names(value) %in% names(existing))) {
-    names_inter <- intersect(names(value), names(existing))
+  if (any(!colnames(value) %in% colnames(existing))) {
+    names_inter <- intersect(colnames(value), colnames(existing))
     value <- value[,names_inter]
   }
-  if (any(!names(existing) %in% names(value))) {
-    diff_cols <- setdiff(names(existing), names(value))
+  if (any(!colnames(existing) %in% colnames(value))) {
+    diff_cols <- setdiff(colnames(existing), colnames(value))
     additional_cols <- matrix(nrow = nrow(value),
                               ncol = length(diff_cols))
     colnames(additional_cols) <- diff_cols
     rownames(additional_cols) <- rownames(value)
-    additional_cols <- as.data.frame(additional_cols)
     value <- cbind(value, additional_cols)
-    value <- value[,names(existing)]
+    value <- value[,colnames(existing)]
   }
   value
 }
@@ -142,7 +141,8 @@
     existing <- matrix(nrow = nrow_full, ncol = ncol(value),
                        dimnames = list(rownames_full,
                                        colnames(value)))
-    existing <- as.data.frame(existing)
+    if (is.data.frame(value))
+      existing <- as.data.frame(existing)
     if (sf) {
       existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
                                          function(t) st_geometrycollection()))
@@ -157,7 +157,8 @@
   existing
 }
 
-.set_intdimdata_id <- function(x, value, sample_id, type, MARGIN, sf = TRUE) {
+.set_intdimdata_id <- function(x, value, sample_id, type, MARGIN, sf = TRUE,
+                               getfun, key) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     if (MARGIN == 1L) {
@@ -165,7 +166,7 @@
     } else {
       # Assuming that the order in value is the same as the
       # order of geometries for this sample in colGeometries
-      existing <- .getfun(MARGIN)(x)[[.dg_key(MARGIN)]][[type]]
+      existing <- getfun(x)[[key]][[type]]
       value <- .intdimdata_partial_replace(existing, value, ncol(x), colnames(x),
                                          colData(x)$sample_id, sample_id, sf = sf)
     }
@@ -182,14 +183,17 @@
 }
 
 .set_internal_id <- function(x, type, MARGIN, sample_id, withDimnames = TRUE,
-                             translate = TRUE, sf = TRUE, .set_internal_fun,
+                             translate = TRUE, sf = TRUE,
+                             .get_all_fun, .set_all_fun,
+                             .set_internal_fun,
                              getfun, setfun, key, xdimfun, funstr, xdimstr,
                              substr, value, ...) {
-  x <- .initialize_intdimdata(x, .get_all_fun = dimGeometries,
-                              .set_all_fun = `dimGeometries<-`,
+  x <- .initialize_intdimdata(x, .get_all_fun = .get_all_fun,
+                              .set_all_fun = .set_all_fun,
                               MARGIN = MARGIN, withDimnames = withDimnames)
   if (sf) value <- .df2sf_in_list(value, ...)
-  value <- .set_intdimdata_id(x, value, sample_id, type, MARGIN)
+  value <- .set_intdimdata_id(x, value, sample_id, type, MARGIN, sf = sf,
+                              getfun, key)
   value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
                                withDimnames = withDimnames, fun = funstr)
   if (sf) value <- .translate_value(x, translate, value)

@@ -8,13 +8,23 @@
 #' results that has a value for each spatial location.
 #'
 #' @inheritParams dimGeometries
+#' @param ... Ignored
+#' @param value Values to set, should be either a matrix or a data frame.
+#' @aliases localResults localResults<- localResult localResult<-
+#'   localResultNames localResultNames<-
+#' @return \code{localResults} returns a named list each element of which is a
+#'   set of local results of interest. \code{localResult} returns a matrix or a
+#'   data frame, whichever the original is when it's set.
+#'   \code{localResultNames} returns a character vector. Setters return an SFE
+#'   object with the desired field set.
+#' @docType methods
 #' @name localResults
 NULL
 
 #' @rdname localResults
 #' @export
 setMethod("localResults", "SpatialFeatureExperiment",
-          function(x, withDimnames = TRUE) {
+          function(x, withDimnames = TRUE, ...) {
             .get_intdimdata_all(x, MARGIN = 2L, withDimnames = withDimnames,
                                 getfun = int_colData, key = "localResults")
           })
@@ -22,7 +32,7 @@ setMethod("localResults", "SpatialFeatureExperiment",
 #' @rdname localResults
 #' @export
 setReplaceMethod("localResults", "SpatialFeatureExperiment",
-                 function(x, withDimnames = TRUE, value) {
+                 function(x, withDimnames = TRUE, value, ...) {
                    .set_intdimdata_all(x, MARGIN = 2L, withDimnames = withDimnames,
                                        translate = FALSE, sf = FALSE,
                                        getfun = int_colData,
@@ -107,6 +117,8 @@ setReplaceMethod("localResult", c("SpatialFeatureExperiment", "numeric"),
                    .set_internal_id(x, type, MARGIN = 2L, sample_id = sample_id,
                                     withDimnames = withDimnames,
                                     translate = FALSE, sf = FALSE,
+                                    .get_all_fun = localResults,
+                                    .set_all_fun = `localResults<-`,
                                     .set_internal_fun = .set_internal_numeric,
                                     getfun = int_colData,
                                     setfun = `int_colData<-`,
@@ -123,6 +135,8 @@ setReplaceMethod("localResult", c("SpatialFeatureExperiment", "character"),
                    .set_internal_id(x, type, MARGIN = 2L, sample_id = sample_id,
                                     withDimnames = withDimnames,
                                     translate = FALSE, sf = FALSE,
+                                    .get_all_fun = localResults,
+                                    .set_all_fun = `localResults<-`,
                                     .set_internal_fun = .set_internal_character,
                                     getfun = int_colData,
                                     setfun = `int_colData<-`,
