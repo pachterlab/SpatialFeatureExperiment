@@ -1,5 +1,0 @@
-url: https://pachterlab.github.io/SpatialFeatureExperiment/
-template:
-  bootstrap: 5
-development:
-  mode: devel
