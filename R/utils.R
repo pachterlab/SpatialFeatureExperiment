@@ -1,47 +1,3 @@
-.getfun <- function(MARGIN) switch (MARGIN, int_elementMetadata, int_colData)
-
-.setfun <- function(MARGIN) switch (MARGIN, `int_elementMetadata<-`, `int_colData<-`)
-
-.xdimstr <- function(MARGIN) switch (MARGIN, "nrow", "ncol")
-
-.xdimfun <- function(MARGIN) switch (MARGIN, nrow, ncol)
-
-.dg_key <- function(MARGIN) switch (MARGIN, "rowGeometries", "colGeometries")
-
-.unnamed <- "unnamed"
-# Modified from SCE to generalize to both rows and columns
-.check_dimgeo_names <- function(reference, incoming, MARGIN, withDimnames,
-                                fun='dimGeometry', vname='value') {
-  if (!is.null(incoming)) {
-    rni <- rownames(incoming)
-    cnr <- dimnames(reference)[[MARGIN]]
-    fun_show <- switch (MARGIN, "rownames", "colnames")
-    if (withDimnames && !is.null(rni)) {
-      if (!setequal(cnr, rni)) {
-        msg <- paste0("non-NULL 'rownames(", vname, ")' should be the same as '",
-                      fun_show, "(x)' for '", fun,
-                      "<-'.")
-        stop(paste(strwrap(msg), collapse="\n"))
-      } else if (!identical(cnr, rni)) {
-        # Do the reordering if they have different orders
-        rni <- rni[match(cnr, rni)]
-        incoming <- incoming[rni,]
-      }
-    }
-  }
-  incoming
-}
-.get_internal_all <- SingleCellExperiment:::.get_internal_all
-.set_internal_all <- SingleCellExperiment:::.set_internal_all
-.get_internal_integer <- SingleCellExperiment:::.get_internal_integer
-.get_internal_names <- SingleCellExperiment:::.get_internal_names
-.get_internal_missing <- SingleCellExperiment:::.get_internal_missing
-.get_internal_character <- SingleCellExperiment:::.get_internal_character
-.set_internal_names <- SingleCellExperiment:::.set_internal_names
-.set_internal_missing <- SingleCellExperiment:::.set_internal_missing
-.set_internal_numeric <- SingleCellExperiment:::.set_internal_numeric
-.set_internal_character <- SingleCellExperiment:::.set_internal_character
-
 #' Get all unique sample IDs
 #'
 #' The title is self-explanatory.
@@ -113,21 +69,20 @@ changeSampleIDs <- function(sfe, replacement) {
   sample_id
 }
 
-.reconcile_cols <- function(existing, value) {
-  # Assume that both existing and value have the geometry column
-  if (any(!names(value) %in% names(existing))) {
-    names_inter <- intersect(names(value), names(existing))
-    value <- value[,names_inter]
+.rm_empty_geometries <- function(g, MARGIN) {
+  empty_inds <- st_is_empty(g)
+  if (MARGIN < 3) {
+    if (any(empty_inds))
+      stop("Empty geometries found in dimGeometry.")
+  } else {
+    g <- g[!empty_inds,]
   }
-  if (any(!names(existing) %in% names(value))) {
-    diff_cols <- setdiff(names(existing), names(value))
-    additional_cols <- matrix(nrow = nrow(value),
-                              ncol = length(diff_cols))
-    colnames(additional_cols) <- diff_cols
-    rownames(additional_cols) <- rownames(value)
-    additional_cols <- as.data.frame(additional_cols)
-    value <- cbind(value, additional_cols)
-    value <- value[,names(existing)]
+  g
+}
+
+.translate_value <- function(x, translate, value) {
+  if (translate && !is.null(int_metadata(x)$orig_bbox)) {
+    value$geometry <- value$geometry - int_metadata(x)$orig_bbox[c("xmin", "ymin")]
   }
   value
 }

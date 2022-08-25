@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatielExperiment with Simple Features in sf
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -42,6 +42,8 @@ Collate:
     'dimGeometries.R'
     'geometry_operation.R'
     'graph_wrappers.R'
+    'int_dimData.R'
+    'localResults.R'
     'read.R'
     'spatialGraphs.R'
     'subset.R'

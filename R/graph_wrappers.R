@@ -1,14 +1,3 @@
-.rm_empty_geometries <- function(g, MARGIN) {
-  empty_inds <- st_is_empty(g)
-  if (MARGIN < 3) {
-    if (any(empty_inds))
-      stop("Empty geometries found in dimGeometry.")
-  } else {
-    g <- g[!empty_inds,]
-  }
-  g
-}
-
 .get_centroids <- function(x, type, MARGIN, sample_id) {
   if (type == "spatialCoords") {
     return(spatialCoords(x)[colData(x)$sample_id %in% sample_id,])

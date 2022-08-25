@@ -121,49 +121,23 @@ NULL
 #' @export
 setMethod("dimGeometries", "SpatialFeatureExperiment",
           function(x, MARGIN = 2, withDimnames = TRUE) {
-            value <- .get_internal_all(x,
-                                       getfun=.getfun(MARGIN),
-                                       key=.dg_key(MARGIN))
-
-            if (withDimnames) {
-              for (i in seq_along(value)) {
-                rownames(value[[i]]) <- dimnames(x)[[MARGIN]]
-              }
-            }
-            value
+            .get_intdimdata_all(x, MARGIN, withDimnames,
+                                getfun = .getfun(MARGIN),
+                                key = .dg_key(MARGIN))
           })
-
-.translate_value <- function(x, translate, value) {
-  if (translate && !is.null(int_metadata(x)$orig_bbox)) {
-    value$geometry <- value$geometry - int_metadata(x)$orig_bbox[c("xmin", "ymin")]
-  }
-  value
-}
 
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometries", "SpatialFeatureExperiment",
                  function(x, MARGIN, withDimnames = TRUE, translate = TRUE,..., value) {
-                   value <- .df2sf_list(value, ...)
-                   if (withDimnames) {
-                     for (v in seq_along(value)) {
-                       value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
-                                                         withDimnames=TRUE,
-                                                         vname=sprintf("value[[%s]]", v),
-                                                         fun='dimGeometries')
-                       value[[v]] <- .translate_value(x, translate, value[[v]])
-                     }
-                   }
-                   .set_internal_all(x, value,
-                                     getfun=.getfun(MARGIN),
-                                     setfun=.setfun(MARGIN),
-                                     key=.dg_key(MARGIN),
-                                     convertfun=NULL,
-                                     xdimfun=.xdimfun(MARGIN),
-                                     vdimfun=nrow,
-                                     funstr="dimGeometries",
-                                     xdimstr=.xdimstr(MARGIN),
-                                     vdimstr="rows")
+                   .set_intdimdata_all(x, MARGIN, withDimnames = withDimnames,
+                                       translate = translate, sf = TRUE,
+                                       getfun = .getfun(MARGIN),
+                                       setfun = .setfun(MARGIN),
+                                       key = .dg_key(MARGIN),
+                                       xdimfun = .xdimfun(MARGIN),
+                                       funstr = "dimGeometries",
+                                       xdimstr = .xdimstr(MARGIN), value, ...)
                  })
 
 #' @rdname dimGeometries
@@ -199,137 +173,55 @@ setMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                                   MARGIN = MARGIN)
           })
 
-.out_geometry_id <- function(x, out, MARGIN, sample_id) {
-  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  if (!is.null(sample_id)) {
-    if (MARGIN == 1L) {
-      # OK, maybe applicable, say to crop the rowGeometries by bbox of a sample
-      # I'll consider that later.
-      message("sample_id is not applicable to rowGeometries.")
-    } else if (MARGIN == 2L) {
-      # Somehow I lose the rownames after row subsetting
-      inds <- colData(x)$sample_id %in% sample_id
-      rns <- rownames(out)[inds]
-      out <- out[inds,]
-      rownames(out) <- rns
-    } else {
-      out <- out[out$sample_id %in% sample_id,]
-    }
-  }
-  out
-}
-
 #' @rdname dimGeometries
 #' @export
 setMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
           function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) {
-            out <- .get_internal_integer(x, type,
-                                         getfun=.getfun(MARGIN),
-                                         key=.dg_key(MARGIN),
-                                         funstr="dimGeometry",
-                                         substr="type")
-
-            if (withDimnames) {
-              rownames(out) <- colnames(x)
-            }
-            .out_geometry_id(x, out, MARGIN, sample_id)
+            .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
+                             .get_internal_integer, getfun = .getfun(MARGIN),
+                             key = .dg_key(MARGIN), funstr = "dimGeometry",
+                             substr = "type")
           })
 
 #' @rdname dimGeometries
 #' @export
 setMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
           function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) {
-            out <- .get_internal_character(x, type,
-                                           getfun=.getfun(MARGIN),
-                                           key=.dg_key(MARGIN),
-                                           funstr="dimGeometry",
-                                           substr="type",
-                                           namestr="dimGeometryNames")
-
-            if (withDimnames) {
-              rownames(out) <- colnames(x)
-            }
-            .out_geometry_id(x, out, MARGIN, sample_id)
+            .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
+                             .get_internal_character, getfun = .getfun(MARGIN),
+                             key = .dg_key(MARGIN), funstr = "dimGeometry",
+                             substr = "type")
           })
 
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "missing"),
                  function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,
-                          translate = TRUE, value) {
+                          translate = TRUE,..., value) {
                    .set_internal_missing(x, value,
                                          withDimnames=withDimnames,
-                                         MARGIN = MARGIN,
+                                         MARGIN = MARGIN, translate = translate,
                                          sample_id = sample_id,
                                          basefun=`dimGeometry<-`,
-                                         namefun=dimGeometryNames
-                   )
+                                         namefun=dimGeometryNames, ...)
                  })
-
-.geometry_partial_replace <- function(existing, value, nrow_full, rownames_full,
-                                      all_sample_ids, sample_id) {
-  if (is.null(existing)) {
-    existing <- matrix(nrow = nrow_full, ncol = ncol(value),
-                       dimnames = list(rownames_full,
-                                       colnames(value)))
-    existing <- as.data.frame(existing)
-    existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
-                                       function(t) st_geometrycollection()))
-    existing <- st_sf(existing, sf_column_name = "geometry",
-                      row.names = rownames_full)
-    existing <- existing[,colnames(value)]
-  } else {
-    value <- .reconcile_cols(existing, value)
-  }
-  existing[all_sample_ids %in% sample_id,] <- value
-  existing
-}
-
-.set_geometry_id <- function(x, value, sample_id, type, MARGIN) {
-  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
-    if (MARGIN == 1L) {
-      message("sample_id is not applicable to rowGeometries.")
-    } else {
-      # Assuming that the order in value is the same as the
-      # order of geometries for this sample in colGeometries
-      existing <- .getfun(MARGIN)(x)[[.dg_key(MARGIN)]][[type]]
-      value <- .geometry_partial_replace(existing, value, ncol(x), colnames(x),
-                                         colData(x)$sample_id, sample_id)
-    }
-  }
-  value
-}
-
-.initialize_int_dimdata <- function(x, MARGIN, withDimnames = TRUE) {
-  if (!length(dimGeometries(x, MARGIN))) {
-    dimGeometries(x, MARGIN, withDimnames = withDimnames) <- list()
-  }
-  x
-}
 
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
                  function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,
                           translate = TRUE, ..., value) {
-                   x <- .initialize_int_dimdata(x, MARGIN, withDimnames)
-                   value <- .df2sf_in_list(value, ...)
-                   value <- .set_geometry_id(x, value, sample_id, type, MARGIN)
-                   value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
-                                                withDimnames = withDimnames)
-                   value <- .translate_value(x, translate, value)
-                   .set_internal_numeric(x, type, value,
-                                         getfun=.getfun(MARGIN),
-                                         setfun=.setfun(MARGIN),
-                                         key=.dg_key(MARGIN),
-                                         convertfun=NULL,
-                                         xdimfun=.xdimfun(MARGIN),
-                                         vdimfun=nrow,
-                                         funstr="dimGeometry",
-                                         xdimstr=.xdimstr(MARGIN),
-                                         vdimstr="rows",
-                                         substr="type")
+                   .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
+                                    translate, sf = TRUE,
+                                    .get_all_fun = dimGeometries,
+                                    .set_all_fun = `dimGeometries<-`,
+                                    .set_internal_fun = .set_internal_numeric,
+                                    getfun = .getfun(MARGIN),
+                                    setfun = .setfun(MARGIN),
+                                    key = .dg_key(MARGIN),
+                                    xdimfun = .xdimfun(MARGIN),
+                                    funstr = "dimGeometry", xdimstr = .xdimstr(MARGIN),
+                                    substr = "type", value, ...)
                  })
 
 #' @rdname dimGeometries
@@ -337,23 +229,17 @@ setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "numeric"),
 setReplaceMethod("dimGeometry", c("SpatialFeatureExperiment", "character"),
                  function(x, type, MARGIN, sample_id = NULL, withDimnames=TRUE,
                           translate = TRUE, ..., value) {
-                   x <- .initialize_int_dimdata(x, MARGIN, withDimnames)
-                   value <- .df2sf_in_list(value, ...)
-                   value <- .set_geometry_id(x, value, sample_id, type, MARGIN)
-                   value <- .check_dimgeo_names(x, value, MARGIN = MARGIN,
-                                                withDimnames = withDimnames)
-                   value <- .translate_value(x, translate, value)
-                   .set_internal_character(x, type, value,
-                                           getfun=.getfun(MARGIN),
-                                           setfun=.setfun(MARGIN),
-                                           key=.dg_key(MARGIN),
-                                           convertfun=NULL,
-                                           xdimfun=.xdimfun(MARGIN),
-                                           vdimfun=nrow,
-                                           funstr="dimGeometry",
-                                           xdimstr=.xdimstr(MARGIN),
-                                           vdimstr="rows",
-                                           substr="type")
+                   .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
+                                    translate, sf = TRUE,
+                                    .get_all_fun = dimGeometries,
+                                    .set_all_fun = `dimGeometries<-`,
+                                    .set_internal_fun = .set_internal_character,
+                                    getfun = .getfun(MARGIN),
+                                    setfun = .setfun(MARGIN),
+                                    key = .dg_key(MARGIN),
+                                    xdimfun = .xdimfun(MARGIN),
+                                    funstr = "dimGeometry", xdimstr = .xdimstr(MARGIN),
+                                    substr = "type", value, ...)
                  })
 
 #' @rdname dimGeometries
