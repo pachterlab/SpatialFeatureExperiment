@@ -66,11 +66,53 @@ results that has a value for each spatial location.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S4 method for SpatialFeatureExperiment</span></span>
-<span><span class="fu">localResults</span><span class="op">(</span><span class="va">x</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S4 method for SpatialFeatureExperiment,missing,missing</span></span>
+<span><span class="fu">localResults</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">name</span>,</span>
+<span>  features <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S4 method for SpatialFeatureExperiment</span></span>
-<span><span class="fu">localResults</span><span class="op">(</span><span class="va">x</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
+<span><span class="co"># S4 method for SpatialFeatureExperiment,missing,missing</span></span>
+<span><span class="fu">localResults</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">name</span>,</span>
+<span>  features <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
+<span></span>
+<span><span class="co"># S4 method for SpatialFeatureExperiment,ANY,character</span></span>
+<span><span class="fu">localResults</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">name</span>,</span>
+<span>  features <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S4 method for SpatialFeatureExperiment,ANY,character</span></span>
+<span><span class="fu">localResults</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">name</span>,</span>
+<span>  features <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment</span></span>
 <span><span class="fu">localResultNames</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
@@ -79,28 +121,100 @@ results that has a value for each spatial location.</p>
 <span><span class="fu">localResultNames</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment,missing</span></span>
-<span><span class="fu">localResult</span><span class="op">(</span><span class="va">x</span>, <span class="va">type</span>, sample_id <span class="op">=</span> <span class="cn">NULL</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu">localResult</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">feature</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment,numeric</span></span>
-<span><span class="fu">localResult</span><span class="op">(</span><span class="va">x</span>, <span class="va">type</span>, sample_id <span class="op">=</span> <span class="cn">NULL</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu">localResult</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">feature</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment,character</span></span>
-<span><span class="fu">localResult</span><span class="op">(</span><span class="va">x</span>, <span class="va">type</span>, sample_id <span class="op">=</span> <span class="cn">NULL</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu">localResult</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">feature</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment,missing</span></span>
-<span><span class="fu">localResult</span><span class="op">(</span><span class="va">x</span>, <span class="va">type</span>, sample_id <span class="op">=</span> <span class="cn">NULL</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
+<span><span class="fu">localResult</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">feature</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment,numeric</span></span>
-<span><span class="fu">localResult</span><span class="op">(</span><span class="va">x</span>, <span class="va">type</span>, sample_id <span class="op">=</span> <span class="cn">NULL</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
+<span><span class="fu">localResult</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">feature</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span>
 <span></span>
 <span><span class="co"># S4 method for SpatialFeatureExperiment,character</span></span>
-<span><span class="fu">localResult</span><span class="op">(</span><span class="va">x</span>, <span class="va">type</span>, sample_id <span class="op">=</span> <span class="cn">NULL</span>, withDimnames <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span></code></pre></div>
+<span><span class="fu">localResult</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">feature</span>,</span>
+<span>  colGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotGeometryName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  withDimnames <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>x</dt>
 <dd><p>A <code>SpatialFeatureExperiment</code> object.</p></dd>
+
+
+<dt>sample_id</dt>
+<dd><p>Sample ID to get or set geometries.</p></dd>
+
+
+<dt>name</dt>
+<dd><p>Name of the graphs to add to each sample_id; used in the
+<code>spatialGraphs</code> replacement method as it must be character while
+<code>type</code> can be either an integer index or a name.</p></dd>
+
+
+<dt>features</dt>
+<dd><p>Features whose local results to get or set, for
+<code>localResults</code> getter and setter for multiple features at a time.</p></dd>
+
+
+<dt>colGeometryName</dt>
+<dd><p>Which <code>colGeometry</code> to get or set local results.</p></dd>
+
+
+<dt>annotGeometryName</dt>
+<dd><p>Which <code>annotGeometry</code> to get or set local
+results.</p></dd>
 
 
 <dt>withDimnames</dt>
@@ -123,8 +237,9 @@ the *Geometry to query or replace. If missing, then the first item in the
 *Geometries will be returned or replaced.</p></dd>
 
 
-<dt>sample_id</dt>
-<dd><p>Sample ID to get or set geometries.</p></dd>
+<dt>feature</dt>
+<dd><p>Feature whose local results to get or set, for
+<code>localResult</code> getter and setter for one feature at a time.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -136,7 +251,14 @@ the *Geometry to query or replace. If missing, then the first item in the
   data frame, whichever the original is when it's set.</p>
 <p></p>
 <p><code>localResultNames</code> returns a character vector. Setters return an SFE
-  object with the desired field set.</p>
+  object with the desired field set. For genes and <code>colData</code> columns,
+  the local results are stored in the <code>localResults</code> field in</p>
+<p></p>
+<p><code>int_colData</code>, whereas for <code>colGeometries</code> and</p>
+<p></p>
+<p><code>annotGeometries</code>, the local results are stored as columns in the same</p>
+<p></p>
+<p><code>sf</code> data frames.</p>
     </div>
 
     <div class="section level2">
@@ -148,35 +270,7 @@ the *Geometry to query or replace. If missing, then the first item in the
 <span class="r-in"><span>                   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"meow"</span>, <span class="st">"purr"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">toy_res2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">10</span>, lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">5</span>, ncol <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                   dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sassy"</span>, <span class="st">"tortitude"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Set multiple items</span></span></span>
-<span class="r-in"><span><span class="fu">localResults</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>foo <span class="op">=</span> <span class="va">toy_res1</span>, bar <span class="op">=</span> <span class="va">toy_res2</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Get multiple items</span></span></span>
-<span class="r-in"><span><span class="fu">localResults</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> List of length 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> names(2): foo bar</span>
-<span class="r-in"><span><span class="co"># Set one item by name (can also be by index)</span></span></span>
-<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"foo"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">toy_res1</span></span></span>
-<span class="r-in"><span><span class="co"># Get one item</span></span></span>
-<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"foo"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         meow       purr</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y -1.2833712  2.1104419</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> H -1.2634498 -0.5214171</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> S  0.2146729 -0.9300566</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> G  0.9469490  0.4193712</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X -1.1750246  1.1111370</span>
-<span class="r-in"><span><span class="co"># Get names</span></span></span>
-<span class="r-in"><span><span class="fu">localResultNames</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "foo" "bar"</span>
-<span class="r-in"><span><span class="co"># sample_id argument is mandatory when there're multiple samples</span></span></span>
-<span class="r-in"><span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"testdata/sfe_multi_sample.rds"</span>,</span></span>
-<span class="r-in"><span>                package <span class="op">=</span> <span class="st">"SpatialFeatureExperiment"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe3</span>, type <span class="op">=</span> <span class="st">"foo"</span>, sample_id <span class="op">=</span> <span class="st">"sample01"</span>,</span></span>
-<span class="r-in"><span>            withDimnames <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">toy_res1</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span></span></span>
-<span class="r-in"><span><span class="fu">localResult</span><span class="op">(</span><span class="va">sfe3</span>, <span class="st">"foo"</span>, sample_id <span class="op">=</span> <span class="st">"sample01"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         meow       purr</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y -1.2833712  2.1104419</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> H -1.2634498 -0.5214171</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> S  0.2146729 -0.9300566</span>
+<span class="r-in"><span><span class="co"># Need to rewrite these examples</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
