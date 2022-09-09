@@ -94,10 +94,10 @@
       # Somehow I lose the rownames after row subsetting
       inds <- colData(x)$sample_id %in% sample_id
       rns <- rownames(out)[inds]
-      out <- out[inds,]
+      out <- out[inds,,drop = FALSE]
       rownames(out) <- rns
     } else {
-      out <- out[out$sample_id %in% sample_id,]
+      out <- out[out$sample_id %in% sample_id,,drop = FALSE]
     }
   }
   out
@@ -105,11 +105,11 @@
 
 .get_internal_id <- function(x, type, MARGIN, sample_id, withDimnames,
                              .get_internal_fun, getfun, key, funstr, substr) {
-  out <- .get_internal_integer(x, type,
-                               getfun=getfun,
-                               key=key,
-                               funstr=funstr,
-                               substr=substr)
+  out <- .get_internal_fun(x, type,
+                           getfun=getfun,
+                           key=key,
+                           funstr=funstr,
+                           substr=substr)
 
   if (withDimnames) {
     rownames(out) <- dimnames(x)[[MARGIN]]
@@ -117,43 +117,57 @@
   .out_intdimdata_id(x, out, MARGIN, sample_id)
 }
 
-.reconcile_cols <- function(existing, value) {
-  # Assume that both existing and value have the geometry column
+.make_na_df <- function(template, nrow, rownames, sf) {
+  out <- lapply(template, function(x) {
+    if (is.vector(x)) out <- rep(NA, nrow)
+    else if (is(x, "sfc")) {
+      out <- st_sfc(lapply(seq_len(nrow), function(t) st_geometrycollection()))
+    } else {
+      # Only deal with columns that are themselves simple matrices or data frames
+      # Not when the columns are data frames with columns that are matrices or data frames
+      out <- matrix(nrow = nrow, ncol = ncol(x), dimnames = list(rownames, colnames(x)))
+      if (is.data.frame(x)) out <- as.data.frame(out)
+      if (is(x, "DFrame")) out <- DataFrame(out)
+      out <- I(out)
+    }
+    out
+  })
+  names(out) <- names(template)
+  S4 <- is(template, "DFrame")
+  if (sf && S4) stop("Please use S3 data.frame for sf.")
+  df_fun <- if(S4) DataFrame else data.frame
+  out <- df_fun(out)
+  if (sf) {
+    out <- st_sf(out, sf_column_name = "geometry",
+                 row.names = rownames)
+  }
+  out
+}
+
+.reconcile_cols <- function(existing, value, sf = FALSE) {
+  # Assume that both existing and value have the geometry column if sf = TRUE
+  # Don't remove columns from `existing` no matter what
+  # Add columns only present in `value` to `existing`
   if (any(!colnames(value) %in% colnames(existing))) {
-    names_inter <- intersect(colnames(value), colnames(existing))
-    value <- value[,names_inter]
+    diff_cols <- setdiff(colnames(value), colnames(existing))
+    additional_cols <- .make_na_df(value[,diff_cols,drop = FALSE],
+                                   nrow = nrow(existing),
+                                   rownames = rownames(existing), sf = sf)
+    existing <- cbind(existing, additional_cols)
   }
-  if (any(!colnames(existing) %in% colnames(value))) {
-    diff_cols <- setdiff(colnames(existing), colnames(value))
-    additional_cols <- matrix(nrow = nrow(value),
-                              ncol = length(diff_cols))
-    colnames(additional_cols) <- diff_cols
-    rownames(additional_cols) <- rownames(value)
-    value <- cbind(value, additional_cols)
-    value <- value[,colnames(existing)]
-  }
-  value
+  existing
 }
 
 .intdimdata_partial_replace <- function(existing, value, nrow_full, rownames_full,
                                       all_sample_ids, sample_id, sf = TRUE) {
   if (is.null(existing)) {
-    existing <- matrix(nrow = nrow_full, ncol = ncol(value),
-                       dimnames = list(rownames_full,
-                                       colnames(value)))
-    if (is.data.frame(value))
-      existing <- as.data.frame(existing)
-    if (sf) {
-      existing$geometry <- st_sfc(lapply(seq_len(nrow(existing)),
-                                         function(t) st_geometrycollection()))
-      existing <- st_sf(existing, sf_column_name = "geometry",
-                        row.names = rownames_full)
-      existing <- existing[,colnames(value)]
-    }
+    existing <- .make_na_df(value, nrow = nrow_full, rownames = rownames_full,
+                            sf = sf)
   } else {
-    value <- .reconcile_cols(existing, value)
+    # Should add columns in value but not in existing
+    existing <- .reconcile_cols(existing, value)
   }
-  existing[all_sample_ids %in% sample_id,] <- value
+  existing[all_sample_ids %in% sample_id, names(value)] <- value
   existing
 }
 
@@ -208,4 +222,161 @@
                     xdimstr=xdimstr,
                     vdimstr="rows",
                     substr=substr)
+}
+
+.get_internal_feature <- function(x, type, feature, colGeometryName,
+                                  annotGeometryName, sample_id, withDimnames,
+                                  .get_internal_fun, ...) {
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+  if (missing(type)) type <- 1L
+  if (is.null(colGeometryName) && is.null(annotGeometryName)) {
+    lr <- .get_internal_id(x, type = type, sample_id = sample_id,
+                           withDimnames = withDimnames,
+                           .get_internal_fun = .get_internal_fun, ...)
+  } else if (!is.null(colGeometryName)) {
+    cg <- colGeometry(x, type = colGeometryName, sample_id = sample_id)
+    lr <- cg$localResults[[type]]
+  } else if (!is.null(annotGeometryName)) {
+    ag <- annotGeometry(x, type = annotGeometryName, sample_id = sample_id)
+    lr <- ag$localResults[[type]]
+  }
+  if (is.null(feature)) feature_use <- names(lr)
+  else
+    feature_use <- intersect(feature, names(lr))
+  if (!length(feature_use)) {
+    stop("None of the features are present in ", type)
+  }
+  if (length(feature_use) < length(feature)) {
+    warning("Features ", paste(setdiff(feature, feature_use), collapse = ", "),
+            " are absent in ", type)
+  }
+  out <- lr[,feature_use]
+  if (length(feature_use) > 1L) out <- as.list(out)
+  out
+}
+
+.value2df <- function(value, use_geometry, feature = NULL) {
+  # Should return data frame for one type, each column is for a feature
+  if (!is.data.frame(value) && !is(value, "DFrame")) {
+    df_fun <- if (use_geometry) data.frame else DataFrame
+    if (is.list(value))
+      value <- lapply(value, function(v) if (is.atomic(v) && is.vector(v)) v else I(v))
+    if (is.matrix(value)) value <- setNames(list(I(value)), feature)
+    if (is.vector(value) && is.atomic(value)) value <- setNames(list(value), feature)
+    value <- df_fun(value)
+  }
+  value
+}
+
+.pad_value_na <- function(value, x, sample_id, sample_index, nrow_full,
+                          rownames_full = NULL) {
+  # Pad value with NA if it's not for all samples
+  if (length(setdiff(sampleIDs(x), sample_id))) {
+    if (is.vector(value)) {
+      value_all <- rep(NA, nrow_full)
+      value_all[sample_index] <- value
+    } else {
+      # matrices
+      value_all <- matrix(NA, nrow = nrow_full, ncol = ncol(value))
+      colnames(value_all) <- colnames(value)
+      if (is.null(rownames_full))
+        rownames(value_all)[sample_index] <- rownames(value)
+      else
+        rownames(value_all) <- rownames_full
+      if (is.data.frame(value)) value_all <- as.data.frame(value_all)
+      value_all[sample_index,] <- value
+      value_all <- I(value_all)
+    }
+  } else {
+    value_all <- value
+  }
+  value_all
+}
+
+.set_geometry_localResults <- function(x, lr_type, feature, sample_id,
+                                      colGeometryName, annotGeometryName,
+                                      value) {
+  if (!is.null(colGeometryName)) {
+    get_geom_fun <- colGeometry
+    set_geom_fun <- `colGeometry<-`
+    geometry_type <- colGeometryName
+  } else {
+    get_geom_fun <- annotGeometry
+    set_geom_fun <- `annotGeometry<-`
+    geometry_type <- annotGeometryName
+  }
+
+  if (is(value, "DFrame")) value <- as.list(value)
+  value <- .value2df(value, TRUE, feature = feature)
+
+  g <- get_geom_fun(x, type = geometry_type, sample_id = "all")
+  if (is.null(annotGeometryName) && !is.null(colGeometryName)) {
+    sample_index <- colData(x)$sample_id %in% sample_id
+    all_sample_ids <- colData(x)$sample_id
+  } else {
+    sample_index <- g$sample_id %in% sample_id
+    all_sample_ids <- g$sample_id
+  }
+  init_lr <- is.null(g$localResults)
+  init_type <- is.null(g$localResults[[lr_type]])
+  init <- data.frame(..1 = rep(NA, nrow(g)))
+  if (init_lr) g$localResults <- init
+  if (init_type) g$localResults[[lr_type]] <- init
+  lr <- g$localResults[[lr_type]][sample_index,,drop = FALSE]
+  lr[,feature] <- value
+  if (any(!all_sample_ids %in% sample_id)) {
+    g$localResults[[lr_type]] <-
+      .intdimdata_partial_replace(existing = g$localResults[[lr_type]],
+                                  value = lr,
+                                  nrow_full = nrow(g),
+                                  rownames_full = rownames(g),
+                                  all_sample_ids = all_sample_ids,
+                                  sample_id = sample_id, sf = FALSE)
+  } else {
+    g$localResults[[lr_type]] <- lr
+  }
+  if (init_type) g$localResults[[lr_type]][["..1"]] <- NULL
+  if (init_lr) g$localResults[["..1"]] <- NULL
+  x <- set_geom_fun(x, type = geometry_type, sample_id = "all", value = g)
+  x
+}
+
+.set_internal_feature <- function(x, type, feature, colGeometryName,
+                                  annotGeometryName, sample_id, withDimnames,
+                                  .set_internal_fun, value, ...) {
+  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+  if (missing(type)) type <- 1L
+  if (any(class(value) %in% c("list", "DFrame", "data.frame"))) {
+    if (is.null(feature)) {
+      feature <- names(value)
+    } else {
+      feature <- intersect(feature, names(value))
+      value <- value[feature]
+    }
+  }
+  not_geometry <- is.null(colGeometryName) && is.null(annotGeometryName)
+  value <- .value2df(value, !not_geometry, feature = feature)
+
+  if (not_geometry) {
+    lr_type <- localResults(x)[[type]]
+    if (is.null(lr_type)) {
+      lr_type <- make_zero_col_DFrame(nrow = nrow(value))
+    } else {
+      lr_type <- lr_type[colData(x)$sample_id %in% sample_id,,drop = FALSE]
+    }
+    lr_type[,feature] <- value
+    .set_internal_id(x, withDimnames = withDimnames, type = type, sample_id = sample_id,
+                     value = lr_type, .set_internal_fun = .set_internal_fun, ...)
+  } else if (!is.null(colGeometryName)) {
+    .set_geometry_localResults(x, lr_type = type, feature = feature,
+                               sample_id = sample_id,
+                               colGeometryName = colGeometryName,
+                               annotGeometryName = NULL, value = value)
+  } else {
+    .set_geometry_localResults(x, lr_type = type, feature = feature,
+                               sample_id = sample_id,
+                               colGeometryName = NULL,
+                               annotGeometryName = annotGeometryName,
+                               value = value)
+  }
 }

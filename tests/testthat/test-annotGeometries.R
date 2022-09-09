@@ -75,3 +75,5 @@ test_that("annotGeometry setter for one sample_id when already present", {
   bar <- int_metadata(sfe2)$annotGeometries$foo
   expect_equal(bar[bar$sample_id == "sample01",], ag2[1,])
 })
+
+# How about adding annotation for one sample when another sample is already present?

@@ -8,8 +8,10 @@
 \alias{localResult<-}
 \alias{localResultNames}
 \alias{localResultNames<-}
-\alias{localResults,SpatialFeatureExperiment-method}
-\alias{localResults<-,SpatialFeatureExperiment-method}
+\alias{localResults,SpatialFeatureExperiment,missing,missing-method}
+\alias{localResults<-,SpatialFeatureExperiment,missing,missing-method}
+\alias{localResults,SpatialFeatureExperiment,ANY,character-method}
+\alias{localResults<-,SpatialFeatureExperiment,ANY,character-method}
 \alias{localResultNames,SpatialFeatureExperiment-method}
 \alias{localResultNames<-,SpatialFeatureExperiment,character-method}
 \alias{localResult,SpatialFeatureExperiment,missing-method}
@@ -20,28 +22,130 @@
 \alias{localResult<-,SpatialFeatureExperiment,character-method}
 \title{Organize results from local spatial statistics}
 \usage{
-\S4method{localResults}{SpatialFeatureExperiment}(x, withDimnames = TRUE, ...)
+\S4method{localResults}{SpatialFeatureExperiment,missing,missing}(
+  x,
+  sample_id = NULL,
+  name,
+  features = NULL,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  withDimnames = TRUE,
+  ...
+)
 
-\S4method{localResults}{SpatialFeatureExperiment}(x, withDimnames = TRUE, ...) <- value
+\S4method{localResults}{SpatialFeatureExperiment,missing,missing}(
+  x,
+  sample_id = NULL,
+  name,
+  features = NULL,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  withDimnames = TRUE,
+  ...
+) <- value
+
+\S4method{localResults}{SpatialFeatureExperiment,ANY,character}(
+  x,
+  sample_id = NULL,
+  name,
+  features = NULL,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  withDimnames = TRUE,
+  ...
+)
+
+\S4method{localResults}{SpatialFeatureExperiment,ANY,character}(
+  x,
+  sample_id = NULL,
+  name,
+  features = NULL,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  withDimnames = TRUE,
+  ...
+) <- value
 
 \S4method{localResultNames}{SpatialFeatureExperiment}(x)
 
 \S4method{localResultNames}{SpatialFeatureExperiment,character}(x) <- value
 
-\S4method{localResult}{SpatialFeatureExperiment,missing}(x, type, sample_id = NULL, withDimnames = TRUE)
+\S4method{localResult}{SpatialFeatureExperiment,missing}(
+  x,
+  type,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  sample_id = NULL,
+  withDimnames = TRUE
+)
 
-\S4method{localResult}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL, withDimnames = TRUE)
+\S4method{localResult}{SpatialFeatureExperiment,numeric}(
+  x,
+  type,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  sample_id = NULL,
+  withDimnames = TRUE
+)
 
-\S4method{localResult}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL, withDimnames = TRUE)
+\S4method{localResult}{SpatialFeatureExperiment,character}(
+  x,
+  type,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  sample_id = NULL,
+  withDimnames = TRUE
+)
 
-\S4method{localResult}{SpatialFeatureExperiment,missing}(x, type, sample_id = NULL, withDimnames = TRUE) <- value
+\S4method{localResult}{SpatialFeatureExperiment,missing}(
+  x,
+  type,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  sample_id = NULL,
+  withDimnames = TRUE
+) <- value
 
-\S4method{localResult}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL, withDimnames = TRUE) <- value
+\S4method{localResult}{SpatialFeatureExperiment,numeric}(
+  x,
+  type,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  sample_id = NULL,
+  withDimnames = TRUE
+) <- value
 
-\S4method{localResult}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL, withDimnames = TRUE) <- value
+\S4method{localResult}{SpatialFeatureExperiment,character}(
+  x,
+  type,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL,
+  sample_id = NULL,
+  withDimnames = TRUE
+) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
+
+\item{sample_id}{Sample ID to get or set geometries.}
+
+\item{name}{Name of the graphs to add to each sample_id; used in the
+\code{spatialGraphs} replacement method as it must be character while
+\code{type} can be either an integer index or a name.}
+
+\item{features}{Features whose local results to get or set, for
+\code{localResults} getter and setter for multiple features at a time.}
+
+\item{colGeometryName}{Which \code{colGeometry} to get or set local results.}
+
+\item{annotGeometryName}{Which \code{annotGeometry} to get or set local
+results.}
 
 \item{withDimnames}{Logical. If \code{TRUE}, then the dimnames (colnames or
 rownames) of the gene count matrix should correspond to row names of the
@@ -55,14 +159,19 @@ rownames) of the gene count matrix should correspond to row names of the
 the *Geometry to query or replace. If missing, then the first item in the
 *Geometries will be returned or replaced.}
 
-\item{sample_id}{Sample ID to get or set geometries.}
+\item{feature}{Feature whose local results to get or set, for
+\code{localResult} getter and setter for one feature at a time.}
 }
 \value{
 \code{localResults} returns a named list each element of which is a
   set of local results of interest. \code{localResult} returns a matrix or a
   data frame, whichever the original is when it's set.
   \code{localResultNames} returns a character vector. Setters return an SFE
-  object with the desired field set.
+  object with the desired field set. For genes and \code{colData} columns,
+  the local results are stored in the \code{localResults} field in
+  \code{int_colData}, whereas for \code{colGeometries} and
+  \code{annotGeometries}, the local results are stored as columns in the same
+  \code{sf} data frames.
 }
 \description{
 Local spatial statics like local Moran's I, local Geary's C, Getis-Ord Gi*,
@@ -80,20 +189,5 @@ toy_res1 <- matrix(rnorm(10), nrow = 5, ncol = 2,
                    dimnames = list(colnames(sfe), c("meow", "purr")))
 toy_res2 <- matrix(rpois(10, lambda = 2), nrow = 5, ncol = 2,
                    dimnames = list(colnames(sfe), c("sassy", "tortitude")))
-# Set multiple items
-localResults(sfe) <- list(foo = toy_res1, bar = toy_res2)
-# Get multiple items
-localResults(sfe)
-# Set one item by name (can also be by index)
-localResult(sfe, "foo") <- toy_res1
-# Get one item
-localResult(sfe, "foo")
-# Get names
-localResultNames(sfe)
-# sample_id argument is mandatory when there're multiple samples
-sfe3 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
-                package = "SpatialFeatureExperiment"))
-localResult(sfe3, type = "foo", sample_id = "sample01",
-            withDimnames = FALSE) <- toy_res1[1:3,]
-localResult(sfe3, "foo", sample_id = "sample01")
+# Need to rewrite these examples
 }

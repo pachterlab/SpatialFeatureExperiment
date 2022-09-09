@@ -135,7 +135,9 @@ setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
   if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
     existing <- int_metadata(x)$annotGeometries[[type]]
     if (!is.null(existing)) {
-      value <- .reconcile_cols(existing, value)
+      existing <- .reconcile_cols(existing, value)
+      value <- .reconcile_cols(value, existing)
+      value <- value[,names(existing)]
       if (sample_id %in% existing$sample_id) {
         # This is a replacement method, so do replace
         existing <- existing[!existing$sample_id %in% sample_id,]
