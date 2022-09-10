@@ -152,7 +152,7 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
   .annot_fun(sfe, ag, colGeometryName = colGeometryName,
-             samples_use = sample_id, un = st_any_pred, pred = pred)
+             samples_use = sample_id, fun = st_any_pred, pred = pred)
 }
 
 #' @rdname annotPred
