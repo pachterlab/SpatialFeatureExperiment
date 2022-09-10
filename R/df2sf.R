@@ -6,7 +6,8 @@
   if (grepl("MULTI", geometryType) && !"group" %in% names(df)) {
     stop("Column 'group' must be present when specifying ", geometryType, "s.")
   }
-  if (any(!names(df) %in% c("ID", "subID", "sample_id", "group", spatialCoordsNames))) {
+  if (any(!names(df) %in% c("ID", "subID", "sample_id", "group",
+                            spatialCoordsNames))) {
     message("Geometry attributes are ignored.")
   }
   n_vertices <- table(df$ID)
@@ -20,7 +21,8 @@
   )
   ids_rm <- names(n_vertices[n_vertices < min_vertices])
   if (length(ids_rm)) {
-    warning("Removed ", length(ids_rm), " items that have fewer than the minimum of ",
+    warning("Removed ", length(ids_rm),
+            " items that have fewer than the minimum of ",
             min_vertices, " vertices for geometry type ", geometryType)
   }
   df <- df[!df$ID %in% ids_rm,]
@@ -48,7 +50,8 @@
     out <- .df_split_sample_id(names(df), df_split, geometry_use)
   } else {
     df$geometry <- lapply(seq_len(nrow(df)), function(i) {
-      st_point(c(df[[spatialCoordsNames[1]]][i], df[[spatialCoordsNames[2]]][i]))
+      st_point(c(df[[spatialCoordsNames[1]]][i],
+                 df[[spatialCoordsNames[2]]][i]))
     })
     df$geometry <- st_sfc(df$geometry)
     # Remove the original coordinate columns

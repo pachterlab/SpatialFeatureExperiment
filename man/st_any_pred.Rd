@@ -20,16 +20,18 @@ st_n_intersects(x, y)
 
 \item{y}{Another object of class \code{sf}, \code{sfc}, or \code{sfg}.}
 
-\item{pred}{A geometric binary predicate function, such as \code{\link{st_intersects}}.
-It should return an object of class \code{sgbp}, for sparse predicates.}
+\item{pred}{A geometric binary predicate function, such as
+\code{\link{st_intersects}}. It should return an object of class
+\code{sgbp}, for sparse predicates.}
 }
 \value{
-For \code{st_any_*}, a logical vector indicating whether each geometry in \code{x} intersects
-(or other predicates such as is covered by) anything in \code{y}. Simplified
-from the \code{sgbp} results which indicate which item in \code{y} each item
-in \code{x} intersects, which might not always be relevant. For \code{st_n_*},
-an integer vector indicating the number of geometries in y returns TRUE for
-each geometry in x.
+For \code{st_any_*}, a logical vector indicating whether each
+  geometry in \code{x} intersects (or other predicates such as is covered by)
+  anything in \code{y}. Simplified from the \code{sgbp} results which
+  indicate which item in \code{y} each item in \code{x} intersects, which
+  might not always be relevant. For \code{st_n_*}, an integer vector
+  indicating the number of geometries in y returns TRUE for each geometry in
+  x.
 }
 \description{
 Unlike functions in \code{sf} like \code{st_intersects}, this function simply
@@ -42,7 +44,8 @@ polygons or a bounding box.
 }
 \examples{
 library(sf)
-pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
+pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)),
+              st_point(c(2.5, 2.5)))
 pol <- st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
 st_any_pred(pts, pol, pred = st_disjoint)
 st_any_intersects(pts, pol)

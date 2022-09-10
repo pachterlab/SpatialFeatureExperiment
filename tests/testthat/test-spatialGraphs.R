@@ -29,7 +29,8 @@ test_that("Set all applicable sample_ids and margins", {
 
 test_that("Set all applicable sample_ids in one margin", {
   # spatialGraphs absent
-  spatialGraphs(sfe2, MARGIN = 2L) <- list(sample01 = list(foo = cgr1, bar = cgr1),
+  spatialGraphs(sfe2, MARGIN = 2L) <- list(sample01 = list(foo = cgr1,
+                                                           bar = cgr1),
                                            sample02 = list(baz = cgr2))
   df <- int_metadata(sfe2)$spatialGraphs
   expect_true(is(df, "DFrame"))
@@ -60,7 +61,8 @@ test_that("Set all applicable margins in one sample_id", {
 })
 
 test_that("Set all items in one margin and one sample_id", {
-  spatialGraphs(sfe2, MARGIN = 2L, sample_id = "sample02") <- list(foo = cgr2, bar = cgr2)
+  spatialGraphs(sfe2, MARGIN = 2L, sample_id = "sample02") <-
+    list(foo = cgr2, bar = cgr2)
   df <- int_metadata(sfe2)$spatialGraphs
   expect_true(is(df, "DFrame"))
   expect_equal(names(df), c("sample01", "sample02"))
@@ -183,7 +185,8 @@ test_that("spatialGraphNames getter", {
 
 test_that("spatialGraphNames setter", {
   spatialGraphNames(sfe2, 2, "sample01") <- "meow"
-  expect_equal(names(int_metadata(sfe2)$spatialGraphs["col", "sample01"][[1]]), "meow")
+  expect_equal(names(int_metadata(sfe2)$spatialGraphs["col", "sample01"][[1]]),
+               "meow")
 })
 
 test_that("Set all graphs to NULL", {

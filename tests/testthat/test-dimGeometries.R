@@ -2,7 +2,8 @@
 library(SingleCellExperiment)
 library(S4Vectors)
 library(sf)
-sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+sfe <- readRDS(system.file("extdata/sfe_toy.rds",
+                           package = "SpatialFeatureExperiment"))
 
 test_that("Get List of length 0 when dimGeometries are absent", {
   foo <- dimGeometries(sfe, 2)
@@ -10,8 +11,10 @@ test_that("Get List of length 0 when dimGeometries are absent", {
   expect_equal(length(foo), 0L)
 })
 
-cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
-cg_toy2 <- readRDS(system.file("extdata/cg_toy2.rds", package = "SpatialFeatureExperiment"))
+cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
+                              package = "SpatialFeatureExperiment"))
+cg_toy2 <- readRDS(system.file("extdata/cg_toy2.rds",
+                               package = "SpatialFeatureExperiment"))
 
 test_that("colGeometries setter", {
   colGeometries(sfe) <- list(coords = cg_toy, buffered = cg_toy2)
@@ -65,8 +68,9 @@ sfe3 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
 test_that("colGeometry setter for one of the two samples (not already present)", {
   # colGeometry not already present
   colGeometry(sfe3, type = "coords", sample_id = "sample01",
-              withDimnames = FALSE) <- cg_toy[1:3,]
-  expect_equal(int_colData(sfe3)$colGeometries$coords[1:3,], cg_toy[1:3,])
+              withDimnames = FALSE) <- cg_toy[seq_len(3),]
+  expect_equal(int_colData(sfe3)$colGeometries$coords[seq_len(3),],
+               cg_toy[seq_len(3),])
   expect_true(all(st_is_empty(int_colData(sfe3)$colGeometries$coords[4:5,])))
 })
 
@@ -74,8 +78,9 @@ test_that("colGeometry setter for one of the two samples (already present)", {
   # colGeometry already present
   sfe3 <- addVisiumSpotPoly(sfe3, 0.3)
   cg_orig <- int_colData(sfe3)$colGeometries$spotPoly
-  colGeometry(sfe3, "spotPoly", sample_id = "sample01") <- cg_toy[1:3,]
-  expect_equal(int_colData(sfe3)$colGeometries$spotPoly[1:3,], cg_toy[1:3,],
+  colGeometry(sfe3, "spotPoly", sample_id = "sample01") <- cg_toy[seq_len(3),]
+  expect_equal(int_colData(sfe3)$colGeometries$spotPoly[seq_len(3),],
+               cg_toy[seq_len(3),],
                ignore_attr = "row.names")
   expect_equal(int_colData(sfe3)$colGeometries$spotPoly[4:5,], cg_orig[4:5,],
                ignore_attr = "row.names")

@@ -136,11 +136,16 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
             extra_args_use <- switch (method,
                                       tri2nb = "row.names",
                                       knearneigh = c("k", "use_kd_tree"),
-                                      dnearneigh = c("d1", "d2", "use_kd_tree", "row.names"),
-                                      gabrielneigh = c("nnmult", "sym", "row.names"),
-                                      relativeneigh = c("nnmult", "sym", "row.names"),
-                                      soi.graph = c("quadsegs", "sym", "row.names"),
-                                      poly2nb = c("row.names", "snap", "queen", "useC", "foundInBox")
+                                      dnearneigh = c("d1", "d2", "use_kd_tree",
+                                                     "row.names"),
+                                      gabrielneigh = c("nnmult", "sym",
+                                                       "row.names"),
+                                      relativeneigh = c("nnmult", "sym",
+                                                        "row.names"),
+                                      soi.graph = c("quadsegs", "sym",
+                                                    "row.names"),
+                                      poly2nb = c("row.names", "snap", "queen",
+                                                  "useC", "foundInBox")
             )
             args <- list(...)
             args <- args[names(args) %in% extra_args_use]
@@ -172,10 +177,12 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
   bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
   bcs_use2 <- sub("[-\\d]+$", "", bcs_use, perl = TRUE)
   #visium_row_col <- SpatialFeatureExperiment::visium_row_col
-  coords_use <- visium_row_col[match(bcs_use2, visium_row_col$barcode), c("col", "row")]
+  coords_use <- visium_row_col[match(bcs_use2, visium_row_col$barcode),
+                               c("col", "row")]
   # So adjacent spots are equidistant
   coords_use$row <- coords_use$row * sqrt(3)
-  g <- dnearneigh(as.matrix(coords_use), d1 = 1.9, d2 = 2.1, row.names = bcs_use)
+  g <- dnearneigh(as.matrix(coords_use), d1 = 1.9, d2 = 2.1,
+                  row.names = bcs_use)
   out <- nb2listw(g, style = style, zero.policy = zero.policy)
   attr(out, "method") <- list(FUN = "findVisiumGraph",
                               package = "SpatialFeatureExperiment",
@@ -220,12 +227,14 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 #' sfe2 <- McKellarMuscleData(dataset = "small2")
 #' sfe_combined <- cbind(sfe, sfe2)
 #' gs <- findVisiumGraph(sfe, sample_id = "all")
-findVisiumGraph <- function(x, sample_id = NULL, style = "W", zero.policy = NULL) {
+findVisiumGraph <- function(x, sample_id = NULL, style = "W",
+                            zero.policy = NULL) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (length(sample_id) == 1L) {
     out <- .comp_visium_graph(x, sample_id, style, zero.policy)
   } else {
-    out <- lapply(sample_id, function(s) .comp_visium_graph(x, s, style, zero.policy))
+    out <- lapply(sample_id,
+                  function(s) .comp_visium_graph(x, s, style, zero.policy))
     names(out) <- sample_id
   }
   return(out)

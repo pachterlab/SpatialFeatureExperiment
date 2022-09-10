@@ -31,9 +31,11 @@ sampleIDs <- function(sfe) unique(colData(sfe)$sample_id)
 #' sampleIDs(sfe)
 changeSampleIDs <- function(sfe, replacement) {
   for (i in seq_along(replacement)) {
-    colData(sfe)$sample_id[colData(sfe)$sample_id == names(replacement)[i]] <- replacement[i]
+    colData(sfe)$sample_id[colData(sfe)$sample_id == names(replacement)[i]] <-
+      replacement[i]
     gs_names <- names(int_metadata(sfe)$spatialGraphs)
-    names(int_metadata(sfe)$spatialGraphs)[gs_names == names(replacement)[i]] <- replacement[i]
+    names(int_metadata(sfe)$spatialGraphs)[gs_names == names(replacement)[i]] <-
+      replacement[i]
     if (length(int_metadata(sfe)$annotGeometries)) {
       for (n in names(int_metadata(sfe)$annotGeometries)) {
         ag <- int_metadata(sfe)$annotGeometries[[n]]
@@ -49,7 +51,8 @@ changeSampleIDs <- function(sfe, replacement) {
   if (is.null(sample_id)) {
     sample_id <- sampleIDs(x)
     if (length(sample_id) > 1L) {
-      stop("There are more than one sample in this object. sample_id must be specified")
+      stop("There are more than one sample in this object.",
+           " sample_id must be specified")
     }
   } else if (identical(sample_id, "all")) {
     sample_id <- sampleIDs(x)
@@ -59,7 +62,8 @@ changeSampleIDs <- function(sfe, replacement) {
       stop("None of the samples is present in the SFE object.")
     }
     sample_show <- setdiff(sample_id, sampleIDs(x))
-    warning("Sample(s) ", paste(sample_show, sep = ","), " is/are absent from the SFE object.")
+    warning("Sample(s) ", paste(sample_show, sep = ","),
+            " is/are absent from the SFE object.")
     sample_id <- sample_use
   }
   if (one) {
@@ -82,7 +86,8 @@ changeSampleIDs <- function(sfe, replacement) {
 
 .translate_value <- function(x, translate, value) {
   if (translate && !is.null(int_metadata(x)$orig_bbox)) {
-    value$geometry <- value$geometry - int_metadata(x)$orig_bbox[c("xmin", "ymin")]
+    value$geometry <- value$geometry -
+      int_metadata(x)$orig_bbox[c("xmin", "ymin")]
   }
   value
 }
@@ -119,7 +124,8 @@ changeSampleIDs <- function(sfe, replacement) {
     genes_show <- all_matches[which_duplicated]
     if (anyDuplicated(all_matches)) {
         warning("Gene symbol is duplicated for ",
-                paste(genes_show, collapse = ", "), ", the first match is used.")
+                paste(genes_show, collapse = ", "),
+                ", the first match is used.")
     }
 }
 

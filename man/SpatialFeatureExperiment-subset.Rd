@@ -37,7 +37,7 @@ library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
 sfe_subset <- sfe[1:10, 1:10, drop = TRUE]
 # Gives warning as graph reconstruction fails
-\dontrun{
+\donttest{
 sfe_subset <- sfe[1:10, 1:10]
 }
 }

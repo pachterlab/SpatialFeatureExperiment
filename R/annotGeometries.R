@@ -78,7 +78,8 @@ setReplaceMethod("annotGeometries", "SpatialFeatureExperiment",
                  function(x, translate = TRUE, ..., value) {
                    value <- .df2sf_list(value, ...)
                    value <- lapply(value, .rm_empty_geometries, MARGIN = 3)
-                   value <- lapply(value, .translate_value, x = x, translate = translate)
+                   value <- lapply(value, .translate_value, x = x,
+                                   translate = translate)
                    int_metadata(x)$annotGeometries <- value
                    m <- .check_annotgeometries(x)
                    if (length(m)) stop(m)
@@ -92,7 +93,8 @@ setMethod("annotGeometryNames", "SpatialFeatureExperiment",
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod("annotGeometryNames", c("SpatialFeatureExperiment", "character"),
+setReplaceMethod("annotGeometryNames", c("SpatialFeatureExperiment",
+                                         "character"),
                  function(x, value) {
                    names(annotGeometries(x)) <- value
                    return(x)
@@ -123,7 +125,8 @@ setMethod("annotGeometry", c("SpatialFeatureExperiment", "character"), .ag)
 #' @rdname annotGeometries
 #' @export
 setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
-          function(x, type, sample_id = NULL, value) annotGeometry(x, 1L, sample_id) <- value)
+          function(x, type, sample_id = NULL, value)
+            annotGeometry(x, 1L, sample_id) <- value)
 
 .ag_r <- function(x, type, sample_id = NULL, translate = TRUE, ..., value) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -170,7 +173,8 @@ tissueBoundary <- function(x, sample_id = NULL) {
 
 #' @rdname annotGeometries
 #' @export
-`tissueBoundary<-` <- function(x, sample_id = NULL, translate = TRUE, ..., value) {
+`tissueBoundary<-` <- function(x, sample_id = NULL, translate = TRUE, ...,
+                               value) {
   annotGeometry(x, "tissueBoundary", sample_id, translate, ...) <- value
   x
 }

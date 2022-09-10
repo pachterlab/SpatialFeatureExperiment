@@ -6,9 +6,9 @@ devtools::load_all()
 # Toy SFE object without the geometries. A SPE object without geometries would
 # be a valid SFE object.
 set.seed(29)
-row_inds <- sample(1:5, 5)
-col_inds <- sample(1:5, 5)
-values <- sample(1:10, 5, replace = TRUE)
+row_inds <- sample(seq_len(5), 5)
+col_inds <- sample(seq_len(5), 5)
+values <- sample(seq_len(10), 5, replace = TRUE)
 mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 rownames(mat) <- sample(letters, 5)
 colnames(mat) <- sample(LETTERS, 5)
@@ -27,8 +27,9 @@ saveRDS(cg_sf, "inst/extdata/cg_toy.rds")
 saveRDS(cg_sf2, "inst/extdata/cg_toy2.rds")
 
 # More than one sample_id
-spe1 <- SpatialExperiment(assays = list(counts = mat[,1:3]),
-                          sample_id = "sample01", spatialCoords = coords[1:3,])
+spe1 <- SpatialExperiment(assays = list(counts = mat[,seq_len(3)]),
+                          sample_id = "sample01",
+                          spatialCoords = coords[seq_len(3),])
 spe2 <- SpatialExperiment(assays = list(counts = mat[,4:5]),
                           sample_id = "sample02", spatialCoords = coords[4:5,])
 spe_samples <- cbind(spe1, spe2)
@@ -41,7 +42,7 @@ ag <- st_sf(geometry = st_convex_hull(st_combine(cg_sf)),
             sample_id = "sample01",
             sf_column_name = "geometry")
 # For different sample_ids
-ag1 <- st_cast(st_combine(cg_sf[1:3,]), "LINESTRING")
+ag1 <- st_cast(st_combine(cg_sf[seq_len(3),]), "LINESTRING")
 ag2 <- st_cast(st_combine(cg_sf[4:5,]), "LINESTRING")
 ag_samples <- st_sf(geometry = c(ag1, ag2),
                     sample_id = c("sample01", "sample02"),

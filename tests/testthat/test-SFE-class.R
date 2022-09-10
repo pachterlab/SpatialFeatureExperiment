@@ -7,9 +7,9 @@ coords1$row <- coords1$row * sqrt(3)
 cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
 
 set.seed(29)
-col_inds <- sample(1:13, 13)
-row_inds <- sample(1:5, 13, replace = TRUE)
-values <- sample(1:5, 13, replace = TRUE)
+col_inds <- sample(seq_len(13), 13)
+row_inds <- sample(seq_len(5), 13, replace = TRUE)
+values <- sample(seq_len(5), 13, replace = TRUE)
 mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 colnames(mat) <- coords1$barcode
 rownames(mat) <- sample(LETTERS, 5)
@@ -19,14 +19,17 @@ test_that("Not supplying colGeometries, supplying coordinates in colData", {
   sfe <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
                                   spatialCoordsNames = c("col", "row"))
   expect_equal(colGeometryNames(sfe), "centroids")
-  expect_equal(as.character(st_geometry_type(colGeometry(sfe), by_geometry = FALSE)), "POINT")
+  expect_equal(as.character(st_geometry_type(colGeometry(sfe),
+                                             by_geometry = FALSE)), "POINT")
 })
 
 test_that("Not supplying colGeometries, supplying coordinates in spatialCoords", {
   sfe <- SpatialFeatureExperiment(list(counts = mat),
-                                  spatialCoords = as.matrix(coords1[,c("col", "row")]))
+                                  spatialCoords = as.matrix(coords1[,c("col",
+                                                                       "row")]))
   expect_equal(colGeometryNames(sfe), "centroids")
-  expect_equal(as.character(st_geometry_type(colGeometry(sfe), by_geometry = FALSE)), "POINT")
+  expect_equal(as.character(st_geometry_type(colGeometry(sfe),
+                                             by_geometry = FALSE)), "POINT")
 })
 
 test_that("Not supplying colGeometries, use spotDiameter for Visium", {
@@ -34,12 +37,14 @@ test_that("Not supplying colGeometries, use spotDiameter for Visium", {
                                   spatialCoordsNames = c("col", "row"),
                                   spotDiameter = 0.7)
   expect_equal(colGeometryNames(sfe), "spotPoly")
-  expect_equal(as.character(st_geometry_type(colGeometry(sfe), by_geometry = FALSE)), "POLYGON")
+  expect_equal(as.character(st_geometry_type(colGeometry(sfe),
+                                             by_geometry = FALSE)), "POLYGON")
   expect_equal(colGeometry(sfe), cg)
 })
 
 test_that("Supplying colGeometries, check centroids", {
-  sfe <- SpatialFeatureExperiment(list(counts = mat), colGeometries = list(foo = cg))
+  sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                  colGeometries = list(foo = cg))
   expect_equal(colGeometryNames(sfe), "foo")
   centroids <- .sc2cg(spatialCoords(sfe))
   expect_equal(centroids, st_centroid(cg), ignore_attr = TRUE)

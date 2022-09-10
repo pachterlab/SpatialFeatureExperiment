@@ -1,7 +1,8 @@
 library(SingleCellExperiment)
 library(S4Vectors)
 
-sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+sfe <- readRDS(system.file("extdata/sfe_toy.rds",
+                           package = "SpatialFeatureExperiment"))
 
 test_that("Get List of length 0 when localResults are absent", {
   foo <- localResults(sfe)
@@ -77,7 +78,8 @@ test_that("localResults setter, one type, multiple features, one sample, not geo
   expect_equal(lr$gene2, toy_res1b)
 })
 
-cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
+cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
+                              package = "SpatialFeatureExperiment"))
 ag <- readRDS(system.file("extdata/ag.rds",
                           package = "SpatialFeatureExperiment"))
 # Should have passed unit tests for dimGeometries and annotGeometries
@@ -92,9 +94,11 @@ test_that("localResults setter, one type, one feature, colGeometry", {
   expect_s3_class(lrs, "data.frame")
   expect_equal(names(lrs), "foo")
   expect_equal(names(lrs$foo), "gene1")
-  expect_equal(lrs$foo$gene1, toy_res1, ignore_attr = "class") # I don't care about the "AsIs" thing.
+  expect_equal(lrs$foo$gene1, toy_res1, ignore_attr = "class")
+  # I don't care about the "AsIs" thing.
   # Additional feature for the same type
-  localResult(sfe, "foo", feature = "gene2", colGeometryName = "cg") <- toy_res1b
+  localResult(sfe, "foo", feature = "gene2", colGeometryName = "cg") <-
+    toy_res1b
   lrs <- colGeometry(sfe, "cg")$localResults
   expect_equal(names(lrs), "foo")
   expect_equal(names(lrs$foo), c("gene1", "gene2"))
@@ -124,66 +128,79 @@ test_that("localResults setter, one type, one feature, annotGeometry", {
 sfe3 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
 # Should have passed the colGeometry unit test
-colGeometry(sfe3, type = "coords", sample_id = "all", withDimnames = FALSE) <- cg_toy
+colGeometry(sfe3, type = "coords", sample_id = "all", withDimnames = FALSE) <-
+  cg_toy
 
 test_that("localResult setter for one of two samples, one feature, not in geometries", {
   localResult(sfe3, "foo", "gene1", sample_id = "sample02") <- toy_res1[4:5,]
   lr <- int_colData(sfe3)$localResults$foo
-  expect_true(all(is.na(lr$gene1[1:3,])))
+  expect_true(all(is.na(lr$gene1[seq_len(3),])))
   expect_equal(lr$gene1[4:5,], toy_res1[4:5,])
   # Additional sample, same feature
-  localResult(sfe3, "foo", "gene1", sample_id = "sample01") <- toy_res1[1:3,]
+  localResult(sfe3, "foo", "gene1", sample_id = "sample01") <-
+    toy_res1[seq_len(3),]
   lr <- int_colData(sfe3)$localResults$foo
   expect_equal(lr$gene1, toy_res1, ignore_attr = "class")
   # Additional feature, same type
-  localResult(sfe3, "foo", "gene2", sample_id = "sample01") <- toy_res1b[1:3,]
+  localResult(sfe3, "foo", "gene2", sample_id = "sample01") <-
+    toy_res1b[seq_len(3),]
   lr <- int_colData(sfe3)$localResults$foo
   expect_equal(names(lr), c("gene1", "gene2"))
-  expect_equal(lr$gene2[1:3,], toy_res1b[1:3,], ignore_attr = TRUE)
+  expect_equal(lr$gene2[seq_len(3),], toy_res1b[seq_len(3),],
+               ignore_attr = TRUE)
   # I don't really care about rownames there
   expect_true(all(is.na(lr$gene2[4:5,])))
   # Additional type
-  localResult(sfe3, "bar", "gene1", sample_id = "sample01") <- toy_res2[1:3,]
+  localResult(sfe3, "bar", "gene1", sample_id = "sample01") <-
+    toy_res2[seq_len(3),]
   expect_equal(names(int_colData(sfe3)$localResults), c("foo", "bar"))
   lr <- int_colData(sfe3)$localResults$bar
   expect_equal(names(lr), "gene1")
-  expect_equal(lr$gene1[1:3,], toy_res2[1:3,], ignore_attr = "class")
+  expect_equal(lr$gene1[seq_len(3),], toy_res2[seq_len(3),],
+               ignore_attr = "class")
   expect_true(all(is.na(lr$gene1[4:5,])))
 })
 
 test_that("localResults setter for one of two samples, multiple features, not in geometries", {
-  localResults(sfe3, sample_id = "sample02", name = "foo") <- as.list(toy_df1[4:5,])
+  localResults(sfe3, sample_id = "sample02", name = "foo") <-
+    as.list(toy_df1[4:5,])
   lr <- int_colData(sfe3)$localResults$foo
   expect_equal(names(lr), c("gene1", "gene2"))
-  expect_true(all(is.na(lr$gene1[1:3,])))
-  expect_true(all(is.na(lr$gene2[1:3,])))
+  expect_true(all(is.na(lr$gene1[seq_len(3),])))
+  expect_true(all(is.na(lr$gene2[seq_len(3),])))
   expect_equal(lr$gene1[4:5,], toy_res1[4:5,])
   expect_equal(lr$gene2[4:5,], toy_res1b[4:5,])
   # Additional sample, same type
-  localResults(sfe3, sample_id = "sample01", name = "foo") <- as.list(toy_df1[1:3,])
+  localResults(sfe3, sample_id = "sample01", name = "foo") <-
+    as.list(toy_df1[seq_len(3),])
   lr <- int_colData(sfe3)$localResults$foo
   expect_equal(lr$gene1, toy_res1, ignore_attr = "class")
   expect_equal(lr$gene2, toy_res1b, ignore_attr = "class")
   # Additional type
-  localResults(sfe3, sample_id = "sample01", name = "bar") <- as.list(toy_df2[1:3,,drop = FALSE])
+  localResults(sfe3, sample_id = "sample01", name = "bar") <-
+    as.list(toy_df2[seq_len(3),,drop = FALSE])
   expect_equal(names(int_colData(sfe3)$localResults), c("foo", "bar"))
   lr <- int_colData(sfe3)$localResults$bar
-  expect_equal(lr$gene1[1:3,], toy_res2[1:3,], ignore_attr = "class")
+  expect_equal(lr$gene1[seq_len(3),], toy_res2[seq_len(3),],
+               ignore_attr = "class")
   expect_true(all(is.na(lr$gene1[4:5,])))
 })
 
 test_that("localResult setter for all samples, one feature, not in geometries", {
-  localResult(sfe3, feature = "gene1", sample_id = "all", type = "bar") <- toy_res2
+  localResult(sfe3, feature = "gene1", sample_id = "all", type = "bar") <-
+    toy_res2
   lr <- int_colData(sfe3)$localResults$bar
   expect_equal(names(lr), "gene1")
   expect_equal(lr$gene1, toy_res2, ignore_attr = "class")
   # Additional feature, same type
-  localResult(sfe3, feature = "gene2", sample_id = "all", type = "bar") <- toy_res1
+  localResult(sfe3, feature = "gene2", sample_id = "all", type = "bar") <-
+    toy_res1
   lr <- int_colData(sfe3)$localResults$bar
   expect_equal(names(lr), c("gene1", "gene2"))
   expect_equal(lr$gene2, toy_res1, ignore_attr = "class")
   # Additional type
-  localResult(sfe3, feature = "gene1", sample_id = "all", type = "foo") <- toy_res1b
+  localResult(sfe3, feature = "gene1", sample_id = "all", type = "foo") <-
+    toy_res1b
   expect_equal(names(int_colData(sfe3)$localResults), c("bar", "foo"))
   lr <- int_colData(sfe3)$localResults$foo
   expect_equal(names(lr), "gene1")
@@ -200,14 +217,15 @@ test_that("localResults setter for all samples, multiple features, not in geomet
 
 test_that("localResults setter for one of two samples, one feature, in colGeometry", {
   localResult(sfe3, "foo", "gene1", colGeometryName = "coords",
-              sample_id = "sample01") <- toy_res1[1:3,]
+              sample_id = "sample01") <- toy_res1[seq_len(3),]
   cg <- colGeometry(sfe3, "coords", sample_id = "all")
   expect_true(setequal(names(cg), c("geometry", "localResults")))
   lrs <- cg$localResults
   expect_s3_class(lrs, "data.frame")
   expect_equal(names(lrs), "foo")
   expect_equal(names(lrs$foo), "gene1")
-  expect_equal(lrs$foo$gene1[1:3,], toy_res1[1:3,], ignore_attr = TRUE)
+  expect_equal(lrs$foo$gene1[seq_len(3),], toy_res1[seq_len(3),],
+               ignore_attr = TRUE)
   expect_true(all(is.na(lrs$foo$gene1[4:5,])))
   # Additional sample, same feature, same type
   localResult(sfe3, "foo", "gene1", colGeometryName = "coords",
@@ -216,25 +234,27 @@ test_that("localResults setter for one of two samples, one feature, in colGeomet
   expect_equal(lr$gene1, toy_res1, ignore_attr = TRUE)
   # Additional feature, same type
   localResult(sfe3, "foo", "gene2", colGeometryName = "coords",
-              sample_id = "sample01") <- toy_res1b[1:3,]
+              sample_id = "sample01") <- toy_res1b[seq_len(3),]
   lr <- colGeometry(sfe3, "coords", sample_id = "all")$localResults$foo
   expect_equal(names(lr), c("gene1", "gene2"))
-  expect_equal(lr$gene2[1:3,], toy_res1b[1:3,], ignore_attr = TRUE)
+  expect_equal(lr$gene2[seq_len(3),], toy_res1b[seq_len(3),],
+               ignore_attr = TRUE)
   # I don't really care about rownames there
   expect_true(all(is.na(lr$gene2[4:5,])))
   # Additional type
   localResult(sfe3, "bar", "gene1", colGeometryName = "coords",
-              sample_id = "sample01") <- toy_res2[1:3,]
+              sample_id = "sample01") <- toy_res2[seq_len(3),]
   cg <- colGeometry(sfe3, "coords", sample_id = "all")
   expect_equal(names(cg$localResults), c("foo", "bar"))
   lr <- cg$localResults$bar
   expect_equal(names(lr), "gene1")
-  expect_equal(lr$gene1[1:3,], toy_res2[1:3,], ignore_attr = TRUE)
+  expect_equal(lr$gene1[seq_len(3),], toy_res2[seq_len(3),],
+               ignore_attr = TRUE)
   expect_true(all(is.na(lr$gene1[4:5,])))
 })
 
 test_that("localResults setter for one of two samples, multiple features, in colGeometry", {
-  cg_lrs <- toy_df1[1:3,]
+  cg_lrs <- toy_df1[seq_len(3),]
   localResults(sfe3, name = "foo", colGeometryName = "coords",
                sample_id = "sample01") <- as.list(cg_lrs)
   cg <- colGeometry(sfe3, "coords", sample_id = "all")
@@ -242,7 +262,8 @@ test_that("localResults setter for one of two samples, multiple features, in col
   lrs <- cg$localResults
   expect_s3_class(lrs, "data.frame")
   expect_equal(names(lrs), "foo")
-  expect_equal(as.list(lrs$foo[1:3,]), as.list(cg_lrs), ignore_attr = TRUE)
+  expect_equal(as.list(lrs$foo[seq_len(3),]), as.list(cg_lrs),
+               ignore_attr = TRUE)
   expect_true(all(is.na(lrs$foo$gene1[4:5,])))
   expect_true(all(is.na(lrs$foo$gene2[4:5,])))
 })
@@ -264,7 +285,8 @@ test_that("localResults setter for all samples, multiple features, colGeometry",
   expect_equal(lr$gene2, toy_res1b, ignore_attr = "class")
 })
 
-ag2 <- readRDS(system.file("extdata/ag_samples.rds", package = "SpatialFeatureExperiment"))
+ag2 <- readRDS(system.file("extdata/ag_samples.rds",
+                           package = "SpatialFeatureExperiment"))
 annotGeometry(sfe3, "ag", sample_id = "all") <- ag2
 test_that("localResults setter for one of two samples, one feature, in annotGeometry", {
   ag_test <- toy_res1[1,,drop = FALSE]
@@ -282,21 +304,21 @@ test_that("localResults setter for one of two samples, one feature, in annotGeom
 
 test_that("localResult setter for all samples, one feature, annotGeometry", {
   localResult(sfe3, type = "foo", feature = "gene1", annotGeometryName = "ag",
-              sample_id = "all") <- toy_res1b[1:2,]
+              sample_id = "all") <- toy_res1b[seq_len(2),]
   ag <- annotGeometry(sfe3, "ag", sample_id = "all")
   lr <- ag$localResults$foo
   expect_equal(names(lr), "gene1")
-  expect_equal(lr$gene1, toy_res1b[1:2,], ignore_attr = "class")
+  expect_equal(lr$gene1, toy_res1b[seq_len(2),], ignore_attr = "class")
 })
 
 test_that("localResult setter for all samples, multiple features, annotGeometry", {
   localResults(sfe3, sample_id = "all", name = "foo",
-               annotGeometryName = "ag") <- toy_df1[1:2,]
+               annotGeometryName = "ag") <- toy_df1[seq_len(2),]
   ag <- annotGeometry(sfe3, "ag", sample_id = "all")
   lr <- ag$localResults$foo
   expect_equal(names(lr), c("gene1", "gene2"))
-  expect_equal(lr$gene1, toy_res1[1:2,], ignore_attr = "class")
-  expect_equal(lr$gene2, toy_res1b[1:2,], ignore_attr = "class")
+  expect_equal(lr$gene1, toy_res1[seq_len(2),], ignore_attr = "class")
+  expect_equal(lr$gene2, toy_res1b[seq_len(2),], ignore_attr = "class")
 })
 
 # What if the various geometries and local results collectively grow larger than
@@ -356,7 +378,8 @@ test_that("localResults getter for colGeometry, one sample", {
   expect_equal(lr, toy_res1, ignore_attr = "class")
 })
 
-localResults(sfe3, name = "foo", colGeometryName = "coords", sample_id = "all") <- toy_df1
+localResults(sfe3, name = "foo", colGeometryName = "coords",
+             sample_id = "all") <- toy_df1
 test_that("localResults getter for colGeometry, one of two samples", {
   lr <- localResults(sfe3, sample_id = "sample02", name = "foo",
                      colGeometryName = "coords")
@@ -383,22 +406,25 @@ test_that("localResults getter for colGeometry, all samples", {
 
 localResults(sfe, name = "bar", annotGeometryName = "ag") <- toy_df1[1,]
 test_that("localResults getter for annotGeometry, one sample", {
-  lr <- localResult(sfe, type = "bar", feature = "gene2", annotGeometryName = "ag")
+  lr <- localResult(sfe, type = "bar", feature = "gene2",
+                    annotGeometryName = "ag")
   expect_equal(lr[1,], toy_res1b[1,], ignore_attr = "class")
 })
 
 localResults(sfe3, name = "foo", annotGeometryName = "ag",
-             sample_id = "all") <- toy_df1[1:2,]
+             sample_id = "all") <- toy_df1[seq_len(2),]
 test_that("localResults getter for annotGeometry, one of two samples", {
-  lr <- localResult(sfe3, type = "foo", feature = "gene1", annotGeometryName = "ag",
+  lr <- localResult(sfe3, type = "foo", feature = "gene1",
+                    annotGeometryName = "ag",
                     sample_id = "sample02")
   expect_equal(lr[1,], toy_res1[2,], ignore_attr = "class")
 })
 
 test_that("localResults getter for annotGeometry, all samples", {
-  lr <- localResult(sfe3, type = "foo", feature = "gene2", annotGeometryName = "ag",
+  lr <- localResult(sfe3, type = "foo", feature = "gene2",
+                    annotGeometryName = "ag",
                     sample_id = "all")
-  expect_equal(lr, toy_res1b[1:2,], ignore_attr = "class")
+  expect_equal(lr, toy_res1b[seq_len(2),], ignore_attr = "class")
 })
 
 test_that("localResultNames", {
@@ -410,7 +436,8 @@ test_that("localResultNames", {
 
 test_that("When features are absent in the results", {
   # Error when all absent
-  expect_error(localResult(sfe, type = "foo", feature = "purr"), "None of the features")
+  expect_error(localResult(sfe, type = "foo", feature = "purr"),
+               "None of the features")
   # Warning when some absent
   expect_warning(localResults(sfe, name = "foo", features = c("gene1", "purr")),
                  "are absent in")

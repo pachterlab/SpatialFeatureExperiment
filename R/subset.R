@@ -26,7 +26,7 @@
 #' sfe <- McKellarMuscleData(dataset = "small")
 #' sfe_subset <- sfe[1:10, 1:10, drop = TRUE]
 #' # Gives warning as graph reconstruction fails
-#' \dontrun{
+#' \donttest{
 #' sfe_subset <- sfe[1:10, 1:10]
 #' }
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
@@ -60,7 +60,8 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
             # Subset *Graphs based on sample_id and reconstruct row and colGraphs
             if (!is.null(spatialGraphs(x))) {
               graphs_sub <- int_metadata(x)$spatialGraphs
-              graphs_sub <- graphs_sub[,names(graphs_sub) %in% sampleIDs(x), drop = FALSE]
+              graphs_sub <- graphs_sub[,names(graphs_sub) %in% sampleIDs(x),
+                                       drop = FALSE]
               if (!drop) {
                 # Check which graphs need to be reconstructed
                 # Wouldn't need reconstruction if the barcodes within one sample
@@ -70,10 +71,11 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
                   cn2[colData(x)$sample_id %in% s]
                 })
                 old_sample_compare <- old_sample_colnames[sample_ids0 %in% sample_ids]
-                samples_reconstruct <- mapply(function(old, new) !isTRUE(all.equal(old, new)),
-                                              old = old_sample_compare,
-                                              new = new_sample_colnames,
-                                              SIMPLIFY = TRUE)
+                samples_reconstruct <- mapply(
+                  function(old, new) !isTRUE(all.equal(old, new)),
+                  old = old_sample_compare,
+                  new = new_sample_colnames,
+                  SIMPLIFY = TRUE)
                 for (s in which(samples_reconstruct)) {
                   for (m in 1:2) { # Not reconstructing annotGraphs
                     # Not sure what to do differently with rowGraphs yet
@@ -89,21 +91,25 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
                         if (requireNamespace(method_info$package, quietly = TRUE)) {
                           fun <- getFromNamespace(method_info$FUN, method_info$package)
                           if ("row.names" %in% names(method_info$args)) {
-                            method_info$args[["row.names"]] <- method_info$args[["row.names"]][j]
+                            method_info$args[["row.names"]] <-
+                              method_info$args[["row.names"]][j]
                           }
                           tryCatch(graphs_sub[[s]][[m]][[g]] <-
                                      do.call(fun, c(list(x = x), method_info$args)),
                                    error = function(e) {
-                                     warning("Graph reconstruction failed for sample ", names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
-                                             names(graphs_sub[[s]][[m]])[g], ": ", e,
-                                             "Dropping graph.\n")
+                                     warning("Graph reconstruction failed for sample ",
+                                             names(graphs_sub)[s], " ",
+                                             .margin_name(m), "Graph ",
+                                             names(graphs_sub[[s]][[m]])[g],
+                                             ": ", e, "Dropping graph.\n")
                                      graphs_sub[[s]][[m]][[g]] <- NULL
                                    })
                         } else {
-                          warning("Package ", method_info$package, " used to construct graph for sample ",
-                                  names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
-                                  names(graphs_sub[[s]][[m]])[g], " is not installed. ",
-                                  "Dropping graph.\n")
+                          warning("Package ", method_info$package,
+                                  " used to construct graph for sample ",
+                                  names(graphs_sub)[s], " ", .margin_name(m),
+                                  "Graph ", names(graphs_sub[[s]][[m]])[g],
+                                  " is not installed. ", "Dropping graph.\n")
                           graphs_sub[[s]][[m]][[g]] <- NULL
                         }
                       }

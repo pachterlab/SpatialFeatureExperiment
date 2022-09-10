@@ -114,9 +114,9 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
 #'
 #' set.seed(29)
-#' col_inds <- sample(1:13, 13)
-#' row_inds <- sample(1:5, 13, replace = TRUE)
-#' values <- sample(1:5, 13, replace = TRUE)
+#' col_inds <- sample(seq_len(13), 13)
+#' row_inds <- sample(seq_len(5), 13, replace = TRUE)
+#' values <- sample(seq_len(5), 13, replace = TRUE)
 #' mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 #' colnames(mat) <- coords1$barcode
 #' rownames(mat) <- sample(LETTERS, 5)
@@ -125,7 +125,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' sfe <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
 #'                                 spatialCoordsNames = c("col", "row"),
 #'                                 spotDiameter = 0.7)
-#' sfe2 <- SpatialFeatureExperiment(list(counts = mat), colGeometries = list(foo = cg))
+#' sfe2 <- SpatialFeatureExperiment(list(counts = mat),
+#' colGeometries = list(foo = cg))
 SpatialFeatureExperiment <- function(assays,
                                      colData = DataFrame(), rowData = NULL,
                                      sample_id = "sample01",
@@ -153,7 +154,8 @@ SpatialFeatureExperiment <- function(assays,
     if (!is.null(spatialCoords)) {
       warning("Ignoring spatialCoords; coordinates are specified in colGeometries.")
     }
-    colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames, spotDiameter, "POLYGON")
+    colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames,
+                                 spotDiameter, "POLYGON")
     spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
     spe <- SpatialExperiment(assays = assays, colData = colData,
                              rowData = rowData, sample_id = sample_id,
@@ -177,8 +179,8 @@ SpatialFeatureExperiment <- function(assays,
     } else colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
   }
   if (!is.null(rowGeometries)) {
-    rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames, spotDiameter = NA,
-                               geometryType = "POLYGON")
+    rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
+                                 spotDiameter = NA, geometryType = "POLYGON")
   }
   if (!is.null(annotGeometries)) {
     annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
@@ -226,7 +228,8 @@ setMethod("show", "SpatialFeatureExperiment",
               if (length(rowGeometries(object)))
                 cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
               if (!is.null(annotGeometries(object)))
-                cat("annotGeometries:", .names_types(annotGeometries(object)), "\n")
+                cat("annotGeometries:", .names_types(annotGeometries(object)),
+                    "\n")
             }
             # What to do with the graphs?
             if (!is.null(int_metadata(object)$spatialGraphs)) {

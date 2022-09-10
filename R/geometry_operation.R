@@ -10,21 +10,24 @@
 #'
 #' @param x An object of class \code{sf}, \code{sfc}, or \code{sfg}.
 #' @param y Another object of class \code{sf}, \code{sfc}, or \code{sfg}.
-#' @param pred A geometric binary predicate function, such as \code{\link{st_intersects}}.
-#' It should return an object of class \code{sgbp}, for sparse predicates.
-#' @return For \code{st_any_*}, a logical vector indicating whether each geometry in \code{x} intersects
-#' (or other predicates such as is covered by) anything in \code{y}. Simplified
-#' from the \code{sgbp} results which indicate which item in \code{y} each item
-#' in \code{x} intersects, which might not always be relevant. For \code{st_n_*},
-#' an integer vector indicating the number of geometries in y returns TRUE for
-#' each geometry in x.
+#' @param pred A geometric binary predicate function, such as
+#'   \code{\link{st_intersects}}. It should return an object of class
+#'   \code{sgbp}, for sparse predicates.
+#' @return For \code{st_any_*}, a logical vector indicating whether each
+#'   geometry in \code{x} intersects (or other predicates such as is covered by)
+#'   anything in \code{y}. Simplified from the \code{sgbp} results which
+#'   indicate which item in \code{y} each item in \code{x} intersects, which
+#'   might not always be relevant. For \code{st_n_*}, an integer vector
+#'   indicating the number of geometries in y returns TRUE for each geometry in
+#'   x.
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
-#' st_is_empty st_disjoint
+#'   st_is_empty st_disjoint
 #' @importFrom stats aggregate
 #' @examples
 #' library(sf)
-#' pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
+#' pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)),
+#'               st_point(c(2.5, 2.5)))
 #' pol <- st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
 #' st_any_pred(pts, pol, pred = st_disjoint)
 #' st_any_intersects(pts, pol)
@@ -87,8 +90,8 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
   gs_sub
 }
 
-.annot_fun <- function(x, y, colGeometryName, samples_use = NULL, fun = st_any_pred,
-                       return_df = FALSE, ...) {
+.annot_fun <- function(x, y, colGeometryName, samples_use = NULL,
+                       fun = st_any_pred, return_df = FALSE, ...) {
   cg <- colGeometry(x, type = colGeometryName, sample_id = samples_use,
                     withDimnames = TRUE)
   cg$barcode <- rownames(cg)
@@ -148,8 +151,8 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                       sample_id = NULL, pred = st_intersects) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
-  .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
-             fun = st_any_pred, pred = pred)
+  .annot_fun(sfe, ag, colGeometryName = colGeometryName,
+             samples_use = sample_id, un = st_any_pred, pred = pred)
 }
 
 #' @rdname annotPred
@@ -158,8 +161,8 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                       sample_id = NULL, pred = st_intersects) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
-  .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
-             fun = st_n_pred, pred = pred)
+  .annot_fun(sfe, ag, colGeometryName = colGeometryName,
+             samples_use = sample_id, fun = st_n_pred, pred = pred)
 }
 
 #' Binary operations for geometry of each cell/spot and annotation
@@ -184,14 +187,16 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")
 #' # Get the intersection of myofibers with each Visium spot
-#' myofibers_on_spots <- annotOp(sfe, "spotPoly", annotGeometryName = "myofiber_simplified")
+#' myofibers_on_spots <- annotOp(sfe, "spotPoly",
+#'                               annotGeometryName = "myofiber_simplified")
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                     sample_id = NULL, op = st_intersection) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
   cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id)
+  sample_index <- colData(sfe)$sample_id %in% sample_id
   out <- .crop_geometry(cg, ag, samples_use = sample_id, op = op,
-                        sample_col = colData(sfe)$sample_id[colData(sfe)$sample_id %in% sample_id],
+                        sample_col = colData(sfe)$sample_id[sample_index],
                         id_col = "barcode")
   if (!"sample_id" %in% names(cg)) out$sample_id <- NULL
   out <- out[rownames(cg),]
@@ -203,7 +208,8 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
   out <- st_drop_geometry(st_join(x, y, join = pred))
   barcodes <- out$barcode
   out <- out[,names(out) != "barcode", drop = FALSE]
-  aggregate(out, list(barcode = barcodes), FUN = summary_fun, simplify = TRUE, drop = FALSE)
+  aggregate(out, list(barcode = barcodes), FUN = summary_fun, simplify = TRUE,
+            drop = FALSE)
 }
 
 #' Summarize attributes of an annotGeometry for each cell/spot
@@ -237,14 +243,15 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                          pred = st_intersects, summary_fun = mean) {
   sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
   ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
-  cols_use <- intersect(annotColNames, names(ag)[!names(ag) %in% c("barcode", "geometry")])
+  cols_use <- intersect(annotColNames,
+                        names(ag)[!names(ag) %in% c("barcode", "geometry")])
   if (!length(cols_use))
-    stop("None of the columns specified in annotColNames is present in the annotGeometry ",
-         annotGeometryName)
+    stop("None of the columns specified in annotColNames is present in the",
+         " annotGeometry ", annotGeometryName)
   ag <- ag[,cols_use] # Geometry is sticky
-  .annot_fun(sfe, ag, colGeometryName = colGeometryName, samples_use = sample_id,
-             fun = .annot_summ, pred = pred, summary_fun = summary_fun,
-             return_df = TRUE)
+  .annot_fun(sfe, ag, colGeometryName = colGeometryName,
+             samples_use = sample_id, fun = .annot_summ, pred = pred,
+             summary_fun = summary_fun, return_df = TRUE)
 }
 #' Crop an SFE object with a geometry
 #'
@@ -311,8 +318,8 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   } else {
     samples_use <- sample_id
   }
-  preds <- .annot_fun(x, y, colGeometryName, samples_use = samples_use, fun = st_any_pred,
-                      pred = pred)
+  preds <- .annot_fun(x, y, colGeometryName, samples_use = samples_use,
+                      fun = st_any_pred, pred = pred)
   # Don't remove anything from other samples
   other_bcs <- setdiff(colnames(x), names(preds))
   other_samples <- setNames(rep(TRUE, length(other_bcs)), other_bcs)
@@ -320,10 +327,12 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
   preds <- preds[colnames(x)]
   out <- x[, preds]
   # colGeometries should have already been subsetted here
-  # Also actually crop all geometries for the samples of interest. Leave rowGeometry alone for now.
+  # Also actually crop all geometries for the samples of interest.
+  # Leave rowGeometry alone for now.
   colGeometries(out) <- lapply(colGeometries(out), .crop_geometry, y = y,
                                samples_use = samples_use, op = op,
-                               id_col = "barcode", sample_col = colData(out)$sample_id)
+                               id_col = "barcode",
+                               sample_col = colData(out)$sample_id)
   annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry, y = y,
                                  samples_use = samples_use, op = op,
                                  remove_empty = TRUE)
@@ -336,7 +345,9 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
 }
 
 .bbox_sample <- function(sfe, sample_id) {
-  cgs <- as.list(int_colData(sfe)[["colGeometries"]][colData(sfe)$sample_id == sample_id,,drop = FALSE])
+  sample_index <- colData(sfe)$sample_id == sample_id
+  cgs <- as.list(int_colData(sfe)[["colGeometries"]][sample_index,,
+                                                     drop = FALSE])
   cgs_bboxes <- lapply(cgs, st_bbox)
   ags <- annotGeometries(sfe)
   if (length(ags)) {

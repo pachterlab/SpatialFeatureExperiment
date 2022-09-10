@@ -36,7 +36,8 @@
 #' @name localResults
 #' @examples
 #' # Toy example
-#' sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+#' sfe <- readRDS(system.file("extdata/sfe_toy.rds",
+#' package = "SpatialFeatureExperiment"))
 #' # localResults functions are written for organizing results from local
 #' # spatial statistics (see the Voyager package). But for the examples here,
 #' # random toy matrices are used. The real results are often matrices, with a
@@ -70,7 +71,8 @@
 #' lr <- localResult(sfe, "localmoran", feature = "gene1")
 #'
 #' # Set results for a feature in colGeometries
-#' cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
+#' cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
+#' package = "SpatialFeatureExperiment"))
 #' colGeometry(sfe, "cg") <- cg_toy
 #' localResult(sfe, "localmoran", feature = "gene1",
 #'             colGeometryName = "cg") <- toy_res1
@@ -90,11 +92,13 @@ setMethod("localResults", c("SpatialFeatureExperiment", "missing", "missing"),
 
 #' @rdname localResults
 #' @export
-setReplaceMethod("localResults", c("SpatialFeatureExperiment", "missing", "missing"),
-                 function(x, sample_id, name, features = NULL, colGeometryName = NULL,
-                          annotGeometryName = NULL, withDimnames = TRUE, ...,
-                          value) {
-                   .set_intdimdata_all(x, MARGIN = 2L, withDimnames = withDimnames,
+setReplaceMethod("localResults", c("SpatialFeatureExperiment", "missing",
+                                   "missing"),
+                 function(x, sample_id, name, features = NULL,
+                          colGeometryName = NULL, annotGeometryName = NULL,
+                          withDimnames = TRUE, ..., value) {
+                   .set_intdimdata_all(x, MARGIN = 2L,
+                                       withDimnames = withDimnames,
                                        translate = FALSE, sf = FALSE,
                                        getfun = int_colData,
                                        setfun = `int_colData<-`,
@@ -107,8 +111,9 @@ setReplaceMethod("localResults", c("SpatialFeatureExperiment", "missing", "missi
 #' @rdname localResults
 #' @export
 setMethod("localResults", c("SpatialFeatureExperiment", "ANY", "character"),
-          function(x, sample_id = NULL, name, features = NULL, colGeometryName = NULL,
-                   annotGeometryName = NULL, withDimnames = TRUE, ...) {
+          function(x, sample_id = NULL, name, features = NULL,
+                   colGeometryName = NULL, annotGeometryName = NULL,
+                   withDimnames = TRUE, ...) {
             localResult(x, name, feature = features, sample_id = sample_id,
                         withDimnames = withDimnames,
                         colGeometryName = colGeometryName,
@@ -117,10 +122,13 @@ setMethod("localResults", c("SpatialFeatureExperiment", "ANY", "character"),
 
 #' @rdname localResults
 #' @export
-setReplaceMethod("localResults", c("SpatialFeatureExperiment", "ANY", "character"),
-                 function(x, sample_id = NULL, name, features = NULL, colGeometryName = NULL,
-                          annotGeometryName = NULL, withDimnames = TRUE, ..., value) {
-                   `localResult<-`(x, name, feature = features, sample_id = sample_id,
+setReplaceMethod("localResults", c("SpatialFeatureExperiment", "ANY",
+                                   "character"),
+                 function(x, sample_id = NULL, name, features = NULL,
+                          colGeometryName = NULL, annotGeometryName = NULL,
+                          withDimnames = TRUE, ..., value) {
+                   `localResult<-`(x, name, feature = features,
+                                   sample_id = sample_id,
                                    withDimnames = withDimnames,
                                    colGeometryName = colGeometryName,
                                    annotGeometryName = annotGeometryName,
@@ -162,7 +170,8 @@ setMethod("localResult", c("SpatialFeatureExperiment", "missing"),
             .get_internal_feature(x, feature = feature, MARGIN = 2L,
                                   colGeometryName = colGeometryName,
                                   annotGeometryName = annotGeometryName,
-                                  sample_id = sample_id, withDimnames = withDimnames,
+                                  sample_id = sample_id,
+                                  withDimnames = withDimnames,
                                   .get_internal_fun = .get_internal_integer,
                                   getfun = int_colData,
                                   key = "localResults", funstr = "localResult",
@@ -175,10 +184,12 @@ setMethod("localResult", c("SpatialFeatureExperiment", "numeric"),
           function(x, type, feature, colGeometryName = NULL,
                    annotGeometryName = NULL, sample_id = NULL,
                    withDimnames = TRUE) {
-            .get_internal_feature(x, type = type, feature = feature, MARGIN = 2L,
+            .get_internal_feature(x, type = type, feature = feature,
+                                  MARGIN = 2L,
                                   colGeometryName = colGeometryName,
                                   annotGeometryName = annotGeometryName,
-                                  sample_id = sample_id, withDimnames = withDimnames,
+                                  sample_id = sample_id,
+                                  withDimnames = withDimnames,
                                   .get_internal_fun = .get_internal_integer,
                                   getfun = int_colData,
                                   key = "localResults", funstr = "localResult",
@@ -191,10 +202,12 @@ setMethod("localResult", c("SpatialFeatureExperiment", "character"),
           function(x, type, feature, colGeometryName = NULL,
                    annotGeometryName = NULL, sample_id = NULL,
                    withDimnames = TRUE) {
-            .get_internal_feature(x, type = type, feature = feature, MARGIN = 2L,
+            .get_internal_feature(x, type = type, feature = feature,
+                                  MARGIN = 2L,
                                   colGeometryName = colGeometryName,
                                   annotGeometryName = annotGeometryName,
-                                  sample_id = sample_id, withDimnames = withDimnames,
+                                  sample_id = sample_id,
+                                  withDimnames = withDimnames,
                                   .get_internal_fun = .get_internal_character,
                                   getfun = int_colData,
                                   key = "localResults", funstr = "localResult",
@@ -220,7 +233,8 @@ setReplaceMethod("localResult", c("SpatialFeatureExperiment", "missing"),
                                          setfun = `int_colData<-`,
                                          key = "localResults",
                                          xdimfun = ncol,
-                                         funstr = "localResult", xdimstr = "ncol",
+                                         funstr = "localResult",
+                                         xdimstr = "ncol",
                                          substr = "type", value = value)
                  })
 
@@ -266,6 +280,7 @@ setReplaceMethod("localResult", c("SpatialFeatureExperiment", "character"),
                                          setfun = `int_colData<-`,
                                          key = "localResults",
                                          xdimfun = ncol,
-                                         funstr = "localResult", xdimstr = "ncol",
+                                         funstr = "localResult",
+                                         xdimstr = "ncol",
                                          substr = "type", value = value)
                  })

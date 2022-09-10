@@ -31,7 +31,9 @@
 #' (sfe <- read10xVisiumSFE(samples, sample_ids, type = "sparse", data = "raw",
 #'                          load = FALSE))
 read10xVisiumSFE <- function(samples = "",
-                             sample_id = paste0("sample", sprintf("%02d", seq_along(samples))),
+                             sample_id = paste0("sample",
+                                                sprintf("%02d",
+                                                        seq_along(samples))),
                              type = c("HDF5", "sparse"),
                              data = c("filtered", "raw"),
                              images = "lowres",
@@ -41,16 +43,19 @@ read10xVisiumSFE <- function(samples = "",
     o <- read10xVisium(samples[i], sample_id[i], type, data, images, load)
     # Transpose coordinates
     spatialCoords(o) <- spatialCoords(o)[,c(2,1)]
-    scalefactors <- fromJSON(file = file.path(samples[i], "spatial", "scalefactors_json.json"))
-    .spe_to_sfe(o, colGeometries = NULL, rowGeometries = NULL, annotGeometries = NULL,
-                spatialCoordsNames = NULL, annotGeometryType = NULL, spatialGraphs = NULL,
+    scalefactors <- fromJSON(file = file.path(samples[i], "spatial",
+                                              "scalefactors_json.json"))
+    .spe_to_sfe(o, colGeometries = NULL, rowGeometries = NULL,
+                annotGeometries = NULL, spatialCoordsNames = NULL,
+                annotGeometryType = NULL, spatialGraphs = NULL,
                 spotDiameter = scalefactors[["spot_diameter_fullres"]],
                 unit = "full_res_image_pixels")
   })
   out <- do.call(cbind, sfes)
   if (data == "filtered") {
     colGraphs(out, sample_id = "all", name = "visium") <-
-      findVisiumGraph(out, sample_id = "all", style = style, zero.policy = zero.policy)
+      findVisiumGraph(out, sample_id = "all", style = style,
+                      zero.policy = zero.policy)
   }
   out
 }

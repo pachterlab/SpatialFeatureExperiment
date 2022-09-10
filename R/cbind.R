@@ -23,7 +23,8 @@
     out_append <- lapply(names_intersect[!which_rbind], function(n) {
       ag_x <- annotGeometry(x, n)
       ag_y <- annotGeometry(y, n)
-      setNames(list(ag_x, ag_y), paste(n, c(ag_x$sample_id[1], ag_y$sample_id[1]),
+      setNames(list(ag_x, ag_y), paste(n,
+                                       c(ag_x$sample_id[1], ag_y$sample_id[1]),
                                        sep = "_"))
     })
     out_append <- unlist(out_append, recursive = FALSE)

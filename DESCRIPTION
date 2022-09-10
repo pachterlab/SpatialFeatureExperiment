@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
-Title: Integrating SpatielExperiment with Simple Features in sf
-Version: 0.99.2
+Title: Integrating SpatialExperiment with Simple Features in sf
+Version: 0.99.3
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -65,3 +65,4 @@ biocViews:
     Transcriptomics,
     Spatial
 URL: https://pachterlab.github.io/SpatialFeatureExperiment/dev/
+BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues

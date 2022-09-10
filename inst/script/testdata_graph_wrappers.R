@@ -25,9 +25,9 @@ saveRDS(g1, "inst/extdata/colgraph_visium.rds")
 saveRDS(g2, "inst/extdata/colgraph_visium2.rds")
 
 set.seed(29)
-col_inds <- sample(1:13, 5)
-row_inds <- sample(1:2, 5, replace = TRUE)
-values <- sample(1:10, 5)
+col_inds <- sample(seq_len(13), 5)
+row_inds <- sample(seq_len(2), 5, replace = TRUE)
+values <- sample(seq_len(10), 5)
 mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 rownames(mat) <- sample(LETTERS, 2)
 colnames(mat) <- coords$barcode

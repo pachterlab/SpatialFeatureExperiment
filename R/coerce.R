@@ -44,7 +44,8 @@ setAs(from = "SpatialExperiment", to = "SpatialFeatureExperiment",
           if (is.null(rownames(coords_use)))
             rownames(coords_use) <- rownames(from)
           cg <- .sc2cg(coords_use)
-          int_colData(from)[["colGeometries"]] <- make_zero_col_DFrame(nrow(int_colData(from)))
+          int_colData(from)[["colGeometries"]] <-
+            make_zero_col_DFrame(nrow(int_colData(from)))
           int_colData(from)$colGeometries$centroids <- cg
           from
         }

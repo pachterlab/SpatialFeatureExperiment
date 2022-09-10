@@ -25,7 +25,7 @@ test_that("sample_id when I need to split the data frame", {
   expect_equal(sf_use, multipts_sf, ignore_attr = TRUE)
 
   multipts_df_wrong_sample <- readRDS(system.file("extdata/pts_sf_dia.rds",
-                                                  package = "SpatialFeatureExperiment"))
+                                        package = "SpatialFeatureExperiment"))
   expect_error(df2sf(multipts_df_wrong_sample, geometryType = "MULTIPOINT"))
 })
 

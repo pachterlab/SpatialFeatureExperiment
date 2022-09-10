@@ -1,9 +1,11 @@
-# Internal functions related to int_colData and int_elementMetadata (essentially int_rowData)
+# Internal functions related to int_colData and int_elementMetadata
+# (essentially int_rowData)
 # I created this file to generalize internal functions written for dimGeometries
 # to localResults and potentially other fields in int_colData.
 .getfun <- function(MARGIN) switch (MARGIN, int_elementMetadata, int_colData)
 
-.setfun <- function(MARGIN) switch (MARGIN, `int_elementMetadata<-`, `int_colData<-`)
+.setfun <- function(MARGIN) switch (MARGIN, `int_elementMetadata<-`,
+                                    `int_colData<-`)
 
 .xdimstr <- function(MARGIN) switch (MARGIN, "nrow", "ncol")
 
@@ -21,10 +23,10 @@
     fun_show <- switch (MARGIN, "rownames", "colnames")
     if (withDimnames && !is.null(rni)) {
       if (!setequal(cnr, rni)) {
-        msg <- paste0("non-NULL 'rownames(", vname, ")' should be the same as '",
+        msg <- paste0("non-NULL 'rownames(", vname,")' should be the same as '",
                       fun_show, "(x)' for '", fun,
                       "<-'.")
-        stop(paste(strwrap(msg), collapse="\n"))
+        stop(strwrap(msg))
       } else if (!identical(cnr, rni)) {
         # Do the reordering if they have different orders
         rni <- rni[match(cnr, rni)]
@@ -123,9 +125,12 @@
     else if (is(x, "sfc")) {
       out <- st_sfc(lapply(seq_len(nrow), function(t) st_geometrycollection()))
     } else {
-      # Only deal with columns that are themselves simple matrices or data frames
-      # Not when the columns are data frames with columns that are matrices or data frames
-      out <- matrix(nrow = nrow, ncol = ncol(x), dimnames = list(rownames, colnames(x)))
+      # Only deal with columns that are themselves simple matrices
+      # or data frames
+      # Not when the columns are data frames with columns that are matrices
+      # or data frames
+      out <- matrix(nrow = nrow, ncol = ncol(x),
+                    dimnames = list(rownames, colnames(x)))
       if (is.data.frame(x)) out <- as.data.frame(out)
       if (is(x, "DFrame")) out <- DataFrame(out)
       out <- I(out)
@@ -158,8 +163,9 @@
   existing
 }
 
-.intdimdata_partial_replace <- function(existing, value, nrow_full, rownames_full,
-                                      all_sample_ids, sample_id, sf = TRUE) {
+.intdimdata_partial_replace <- function(existing, value, nrow_full,
+                                        rownames_full, all_sample_ids,
+                                        sample_id, sf = TRUE) {
   if (is.null(existing)) {
     existing <- .make_na_df(value, nrow = nrow_full, rownames = rownames_full,
                             sf = sf)
@@ -181,8 +187,9 @@
       # Assuming that the order in value is the same as the
       # order of geometries for this sample in colGeometries
       existing <- getfun(x)[[key]][[type]]
-      value <- .intdimdata_partial_replace(existing, value, ncol(x), colnames(x),
-                                         colData(x)$sample_id, sample_id, sf = sf)
+      value <- .intdimdata_partial_replace(existing, value, ncol(x),
+                                           colnames(x), colData(x)$sample_id,
+                                           sample_id, sf = sf)
     }
   }
   value
@@ -260,9 +267,11 @@
   if (!is.data.frame(value) && !is(value, "DFrame")) {
     df_fun <- if (use_geometry) data.frame else DataFrame
     if (is.list(value))
-      value <- lapply(value, function(v) if (is.atomic(v) && is.vector(v)) v else I(v))
+      value <- lapply(value,
+                      function(v) if (is.atomic(v) && is.vector(v)) v else I(v))
     if (is.matrix(value)) value <- setNames(list(I(value)), feature)
-    if (is.vector(value) && is.atomic(value)) value <- setNames(list(value), feature)
+    if (is.vector(value) && is.atomic(value))
+      value <- setNames(list(value), feature)
     value <- df_fun(value)
   }
   value
@@ -365,8 +374,9 @@
       lr_type <- lr_type[colData(x)$sample_id %in% sample_id,,drop = FALSE]
     }
     lr_type[,feature] <- value
-    .set_internal_id(x, withDimnames = withDimnames, type = type, sample_id = sample_id,
-                     value = lr_type, .set_internal_fun = .set_internal_fun, ...)
+    .set_internal_id(x, withDimnames = withDimnames, type = type,
+                     sample_id = sample_id, value = lr_type,
+                     .set_internal_fun = .set_internal_fun, ...)
   } else if (!is.null(colGeometryName)) {
     .set_geometry_localResults(x, lr_type = type, feature = feature,
                                sample_id = sample_id,

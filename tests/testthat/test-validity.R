@@ -2,10 +2,14 @@
 library(sf)
 library(SingleCellExperiment)
 
-sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
-cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
-cg_toy2 <- readRDS(system.file("extdata/cg_toy2.rds", package = "SpatialFeatureExperiment"))
-ag <- readRDS(system.file("extdata/ag.rds", package = "SpatialFeatureExperiment"))
+sfe <- readRDS(system.file("extdata/sfe_toy.rds",
+                           package = "SpatialFeatureExperiment"))
+cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
+                              package = "SpatialFeatureExperiment"))
+cg_toy2 <- readRDS(system.file("extdata/cg_toy2.rds",
+                               package = "SpatialFeatureExperiment"))
+ag <- readRDS(system.file("extdata/ag.rds",
+                          package = "SpatialFeatureExperiment"))
 cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
                             package = "SpatialFeatureExperiment"))
 
@@ -29,11 +33,13 @@ test_that("All sample_ids in annotGeometries must be present in colData", {
 })
 
 test_that("All graphs must be listw objects", {
-  expect_error(spatialGraphs(sfe, MARGIN = 3, sample_id = "sample01") <- list(foo = "bar"), "must have class listw")
+  expect_error(spatialGraphs(sfe, MARGIN = 3, sample_id = "sample01") <-
+                 list(foo = "bar"), "must have class listw")
 })
 
 test_that("All row and col graphs must have the right number of nodes", {
-  expect_error(spatialGraphs(sfe, MARGIN = 2, sample_id = "sample01") <- list(foo = cgr1), "do not have the right length")
+  expect_error(spatialGraphs(sfe, MARGIN = 2, sample_id = "sample01") <-
+                 list(foo = cgr1), "do not have the right length")
 })
 
 test_that("The spatialGraphs field must have the right structure", {

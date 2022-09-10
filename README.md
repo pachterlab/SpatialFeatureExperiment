@@ -23,8 +23,15 @@ Below is a list of SFE features that extend the SPE object:
 The development version of SpatialFeatureExperiment can be installed from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("pachterlab/SpatialFeatureExperiment")
+# install.packages("remotes")
+remotes::install_github("pachterlab/SpatialFeatureExperiment")
 ```
+Documentation of the development version can be accessed [on this website](https://pachterlab.github.io/SpatialFeatureExperiment/dev/). 
 
-This package has been submitted to Bioconductor. Documentation of the development version can be accessed [on this website](https://pachterlab.github.io/SpatialFeatureExperiment/dev/). 
+This package has been submitted to Bioconductor. Once accepted, it can be installed with
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("SpatialFeatureExperiment")
+```

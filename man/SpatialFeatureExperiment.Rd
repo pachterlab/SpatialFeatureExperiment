@@ -144,9 +144,9 @@ coords1$row <- coords1$row * sqrt(3)
 cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
 
 set.seed(29)
-col_inds <- sample(1:13, 13)
-row_inds <- sample(1:5, 13, replace = TRUE)
-values <- sample(1:5, 13, replace = TRUE)
+col_inds <- sample(seq_len(13), 13)
+row_inds <- sample(seq_len(5), 13, replace = TRUE)
+values <- sample(seq_len(5), 13, replace = TRUE)
 mat <- sparseMatrix(i = row_inds, j = col_inds, x = values)
 colnames(mat) <- coords1$barcode
 rownames(mat) <- sample(LETTERS, 5)
@@ -155,5 +155,6 @@ rownames(cg) <- colnames(mat)
 sfe <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
                                 spatialCoordsNames = c("col", "row"),
                                 spotDiameter = 0.7)
-sfe2 <- SpatialFeatureExperiment(list(counts = mat), colGeometries = list(foo = cg))
+sfe2 <- SpatialFeatureExperiment(list(counts = mat),
+colGeometries = list(foo = cg))
 }

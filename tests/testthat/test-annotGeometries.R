@@ -67,7 +67,8 @@ test_that("annotGeometry getter for one out of two sample_id", {
 
 test_that("annotGeometry setter for one sample_id when already present", {
   # when annotGeometry of the given name already exists
-  foo <- st_sf(geometry = st_sfc(lapply(1:2, function(t) st_geometrycollection())),
+  foo <- st_sf(geometry = st_sfc(lapply(seq_len(2),
+                                        function(t) st_geometrycollection())),
                sample_id = c("sample01", "sample02"),
                sf_column_name = "geometry")
   int_metadata(sfe2)$annotGeometries$foo <- foo
@@ -75,5 +76,3 @@ test_that("annotGeometry setter for one sample_id when already present", {
   bar <- int_metadata(sfe2)$annotGeometries$foo
   expect_equal(bar[bar$sample_id == "sample01",], ag2[1,])
 })
-
-# How about adding annotation for one sample when another sample is already present?

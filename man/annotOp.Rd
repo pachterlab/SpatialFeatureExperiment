@@ -43,7 +43,8 @@ those geometries will be taken, so each cell/spot will only get one geometry.
 library(SFEData)
 sfe <- McKellarMuscleData("small")
 # Get the intersection of myofibers with each Visium spot
-myofibers_on_spots <- annotOp(sfe, "spotPoly", annotGeometryName = "myofiber_simplified")
+myofibers_on_spots <- annotOp(sfe, "spotPoly",
+                              annotGeometryName = "myofiber_simplified")
 }
 \seealso{
 annotPred
