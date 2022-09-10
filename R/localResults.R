@@ -36,11 +36,12 @@
 #' @name localResults
 #' @examples
 #' # Toy example
-#' sfe <- readRDS(system.file("testdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+#' sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
 #' # localResults functions are written for organizing results from local
 #' # spatial statistics (see the Voyager package). But for the examples here,
 #' # random toy matrices are used. The real results are often matrices, with a
 #' # matrix for each feature.
+#' library(S4Vectors)
 #' set.seed(29)
 #' toy_res1 <- matrix(rnorm(10), nrow = 5, ncol = 2,
 #' dimnames = list(colnames(sfe), c("meow", "purr")))
@@ -69,7 +70,7 @@
 #' lr <- localResult(sfe, "localmoran", feature = "gene1")
 #'
 #' # Set results for a feature in colGeometries
-#' cg_toy <- readRDS(system.file("testdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
+#' cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
 #' colGeometry(sfe, "cg") <- cg_toy
 #' localResult(sfe, "localmoran", feature = "gene1",
 #'             colGeometryName = "cg") <- toy_res1

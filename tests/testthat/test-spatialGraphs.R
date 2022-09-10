@@ -1,14 +1,14 @@
 # Unit test spatialGraphs getters and setters
 library(SingleCellExperiment)
-sfe2 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
+sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
-cgr1 <- readRDS(system.file("testdata/colgraph1.rds",
+cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
                             package = "SpatialFeatureExperiment"))
-cgr2 <- readRDS(system.file("testdata/colgraph2.rds",
+cgr2 <- readRDS(system.file("extdata/colgraph2.rds",
                             package = "SpatialFeatureExperiment"))
-agr1 <- readRDS(system.file("testdata/annotgraph1.rds",
+agr1 <- readRDS(system.file("extdata/annotgraph1.rds",
                             package = "SpatialFeatureExperiment"))
-agr2 <- readRDS(system.file("testdata/annotgraph2.rds",
+agr2 <- readRDS(system.file("extdata/annotgraph2.rds",
                             package = "SpatialFeatureExperiment"))
 
 test_that("Set all applicable sample_ids and margins", {

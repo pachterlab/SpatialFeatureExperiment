@@ -1,9 +1,9 @@
 library(sf)
 library(SingleCellExperiment)
 
-sfe <- readRDS(system.file("testdata/sfe_toy.rds",
+sfe <- readRDS(system.file("extdata/sfe_toy.rds",
                            package = "SpatialFeatureExperiment"))
-ag <- readRDS(system.file("testdata/ag.rds",
+ag <- readRDS(system.file("extdata/ag.rds",
                           package = "SpatialFeatureExperiment"))
 test_that("annotGeometries setter", {
   annotGeometries(sfe) <- list(hull = ag)
@@ -55,9 +55,9 @@ test_that("annotGeometryNames setter", {
 })
 
 # More than one sample_id
-sfe2 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
+sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
-ag2 <- readRDS(system.file("testdata/ag_samples.rds",
+ag2 <- readRDS(system.file("extdata/ag_samples.rds",
                            package = "SpatialFeatureExperiment"))
 test_that("annotGeometry getter for one out of two sample_id", {
   int_metadata(sfe2)$annotGeometries <- list(annot = ag2)

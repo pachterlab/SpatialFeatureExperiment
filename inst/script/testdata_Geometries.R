@@ -17,14 +17,14 @@ spe <- SpatialExperiment(assays = list(counts = mat),
                          sample_id = "sample01",
                          spatialCoords = coords)
 sfe <- new("SpatialFeatureExperiment", spe)
-saveRDS(sfe, "inst/testdata/sfe_toy.rds")
+saveRDS(sfe, "inst/extdata/sfe_toy.rds")
 # Toy colGeometries
 cg <- st_sfc(apply(coords, 1, st_point, simplify = FALSE))
 cg_sf <- st_sf(geometry = cg, sf_column_name = "geometry")
 rownames(cg_sf) <- colnames(mat)
 cg_sf2 <- st_buffer(cg_sf, 0.05)
-saveRDS(cg_sf, "inst/testdata/cg_toy.rds")
-saveRDS(cg_sf2, "inst/testdata/cg_toy2.rds")
+saveRDS(cg_sf, "inst/extdata/cg_toy.rds")
+saveRDS(cg_sf2, "inst/extdata/cg_toy2.rds")
 
 # More than one sample_id
 spe1 <- SpatialExperiment(assays = list(counts = mat[,1:3]),
@@ -33,7 +33,7 @@ spe2 <- SpatialExperiment(assays = list(counts = mat[,4:5]),
                           sample_id = "sample02", spatialCoords = coords[4:5,])
 spe_samples <- cbind(spe1, spe2)
 sfe2 <- new("SpatialFeatureExperiment", spe_samples)
-saveRDS(sfe2, "inst/testdata/sfe_multi_sample.rds")
+saveRDS(sfe2, "inst/extdata/sfe_multi_sample.rds")
 
 # annotGeometries
 # The difference is that the number of rows is not regulated
@@ -46,5 +46,5 @@ ag2 <- st_cast(st_combine(cg_sf[4:5,]), "LINESTRING")
 ag_samples <- st_sf(geometry = c(ag1, ag2),
                     sample_id = c("sample01", "sample02"),
                     sf_column_name = "geometry")
-saveRDS(ag, "inst/testdata/ag.rds")
-saveRDS(ag_samples, "inst/testdata/ag_samples.rds")
+saveRDS(ag, "inst/extdata/ag.rds")
+saveRDS(ag_samples, "inst/extdata/ag_samples.rds")

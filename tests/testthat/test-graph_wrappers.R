@@ -1,7 +1,7 @@
 # Unit test spdep and Visium graph wrappers
-sfe2 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
+sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
-cgr1 <- readRDS(system.file("testdata/colgraph1.rds",
+cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
                             package = "SpatialFeatureExperiment"))
 
 test_that("Get the correct graph and attr for reconstruction", {
@@ -16,9 +16,9 @@ test_that("Get the correct graph and attr for reconstruction", {
   expect_equal(attrs_reconst$args$method, "tri2nb")
 })
 
-sfe_visium <- readRDS(system.file("testdata/sfe_visium.rds",
+sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
                                   package = "SpatialFeatureExperiment"))
-g_visium <- readRDS(system.file("testdata/colgraph_visium.rds",
+g_visium <- readRDS(system.file("extdata/colgraph_visium.rds",
                                 package = "SpatialFeatureExperiment"))
 test_that("Correct Visium graph", {
   g <- findVisiumGraph(sfe_visium, "sample01")

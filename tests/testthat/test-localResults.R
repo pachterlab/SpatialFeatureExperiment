@@ -1,7 +1,7 @@
 library(SingleCellExperiment)
 library(S4Vectors)
 
-sfe <- readRDS(system.file("testdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
 
 test_that("Get List of length 0 when localResults are absent", {
   foo <- localResults(sfe)
@@ -77,8 +77,8 @@ test_that("localResults setter, one type, multiple features, one sample, not geo
   expect_equal(lr$gene2, toy_res1b)
 })
 
-cg_toy <- readRDS(system.file("testdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
-ag <- readRDS(system.file("testdata/ag.rds",
+cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
+ag <- readRDS(system.file("extdata/ag.rds",
                           package = "SpatialFeatureExperiment"))
 # Should have passed unit tests for dimGeometries and annotGeometries
 colGeometry(sfe, "cg") <- cg_toy
@@ -121,7 +121,7 @@ test_that("localResults setter, one type, one feature, annotGeometry", {
   expect_equal(lrs$foo$gene1, toy_res1[1,, drop = FALSE], ignore_attr = "class")
 })
 
-sfe3 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
+sfe3 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
 # Should have passed the colGeometry unit test
 colGeometry(sfe3, type = "coords", sample_id = "all", withDimnames = FALSE) <- cg_toy
@@ -264,7 +264,7 @@ test_that("localResults setter for all samples, multiple features, colGeometry",
   expect_equal(lr$gene2, toy_res1b, ignore_attr = "class")
 })
 
-ag2 <- readRDS(system.file("testdata/ag_samples.rds", package = "SpatialFeatureExperiment"))
+ag2 <- readRDS(system.file("extdata/ag_samples.rds", package = "SpatialFeatureExperiment"))
 annotGeometry(sfe3, "ag", sample_id = "all") <- ag2
 test_that("localResults setter for one of two samples, one feature, in annotGeometry", {
   ag_test <- toy_res1[1,,drop = FALSE]
