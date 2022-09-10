@@ -105,9 +105,9 @@ sfe_small <- McKellarMuscleData(dataset = "small")
 annotGeometries(sfe_small)
 
 # Set all annotation geometries, in a named list
-toy <- readRDS(system.file("testdata/sfe_toy.rds",
+toy <- readRDS(system.file("extdata/sfe_toy.rds",
                package = "SpatialFeatureExperiment"))
-ag <- readRDS(system.file("testdata/ag.rds",
+ag <- readRDS(system.file("extdata/ag.rds",
                           package = "SpatialFeatureExperiment"))
 annotGeometries(toy) <- list(hull = ag)
 

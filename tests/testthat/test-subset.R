@@ -1,9 +1,9 @@
 # Unit test the subsetting method
-sfe2 <- readRDS(system.file("testdata/sfe_multi_sample.rds",
+sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
                             package = "SpatialFeatureExperiment"))
-agr1 <- readRDS(system.file("testdata/annotgraph1.rds",
+agr1 <- readRDS(system.file("extdata/annotgraph1.rds",
                             package = "SpatialFeatureExperiment"))
-ag <- readRDS(system.file("testdata/ag.rds",
+ag <- readRDS(system.file("extdata/ag.rds",
                           package = "SpatialFeatureExperiment"))
 # Should have passed unit test for graph_wrapper
 spatialGraph(sfe2, type = "foo", MARGIN = 2, sample_id = "sample01") <-
@@ -23,13 +23,13 @@ test_that("row and col graphs are dropped if drop = TRUE", {
   expect_true(is.null(unlist(as.list(colGraphs(sfe2)))))
 })
 
-sfe_visium <- readRDS(system.file("testdata/sfe_visium.rds",
+sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
                                   package = "SpatialFeatureExperiment"))
-g_visium <- readRDS(system.file("testdata/colgraph_visium.rds",
+g_visium <- readRDS(system.file("extdata/colgraph_visium.rds",
                                 package = "SpatialFeatureExperiment"))
-g_visium2 <- readRDS(system.file("testdata/colgraph_visium2.rds",
+g_visium2 <- readRDS(system.file("extdata/colgraph_visium2.rds",
                                  package = "SpatialFeatureExperiment"))
-g_sub <- readRDS(system.file("testdata/colgraph_visium_sub.rds",
+g_sub <- readRDS(system.file("extdata/colgraph_visium_sub.rds",
                              package = "SpatialFeatureExperiment"))
 colGraph(sfe_visium, "foo", "sample01") <- g_visium
 colGraph(sfe_visium, "bar", "sample02") <- g_visium2

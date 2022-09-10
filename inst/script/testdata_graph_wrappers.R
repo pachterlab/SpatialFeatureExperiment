@@ -21,8 +21,8 @@ attr(g1, "method") <- list(FUN = "findVisiumGraph",
                                        zero.policy = NULL,
                                        sample_id = "sample01"))
 # g2 doesn't have the attributes on purpose for unit test purposes
-saveRDS(g1, "inst/testdata/colgraph_visium.rds")
-saveRDS(g2, "inst/testdata/colgraph_visium2.rds")
+saveRDS(g1, "inst/extdata/colgraph_visium.rds")
+saveRDS(g2, "inst/extdata/colgraph_visium2.rds")
 
 set.seed(29)
 col_inds <- sample(1:13, 5)
@@ -39,7 +39,7 @@ spe2 <- SpatialExperiment(assays = list(counts = mat[,!sample01_ind]),
                           spatialCoords = coords_mat[!sample01_ind,])
 spe <- cbind(spe1, spe2)
 sfe <- new("SpatialFeatureExperiment", spe)
-saveRDS(sfe, "inst/testdata/sfe_visium.rds")
+saveRDS(sfe, "inst/extdata/sfe_visium.rds")
 
 # Graph when one vertex is removed
 g1_sub <- nb2listw(dnearneigh(spatialCoords(spe1)[-1,], 1.9, 2.1,
@@ -49,4 +49,4 @@ attr(g1_sub, "method") <- list(FUN = "findVisiumGraph",
                                args = list(style = "W",
                                            zero.policy = NULL,
                                            sample_id = "sample01"))
-saveRDS(g1_sub, "inst/testdata/colgraph_visium_sub.rds")
+saveRDS(g1_sub, "inst/extdata/colgraph_visium_sub.rds")

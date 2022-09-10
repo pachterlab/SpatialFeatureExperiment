@@ -2,11 +2,11 @@
 library(sf)
 library(SingleCellExperiment)
 
-sfe <- readRDS(system.file("testdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
-cg_toy <- readRDS(system.file("testdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
-cg_toy2 <- readRDS(system.file("testdata/cg_toy2.rds", package = "SpatialFeatureExperiment"))
-ag <- readRDS(system.file("testdata/ag.rds", package = "SpatialFeatureExperiment"))
-cgr1 <- readRDS(system.file("testdata/colgraph1.rds",
+sfe <- readRDS(system.file("extdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+cg_toy <- readRDS(system.file("extdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
+cg_toy2 <- readRDS(system.file("extdata/cg_toy2.rds", package = "SpatialFeatureExperiment"))
+ag <- readRDS(system.file("extdata/ag.rds", package = "SpatialFeatureExperiment"))
+cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
                             package = "SpatialFeatureExperiment"))
 
 test_that("Everything in *Geometries must be sf objects", {
