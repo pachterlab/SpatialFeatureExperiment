@@ -138,9 +138,9 @@
   df_fun <- if(S4) DataFrame else data.frame
   out <- df_fun(out)
   if (sf) {
-    out <- st_sf(out, sf_column_name = "geometry",
-                 row.names = rownames)
+    out <- st_sf(out, sf_column_name = "geometry")
   }
+  rownames(out) <- rownames
   out
 }
 
