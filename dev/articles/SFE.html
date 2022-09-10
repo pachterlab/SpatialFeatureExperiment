@@ -68,7 +68,7 @@
       <img src="" class="logo" alt=""><h1>Introduction to the SpatialFeatureExperiment class</h1>
                         <h4 data-toc-skip class="author">Lambda Moses, Lior Pachter</h4>
             
-            <h4 data-toc-skip class="date">Sep 09, 2022</h4>
+            <h4 data-toc-skip class="date">Sep 10, 2022</h4>
       
       
       <div class="d-none name"><code>SFE.Rmd</code></div>
@@ -417,7 +417,7 @@ Schematics of the SFE object
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
 <span><span class="fu"><a href="../reference/dimGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe2</span><span class="op">)</span><span class="op">$</span><span class="va">sample_id</span> <span class="op">&lt;-</span> <span class="st">"sample02"</span></span>
-<span><span class="op">(</span><span class="va">sfe_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sfe1</span>, <span class="va">sfe2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">(</span><span class="va">sfe_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sfe1</span>, <span class="va">sfe2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
 <span><span class="co">#&gt; dim: 15123 149 </span></span>
 <span><span class="co">#&gt; metadata(0):</span></span>
@@ -611,8 +611,8 @@ Schematics of the SFE object
 <span><span class="va">row_inds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">13</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">13</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/sparseMatrix.html" class="external-link">sparseMatrix</a></span><span class="op">(</span>i <span class="op">=</span> <span class="va">row_inds</span>, j <span class="op">=</span> <span class="va">col_inds</span>, x <span class="op">=</span> <span class="va">values</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">coords1</span><span class="op">$</span><span class="va">barcode</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">coords1</span><span class="op">$</span><span class="va">barcode</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <p>That should be sufficient to create an SPE object, and an SFE object, even though no <code>sf</code> data frame was constructed for the geometries. The constructor behaves similarly to the SPE constructor. The centroid coordinates of the Visium spots in the toy example can be converted into spot polygons with the <code>spotDiameter</code> argument. Spot diameter in pixels in full resolution image can be found in the <code>scalefactors_json.json</code> file in Space Ranger output.</p>
 <div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SpatialFeatureExperiment.html">SpatialFeatureExperiment</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">mat</span><span class="op">)</span>, colData <span class="op">=</span> <span class="va">coords1</span>,</span>
@@ -623,7 +623,7 @@ Schematics of the SFE object
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Convert regular data frame with coordinates to sf data frame</span></span>
 <span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/df2sf.html">df2sf</a></span><span class="op">(</span><span class="va">coords1</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"col"</span>, <span class="st">"row"</span><span class="op">)</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"col"</span>, <span class="st">"row"</span><span class="op">)</span>, spotDiameter <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cg</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cg</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span>
 <span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SpatialFeatureExperiment.html">SpatialFeatureExperiment</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="va">mat</span><span class="op">)</span>, colGeometries <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>foo <span class="op">=</span> <span class="va">cg</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -682,8 +682,8 @@ Schematics of the SFE object
 <span>  images <span class="op">=</span> <span class="st">"lowres"</span>, load <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>For the coercion, column names must not be duplicate.</p>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/make.unique.html" class="external-link">make.unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"-"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/make.unique.html" class="external-link">make.unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"-"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
@@ -719,7 +719,7 @@ Schematics of the SFE object
 </h3>
 <p>SFE objects can be concatenated with <code>cbind</code>, as was done just now to create a toy example with 2 samples.</p>
 <div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sfe_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sfe1</span>, <span class="va">sfe2</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">sfe_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sfe1</span>, <span class="va">sfe2</span><span class="op">)</span></span></code></pre></div>
 <p>The SFE object can also be subsetted like a matrix, like an SCE object. More complexity arises when it comes to the spatial graphs. The <code>drop</code> argument of the SFE method <code>[</code> determines what to do with the spatial graphs. If <code>drop = TRUE</code>, then all spatial graphs will be removed, since the graphs with nodes and edges that have been removed are no longer valid. If <code>drop = FALSE</code>, which is the default, then the spatial graphs will be reconstructed with the remaining nodes after subsetting. Reconstruction would only work when the original graphs were constructed with <code>findSpatialNeighbors</code> or <code>findVisiumGraph</code> in this package, which records the method and parameters used to construct the graphs. If reconstruction fails, then a waning will be issued and the graphs removed.</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_subset</span> <span class="op">&lt;-</span> <span class="va">sfe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, drop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">]</span><span class="op">)</span></span>
@@ -831,7 +831,7 @@ Schematics of the SFE object
 <span><span class="co">#&gt;  [5] SingleCellExperiment_1.19.0     SummarizedExperiment_1.27.2    </span></span>
 <span><span class="co">#&gt;  [7] Biobase_2.57.1                  GenomicRanges_1.49.1           </span></span>
 <span><span class="co">#&gt;  [9] GenomeInfoDb_1.33.7             IRanges_2.31.2                 </span></span>
-<span><span class="co">#&gt; [11] S4Vectors_0.35.3                BiocGenerics_0.43.2            </span></span>
+<span><span class="co">#&gt; [11] S4Vectors_0.35.3                BiocGenerics_0.43.3            </span></span>
 <span><span class="co">#&gt; [13] MatrixGenerics_1.9.1            matrixStats_0.62.0             </span></span>
 <span><span class="co">#&gt; [15] SpatialFeatureExperiment_0.99.0 BiocStyle_2.25.0               </span></span>
 <span><span class="co">#&gt; </span></span>
@@ -841,7 +841,7 @@ Schematics of the SFE object
 <span><span class="co">#&gt;   [5] rprojroot_2.0.3               scuttle_1.7.4                </span></span>
 <span><span class="co">#&gt;   [7] XVector_0.37.1                fs_1.5.2                     </span></span>
 <span><span class="co">#&gt;   [9] proxy_0.4-27                  bit64_4.0.5                  </span></span>
-<span><span class="co">#&gt;  [11] AnnotationDbi_1.58.0          interactiveDisplayBase_1.34.0</span></span>
+<span><span class="co">#&gt;  [11] AnnotationDbi_1.59.1          interactiveDisplayBase_1.35.0</span></span>
 <span><span class="co">#&gt;  [13] fansi_1.0.3                   codetools_0.2-18             </span></span>
 <span><span class="co">#&gt;  [15] R.methodsS3_1.8.2             sparseMatrixStats_1.9.0      </span></span>
 <span><span class="co">#&gt;  [17] cachem_1.0.6                  knitr_1.40                   </span></span>
@@ -858,12 +858,12 @@ Schematics of the SFE object
 <span><span class="co">#&gt;  [39] dplyr_1.0.10                  rappdirs_0.3.3               </span></span>
 <span><span class="co">#&gt;  [41] wk_0.6.0                      Rcpp_1.0.9                   </span></span>
 <span><span class="co">#&gt;  [43] jquerylib_0.1.4               pkgdown_2.0.6                </span></span>
-<span><span class="co">#&gt;  [45] Biostrings_2.64.1             vctrs_0.4.1                  </span></span>
+<span><span class="co">#&gt;  [45] Biostrings_2.65.5             vctrs_0.4.1                  </span></span>
 <span><span class="co">#&gt;  [47] rhdf5filters_1.9.0            spdep_1.2-5                  </span></span>
-<span><span class="co">#&gt;  [49] ExperimentHub_2.4.0           DelayedMatrixStats_1.19.0    </span></span>
+<span><span class="co">#&gt;  [49] ExperimentHub_2.5.0           DelayedMatrixStats_1.19.0    </span></span>
 <span><span class="co">#&gt;  [51] xfun_0.32                     stringr_1.4.1                </span></span>
 <span><span class="co">#&gt;  [53] beachmat_2.13.4               mime_0.12                    </span></span>
-<span><span class="co">#&gt;  [55] lifecycle_1.0.1               AnnotationHub_3.4.0          </span></span>
+<span><span class="co">#&gt;  [55] lifecycle_1.0.2               AnnotationHub_3.5.1          </span></span>
 <span><span class="co">#&gt;  [57] edgeR_3.39.6                  zlibbioc_1.43.0              </span></span>
 <span><span class="co">#&gt;  [59] promises_1.2.0.1              ragg_1.2.2                   </span></span>
 <span><span class="co">#&gt;  [61] parallel_4.2.1                rhdf5_2.41.1                 </span></span>
@@ -883,7 +883,7 @@ Schematics of the SFE object
 <span><span class="co">#&gt;  [89] R6_2.5.1                      magick_2.7.3                 </span></span>
 <span><span class="co">#&gt;  [91] generics_0.1.3                DelayedArray_0.23.1          </span></span>
 <span><span class="co">#&gt;  [93] DBI_1.1.3                     pillar_1.8.1                 </span></span>
-<span><span class="co">#&gt;  [95] units_0.8-0                   KEGGREST_1.36.3              </span></span>
+<span><span class="co">#&gt;  [95] units_0.8-0                   KEGGREST_1.37.3              </span></span>
 <span><span class="co">#&gt;  [97] RCurl_1.98-1.8                sp_1.5-0                     </span></span>
 <span><span class="co">#&gt;  [99] tibble_3.1.8                  crayon_1.5.1                 </span></span>
 <span><span class="co">#&gt; [101] DropletUtils_1.17.1           KernSmooth_2.23-20           </span></span>
@@ -891,7 +891,7 @@ Schematics of the SFE object
 <span><span class="co">#&gt; [105] rmarkdown_2.16                locfit_1.5-9.6               </span></span>
 <span><span class="co">#&gt; [107] grid_4.2.1                    blob_1.2.3                   </span></span>
 <span><span class="co">#&gt; [109] digest_0.6.29                 classInt_0.4-7               </span></span>
-<span><span class="co">#&gt; [111] xtable_1.8-4                  httpuv_1.6.5                 </span></span>
+<span><span class="co">#&gt; [111] xtable_1.8-4                  httpuv_1.6.6                 </span></span>
 <span><span class="co">#&gt; [113] R.utils_2.12.0                textshaping_0.3.6            </span></span>
 <span><span class="co">#&gt; [115] bslib_0.4.0</span></span></code></pre></div>
 </div>

@@ -341,11 +341,8 @@ stored in <code>rowGeometries</code>.</p></dd>
 <span class="r-in"><span><span class="fu">spotPoly</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">spots</span></span></span>
 <span class="r-in"><span><span class="co"># Specify sample_id</span></span></span>
 <span class="r-in"><span><span class="fu">colGeometry</span><span class="op">(</span><span class="va">sfe_combined</span>, <span class="st">"foobar"</span>, sample_id <span class="op">=</span> <span class="st">"Vis5A"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">spots1</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in .check_dimgeo_names(x, value, MARGIN = MARGIN, withDimnames = withDimnames,     fun = funstr):</span> non-NULL 'rownames(value)' should be the same as 'colnames(x)' for</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> 'dimGeometry&lt;-'.</span>
 <span class="r-in"><span><span class="co"># Only entries for the specified sample are set.</span></span></span>
 <span class="r-in"><span><span class="va">foobar</span> <span class="op">&lt;-</span> <span class="fu">colGeometry</span><span class="op">(</span><span class="va">sfe_combined</span>, <span class="st">"foobar"</span>, sample_id <span class="op">=</span> <span class="st">"sample02"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in stop("invalid subscript '", substr, "' in '", funstr, "(&lt;", class(x),     "&gt;, type=\"character\", ...)':\n  ", "'", index, "' not in '",     namestr, "(&lt;", class(x), "&gt;)'"):</span> argument "namestr" is missing, with no default</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
