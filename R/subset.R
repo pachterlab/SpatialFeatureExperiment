@@ -24,10 +24,10 @@
 #' # Just like subsetting matrices and SingleCellExperiment
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
-#' sfe_subset <- sfe[1:10, 1:10, drop = TRUE]
+#' sfe_subset <- sfe[seq_len(10), seq_len(10), drop = TRUE]
 #' # Gives warning as graph reconstruction fails
 #' \donttest{
-#' sfe_subset <- sfe[1:10, 1:10]
+#' sfe_subset <- sfe[seq_len(10), seq_len(10)]
 #' }
 setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
           function(x, i, j, ..., drop = FALSE) {
@@ -77,7 +77,7 @@ setMethod("[", c("SpatialFeatureExperiment", "ANY", "ANY"),
                   new = new_sample_colnames,
                   SIMPLIFY = TRUE)
                 for (s in which(samples_reconstruct)) {
-                  for (m in 1:2) { # Not reconstructing annotGraphs
+                  for (m in seq_len(2)) { # Not reconstructing annotGraphs
                     # Not sure what to do differently with rowGraphs yet
                     for (g in seq_along(graphs_sub[[s]][[m]])) {
                       method_info <- attr(graphs_sub[[s]][[m]][[g]], "method")
