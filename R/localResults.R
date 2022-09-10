@@ -4,20 +4,23 @@
 #' and geographically weighted PCA loadings return values at each spatial
 #' location. Just like dimension reductions, these results are clearly
 #' associated with the braoder SFE object, so they should have a place within
-#' the object. The \code{localResults} field in the SFE object stores these
-#' results that has a value for each spatial location.
+#' the object. However, a separate field is needed because these analyses are
+#' conceptually distinct from dimension reduction. Also, each feature (e.g.
+#' gene) can have its own results with values at each location. The
+#' \code{localResults} field in the SFE object stores these results that has a
+#' value for each spatial location.
 #'
 #' @inheritParams dimGeometries
 #' @inheritParams spatialGraphs
 #' @param ... Ignored
 #' @param value Values to set, should be either a matrix or a data frame.
 #' @param feature Feature whose local results to get or set, for
-#' \code{localResult} getter and setter for one feature at a time.
+#'   \code{localResult} getter and setter for one feature at a time.
 #' @param features Features whose local results to get or set, for
-#' \code{localResults} getter and setter for multiple features at a time.
+#'   \code{localResults} getter and setter for multiple features at a time.
 #' @param colGeometryName Which \code{colGeometry} to get or set local results.
 #' @param annotGeometryName Which \code{annotGeometry} to get or set local
-#' results.
+#'   results.
 #' @aliases localResults localResults<- localResult localResult<-
 #'   localResultNames localResultNames<-
 #' @return \code{localResults} returns a named list each element of which is a
@@ -34,12 +37,44 @@
 #' @examples
 #' # Toy example
 #' sfe <- readRDS(system.file("testdata/sfe_toy.rds", package = "SpatialFeatureExperiment"))
+#' # localResults functions are written for organizing results from local
+#' # spatial statistics (see the Voyager package). But for the examples here,
+#' # random toy matrices are used. The real results are often matrices, with a
+#' # matrix for each feature.
 #' set.seed(29)
 #' toy_res1 <- matrix(rnorm(10), nrow = 5, ncol = 2,
-#'                    dimnames = list(colnames(sfe), c("meow", "purr")))
+#' dimnames = list(colnames(sfe), c("meow", "purr")))
+#' toy_res1b <- matrix(rgamma(10, shape = 2), nrow = 5, ncol = 2,
+#'                     dimnames = list(colnames(sfe), c("meow", "purr")))
+#' toy_df1 <- DataFrame(gene1 = I(toy_res1), gene2 = I(toy_res1b))
+#'
 #' toy_res2 <- matrix(rpois(10, lambda = 2), nrow = 5, ncol = 2,
 #'                    dimnames = list(colnames(sfe), c("sassy", "tortitude")))
-#' # Need to rewrite these examples
+#' toy_df2 <- DataFrame(gene1 = I(toy_res2))
+#' # Set all local results
+#' localResults(sfe) <- list(localmoran = toy_df1, Gistar = toy_df2)
+#' # Get all local results
+#' lrs <- localResults(sfe)
+#'
+#' # Set results of the same type for multiple genes
+#' localResults(sfe, name = "localmoran") <- toy_df1
+#' # Can also use a list
+#' localResults(sfe, name = "localmoran") <- as.list(toy_df1)
+#' # Get results of the same type for multiple genes
+#' lrs <- localResults(sfe, name = "localmoran", features = c("gene1", "gene2"))
+#'
+#' # Set results for one type and one gene
+#' localResult(sfe, "localmoran", feature = "gene1") <- toy_res1
+#' # Get results for one type and one gene
+#' lr <- localResult(sfe, "localmoran", feature = "gene1")
+#'
+#' # Set results for a feature in colGeometries
+#' cg_toy <- readRDS(system.file("testdata/cg_toy.rds", package = "SpatialFeatureExperiment"))
+#' colGeometry(sfe, "cg") <- cg_toy
+#' localResult(sfe, "localmoran", feature = "gene1",
+#'             colGeometryName = "cg") <- toy_res1
+#' # Get results for a feature in colGeometries
+#' lr <- localResult(sfe, "localmoran", "gene1", colGeometryName = "cg")
 NULL
 
 # Get all results for all features and all types
