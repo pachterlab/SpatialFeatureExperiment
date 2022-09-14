@@ -35,9 +35,9 @@ are no longer valid after subsetting as some nodes are no longer present.
 # Just like subsetting matrices and SingleCellExperiment
 library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
-sfe_subset <- sfe[1:10, 1:10, drop = TRUE]
+sfe_subset <- sfe[seq_len(10), seq_len(10), drop = TRUE]
 # Gives warning as graph reconstruction fails
 \donttest{
-sfe_subset <- sfe[1:10, 1:10]
+sfe_subset <- sfe[seq_len(10), seq_len(10)]
 }
 }
