@@ -175,9 +175,9 @@ the *Geometry to query or replace. If missing, then the first item in the
 }
 \description{
 Local spatial statics like local Moran's I, local Geary's C, Getis-Ord Gi*,
-and geographically weighted PCA loadings return values at each spatial
+and geographically weighted summary statistics return values at each spatial
 location. Just like dimension reductions, these results are clearly
-associated with the braoder SFE object, so they should have a place within
+associated with the broader SFE object, so they should have a place within
 the object. However, a separate field is needed because these analyses are
 conceptually distinct from dimension reduction. Also, each feature (e.g.
 gene) can have its own results with values at each location. The

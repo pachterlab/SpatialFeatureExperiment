@@ -29,7 +29,7 @@ Imports:
     utils
 License: GPL-3
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Collate: 
     'AllGenerics.R'
     'utils.R'
