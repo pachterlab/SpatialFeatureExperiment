@@ -277,31 +277,6 @@
   value
 }
 
-.pad_value_na <- function(value, x, sample_id, sample_index, nrow_full,
-                          rownames_full = NULL) {
-  # Pad value with NA if it's not for all samples
-  if (length(setdiff(sampleIDs(x), sample_id))) {
-    if (is.vector(value)) {
-      value_all <- rep(NA, nrow_full)
-      value_all[sample_index] <- value
-    } else {
-      # matrices
-      value_all <- matrix(NA, nrow = nrow_full, ncol = ncol(value))
-      colnames(value_all) <- colnames(value)
-      if (is.null(rownames_full))
-        rownames(value_all)[sample_index] <- rownames(value)
-      else
-        rownames(value_all) <- rownames_full
-      if (is.data.frame(value)) value_all <- as.data.frame(value_all)
-      value_all[sample_index,] <- value
-      value_all <- I(value_all)
-    }
-  } else {
-    value_all <- value
-  }
-  value_all
-}
-
 .set_geometry_localResults <- function(x, lr_type, feature, sample_id,
                                       colGeometryName, annotGeometryName,
                                       value) {
