@@ -134,7 +134,9 @@
 #' @aliases findSpatialNeighbors
 #' @note \code{style = "raw"} is only applicable when \code{dist_type} is not
 #'   "none". If \code{dist_type = "none"} and \code{style = "raw"}, then style
-#'   will default to "W".
+#'   will default to "W". Using distance based weights does not supplant finding
+#'   a spatial neighborhood graph. The spatial neighborhood graph is first found
+#'   and then its edges weighted based on distance in this function.
 #' @export
 #' @examples
 #' library(SFEData)
