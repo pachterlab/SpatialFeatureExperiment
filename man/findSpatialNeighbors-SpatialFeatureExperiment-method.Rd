@@ -12,8 +12,11 @@
   MARGIN = 2,
   method = c("tri2nb", "knearneigh", "dnearneigh", "gabrielneigh", "relativeneigh",
     "soi.graph", "poly2nb"),
+  dist_type = c("none", "idw", "exp", "dpd"),
   glist = NULL,
-  style = "W",
+  style = c("raw", "W", "B", "C", "U", "minmax", "S"),
+  alpha = 0,
+  dmax = NULL,
   zero.policy = NULL,
   ...
 )
@@ -35,9 +38,20 @@ stands for column. Here, in addition, 3 stands for annotation, to query the
 \item{method}{Name of function in the package \code{spdep} to use to find the
 spatial neighborhood graph.}
 
+\item{dist_type}{Type of distance-based weight. "none" means not using
+distance-based weights; the edge weights of the spatial neighborhood graph
+will be entirely determined by the \code{style} argument. "idw" means
+inverse distance weighting. "exp" means exponential decay. "dpd" means
+doubpe-power distance weights. See \code{\link{spdep::nb2listwdist}} for
+details.}
+
 \item{glist}{list of general weights corresponding to neighbours}
 
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
+
+\item{alpha}{Only relevant when \code{dist_type = "dpd"}.}
+
+\item{dmax}{Only relevant when \code{dist_type = "dpd"}.}
 
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 
@@ -71,6 +85,11 @@ graph in the \code{spdep}, \code{spatialreg}, and \code{adespatial}. The edge
 weights of the graph in the \code{listw} object are by default style W (see
 \code{\link{nb2listw}}) and the unweighted neighbor list is in the
 \code{neighbours} field of the \code{listw} object.
+}
+\note{
+\code{style = "raw"} is only applicable when \code{dist_type} is not
+  "none". If \code{dist_type = "none"} and \code{style = "raw"}, then style
+  will default to "W".
 }
 \examples{
 library(SFEData)

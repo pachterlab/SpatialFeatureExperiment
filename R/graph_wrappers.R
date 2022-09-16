@@ -37,9 +37,9 @@
   graph2nb(g, sym = sym, row.names = row.names)
 }
 
-.comp_graph_sample <- function(x, sample_id, type, MARGIN, method,
-                               args, extra_args_use, glist, style,
-                               zero.policy, fun_use) {
+.comp_graph_sample <- function(x, sample_id, type, MARGIN, method, dist_type,
+                               args, extra_args_use, glist, style, zero.policy,
+                               alpha, dmax, fun_use) {
   if (!"row.names" %in% names(args) &&
       "row.names" %in% extra_args_use && MARGIN < 3) {
     args$row.names <- colnames(x)[colData(x)$sample_id == sample_id]
@@ -56,13 +56,23 @@
     }
     nb_out <- do.call(fun_use, c(list(pl = coords), args))
   }
+  if (dist_type == "none") {
+    if (style == "raw") style <- "W"
+    out <- nb2listw(nb_out, glist, style, zero.policy)
+  } else {
+    out <- nb2listwdist(nb_out, coords, type = dist_type, style = style,
+                        longlat = FALSE, zero.policy = zero.policy,
+                        alpha = alpha, dmax = dmax)
+  }
 
-  out <- nb2listw(nb_out, glist, style, zero.policy)
   attr(out, "method") <- list(FUN = "findSpatialNeighbors",
                               package = "SpatialFeatureExperiment",
                               args = c(method = method, args,
+                                       dist_type = dist_type,
                                        glist = glist,
                                        style = style,
+                                       alpha = alpha,
+                                       dmax = dmax,
                                        zero.policy = zero.policy,
                                        sample_id = sample_id,
                                        type = type,
@@ -96,6 +106,14 @@
 #'   which to compute the graph.
 #' @param method Name of function in the package \code{spdep} to use to find the
 #'   spatial neighborhood graph.
+#' @param dist_type Type of distance-based weight. "none" means not using
+#'   distance-based weights; the edge weights of the spatial neighborhood graph
+#'   will be entirely determined by the \code{style} argument. "idw" means
+#'   inverse distance weighting. "exp" means exponential decay. "dpd" means
+#'   doubpe-power distance weights. See \code{\link{spdep::nb2listwdist}} for
+#'   details.
+#' @param alpha Only relevant when \code{dist_type = "dpd"}.
+#' @param dmax Only relevant when \code{dist_type = "dpd"}.
 #' @param ... Extra arguments passed to the \code{spdep} function stated in the
 #'   \code{method} argument, such as \code{k}, \code{use_kd_tree}, \code{d1},
 #'   \code{d2}, \code{nnmult}, \code{sym}, and \code{quadsegs}. Note that any
@@ -112,8 +130,11 @@
 #'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
 #'   will be added to the SFE object for each sample.
 #' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh
-#'   soi.graph knn2nb graph2nb nb2listw poly2nb
+#'   soi.graph knn2nb graph2nb nb2listw poly2nb nb2listwdist
 #' @aliases findSpatialNeighbors
+#' @note \code{style = "raw"} is only applicable when \code{dist_type} is not
+#'   "none". If \code{dist_type = "none"} and \code{style = "raw"}, then style
+#'   will default to "W".
 #' @export
 #' @examples
 #' library(SFEData)
@@ -130,8 +151,13 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                    method = c("tri2nb", "knearneigh", "dnearneigh",
                               "gabrielneigh", "relativeneigh", "soi.graph",
                               "poly2nb"),
-                   glist = NULL, style = "W", zero.policy = NULL, ...) {
+                   dist_type = c("none", "idw", "exp", "dpd"),
+                   glist = NULL, style = c("raw", "W", "B", "C", "U",
+                                           "minmax", "S"),
+                   alpha = 0, dmax = NULL, zero.policy = NULL, ...) {
             method <- match.arg(method)
+            dist_type <- match.arg(dist_type)
+            style <- match.arg(style)
             sample_id <- .check_sample_id(x, sample_id, one = FALSE)
             extra_args_use <- switch (method,
                                       tri2nb = "row.names",
@@ -160,13 +186,13 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
             )
             if (length(sample_id) == 1L) {
               out <- .comp_graph_sample(x, sample_id, type, MARGIN, method,
-                                        args, extra_args_use, glist, style,
-                                        zero.policy, fun_use)
+                                        dist_type, args, extra_args_use, glist,
+                                        style, zero.policy, alpha, dmax, fun_use)
             } else {
               out <- lapply(sample_id, function(s) {
-                .comp_graph_sample(x, s, type, MARGIN, method,
+                .comp_graph_sample(x, s, type, MARGIN, method, dist_type,
                                    args, extra_args_use, glist, style,
-                                   zero.policy, fun_use)
+                                   zero.policy, alpha, dmax, fun_use)
               })
               names(out) <- sample_id
             }
