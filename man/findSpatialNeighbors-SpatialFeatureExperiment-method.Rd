@@ -15,7 +15,7 @@
   dist_type = c("none", "idw", "exp", "dpd"),
   glist = NULL,
   style = c("raw", "W", "B", "C", "U", "minmax", "S"),
-  alpha = 0,
+  alpha = 1,
   dmax = NULL,
   zero.policy = NULL,
   ...
@@ -89,7 +89,9 @@ weights of the graph in the \code{listw} object are by default style W (see
 \note{
 \code{style = "raw"} is only applicable when \code{dist_type} is not
   "none". If \code{dist_type = "none"} and \code{style = "raw"}, then style
-  will default to "W".
+  will default to "W". Using distance based weights does not supplant finding
+  a spatial neighborhood graph. The spatial neighborhood graph is first found
+  and then its edges weighted based on distance in this function.
 }
 \examples{
 library(SFEData)
