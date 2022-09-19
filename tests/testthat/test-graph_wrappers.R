@@ -5,15 +5,28 @@ cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
                             package = "SpatialFeatureExperiment"))
 
 test_that("Get the correct graph and attr for reconstruction", {
-  g <- findSpatialNeighbors(sfe2, "sample01", type = "spatialCoords",
-                            MARGIN = 2, method = "tri2nb")
-  expect_equal(g, cgr1, ignore_attr = TRUE)
-  attrs_reconst <- attr(g, "method")
-  expect_equal(names(attrs_reconst), c("FUN", "package", "args"))
-  expect_equal(attrs_reconst$FUN, "findSpatialNeighbors")
-  expect_equal(attrs_reconst$package, "SpatialFeatureExperiment")
-  expect_true("row.names" %in% names(attrs_reconst$args))
-  expect_equal(attrs_reconst$args$method, "tri2nb")
+    g <- findSpatialNeighbors(sfe2, "sample01", type = "spatialCoords",
+                              MARGIN = 2, method = "tri2nb")
+    expect_equal(g, cgr1, ignore_attr = TRUE)
+    attrs_reconst <- attr(g, "method")
+    expect_equal(names(attrs_reconst), c("FUN", "package", "args"))
+    expect_equal(attrs_reconst$FUN, "findSpatialNeighbors")
+    expect_equal(attrs_reconst$package, "SpatialFeatureExperiment")
+    expect_equal(attrs_reconst$args$dist_type, "none")
+    expect_equal(attrs_reconst$args$style, "W")
+    expect_true("row.names" %in% names(attrs_reconst$args))
+    expect_equal(attrs_reconst$args$method, "tri2nb")
+})
+
+test_that("Use distance weighting", {
+    g <- findSpatialNeighbors(sfe2, "sample01", type = "spatialCoords",
+                              MARGIN = 2, method = "tri2nb",
+                              dist_type = "idw")
+    expect_equal(g$neighbours, cgr1$neighbours, ignore_attr = TRUE)
+    expect_false(isTRUE(all.equal(g$weights, cgr1$weights, check.attributes = FALSE)))
+    attrs_reconst <- attr(g, "method")
+    expect_equal(attrs_reconst$args$dist_type, "idw")
+    expect_equal(attrs_reconst$args$style, "raw")
 })
 
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",

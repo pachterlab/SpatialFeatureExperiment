@@ -1,6 +1,8 @@
 .get_centroids <- function(x, type, MARGIN, sample_id) {
   if (type == "spatialCoords") {
-    return(spatialCoords(x)[colData(x)$sample_id %in% sample_id,])
+    coords <- spatialCoords(x)[colData(x)$sample_id %in% sample_id,]
+    colnames(coords) <- c("x", "y")
+    coords <- st_geometry(df2sf(coords))
   } else {
     # What to do with empty geometries?
     # Throw error for empty dimGeometries, since each item must have a geometry
@@ -10,9 +12,9 @@
     else g <- annotGeometry(x, type, sample_id)
     g <- .rm_empty_geometries(g, MARGIN)
     if (st_geometry_type(g, FALSE) == "POINT") {
-      coords <- st_coordinates(st_geometry(g))
+      coords <- st_geometry(g)
     } else {
-      coords <- st_coordinates(st_centroid(st_geometry(g)))
+      coords <- st_centroid(st_geometry(g))
     }
     return(coords)
   }
@@ -156,7 +158,7 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
                    dist_type = c("none", "idw", "exp", "dpd"),
                    glist = NULL, style = c("raw", "W", "B", "C", "U",
                                            "minmax", "S"),
-                   alpha = 0, dmax = NULL, zero.policy = NULL, ...) {
+                   alpha = 1, dmax = NULL, zero.policy = NULL, ...) {
             method <- match.arg(method)
             dist_type <- match.arg(dist_type)
             style <- match.arg(style)

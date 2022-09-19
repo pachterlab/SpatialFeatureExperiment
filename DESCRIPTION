@@ -23,7 +23,7 @@ Imports:
     sf,
     SingleCellExperiment,
     SpatialExperiment,
-    spdep (>=1.1-7),
+    spdep (>= 1.1-7),
     SummarizedExperiment,
     stats,
     utils
