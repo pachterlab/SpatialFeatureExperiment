@@ -43,6 +43,7 @@ Collate:
     'geometry_operation.R'
     'graph_wrappers.R'
     'int_dimData.R'
+    'internal-Voyager.R'
     'localResults.R'
     'read.R'
     'spatialGraphs.R'

@@ -262,21 +262,6 @@
   out
 }
 
-.value2df <- function(value, use_geometry, feature = NULL) {
-  # Should return data frame for one type, each column is for a feature
-  if (!is.data.frame(value) && !is(value, "DFrame")) {
-    df_fun <- if (use_geometry) data.frame else DataFrame
-    if (is.list(value))
-      value <- lapply(value,
-                      function(v) if (is.atomic(v) && is.vector(v)) v else I(v))
-    if (is.matrix(value)) value <- setNames(list(I(value)), feature)
-    if (is.vector(value) && is.atomic(value))
-      value <- setNames(list(value), feature)
-    value <- df_fun(value)
-  }
-  value
-}
-
 .set_geometry_localResults <- function(x, lr_type, feature, sample_id,
                                       colGeometryName, annotGeometryName,
                                       value) {
