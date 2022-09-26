@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 0.99.4
+Version: 0.99.5
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -55,6 +55,7 @@ Suggests:
     knitr,
     Matrix,
     rmarkdown,
+    SFEData,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 

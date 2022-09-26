@@ -112,7 +112,7 @@
 #'   distance-based weights; the edge weights of the spatial neighborhood graph
 #'   will be entirely determined by the \code{style} argument. "idw" means
 #'   inverse distance weighting. "exp" means exponential decay. "dpd" means
-#'   doubpe-power distance weights. See \code{\link{spdep::nb2listwdist}} for
+#'   double-power distance weights. See \code{\link[spdep]{nb2listwdist}} for
 #'   details.
 #' @param alpha Only relevant when \code{dist_type = "dpd"}.
 #' @param dmax Only relevant when \code{dist_type = "dpd"}.
