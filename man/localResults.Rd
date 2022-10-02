@@ -8,12 +8,16 @@
 \alias{localResult<-}
 \alias{localResultNames}
 \alias{localResultNames<-}
+\alias{localResultFeatures}
+\alias{localResultAttrs}
 \alias{localResults,SpatialFeatureExperiment,missing,missing-method}
 \alias{localResults<-,SpatialFeatureExperiment,missing,missing-method}
 \alias{localResults,SpatialFeatureExperiment,ANY,character-method}
 \alias{localResults<-,SpatialFeatureExperiment,ANY,character-method}
 \alias{localResultNames,SpatialFeatureExperiment-method}
 \alias{localResultNames<-,SpatialFeatureExperiment,character-method}
+\alias{localResultFeatures,SpatialFeatureExperiment-method}
+\alias{localResultAttrs,SpatialFeatureExperiment-method}
 \alias{localResult,SpatialFeatureExperiment,missing-method}
 \alias{localResult,SpatialFeatureExperiment,numeric-method}
 \alias{localResult,SpatialFeatureExperiment,character-method}
@@ -69,6 +73,21 @@
 \S4method{localResultNames}{SpatialFeatureExperiment}(x)
 
 \S4method{localResultNames}{SpatialFeatureExperiment,character}(x) <- value
+
+\S4method{localResultFeatures}{SpatialFeatureExperiment}(
+  x,
+  type = 1L,
+  colGeometryName = NULL,
+  annotGeometryName = NULL
+)
+
+\S4method{localResultAttrs}{SpatialFeatureExperiment}(
+  x,
+  type = 1L,
+  feature,
+  colGeometryName = NULL,
+  annotGeometryName = NULL
+)
 
 \S4method{localResult}{SpatialFeatureExperiment,missing}(
   x,
@@ -171,7 +190,11 @@ the *Geometry to query or replace. If missing, then the first item in the
   the local results are stored in the \code{localResults} field in
   \code{int_colData}, whereas for \code{colGeometries} and
   \code{annotGeometries}, the local results are stored as columns in the same
-  \code{sf} data frames.
+  \code{sf} data frames. \code{localResultFeatures} returns a character
+  vector of names of features for which local results are available.
+  \code{localResultAttrs} returns a character vector of the column names of
+  the local results of one type for one feature. It returns \code{NULL} if
+  the results are a vector.
 }
 \description{
 Local spatial statics like local Moran's I, local Geary's C, Getis-Ord Gi*,

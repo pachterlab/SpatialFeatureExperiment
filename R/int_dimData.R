@@ -233,7 +233,7 @@
 
 .get_internal_feature <- function(x, type, feature, colGeometryName,
                                   annotGeometryName, sample_id, withDimnames,
-                                  .get_internal_fun, ...) {
+                                  .get_internal_fun, simplify = TRUE, ...) {
   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
   if (missing(type)) type <- 1L
   if (is.null(colGeometryName) && is.null(annotGeometryName)) {
@@ -251,14 +251,23 @@
   else
     feature_use <- intersect(feature, names(lr))
   if (!length(feature_use)) {
-    stop("None of the features are present in ", type)
+      messae_use <- paste0("None of the features are present in ", type)
+      if (!is.null(colGeometryName)) {
+          message_use <- paste0(message_use, " in colGeometry ",
+                                colGeometryName)
+      } else if (!is.null(annotGeometryName)) {
+          message_use <- paste0(message_use, " in annotGeometry ",
+                                annotGeometryName)
+      }
+    stop(message_use)
   }
   if (length(feature_use) < length(feature)) {
     warning("Features ", paste(setdiff(feature, feature_use), collapse = ", "),
             " are absent in ", type)
   }
-  out <- lr[,feature_use]
+  out <- lr[,feature_use, drop = FALSE]
   if (length(feature_use) > 1L) out <- as.list(out)
+  else if (simplify) out <- out[[1]]
   out
 }
 

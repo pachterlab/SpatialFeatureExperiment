@@ -146,8 +146,8 @@ setGeneric("localResults<-",
 #' @export
 setGeneric("localResult",
            function(x, type, feature, colGeometryName = NULL,
-                                   annotGeometryName = NULL, sample_id = NULL,
-                                   withDimnames = TRUE)
+                    annotGeometryName = NULL, sample_id = NULL,
+                    withDimnames = TRUE, simplify = TRUE)
              standardGeneric("localResult"))
 
 #' @export
@@ -163,3 +163,13 @@ setGeneric("localResultNames", function(x) standardGeneric("localResultNames"))
 #' @export
 setGeneric("localResultNames<-",
            function(x, value) standardGeneric("localResultNames<-"))
+
+#' @export
+setGeneric("localResultFeatures",
+           function(x, type, colGeometryName = NULL, annotGeometryName = NULL)
+               standardGeneric("localResultFeatures"))
+
+#' @export
+setGeneric("localResultAttrs",
+           function(x, type, feature, colGeometryName = NULL, annotGeometryName = NULL)
+               standardGeneric("localResultAttrs"))

@@ -21,8 +21,11 @@
 #' @param colGeometryName Which \code{colGeometry} to get or set local results.
 #' @param annotGeometryName Which \code{annotGeometry} to get or set local
 #'   results.
+#' @param simplify Basically whether to return the content of the list rather
+#'   than a list when the list only has one element, such as results for one
+#'   type and one feature.
 #' @aliases localResults localResults<- localResult localResult<-
-#'   localResultNames localResultNames<-
+#'   localResultNames localResultNames<- localResultFeatures localResultAttrs
 #' @return \code{localResults} returns a named list each element of which is a
 #'   set of local results of interest. \code{localResult} returns a matrix or a
 #'   data frame, whichever the original is when it's set.
@@ -31,7 +34,11 @@
 #'   the local results are stored in the \code{localResults} field in
 #'   \code{int_colData}, whereas for \code{colGeometries} and
 #'   \code{annotGeometries}, the local results are stored as columns in the same
-#'   \code{sf} data frames.
+#'   \code{sf} data frames. \code{localResultFeatures} returns a character
+#'   vector of names of features for which local results are available.
+#'   \code{localResultAttrs} returns a character vector of the column names of
+#'   the local results of one type for one feature. It returns \code{NULL} if
+#'   the results are a vector.
 #' @docType methods
 #' @name localResults
 #' @examples
@@ -117,7 +124,8 @@ setMethod("localResults", c("SpatialFeatureExperiment", "ANY", "character"),
             localResult(x, name, feature = features, sample_id = sample_id,
                         withDimnames = withDimnames,
                         colGeometryName = colGeometryName,
-                        annotGeometryName = annotGeometryName)
+                        annotGeometryName = annotGeometryName,
+                        simplify = FALSE)
           })
 
 #' @rdname localResults
@@ -159,6 +167,25 @@ setReplaceMethod("localResultNames",
                                        key="localResults")
                  })
 
+#' @rdname localResults
+#' @export
+setMethod("localResultFeatures", "SpatialFeatureExperiment",
+          function(x, type = 1L, colGeometryName = NULL,
+                   annotGeometryName = NULL) {
+              names(localResults(x, "all", type,
+                                 colGeometryName = colGeometryName,
+                                 annotGeometryName = annotGeometryName))
+          })
+
+#' @rdname localResults
+#' @export
+setMethod("localResultAttrs", "SpatialFeatureExperiment",
+          function(x, type = 1L, feature, colGeometryName = NULL,
+                   annotGeometryName = NULL) {
+              colnames(localResult(x, type, feature, colGeometryName,
+                                   annotGeometryName, sample_id = "all"))
+          })
+
 # Here "feature" can be a character vector for multiple features, but it will
 # not be documented. Use localResults for that.
 #' @rdname localResults
@@ -166,7 +193,7 @@ setReplaceMethod("localResultNames",
 setMethod("localResult", c("SpatialFeatureExperiment", "missing"),
           function(x, type, feature, colGeometryName = NULL,
                    annotGeometryName = NULL, sample_id = NULL,
-                   withDimnames = TRUE) {
+                   withDimnames = TRUE, simplify = TRUE) {
             .get_internal_feature(x, feature = feature, MARGIN = 2L,
                                   colGeometryName = colGeometryName,
                                   annotGeometryName = annotGeometryName,
@@ -175,7 +202,7 @@ setMethod("localResult", c("SpatialFeatureExperiment", "missing"),
                                   .get_internal_fun = .get_internal_integer,
                                   getfun = int_colData,
                                   key = "localResults", funstr = "localResult",
-                                  substr = "type")
+                                  substr = "type", simplify = simplify)
             })
 
 #' @rdname localResults
@@ -183,7 +210,7 @@ setMethod("localResult", c("SpatialFeatureExperiment", "missing"),
 setMethod("localResult", c("SpatialFeatureExperiment", "numeric"),
           function(x, type, feature, colGeometryName = NULL,
                    annotGeometryName = NULL, sample_id = NULL,
-                   withDimnames = TRUE) {
+                   withDimnames = TRUE, simplify = TRUE) {
             .get_internal_feature(x, type = type, feature = feature,
                                   MARGIN = 2L,
                                   colGeometryName = colGeometryName,
@@ -193,7 +220,7 @@ setMethod("localResult", c("SpatialFeatureExperiment", "numeric"),
                                   .get_internal_fun = .get_internal_integer,
                                   getfun = int_colData,
                                   key = "localResults", funstr = "localResult",
-                                  substr = "type")
+                                  substr = "type", simplify = simplify)
           })
 
 #' @rdname localResults
@@ -201,7 +228,7 @@ setMethod("localResult", c("SpatialFeatureExperiment", "numeric"),
 setMethod("localResult", c("SpatialFeatureExperiment", "character"),
           function(x, type, feature, colGeometryName = NULL,
                    annotGeometryName = NULL, sample_id = NULL,
-                   withDimnames = TRUE) {
+                   withDimnames = TRUE, simplify = TRUE) {
             .get_internal_feature(x, type = type, feature = feature,
                                   MARGIN = 2L,
                                   colGeometryName = colGeometryName,
@@ -211,7 +238,7 @@ setMethod("localResult", c("SpatialFeatureExperiment", "character"),
                                   .get_internal_fun = .get_internal_character,
                                   getfun = int_colData,
                                   key = "localResults", funstr = "localResult",
-                                  substr = "type")
+                                  substr = "type", simplify = simplify)
           })
 
 #' @rdname localResults
