@@ -71,8 +71,9 @@ NULL
 #' @export
 .symbol2id <- function(x, features) {
     if (!any(features %in% rownames(x)) && "symbol" %in% names(rowData(x))) {
-        features <- rownames(x)[match(features, rowData(x)$symbol)]
         .warn_symbol_duplicate(x, features)
+        ind <- features %in% rowData(x)$symbol
+        features[ind] <- rownames(x)[match(features[ind], rowData(x)$symbol)]
     }
     features
 }

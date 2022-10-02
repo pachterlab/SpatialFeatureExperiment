@@ -240,6 +240,7 @@
     lr <- .get_internal_id(x, type = type, sample_id = sample_id,
                            withDimnames = withDimnames,
                            .get_internal_fun = .get_internal_fun, ...)
+    feature <- .symbol2id(x, feature)
   } else if (!is.null(colGeometryName)) {
     cg <- colGeometry(x, type = colGeometryName, sample_id = sample_id)
     lr <- cg$localResults[[type]]
@@ -251,7 +252,7 @@
   else
     feature_use <- intersect(feature, names(lr))
   if (!length(feature_use)) {
-      messae_use <- paste0("None of the features are present in ", type)
+      message_use <- paste0("None of the features are present in ", type)
       if (!is.null(colGeometryName)) {
           message_use <- paste0(message_use, " in colGeometry ",
                                 colGeometryName)
