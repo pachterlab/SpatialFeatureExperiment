@@ -217,21 +217,28 @@ value for each spatial location.
 \examples{
 # Toy example
 sfe <- readRDS(system.file("extdata/sfe_toy.rds",
-package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 # localResults functions are written for organizing results from local
 # spatial statistics (see the Voyager package). But for the examples here,
 # random toy matrices are used. The real results are often matrices, with a
 # matrix for each feature.
 library(S4Vectors)
 set.seed(29)
-toy_res1 <- matrix(rnorm(10), nrow = 5, ncol = 2,
-dimnames = list(colnames(sfe), c("meow", "purr")))
-toy_res1b <- matrix(rgamma(10, shape = 2), nrow = 5, ncol = 2,
-                    dimnames = list(colnames(sfe), c("meow", "purr")))
+toy_res1 <- matrix(rnorm(10),
+    nrow = 5, ncol = 2,
+    dimnames = list(colnames(sfe), c("meow", "purr"))
+)
+toy_res1b <- matrix(rgamma(10, shape = 2),
+    nrow = 5, ncol = 2,
+    dimnames = list(colnames(sfe), c("meow", "purr"))
+)
 toy_df1 <- DataFrame(gene1 = I(toy_res1), gene2 = I(toy_res1b))
 
-toy_res2 <- matrix(rpois(10, lambda = 2), nrow = 5, ncol = 2,
-                   dimnames = list(colnames(sfe), c("sassy", "tortitude")))
+toy_res2 <- matrix(rpois(10, lambda = 2),
+    nrow = 5, ncol = 2,
+    dimnames = list(colnames(sfe), c("sassy", "tortitude"))
+)
 toy_df2 <- DataFrame(gene1 = I(toy_res2))
 # Set all local results
 localResults(sfe) <- list(localmoran = toy_df1, Gistar = toy_df2)
@@ -252,10 +259,13 @@ lr <- localResult(sfe, "localmoran", feature = "gene1")
 
 # Set results for a feature in colGeometries
 cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
-package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 colGeometry(sfe, "cg") <- cg_toy
-localResult(sfe, "localmoran", feature = "gene1",
-            colGeometryName = "cg") <- toy_res1
+localResult(sfe, "localmoran",
+    feature = "gene1",
+    colGeometryName = "cg"
+) <- toy_res1
 # Get results for a feature in colGeometries
 lr <- localResult(sfe, "localmoran", "gene1", colGeometryName = "cg")
 }

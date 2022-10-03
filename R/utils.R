@@ -30,27 +30,27 @@ sampleIDs <- function(sfe) unique(colData(sfe)$sample_id)
 #' sfe <- changeSampleIDs(sfe, c(Vis5A = "sample01"))
 #' sampleIDs(sfe)
 changeSampleIDs <- function(sfe, replacement) {
-  for (i in seq_along(replacement)) {
-    colData(sfe)$sample_id[colData(sfe)$sample_id == names(replacement)[i]] <-
-      replacement[i]
-    gs_names <- names(int_metadata(sfe)$spatialGraphs)
-    names(int_metadata(sfe)$spatialGraphs)[gs_names == names(replacement)[i]] <-
-      replacement[i]
-    if (length(int_metadata(sfe)$annotGeometries)) {
-      for (n in names(int_metadata(sfe)$annotGeometries)) {
-        ag <- int_metadata(sfe)$annotGeometries[[n]]
-        ind <- ag$sample_id == names(replacement)[i]
-        int_metadata(sfe)$annotGeometries[[n]]$sample_id[ind] <- replacement[i]
-      }
+    for (i in seq_along(replacement)) {
+        colData(sfe)$sample_id[colData(sfe)$sample_id == names(replacement)[i]] <-
+            replacement[i]
+        gs_names <- names(int_metadata(sfe)$spatialGraphs)
+        names(int_metadata(sfe)$spatialGraphs)[gs_names == names(replacement)[i]] <-
+            replacement[i]
+        if (length(int_metadata(sfe)$annotGeometries)) {
+            for (n in names(int_metadata(sfe)$annotGeometries)) {
+                ag <- int_metadata(sfe)$annotGeometries[[n]]
+                ind <- ag$sample_id == names(replacement)[i]
+                int_metadata(sfe)$annotGeometries[[n]]$sample_id[ind] <- replacement[i]
+            }
+        }
     }
-  }
-  sfe
+    sfe
 }
 
 .translate_value <- function(x, translate, value) {
-  if (translate && !is.null(int_metadata(x)$orig_bbox)) {
-    value$geometry <- value$geometry -
-      int_metadata(x)$orig_bbox[c("xmin", "ymin")]
-  }
-  value
+    if (translate && !is.null(int_metadata(x)$orig_bbox)) {
+        value$geometry <- value$geometry -
+            int_metadata(x)$orig_bbox[c("xmin", "ymin")]
+    }
+    value
 }

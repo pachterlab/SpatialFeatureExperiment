@@ -39,9 +39,11 @@
 #'
 #' # Set all annotation geometries, in a named list
 #' toy <- readRDS(system.file("extdata/sfe_toy.rds",
-#'                package = "SpatialFeatureExperiment"))
+#'     package = "SpatialFeatureExperiment"
+#' ))
 #' ag <- readRDS(system.file("extdata/ag.rds",
-#'                           package = "SpatialFeatureExperiment"))
+#'     package = "SpatialFeatureExperiment"
+#' ))
 #' annotGeometries(toy) <- list(hull = ag)
 #'
 #' # Get names of annotation geometries
@@ -69,49 +71,63 @@ NULL
 
 #' @rdname annotGeometries
 #' @export
-setMethod("annotGeometries", "SpatialFeatureExperiment",
-          function(x) int_metadata(x)$annotGeometries)
+setMethod(
+    "annotGeometries", "SpatialFeatureExperiment",
+    function(x) int_metadata(x)$annotGeometries
+)
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod("annotGeometries", "SpatialFeatureExperiment",
-                 function(x, translate = TRUE, ..., value) {
-                   value <- .df2sf_list(value, ...)
-                   value <- lapply(value, .rm_empty_geometries, MARGIN = 3)
-                   value <- lapply(value, .translate_value, x = x,
-                                   translate = translate)
-                   int_metadata(x)$annotGeometries <- value
-                   m <- .check_annotgeometries(x)
-                   if (length(m)) stop(m)
-                   return(x)
-                 })
+setReplaceMethod(
+    "annotGeometries", "SpatialFeatureExperiment",
+    function(x, translate = TRUE, ..., value) {
+        value <- .df2sf_list(value, ...)
+        value <- lapply(value, .rm_empty_geometries, MARGIN = 3)
+        value <- lapply(value, .translate_value,
+            x = x,
+            translate = translate
+        )
+        int_metadata(x)$annotGeometries <- value
+        m <- .check_annotgeometries(x)
+        if (length(m)) stop(m)
+        return(x)
+    }
+)
 
 #' @rdname annotGeometries
 #' @export
-setMethod("annotGeometryNames", "SpatialFeatureExperiment",
-          function(x) names(annotGeometries(x)))
+setMethod(
+    "annotGeometryNames", "SpatialFeatureExperiment",
+    function(x) names(annotGeometries(x))
+)
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod("annotGeometryNames", c("SpatialFeatureExperiment",
-                                         "character"),
-                 function(x, value) {
-                   names(annotGeometries(x)) <- value
-                   return(x)
-                 })
+setReplaceMethod(
+    "annotGeometryNames", c(
+        "SpatialFeatureExperiment",
+        "character"
+    ),
+    function(x, value) {
+        names(annotGeometries(x)) <- value
+        return(x)
+    }
+)
 
 #' @rdname annotGeometries
 #' @export
-setMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
-          function(x, type, sample_id = NULL) annotGeometry(x, 1L, sample_id))
+setMethod(
+    "annotGeometry", c("SpatialFeatureExperiment", "missing"),
+    function(x, type, sample_id = NULL) annotGeometry(x, 1L, sample_id)
+)
 
 .ag <- function(x, type, sample_id = NULL) {
-  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  out <- int_metadata(x)$annotGeometries[[type]]
-  if (!is.null(sample_id)) {
-    out <- out[out$sample_id %in% sample_id,]
-  }
-  return(out)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    out <- int_metadata(x)$annotGeometries[[type]]
+    if (!is.null(sample_id)) {
+        out <- out[out$sample_id %in% sample_id, ]
+    }
+    return(out)
 }
 
 #' @rdname annotGeometries
@@ -124,57 +140,64 @@ setMethod("annotGeometry", c("SpatialFeatureExperiment", "character"), .ag)
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "missing"),
-          function(x, type, sample_id = NULL, value)
-            annotGeometry(x, 1L, sample_id) <- value)
+setReplaceMethod(
+    "annotGeometry", c("SpatialFeatureExperiment", "missing"),
+    function(x, type, sample_id = NULL, value) {
+        annotGeometry(x, 1L, sample_id) <- value
+    }
+)
 
 .ag_r <- function(x, type, sample_id = NULL, translate = TRUE, ..., value) {
-  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  if (length(sampleIDs(x)) == 1L && !"sample_id" %in% names(value)) {
-    value$sample_id <- sample_id
-  }
-  value <- .df2sf_in_list(value, ...)
-  value <- .rm_empty_geometries(value, MARGIN = 3)
-  if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
-    existing <- int_metadata(x)$annotGeometries[[type]]
-    if (!is.null(existing)) {
-      existing <- .reconcile_cols(existing, value)
-      value <- .reconcile_cols(value, existing)
-      value <- value[,names(existing)]
-      if (sample_id %in% existing$sample_id) {
-        # This is a replacement method, so do replace
-        existing <- existing[!existing$sample_id %in% sample_id,]
-      }
-      value <- rbind(existing, value)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    if (length(sampleIDs(x)) == 1L && !"sample_id" %in% names(value)) {
+        value$sample_id <- sample_id
     }
-  }
-  value <- .translate_value(x, translate, value)
-  int_metadata(x)$annotGeometries[[type]] <- value
-  m <- .check_annotgeometries(x)
-  if (length(m)) stop(m)
-  return(x)
+    value <- .df2sf_in_list(value, ...)
+    value <- .rm_empty_geometries(value, MARGIN = 3)
+    if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
+        existing <- int_metadata(x)$annotGeometries[[type]]
+        if (!is.null(existing)) {
+            existing <- .reconcile_cols(existing, value)
+            value <- .reconcile_cols(value, existing)
+            value <- value[, names(existing)]
+            if (sample_id %in% existing$sample_id) {
+                # This is a replacement method, so do replace
+                existing <- existing[!existing$sample_id %in% sample_id, ]
+            }
+            value <- rbind(existing, value)
+        }
+    }
+    value <- .translate_value(x, translate, value)
+    int_metadata(x)$annotGeometries[[type]] <- value
+    m <- .check_annotgeometries(x)
+    if (length(m)) stop(m)
+    return(x)
 }
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "numeric"),
-                 .ag_r)
+setReplaceMethod(
+    "annotGeometry", c("SpatialFeatureExperiment", "numeric"),
+    .ag_r
+)
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod("annotGeometry", c("SpatialFeatureExperiment", "character"),
-                 .ag_r)
+setReplaceMethod(
+    "annotGeometry", c("SpatialFeatureExperiment", "character"),
+    .ag_r
+)
 
 #' @rdname annotGeometries
 #' @export
 tissueBoundary <- function(x, sample_id = NULL) {
-  annotGeometry(x, "tissueBoundary", sample_id)
+    annotGeometry(x, "tissueBoundary", sample_id)
 }
 
 #' @rdname annotGeometries
 #' @export
 `tissueBoundary<-` <- function(x, sample_id = NULL, translate = TRUE, ...,
                                value) {
-  annotGeometry(x, "tissueBoundary", sample_id, translate, ...) <- value
-  x
+    annotGeometry(x, "tissueBoundary", sample_id, translate, ...) <- value
+    x
 }

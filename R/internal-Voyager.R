@@ -6,6 +6,7 @@
 #'
 #' @name internal-Voyager
 #' @keywords internal
+#' @return Internal
 NULL
 
 #' @rdname internal-Voyager
@@ -14,13 +15,22 @@ NULL
     # Should return data frame for one type, each column is for a feature
     if (!is.data.frame(value) && !is(value, "DFrame")) {
         df_fun <- if (use_geometry) data.frame else DataFrame
-        if (is.list(value))
-            value <- lapply(value,
-                            function(v) if (is.atomic(v) && is.vector(v)) v
-                            else I(v))
+        if (is.list(value)) {
+            value <- lapply(
+                value,
+                function(v) {
+                    if (is.atomic(v) && is.vector(v)) {
+                        v
+                    } else {
+                        I(v)
+                    }
+                }
+            )
+        }
         if (is.matrix(value)) value <- setNames(list(I(value)), feature)
-        if (is.vector(value) && is.atomic(value))
+        if (is.vector(value) && is.atomic(value)) {
             value <- setNames(list(value), feature)
+        }
         value <- df_fun(value)
     }
     value
@@ -45,9 +55,11 @@ NULL
         cg <- colGeometry(x, type = colGeometryName, sample_id = "all")
         features_colgeom <- intersect(features, names(st_drop_geometry(cg)))
     }
-    out <- list(assay = features_assay,
-                coldata = features_coldata,
-                colgeom = features_colgeom)
+    out <- list(
+        assay = features_assay,
+        coldata = features_coldata,
+        colgeom = features_colgeom
+    )
     if (all(lengths(out) == 0L)) {
         stop("None of the features are found in the SFE object.")
     }
@@ -61,9 +73,11 @@ NULL
     which_duplicated <- duplicated(all_matches)
     genes_show <- all_matches[which_duplicated]
     if (anyDuplicated(all_matches)) {
-        warning("Gene symbol is duplicated for ",
-                paste(genes_show, collapse = ", "),
-                ", the first match is used.")
+        warning(
+            "Gene symbol is duplicated for ",
+            paste(genes_show, collapse = ", "),
+            ", the first match is used."
+        )
     }
 }
 
@@ -84,8 +98,10 @@ NULL
     if (is.null(sample_id)) {
         sample_id <- sampleIDs(x)
         if (length(sample_id) > 1L) {
-            stop("There are more than one sample in this object.",
-                 " sample_id must be specified")
+            stop(
+                "There are more than one sample in this object.",
+                " sample_id must be specified"
+            )
         }
     } else if (identical(sample_id, "all")) {
         sample_id <- sampleIDs(x)
@@ -95,13 +111,16 @@ NULL
             stop("None of the samples is present in the SFE object.")
         }
         sample_show <- setdiff(sample_id, sampleIDs(x))
-        warning("Sample(s) ", paste(sample_show, sep = ","),
-                " is/are absent from the SFE object.")
+        warning(
+            "Sample(s) ", paste(sample_show, sep = ","),
+            " is/are absent from the SFE object."
+        )
         sample_id <- sample_use
     }
     if (one) {
-        if (length(sample_id) > 1L)
+        if (length(sample_id) > 1L) {
             stop("Only one sample can be specified at a time.")
+        }
     }
     sample_id
 }
@@ -111,10 +130,11 @@ NULL
 .rm_empty_geometries <- function(g, MARGIN) {
     empty_inds <- st_is_empty(g)
     if (MARGIN < 3) {
-        if (any(empty_inds))
+        if (any(empty_inds)) {
             stop("Empty geometries found in dimGeometry.")
+        }
     } else {
-        g <- g[!empty_inds,]
+        g <- g[!empty_inds, ]
     }
     g
 }

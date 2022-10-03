@@ -29,7 +29,7 @@ library(SFEData)
 library(SingleCellExperiment)
 sfe <- McKellarMuscleData("full")
 # Only keep spots on tissue
-sfe <- sfe[,colData(sfe)$in_tissue]
+sfe <- sfe[, colData(sfe)$in_tissue]
 # Move the coordinates of the tissue
 sfe <- removeEmptySpace(sfe)
 }

@@ -22,6 +22,9 @@
 
 .rm_empty_geometries(g, MARGIN)
 }
+\value{
+Internal
+}
 \description{
 Not meant for the user, but exporting to be used internally in Voyager. But
 one day I may clean these up and remove the internal note for people building

@@ -1,12 +1,16 @@
 # Unit test spdep and Visium graph wrappers
 sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
-                            package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
-                            package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 
 test_that("Get the correct graph and attr for reconstruction", {
-    g <- findSpatialNeighbors(sfe2, "sample01", type = "spatialCoords",
-                              MARGIN = 2, method = "tri2nb")
+    g <- findSpatialNeighbors(sfe2, "sample01",
+        type = "spatialCoords",
+        MARGIN = 2, method = "tri2nb"
+    )
     expect_equal(g, cgr1, ignore_attr = TRUE)
     attrs_reconst <- attr(g, "method")
     expect_equal(names(attrs_reconst), c("FUN", "package", "args"))
@@ -19,9 +23,11 @@ test_that("Get the correct graph and attr for reconstruction", {
 })
 
 test_that("Use distance weighting", {
-    g <- findSpatialNeighbors(sfe2, "sample01", type = "spatialCoords",
-                              MARGIN = 2, method = "tri2nb",
-                              dist_type = "idw")
+    g <- findSpatialNeighbors(sfe2, "sample01",
+        type = "spatialCoords",
+        MARGIN = 2, method = "tri2nb",
+        dist_type = "idw"
+    )
     expect_equal(g$neighbours, cgr1$neighbours, ignore_attr = TRUE)
     expect_false(isTRUE(all.equal(g$weights, cgr1$weights, check.attributes = FALSE)))
     attrs_reconst <- attr(g, "method")
@@ -30,13 +36,15 @@ test_that("Use distance weighting", {
 })
 
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
-                                  package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 g_visium <- readRDS(system.file("extdata/colgraph_visium.rds",
-                                package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 test_that("Correct Visium graph", {
-  g <- findVisiumGraph(sfe_visium, "sample01")
-  expect_equal(g, g_visium, ignore_attr = TRUE)
-  attrs_reconst <- attr(g, "method")
-  expect_equal(attrs_reconst$FUN, "findVisiumGraph")
-  expect_equal(attrs_reconst$args$style, "W")
+    g <- findVisiumGraph(sfe_visium, "sample01")
+    expect_equal(g, g_visium, ignore_attr = TRUE)
+    attrs_reconst <- attr(g, "method")
+    expect_equal(attrs_reconst$FUN, "findVisiumGraph")
+    expect_equal(attrs_reconst$args$style, "W")
 })

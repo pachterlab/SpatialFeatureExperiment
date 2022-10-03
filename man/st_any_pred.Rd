@@ -44,9 +44,11 @@ polygons or a bounding box.
 }
 \examples{
 library(sf)
-pts <- st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)),
-              st_point(c(2.5, 2.5)))
-pol <- st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
+pts <- st_sfc(
+    st_point(c(.5, .5)), st_point(c(1.5, 1.5)),
+    st_point(c(2.5, 2.5))
+)
+pol <- st_polygon(list(rbind(c(0, 0), c(2, 0), c(2, 2), c(0, 2), c(0, 0))))
 st_any_pred(pts, pol, pred = st_disjoint)
 st_any_intersects(pts, pol)
 st_n_pred(pts, pol, pred = st_disjoint)

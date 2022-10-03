@@ -209,7 +209,7 @@ g2 <- findSpatialNeighbors(sfe)
 
 # Set all graphs of a margin by a named list
 spatialGraphs(sfe, MARGIN = 2L, sample_id = "Vis5A") <-
-  list(tri2nb = g2, visium = g1)
+    list(tri2nb = g2, visium = g1)
 # Or equivalently
 colGraphs(sfe, sample_id = "Vis5A") <- list(tri2nb = g2, visium = g1)
 
@@ -223,7 +223,7 @@ gs <- colGraphs(sfe)
 sfe2 <- McKellarMuscleData("small2")
 sfe_combined <- cbind(sfe, sfe2)
 colGraphs(sfe_combined, name = "visium", sample_id = "all") <-
-  findVisiumGraph(sfe_combined, sample_id = "all")
+    findVisiumGraph(sfe_combined, sample_id = "all")
 
 # Get graph names
 spatialGraphNames(sfe, MARGIN = 2L, sample_id = "Vis5A")
@@ -239,8 +239,10 @@ colGraphNames(sfe) <- c("tri2nb", "visium")
 
 # Set single graph by
 # Spatial graph for myofibers
-g_myofiber <- findSpatialNeighbors(sfe, type = "myofiber_simplified",
-                                   MARGIN = 3L)
+g_myofiber <- findSpatialNeighbors(sfe,
+    type = "myofiber_simplified",
+    MARGIN = 3L
+)
 spatialGraph(sfe, type = "myofiber", MARGIN = 3L) <- g_myofiber
 # Or equivalently
 annotGraph(sfe, "myofiber") <- g_myofiber

@@ -139,9 +139,9 @@ Create a \code{SpatialFeatureExperiment} object.
 \examples{
 library(Matrix)
 data("visium_row_col")
-coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6,]
+coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6, ]
 coords1$row <- coords1$row * sqrt(3)
-cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
+cg <- df2sf(coords1[, c("col", "row")], c("col", "row"), spotDiameter = 0.7)
 
 set.seed(29)
 col_inds <- sample(seq_len(13), 13)
@@ -152,9 +152,12 @@ colnames(mat) <- coords1$barcode
 rownames(mat) <- sample(LETTERS, 5)
 rownames(cg) <- colnames(mat)
 
-sfe <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
-                                spatialCoordsNames = c("col", "row"),
-                                spotDiameter = 0.7)
+sfe <- SpatialFeatureExperiment(list(counts = mat),
+    colData = coords1,
+    spatialCoordsNames = c("col", "row"),
+    spotDiameter = 0.7
+)
 sfe2 <- SpatialFeatureExperiment(list(counts = mat),
-colGeometries = list(foo = cg))
+    colGeometries = list(foo = cg)
+)
 }

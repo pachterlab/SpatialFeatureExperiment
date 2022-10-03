@@ -109,9 +109,9 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @examples
 #' library(Matrix)
 #' data("visium_row_col")
-#' coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6,]
+#' coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6, ]
 #' coords1$row <- coords1$row * sqrt(3)
-#' cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
+#' cg <- df2sf(coords1[, c("col", "row")], c("col", "row"), spotDiameter = 0.7)
 #'
 #' set.seed(29)
 #' col_inds <- sample(seq_len(13), 13)
@@ -122,11 +122,14 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' rownames(mat) <- sample(LETTERS, 5)
 #' rownames(cg) <- colnames(mat)
 #'
-#' sfe <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
-#'                                 spatialCoordsNames = c("col", "row"),
-#'                                 spotDiameter = 0.7)
+#' sfe <- SpatialFeatureExperiment(list(counts = mat),
+#'     colData = coords1,
+#'     spatialCoordsNames = c("col", "row"),
+#'     spotDiameter = 0.7
+#' )
 #' sfe2 <- SpatialFeatureExperiment(list(counts = mat),
-#' colGeometries = list(foo = cg))
+#'     colGeometries = list(foo = cg)
+#' )
 SpatialFeatureExperiment <- function(assays,
                                      colData = DataFrame(), rowData = NULL,
                                      sample_id = "sample01",
@@ -139,67 +142,83 @@ SpatialFeatureExperiment <- function(assays,
                                      spatialGraphs = NULL,
                                      unit = "full_res_image_pixels",
                                      ...) {
-  if (!length(colData)) {
-    colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
-  }
-  if (any(!spatialCoordsNames %in% names(colData)))
-    scn_use <- NULL
-  else scn_use <- spatialCoordsNames
-  if (is.null(colGeometries)) {
-    spe <- SpatialExperiment(assays = assays, colData = colData,
-                             rowData = rowData, sample_id = sample_id,
-                             spatialCoords = spatialCoords,
-                             spatialCoordsNames = scn_use,...)
-  } else {
-    if (!is.null(spatialCoords)) {
-      warning("Ignoring spatialCoords; coordinates are specified in colGeometries.")
+    if (!length(colData)) {
+        colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
     }
-    colGeometries <- .df2sf_list(colGeometries, spatialCoordsNames,
-                                 spotDiameter, "POLYGON")
-    spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
-    spe <- SpatialExperiment(assays = assays, colData = colData,
-                             rowData = rowData, sample_id = sample_id,
-                             spatialCoords = spe_coords,
-                             spatialCoordsNames = NULL, ...)
-  }
-  rownames(spatialCoords(spe)) <- colnames(assays[[1]])
-  sfe <- .spe_to_sfe(spe, colGeometries, rowGeometries, annotGeometries,
-                     spatialCoordsNames, annotGeometryType,
-                     spatialGraphs, spotDiameter, unit)
-  return(sfe)
+    if (any(!spatialCoordsNames %in% names(colData))) {
+        scn_use <- NULL
+    } else {
+        scn_use <- spatialCoordsNames
+    }
+    if (is.null(colGeometries)) {
+        spe <- SpatialExperiment(
+            assays = assays, colData = colData,
+            rowData = rowData, sample_id = sample_id,
+            spatialCoords = spatialCoords,
+            spatialCoordsNames = scn_use, ...
+        )
+    } else {
+        if (!is.null(spatialCoords)) {
+            warning("Ignoring spatialCoords; coordinates are specified in colGeometries.")
+        }
+        colGeometries <- .df2sf_list(
+            colGeometries, spatialCoordsNames,
+            spotDiameter, "POLYGON"
+        )
+        spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
+        spe <- SpatialExperiment(
+            assays = assays, colData = colData,
+            rowData = rowData, sample_id = sample_id,
+            spatialCoords = spe_coords,
+            spatialCoordsNames = NULL, ...
+        )
+    }
+    rownames(spatialCoords(spe)) <- colnames(assays[[1]])
+    sfe <- .spe_to_sfe(
+        spe, colGeometries, rowGeometries, annotGeometries,
+        spatialCoordsNames, annotGeometryType,
+        spatialGraphs, spotDiameter, unit
+    )
+    return(sfe)
 }
 
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
                         spotDiameter, unit) {
-  if (is.null(colGeometries)) {
-    if (!is.na(spotDiameter)) {
-      colGeometries <- list(spotPoly = st_buffer(.sc2cg(spatialCoords(spe)),
-                                                 dist = spotDiameter/2))
-    } else colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
-  }
-  if (!is.null(rowGeometries)) {
-    rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
-                                 spotDiameter = NA, geometryType = "POLYGON")
-  }
-  if (!is.null(annotGeometries)) {
-    annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
-                                 spotDiameter = NA,
-                                 geometryType = annotGeometryType)
-  }
-  sfe <- new("SpatialFeatureExperiment", spe)
-  colGeometries(sfe) <- colGeometries
-  rowGeometries(sfe) <- rowGeometries
-  annotGeometries(sfe) <- annotGeometries
-  spatialGraphs(sfe) <- spatialGraphs
-  int_metadata(sfe)$unit <- unit
-  return(sfe)
+    if (is.null(colGeometries)) {
+        if (!is.na(spotDiameter)) {
+            colGeometries <- list(spotPoly = st_buffer(.sc2cg(spatialCoords(spe)),
+                dist = spotDiameter / 2
+            ))
+        } else {
+            colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
+        }
+    }
+    if (!is.null(rowGeometries)) {
+        rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
+            spotDiameter = NA, geometryType = "POLYGON"
+        )
+    }
+    if (!is.null(annotGeometries)) {
+        annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
+            spotDiameter = NA,
+            geometryType = annotGeometryType
+        )
+    }
+    sfe <- new("SpatialFeatureExperiment", spe)
+    colGeometries(sfe) <- colGeometries
+    rowGeometries(sfe) <- rowGeometries
+    annotGeometries(sfe) <- annotGeometries
+    spatialGraphs(sfe) <- spatialGraphs
+    int_metadata(sfe)$unit <- unit
+    return(sfe)
 }
 
 .names_types <- function(l) {
-  types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
-                  FUN.VALUE = character(1))
-  paste(paste0(names(l), " (", types, ")"), collapse = ", ")
+    types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
+        FUN.VALUE = character(1)
+    )
+    paste(paste0(names(l), " (", types, ")"), collapse = ", ")
 }
 
 #' Print method for SpatialFeatureExperiment
@@ -215,36 +234,45 @@ SpatialFeatureExperiment <- function(assays,
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
 #' sfe # The show method is implicitly called
-setMethod("show", "SpatialFeatureExperiment",
-          function(object) {
-            callNextMethod()
-            skip_geometries <- length(colGeometries(object)) < 1 &
-              length(rowGeometries(object)) < 1 &
-              is.null(annotGeometries(object))
-            if (!skip_geometries) {
-              cat("\nGeometries:\n")
-              if (length(colGeometries(object)))
+setMethod(
+    "show", "SpatialFeatureExperiment",
+    function(object) {
+        callNextMethod()
+        skip_geometries <- length(colGeometries(object)) < 1 &
+            length(rowGeometries(object)) < 1 &
+            is.null(annotGeometries(object))
+        if (!skip_geometries) {
+            cat("\nGeometries:\n")
+            if (length(colGeometries(object))) {
                 cat("colGeometries:", .names_types(colGeometries(object)), "\n")
-              if (length(rowGeometries(object)))
-                cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
-              if (!is.null(annotGeometries(object)))
-                cat("annotGeometries:", .names_types(annotGeometries(object)),
-                    "\n")
             }
-            # What to do with the graphs?
-            if (!is.null(int_metadata(object)$spatialGraphs)) {
-              cat("\nGraphs:")
-              df <- int_metadata(object)$spatialGraphs
-              for (s in colnames(df)) {
+            if (length(rowGeometries(object))) {
+                cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
+            }
+            if (!is.null(annotGeometries(object))) {
+                cat(
+                    "annotGeometries:", .names_types(annotGeometries(object)),
+                    "\n"
+                )
+            }
+        }
+        # What to do with the graphs?
+        if (!is.null(int_metadata(object)$spatialGraphs)) {
+            cat("\nGraphs:")
+            df <- int_metadata(object)$spatialGraphs
+            for (s in colnames(df)) {
                 cat("\n", s, ": ", sep = "")
                 out <- vapply(rownames(df), function(r) {
-                  l <- df[r,s][[1]]
-                  if (length(l)) {
-                    paste0(r, ": ", paste(names(l), collapse = ", "))
-                  } else NA_character_
+                    l <- df[r, s][[1]]
+                    if (length(l)) {
+                        paste0(r, ": ", paste(names(l), collapse = ", "))
+                    } else {
+                        NA_character_
+                    }
                 }, FUN.VALUE = character(1))
                 out <- out[!is.na(out)]
                 cat(paste(out, collapse = "; "))
-              }
             }
-          })
+        }
+    }
+)

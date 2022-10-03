@@ -33,51 +33,59 @@
 NULL
 
 .sc2cg <- function(coords_use) {
-  cg_sfc <- st_sfc(apply(coords_use, 1, st_point, simplify = FALSE))
-  st_sf(geometry = cg_sfc, row.names = rownames(coords_use))
+    cg_sfc <- st_sfc(apply(coords_use, 1, st_point, simplify = FALSE))
+    st_sf(geometry = cg_sfc, row.names = rownames(coords_use))
 }
-setAs(from = "SpatialExperiment", to = "SpatialFeatureExperiment",
-      function(from) {
+setAs(
+    from = "SpatialExperiment", to = "SpatialFeatureExperiment",
+    function(from) {
         cg <- int_colData(from)[["colGeometries"]]
         if (is.null(cg)) {
-          coords_use <- spatialCoords(from)
-          if (is.null(rownames(coords_use)))
-            rownames(coords_use) <- rownames(from)
-          cg <- .sc2cg(coords_use)
-          int_colData(from)[["colGeometries"]] <-
-            make_zero_col_DFrame(nrow(int_colData(from)))
-          int_colData(from)$colGeometries$centroids <- cg
-          from
+            coords_use <- spatialCoords(from)
+            if (is.null(rownames(coords_use))) {
+                rownames(coords_use) <- rownames(from)
+            }
+            cg <- .sc2cg(coords_use)
+            int_colData(from)[["colGeometries"]] <-
+                make_zero_col_DFrame(nrow(int_colData(from)))
+            int_colData(from)$colGeometries$centroids <- cg
+            from
         }
         .spe_to_sfe(from, int_colData(from)[["colGeometries"]],
-                    int_elementMetadata(from)[["rowGeometries"]],
-                    int_metadata(from)[["annotGeometries"]],
-                    spatialCoordsNames(from), "POLYGON",
-                    int_metadata(from)[["spatialGraphs"]],
-                    spotDiameter = NA,
-                    int_metadata(from)[["unit"]])
-      })
+            int_elementMetadata(from)[["rowGeometries"]],
+            int_metadata(from)[["annotGeometries"]],
+            spatialCoordsNames(from), "POLYGON",
+            int_metadata(from)[["spatialGraphs"]],
+            spotDiameter = NA,
+            int_metadata(from)[["unit"]]
+        )
+    }
+)
 
 #' @rdname SpatialFeatureExperiment-coercion
 #' @export
-setMethod("toSpatialFeatureExperiment", "SpatialExperiment",
-          function(x, colGeometries = NULL, rowGeometries = NULL,
-                   annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
-                   annotGeometryType = "POLYGON",
-                   spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
-            if (is.null(colGeometries)) {
-              colGeometries <- int_colData(x)$colGeometries
-            }
-            if (is.null(rowGeometries)) {
-              rowGeometries <- int_elementMetadata(x)$rowGeometries
-            }
-            if (is.null(annotGeometries)) {
-              annotGeometries <- int_metadata(x)$annotGeometries
-            }
-            if (is.null(spatialGraphs)) {
-              spatialGraphs <- int_metadata(x)$spatialGraphs
-            }
-            .spe_to_sfe(x, colGeometries, rowGeometries, annotGeometries,
-                        spatialCoordsNames, annotGeometryType,
-                        spatialGraphs, spotDiameter, unit)
-          })
+setMethod(
+    "toSpatialFeatureExperiment", "SpatialExperiment",
+    function(x, colGeometries = NULL, rowGeometries = NULL,
+             annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
+             annotGeometryType = "POLYGON",
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
+        if (is.null(colGeometries)) {
+            colGeometries <- int_colData(x)$colGeometries
+        }
+        if (is.null(rowGeometries)) {
+            rowGeometries <- int_elementMetadata(x)$rowGeometries
+        }
+        if (is.null(annotGeometries)) {
+            annotGeometries <- int_metadata(x)$annotGeometries
+        }
+        if (is.null(spatialGraphs)) {
+            spatialGraphs <- int_metadata(x)$spatialGraphs
+        }
+        .spe_to_sfe(
+            x, colGeometries, rowGeometries, annotGeometries,
+            spatialCoordsNames, annotGeometryType,
+            spatialGraphs, spotDiameter, unit
+        )
+    }
+)

@@ -46,24 +46,33 @@ and fix any invalid geometries.
 # Points, use spotDiameter to convert to circle polygons
 # This is done to Visium spots
 pts_df <- readRDS(system.file("extdata/pts_df.rds",
-                  package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 sf_use <- df2sf(pts_df, geometryType = "POINT", spotDiameter = 0.1)
 # Linestring
 ls_df <- readRDS(system.file("extdata/ls_df.rds",
-                 package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 sf_use <- df2sf(ls_df, geometryType = "LINESTRING")
 # Polygon
 pol_df <- readRDS(system.file("extdata/pol_df.rds",
-                  package = "SpatialFeatureExperiment"))
-sf_use <- df2sf(pol_df, geometryType = "POLYGON",
-                spatialCoordsNames = c("V1", "V2"))
+    package = "SpatialFeatureExperiment"
+))
+sf_use <- df2sf(pol_df,
+    geometryType = "POLYGON",
+    spatialCoordsNames = c("V1", "V2")
+)
 # Multipolygon
 mpol_df <- readRDS(system.file("extdata/mpol_df.rds",
-                   package = "SpatialFeatureExperiment"))
-sf_use <- df2sf(mpol_df, geometryType = "MULTIPOLYGON",
-                spatialCoordsNames = c("V1", "V2"))
+    package = "SpatialFeatureExperiment"
+))
+sf_use <- df2sf(mpol_df,
+    geometryType = "MULTIPOLYGON",
+    spatialCoordsNames = c("V1", "V2")
+)
 # Multiple sample_ids present
 multipts_df <- readRDS(system.file("extdata/multipts_df.rds",
-                       package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 sf_use <- df2sf(multipts_df, geometryType = "MULTIPOINT")
 }

@@ -1,85 +1,105 @@
 .get_centroids <- function(x, type, MARGIN, sample_id) {
-  if (type == "spatialCoords") {
-    coords <- spatialCoords(x)[colData(x)$sample_id %in% sample_id,]
-    colnames(coords) <- c("x", "y")
-    coords <- st_geometry(df2sf(coords))
-  } else {
-    # What to do with empty geometries?
-    # Throw error for empty dimGeometries, since each item must have a geometry
-    # Need a more helpful error message
-    # Remove empty geometries for annotGeometries
-    if (MARGIN < 3) g <- dimGeometry(x, type, MARGIN, sample_id)
-    else g <- annotGeometry(x, type, sample_id)
-    g <- .rm_empty_geometries(g, MARGIN)
-    if (st_geometry_type(g, FALSE) == "POINT") {
-      coords <- st_geometry(g)
+    if (type == "spatialCoords") {
+        coords <- spatialCoords(x)[colData(x)$sample_id %in% sample_id, ]
+        colnames(coords) <- c("x", "y")
+        coords <- st_geometry(df2sf(coords))
     } else {
-      coords <- st_centroid(st_geometry(g))
+        # What to do with empty geometries?
+        # Throw error for empty dimGeometries, since each item must have a geometry
+        # Need a more helpful error message
+        # Remove empty geometries for annotGeometries
+        if (MARGIN < 3) {
+            g <- dimGeometry(x, type, MARGIN, sample_id)
+        } else {
+            g <- annotGeometry(x, type, sample_id)
+        }
+        g <- .rm_empty_geometries(g, MARGIN)
+        if (st_geometry_type(g, FALSE) == "POINT") {
+            coords <- st_geometry(g)
+        } else {
+            coords <- st_centroid(st_geometry(g))
+        }
+        return(coords)
     }
-    return(coords)
-  }
 }
-.knn_sfe <- function(coords, k = 1, use_kd_tree = TRUE)
-  knn2nb(knearneigh(coords, k = k, use_kd_tree = use_kd_tree,
-                    longlat = FALSE))
-.dnn_sfe <- function(coords, d1, d2, row.names = NULL, use_kd_tree = TRUE)
-  dnearneigh(coords, d1, d2, longlat = FALSE,
-             use_kd_tree = use_kd_tree, row.names = row.names)
+.knn_sfe <- function(coords, k = 1, use_kd_tree = TRUE) {
+    knn2nb(knearneigh(coords,
+        k = k, use_kd_tree = use_kd_tree,
+        longlat = FALSE
+    ))
+}
+.dnn_sfe <- function(coords, d1, d2, row.names = NULL, use_kd_tree = TRUE) {
+    dnearneigh(coords, d1, d2,
+        longlat = FALSE,
+        use_kd_tree = use_kd_tree, row.names = row.names
+    )
+}
 .g2nb_sfe <- function(coords, fun, nnmult = 3, sym = FALSE, row.names = NULL) {
-  # Either gabrielneigh or relativeneigh
-  g <- fun(coords, nnmult)
-  graph2nb(g, sym = sym, row.names = row.names)
+    # Either gabrielneigh or relativeneigh
+    g <- fun(coords, nnmult)
+    graph2nb(g, sym = sym, row.names = row.names)
 }
-.gabriel_sfe <- function(coords, nnmult = 3, sym = FALSE, row.names = NULL)
-  .g2nb_sfe(coords, gabrielneigh, nnmult, sym, row.names)
-.relative_sfe <- function(coords, nnmult = 3, sym = FALSE, row.names = NULL)
-  .g2nb_sfe(coords, relativeneigh, nnmult, sym, row.names)
+.gabriel_sfe <- function(coords, nnmult = 3, sym = FALSE, row.names = NULL) {
+    .g2nb_sfe(coords, gabrielneigh, nnmult, sym, row.names)
+}
+.relative_sfe <- function(coords, nnmult = 3, sym = FALSE, row.names = NULL) {
+    .g2nb_sfe(coords, relativeneigh, nnmult, sym, row.names)
+}
 .soi_sfe <- function(coords, quadsegs = 10, sym = FALSE, row.names = NULL) {
-  g <- soi.graph(tri2nb(coords), coords, quadsegs)
-  graph2nb(g, sym = sym, row.names = row.names)
+    g <- soi.graph(tri2nb(coords), coords, quadsegs)
+    graph2nb(g, sym = sym, row.names = row.names)
 }
 
 .comp_graph_sample <- function(x, sample_id, type, MARGIN, method, dist_type,
                                args, extra_args_use, glist, style, zero.policy,
                                alpha, dmax, fun_use) {
-  if (!"row.names" %in% names(args) &&
-      "row.names" %in% extra_args_use && MARGIN < 3) {
-    args$row.names <- colnames(x)[colData(x)$sample_id == sample_id]
-  }
-  if (method != "poly2nb") {
-    coords <- .get_centroids(x, type, MARGIN, sample_id)
-    nb_out <- do.call(fun_use, c(list(coords = coords), args))
-  } else {
-    if (MARGIN < 3) coords <- dimGeometry(x, type, MARGIN, sample_id)
-    else coords <- annotGeometry(x, type, sample_id)
-    coords <- .rm_empty_geometries(coords, MARGIN)
-    if (st_geometry_type(coords, FALSE) != "POLYGON") {
-      stop("poly2nb can only be used on POLYGON geometries.")
+    if (!"row.names" %in% names(args) &&
+        "row.names" %in% extra_args_use && MARGIN < 3) {
+        args$row.names <- colnames(x)[colData(x)$sample_id == sample_id]
     }
-    nb_out <- do.call(fun_use, c(list(pl = coords), args))
-  }
-  if (dist_type == "none") {
-    if (style == "raw") style <- "W"
-    out <- nb2listw(nb_out, glist, style, zero.policy)
-  } else {
-    out <- nb2listwdist(nb_out, coords, type = dist_type, style = style,
-                        longlat = FALSE, zero.policy = zero.policy,
-                        alpha = alpha, dmax = dmax)
-  }
+    if (method != "poly2nb") {
+        coords <- .get_centroids(x, type, MARGIN, sample_id)
+        nb_out <- do.call(fun_use, c(list(coords = coords), args))
+    } else {
+        if (MARGIN < 3) {
+            coords <- dimGeometry(x, type, MARGIN, sample_id)
+        } else {
+            coords <- annotGeometry(x, type, sample_id)
+        }
+        coords <- .rm_empty_geometries(coords, MARGIN)
+        if (st_geometry_type(coords, FALSE) != "POLYGON") {
+            stop("poly2nb can only be used on POLYGON geometries.")
+        }
+        nb_out <- do.call(fun_use, c(list(pl = coords), args))
+    }
+    if (dist_type == "none") {
+        if (style == "raw") style <- "W"
+        out <- nb2listw(nb_out, glist, style, zero.policy)
+    } else {
+        out <- nb2listwdist(nb_out, coords,
+            type = dist_type, style = style,
+            longlat = FALSE, zero.policy = zero.policy,
+            alpha = alpha, dmax = dmax
+        )
+    }
 
-  attr(out, "method") <- list(FUN = "findSpatialNeighbors",
-                              package = "SpatialFeatureExperiment",
-                              args = c(method = method, args,
-                                       dist_type = dist_type,
-                                       glist = glist,
-                                       style = style,
-                                       alpha = alpha,
-                                       dmax = dmax,
-                                       zero.policy = zero.policy,
-                                       sample_id = sample_id,
-                                       type = type,
-                                       MARGIN = MARGIN))
-  out
+    attr(out, "method") <- list(
+        FUN = "findSpatialNeighbors",
+        package = "SpatialFeatureExperiment",
+        args = c(
+            method = method, args,
+            dist_type = dist_type,
+            glist = glist,
+            style = style,
+            alpha = alpha,
+            dmax = dmax,
+            zero.policy = zero.policy,
+            sample_id = sample_id,
+            type = type,
+            MARGIN = MARGIN
+        )
+    )
+    out
 }
 
 #' Find spatial neighborhood graph
@@ -150,76 +170,104 @@
 #' sfe2 <- McKellarMuscleData(dataset = "small2")
 #' sfe_combined <- cbind(sfe, sfe2)
 #' gs <- findSpatialNeighbors(sfe, sample_id = "all")
-setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
-          function(x, sample_id = NULL, type = "spatialCoords", MARGIN = 2,
-                   method = c("tri2nb", "knearneigh", "dnearneigh",
-                              "gabrielneigh", "relativeneigh", "soi.graph",
-                              "poly2nb"),
-                   dist_type = c("none", "idw", "exp", "dpd"),
-                   glist = NULL, style = c("raw", "W", "B", "C", "U",
-                                           "minmax", "S"),
-                   alpha = 1, dmax = NULL, zero.policy = NULL, ...) {
-            method <- match.arg(method)
-            dist_type <- match.arg(dist_type)
-            style <- match.arg(style)
-            sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-            extra_args_use <- switch (method,
-                                      tri2nb = "row.names",
-                                      knearneigh = c("k", "use_kd_tree"),
-                                      dnearneigh = c("d1", "d2", "use_kd_tree",
-                                                     "row.names"),
-                                      gabrielneigh = c("nnmult", "sym",
-                                                       "row.names"),
-                                      relativeneigh = c("nnmult", "sym",
-                                                        "row.names"),
-                                      soi.graph = c("quadsegs", "sym",
-                                                    "row.names"),
-                                      poly2nb = c("row.names", "snap", "queen",
-                                                  "useC", "foundInBox")
+setMethod(
+    "findSpatialNeighbors", "SpatialFeatureExperiment",
+    function(x, sample_id = NULL, type = "spatialCoords", MARGIN = 2,
+             method = c(
+                 "tri2nb", "knearneigh", "dnearneigh",
+                 "gabrielneigh", "relativeneigh", "soi.graph",
+                 "poly2nb"
+             ),
+             dist_type = c("none", "idw", "exp", "dpd"),
+             glist = NULL, style = c(
+                 "raw", "W", "B", "C", "U",
+                 "minmax", "S"
+             ),
+             alpha = 1, dmax = NULL, zero.policy = NULL, ...) {
+        method <- match.arg(method)
+        dist_type <- match.arg(dist_type)
+        style <- match.arg(style)
+        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+        extra_args_use <- switch(method,
+            tri2nb = "row.names",
+            knearneigh = c("k", "use_kd_tree"),
+            dnearneigh = c(
+                "d1", "d2", "use_kd_tree",
+                "row.names"
+            ),
+            gabrielneigh = c(
+                "nnmult", "sym",
+                "row.names"
+            ),
+            relativeneigh = c(
+                "nnmult", "sym",
+                "row.names"
+            ),
+            soi.graph = c(
+                "quadsegs", "sym",
+                "row.names"
+            ),
+            poly2nb = c(
+                "row.names", "snap", "queen",
+                "useC", "foundInBox"
             )
-            args <- list(...)
-            args <- args[names(args) %in% extra_args_use]
-            fun_use <- switch (method,
-                               tri2nb = tri2nb,
-                               knearneigh = .knn_sfe,
-                               dnearneigh = .dnn_sfe,
-                               gabrielneigh = .gabriel_sfe,
-                               relativeneigh = .relative_sfe,
-                               soi.graph = .soi_sfe,
-                               poly2nb = poly2nb
+        )
+        args <- list(...)
+        args <- args[names(args) %in% extra_args_use]
+        fun_use <- switch(method,
+            tri2nb = tri2nb,
+            knearneigh = .knn_sfe,
+            dnearneigh = .dnn_sfe,
+            gabrielneigh = .gabriel_sfe,
+            relativeneigh = .relative_sfe,
+            soi.graph = .soi_sfe,
+            poly2nb = poly2nb
+        )
+        if (length(sample_id) == 1L) {
+            out <- .comp_graph_sample(
+                x, sample_id, type, MARGIN, method,
+                dist_type, args, extra_args_use, glist,
+                style, zero.policy, alpha, dmax, fun_use
             )
-            if (length(sample_id) == 1L) {
-              out <- .comp_graph_sample(x, sample_id, type, MARGIN, method,
-                                        dist_type, args, extra_args_use, glist,
-                                        style, zero.policy, alpha, dmax, fun_use)
-            } else {
-              out <- lapply(sample_id, function(s) {
-                .comp_graph_sample(x, s, type, MARGIN, method, dist_type,
-                                   args, extra_args_use, glist, style,
-                                   zero.policy, alpha, dmax, fun_use)
-              })
-              names(out) <- sample_id
-            }
-            return(out)
-          })
+        } else {
+            out <- lapply(sample_id, function(s) {
+                .comp_graph_sample(
+                    x, s, type, MARGIN, method, dist_type,
+                    args, extra_args_use, glist, style,
+                    zero.policy, alpha, dmax, fun_use
+                )
+            })
+            names(out) <- sample_id
+        }
+        return(out)
+    }
+)
 
 .comp_visium_graph <- function(x, sample_id, style, zero.policy) {
-  bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
-  bcs_use2 <- sub("[-\\d]+$", "", bcs_use, perl = TRUE)
-  #visium_row_col <- SpatialFeatureExperiment::visium_row_col
-  coords_use <- visium_row_col[match(bcs_use2, visium_row_col$barcode),
-                               c("col", "row")]
-  # So adjacent spots are equidistant
-  coords_use$row <- coords_use$row * sqrt(3)
-  g <- dnearneigh(as.matrix(coords_use), d1 = 1.9, d2 = 2.1,
-                  row.names = bcs_use)
-  out <- nb2listw(g, style = style, zero.policy = zero.policy)
-  attr(out, "method") <- list(FUN = "findVisiumGraph",
-                              package = "SpatialFeatureExperiment",
-                              args = list(style = style,
-                                          zero.policy = zero.policy,
-                                          sample_id = sample_id))
-  out
+    bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
+    bcs_use2 <- sub("[-\\d]+$", "", bcs_use, perl = TRUE)
+    # visium_row_col <- SpatialFeatureExperiment::visium_row_col
+    coords_use <- visium_row_col[
+        match(bcs_use2, visium_row_col$barcode),
+        c("col", "row")
+    ]
+    # So adjacent spots are equidistant
+    coords_use$row <- coords_use$row * sqrt(3)
+    g <- dnearneigh(as.matrix(coords_use),
+        d1 = 1.9, d2 = 2.1,
+        row.names = bcs_use
+    )
+    out <- nb2listw(g, style = style, zero.policy = zero.policy)
+    attr(out, "method") <- list(
+        FUN = "findVisiumGraph",
+        package = "SpatialFeatureExperiment",
+        args = list(
+            style = style,
+            zero.policy = zero.policy,
+            sample_id = sample_id
+        )
+    )
+    out
 }
 
 #' Find spatial neighborhood graphs for Visium spots
@@ -259,13 +307,15 @@ setMethod("findSpatialNeighbors", "SpatialFeatureExperiment",
 #' gs <- findVisiumGraph(sfe, sample_id = "all")
 findVisiumGraph <- function(x, sample_id = NULL, style = "W",
                             zero.policy = NULL) {
-  sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-  if (length(sample_id) == 1L) {
-    out <- .comp_visium_graph(x, sample_id, style, zero.policy)
-  } else {
-    out <- lapply(sample_id,
-                  function(s) .comp_visium_graph(x, s, style, zero.policy))
-    names(out) <- sample_id
-  }
-  return(out)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    if (length(sample_id) == 1L) {
+        out <- .comp_visium_graph(x, sample_id, style, zero.policy)
+    } else {
+        out <- lapply(
+            sample_id,
+            function(s) .comp_visium_graph(x, s, style, zero.policy)
+        )
+        names(out) <- sample_id
+    }
+    return(out)
 }

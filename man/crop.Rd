@@ -69,11 +69,15 @@ In this version, this function does NOT crop the image.
 library(SFEData)
 sfe <- McKellarMuscleData("small")
 # Subset sfe to only keep spots on tissue
-sfe_on_tissue <- crop(sfe, tissueBoundary(sfe), colGeometryName = "spotPoly",
-                      sample_id = "Vis5A")
+sfe_on_tissue <- crop(sfe, tissueBoundary(sfe),
+    colGeometryName = "spotPoly",
+    sample_id = "Vis5A"
+)
 # Subset sfe to only keep what's within a bounding box
 # All geometries will be cropped
 # sample_id is optional when only one sample is present
-sfe_cropped <- crop(sfe, colGeometryName = "spotPoly",
-                    xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500)
+sfe_cropped <- crop(sfe,
+    colGeometryName = "spotPoly",
+    xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500
+)
 }

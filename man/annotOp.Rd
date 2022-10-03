@@ -44,7 +44,8 @@ library(SFEData)
 sfe <- McKellarMuscleData("small")
 # Get the intersection of myofibers with each Visium spot
 myofibers_on_spots <- annotOp(sfe, "spotPoly",
-                              annotGeometryName = "myofiber_simplified")
+    annotGeometryName = "myofiber_simplified"
+)
 }
 \seealso{
 annotPred

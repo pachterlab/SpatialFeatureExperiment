@@ -106,9 +106,11 @@ annotGeometries(sfe_small)
 
 # Set all annotation geometries, in a named list
 toy <- readRDS(system.file("extdata/sfe_toy.rds",
-               package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 ag <- readRDS(system.file("extdata/ag.rds",
-                          package = "SpatialFeatureExperiment"))
+    package = "SpatialFeatureExperiment"
+))
 annotGeometries(toy) <- list(hull = ag)
 
 # Get names of annotation geometries

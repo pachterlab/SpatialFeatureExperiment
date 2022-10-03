@@ -52,5 +52,6 @@ predicate with a \code{colGeometry}.
 library(SFEData)
 sfe <- McKellarMuscleData("small")
 s <- annotSummary(sfe, "spotPoly", "myofiber_simplified",
-                  annotColNames = c("area", "convexity"))
+    annotColNames = c("area", "convexity")
+)
 }
