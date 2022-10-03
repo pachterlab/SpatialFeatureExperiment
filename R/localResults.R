@@ -211,7 +211,7 @@ setMethod(
              annotGeometryName = NULL) {
         names(localResults(x, "all", type,
             colGeometryName = colGeometryName,
-            annotGeometryName = annotGeometryName
+            annotGeometryName = annotGeometryName, withDimnames = FALSE
         ))
     }
 )
@@ -224,7 +224,7 @@ setMethod(
              annotGeometryName = NULL) {
         colnames(localResult(x, type, feature, colGeometryName,
             annotGeometryName,
-            sample_id = "all"
+            sample_id = "all", withDimnames = FALSE
         ))
     }
 )
