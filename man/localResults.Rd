@@ -96,7 +96,8 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   sample_id = NULL,
-  withDimnames = TRUE
+  withDimnames = TRUE,
+  simplify = TRUE
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,numeric}(
@@ -106,7 +107,8 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   sample_id = NULL,
-  withDimnames = TRUE
+  withDimnames = TRUE,
+  simplify = TRUE
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,character}(
@@ -116,7 +118,8 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   sample_id = NULL,
-  withDimnames = TRUE
+  withDimnames = TRUE,
+  simplify = TRUE
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,missing}(
@@ -180,6 +183,10 @@ the *Geometry to query or replace. If missing, then the first item in the
 
 \item{feature}{Feature whose local results to get or set, for
 \code{localResult} getter and setter for one feature at a time.}
+
+\item{simplify}{Basically whether to return the content of the list rather
+than a list when the list only has one element, such as results for one
+type and one feature.}
 }
 \value{
 \code{localResults} returns a named list each element of which is a

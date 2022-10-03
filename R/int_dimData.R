@@ -267,8 +267,8 @@
             " are absent in ", type)
   }
   out <- lr[,feature_use, drop = FALSE]
-  if (length(feature_use) > 1L) out <- as.list(out)
-  else if (simplify) out <- out[[1]]
+  out <- as.list(out)
+  if (simplify) out <- out[[1]]
   out
 }
 

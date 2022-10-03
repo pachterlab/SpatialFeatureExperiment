@@ -347,7 +347,7 @@ test_that("localResults getter, by name and features", {
   expect_equal(lrs$gene2, toy_res1b)
   # Specify feature
   lr <- localResults(sfe, name = "foo", features = "gene1")
-  expect_equal(lr, toy_res1)
+  expect_equal(lr[["gene1"]], toy_res1)
 })
 
 test_that("localResult getter, one sample", {
@@ -362,8 +362,8 @@ test_that("localResult getter, one sample", {
 localResults(sfe3) <- list(bar = toy_df2)
 test_that("localResults getter for one of the two samples", {
   lr_sample02 <- localResults(sfe3, "bar", sample_id = "sample02")
-  expect_equal(nrow(lr_sample02), 2L)
-  expect_equal(lr_sample02, toy_res2[4:5,])
+  expect_equal(nrow(lr_sample02[["gene1"]]), 2L)
+  expect_equal(lr_sample02[["gene1"]], toy_res2[4:5,])
 })
 
 localResults(sfe, name = "foo", colGeometryName = "cg") <- toy_df1
