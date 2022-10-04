@@ -10,6 +10,7 @@ test_that("Get List of length 0 when localResults are absent", {
     expect_true(is(foo, "List"))
     expect_equal(length(foo), 0L)
 })
+
 set.seed(29)
 toy_res1 <- matrix(rnorm(10),
     nrow = 5, ncol = 2,
@@ -397,6 +398,18 @@ test_that("localResult getter, one sample", {
     expect_equal(lr3, toy_res2)
 })
 
+test_that("localResultFeatures", {
+    expect_equal(localResultFeatures(sfe, "foo"), names(toy_df1))
+    # Return NULL when type is absent
+    expect_true(is.null(localResultFeatures(sfe, "meow")))
+})
+
+test_that("localResultAttrs", {
+    expect_equal(localResultAttrs(sfe, "foo", "gene1"), c("meow", "purr"))
+    expect_true(is.null(localResultAttrs(sfe, "meow", "gene1")))
+    expect_true(is.null(localResultAttrs(sfe, "foo", "gene3")))
+})
+
 localResults(sfe3) <- list(bar = toy_df2)
 test_that("localResults getter for one of the two samples", {
     lr_sample02 <- localResults(sfe3, "bar", sample_id = "sample02")
@@ -414,6 +427,21 @@ test_that("localResults getter for colGeometry, one sample", {
     # One feature
     lr <- localResult(sfe, "foo", "gene1", colGeometryName = "cg")
     expect_equal(lr, toy_res1, ignore_attr = "class")
+})
+
+test_that("localResultFeatures for colGeometry", {
+    expect_equal(localResultFeatures(sfe, "foo", colGeometryName = "cg"),
+                 names(toy_df1))
+    expect_true(is.null(localResultFeatures(sfe, "purr", colGeometryName = "cg")))
+})
+
+test_that("localResultAttrs for colGeometry", {
+    expect_equal(localResultAttrs(sfe, "foo", "gene2", colGeometryName = "cg"),
+                 c("meow", "purr"))
+    expect_true(is.null(localResultAttrs(sfe, "purr", "gene1",
+                                         colGeometryName = "cg")))
+    expect_true(is.null(localResultAttrs(sfe, "foo", "gene3",
+                                         colGeometryName = "cg")))
 })
 
 localResults(sfe3,
@@ -459,6 +487,23 @@ test_that("localResults getter for annotGeometry, one sample", {
         annotGeometryName = "ag"
     )
     expect_equal(lr[1, ], toy_res1b[1, ], ignore_attr = "class")
+})
+
+test_that("localResultFeatures for annotGeometry", {
+    expect_equal(localResultFeatures(sfe, "bar", annotGeometryName = "ag"),
+                 names(toy_df1))
+    expect_true(is.null(localResultFeatures(sfe, "purr",
+                                            annotGeometryName = "ag")))
+})
+
+test_that("localResultAttrs for annotGeometry", {
+    expect_equal(localResultAttrs(sfe, "bar", "gene2",
+                                  annotGeometryName = "ag"),
+                 c("meow", "purr"))
+    expect_true(is.null(localResultAttrs(sfe, "purr", "gene1",
+                                         annotGeometryName = "ag")))
+    expect_true(is.null(localResultAttrs(sfe, "bar", "gene3",
+                                         annotGeometryName = "ag")))
 })
 
 localResults(sfe3,

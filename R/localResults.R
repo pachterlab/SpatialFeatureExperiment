@@ -209,10 +209,10 @@ setMethod(
     "localResultFeatures", "SpatialFeatureExperiment",
     function(x, type = 1L, colGeometryName = NULL,
              annotGeometryName = NULL) {
-        names(localResults(x, "all", type,
+        tryCatch(names(localResults(x, "all", type,
             colGeometryName = colGeometryName,
             annotGeometryName = annotGeometryName, withDimnames = FALSE
-        ))
+        )), error = function(e) NULL)
     }
 )
 
@@ -222,10 +222,10 @@ setMethod(
     "localResultAttrs", "SpatialFeatureExperiment",
     function(x, type = 1L, feature, colGeometryName = NULL,
              annotGeometryName = NULL) {
-        colnames(localResult(x, type, feature, colGeometryName,
+        tryCatch(colnames(localResult(x, type, feature, colGeometryName,
             annotGeometryName,
             sample_id = "all", withDimnames = FALSE
-        ))
+        )), error = function(e) NULL)
     }
 )
 
