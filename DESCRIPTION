@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 0.99.6
+Version: 0.99.7
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -17,6 +17,7 @@ Description: A new S4 class integrating Simple Features with the R package sf
     be used.
 Imports:
     BiocGenerics,
+    BiocParallel,
     methods,
     rjson,
     S4Vectors,

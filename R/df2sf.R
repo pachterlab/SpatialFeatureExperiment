@@ -39,7 +39,8 @@
     df
 }
 
-.df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi) {
+.df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi,
+                         BPPARAM) {
     # Case 1: centroids, use POINT
     if (!is.na(spotDiameter)) {
         if (spotDiameter <= 0) {
@@ -49,18 +50,18 @@
     if (multi) {
         df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT")
         df_split <- split(df, df$group)
-        geometry_use <- lapply(df_split, function(x) {
+        geometry_use <- bplapply(df_split, function(x) {
             st_multipoint(as.matrix(x[, spatialCoordsNames]))
-        })
+        }, BPPARAM = BPPARAM)
         geometry_use <- st_sfc(geometry_use)
         out <- .df_split_sample_id(names(df), df_split, geometry_use)
     } else {
-        df$geometry <- lapply(seq_len(nrow(df)), function(i) {
+        df$geometry <- bplapply(seq_len(nrow(df)), function(i) {
             st_point(c(
                 df[[spatialCoordsNames[1]]][i],
                 df[[spatialCoordsNames[2]]][i]
             ))
-        })
+        }, BPPARAM = BPPARAM)
         df$geometry <- st_sfc(df$geometry)
         # Remove the original coordinate columns
         df[, spatialCoordsNames] <- NULL
@@ -96,7 +97,7 @@
     }
     return(out)
 }
-.df2sf_polygon <- function(df, spatialCoordsNames, multi) {
+.df2sf_polygon <- function(df, spatialCoordsNames, multi, BPPARAM) {
     df <- unique(df)
     gt <- if (multi) "MULTIPOLYGON" else "POLYGON"
     df <- .df2sf_check(df, spatialCoordsNames, gt)
@@ -105,12 +106,13 @@
         geometry_use <- lapply(df_split, function(x) {
             ms1 <- split(x, x$ID)
             if ("subID" %in% names(df)) {
-                m <- lapply(ms1, function(y) {
+                m <- bplapply(ms1, function(y) {
                     ms2 <- split(y, y$subID)
                     lapply(ms2, .df2poly_mat, spatialCoordsNames = spatialCoordsNames)
-                })
+                }, BPPARAM = BPPARAM)
             } else {
-                m <- lapply(ms1, function(y) list(.df2poly_mat(y, spatialCoordsNames)))
+                m <- bplapply(ms1, function(y) list(.df2poly_mat(y, spatialCoordsNames)),
+                              BPPARAM = BPPARAM)
             }
             st_multipolygon(m)
         })
@@ -118,22 +120,22 @@
         df_split <- split(df, df$ID)
         if ("subID" %in% names(df)) {
             # Might be holes
-            geometry_use <- lapply(df_split, function(y) {
+            geometry_use <- bplapply(df_split, function(y) {
                 ms <- split(y, y$subID)
                 out <- lapply(ms, .df2poly_mat, spatialCoordsNames = spatialCoordsNames)
                 st_polygon(out)
-            })
+            }, BPPARAM = BPPARAM)
         } else { # Definitely no holes
-            geometry_use <- lapply(df_split, function(y) {
+            geometry_use <- bplapply(df_split, function(y) {
                 st_polygon(list(.df2poly_mat(y, spatialCoordsNames)))
-            })
+            }, BPPARAM = BPPARAM)
         }
     }
     geometry_use <- st_sfc(geometry_use)
     .df_split_sample_id(names(df), df_split, geometry_use)
 }
 
-.df2sf_linestring <- function(df, spatialCoordsNames, multi) {
+.df2sf_linestring <- function(df, spatialCoordsNames, multi, BPPARAM) {
     df <- unique(df)
     gt <- if (multi) "MULTILINESTRING" else "LINESTRING"
     df <- .df2sf_check(df, spatialCoordsNames, gt)
@@ -141,14 +143,15 @@
         df_split <- split(df, df$group)
         geometry_use <- lapply(df_split, function(x) {
             ms <- split(x, x$ID)
-            m <- lapply(ms, function(y) as.matrix(y[, spatialCoordsNames]))
+            m <- bplapply(ms, function(y) as.matrix(y[, spatialCoordsNames]),
+                          BPPARAM = BPPARAM)
             st_multilinestring(m)
         })
     } else {
         df_split <- split(df, df$ID)
-        geometry_use <- lapply(df_split, function(x) {
+        geometry_use <- bplapply(df_split, function(x) {
             st_linestring(as.matrix(x[, spatialCoordsNames]))
-        })
+        }, BPPARAM = BPPARAM)
     }
     geometry_use <- st_sfc(geometry_use)
     .df_split_sample_id(names(df), df_split, geometry_use)
@@ -167,6 +170,7 @@
 #' and fix any invalid geometries.
 #'
 #' @inheritParams SpatialFeatureExperiment
+#' @inheritParams BiocParallel::bplapply
 #' @param df An ordinary data frame, i.e. not \code{sf}. Or a matrix that can be
 #' converted to a data frame.
 #' @param spatialCoordsNames Column names in \code{df} that specify spatial
@@ -180,6 +184,7 @@
 #' column specifying which coordinates for which MULTI geometry.
 #' @return An \code{sf} object.
 #' @export
+#' @importFrom BiocParallel bplapply SerialParam
 #' @examples
 #' # Points, use spotDiameter to convert to circle polygons
 #' # This is done to Visium spots
@@ -218,7 +223,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                       "POINT", "LINESTRING", "POLYGON",
                       "MULTIPOINT", "MULTILINESTRING",
                       "MULTIPOLYGON"
-                  )) {
+                  ), BPPARAM = SerialParam()) {
     if (is.matrix(df)) df <- as.data.frame(df)
     if (any(!spatialCoordsNames %in% names(df))) {
         cols_absent <- setdiff(spatialCoordsNames, names(df))
@@ -231,12 +236,12 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     if (.is_de_facto_point(df)) geometryType <- "POINT"
     geometryType <- match.arg(geometryType)
     switch(geometryType,
-        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE),
-        MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE),
-        LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE),
-        MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE),
-        POLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = FALSE),
-        MULTIPOLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = TRUE)
+        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE, BPPARAM),
+        MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE, BPPARAM),
+        LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE, BPPARAM),
+        MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE, BPPARAM),
+        POLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = FALSE, BPPARAM),
+        MULTIPOLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = TRUE, BPPARAM)
     )
 }
 
