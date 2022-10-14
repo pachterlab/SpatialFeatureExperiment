@@ -88,6 +88,9 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   engineering CRS's which can convert units and invert the y axis for
 #'   Cartesian vs. image orientations. Units are also helpful when plotting
 #'   scale bars. Ignored for now, until I find a better way to deal with it.
+#' @param BPPARAM An optional \code{\link[BiocParallel]{BiocParallelParam}}
+#'   instance, passed to \code{\link{df2df}} to parallelize the conversion of
+#'   data frames with coordinates to \code{sf} geometries.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @return A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
@@ -102,8 +105,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @importFrom SingleCellExperiment int_colData int_elementMetadata int_metadata
 #'   int_metadata<- int_elementMetadata<- int_colData<-
 #' @importFrom sf st_point st_sfc st_sf st_polygon st_buffer st_linestring
-#'   st_multipoint st_multilinestring st_multipolygon st_coordinates
-#'   st_centroid st_geometry_type st_geometry st_is_valid st_geometrycollection
+#'   st_multipoint st_multilinestring st_multipolygon st_coordinates st_centroid
+#'   st_geometry_type st_geometry st_is_valid st_geometrycollection
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @export
 #' @examples
@@ -141,6 +144,7 @@ SpatialFeatureExperiment <- function(assays,
                                      annotGeometryType = "POLYGON",
                                      spatialGraphs = NULL,
                                      unit = "full_res_image_pixels",
+                                     BPPARAM = SerialParam(),
                                      ...) {
     if (!length(colData)) {
         colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
@@ -177,37 +181,34 @@ SpatialFeatureExperiment <- function(assays,
     sfe <- .spe_to_sfe(
         spe, colGeometries, rowGeometries, annotGeometries,
         spatialCoordsNames, annotGeometryType,
-        spatialGraphs, spotDiameter, unit
+        spatialGraphs, spotDiameter, unit, BPPARAM
     )
     return(sfe)
 }
 
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
-                        spotDiameter, unit) {
+                        spotDiameter, unit, BPPARAM) {
     if (is.null(colGeometries)) {
-        if (!is.na(spotDiameter)) {
-            colGeometries <- list(spotPoly = st_buffer(.sc2cg(spatialCoords(spe)),
-                dist = spotDiameter / 2
-            ))
-        } else {
-            colGeometries <- list(centroids = .sc2cg(spatialCoords(spe)))
-        }
+      cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
+      colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter,
+                                         BPPARAM))
+      names(colGeometries) <- cg_name
     }
     if (!is.null(rowGeometries)) {
         rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
-            spotDiameter = NA, geometryType = "POLYGON"
+            spotDiameter = NA, geometryType = "POLYGON", BPPARAM = BPPARAM
         )
     }
     if (!is.null(annotGeometries)) {
         annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
             spotDiameter = NA,
-            geometryType = annotGeometryType
+            geometryType = annotGeometryType, BPPARAM = BPPARAM
         )
     }
     sfe <- new("SpatialFeatureExperiment", spe)
-    colGeometries(sfe) <- colGeometries
-    rowGeometries(sfe) <- rowGeometries
+    colGeometries(sfe, withDimnames = FALSE) <- colGeometries
+    rowGeometries(sfe, withDimnames = FALSE) <- rowGeometries
     annotGeometries(sfe) <- annotGeometries
     spatialGraphs(sfe) <- spatialGraphs
     int_metadata(sfe)$unit <- unit
@@ -238,18 +239,20 @@ setMethod(
     "show", "SpatialFeatureExperiment",
     function(object) {
         callNextMethod()
-        skip_geometries <- length(colGeometries(object)) < 1 &
-            length(rowGeometries(object)) < 1 &
-            is.null(annotGeometries(object))
+      cg_names <- names(int_colData(object)$colGeometries)
+      rg_names <- names(int_elementMetadata(object)$rowGeometries)
+      ag_names <- names(int_metadata(object)$annotGeometries)
+        skip_geometries <- length(cg_names) < 1 & length(rg_names) < 1 &
+            is.null(ag_names)
         if (!skip_geometries) {
             cat("\nGeometries:\n")
-            if (length(colGeometries(object))) {
-                cat("colGeometries:", .names_types(colGeometries(object)), "\n")
+            if (length(cg_names)) {
+                cat("colGeometries:", .names_types(colGeometries(object, withDimnames = FALSE)), "\n")
             }
-            if (length(rowGeometries(object))) {
-                cat("rowGeometries:", .names_types(rowGeometries(object)), "\n")
+            if (length(rg_names)) {
+                cat("rowGeometries:", .names_types(rowGeometries(object, withDimnames = FALSE)), "\n")
             }
-            if (!is.null(annotGeometries(object))) {
+            if (!is.null(ag_names)) {
                 cat(
                     "annotGeometries:", .names_types(annotGeometries(object)),
                     "\n"

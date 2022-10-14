@@ -247,22 +247,25 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
 
 # Call in SFE constructor and *Geometries replacement methods
 .df2sf_in_list <- function(x, spatialCoordsNames = c("x", "y"),
-                           spotDiameter = NA, geometryType = "POLYGON") {
-    if (!is.null(x) && !is(x, "sf") && !is.data.frame(x)) {
+                           spotDiameter = NA, geometryType = "POLYGON",
+                           BPPARAM = SerialParam()) {
+    if (!is.null(x) && !is(x, "sf") && !is.data.frame(x) && !is.matrix(x)) {
         stop(
             "Each element of the list for *Geometry must be an ",
-            "sf object or a data frame."
+            "sf object or a data frame or a matrix."
         )
     }
     if (is(x, "sf") || is.null(x)) {
         return(x)
-    } else if (is.data.frame(x)) {
-        return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType))
+    } else if (is.data.frame(x) || is.matrix(x)) {
+        return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType, 
+                     BPPARAM = BPPARAM))
     }
 }
 
 .df2sf_list <- function(x, spatialCoordsNames = c("x", "y"),
-                        spotDiameter = NA, geometryType = "POLYGON") {
+                        spotDiameter = NA, geometryType = "POLYGON",
+                        BPPARAM = SerialParam()) {
     x_is_sf <- vapply(x, function(t) is(t, "sf"), FUN.VALUE = logical(1))
     if (all(x_is_sf)) {
         return(x)
@@ -279,7 +282,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
         x = x, geometryType = geometryType,
         MoreArgs = list(
             spatialCoordsNames = spatialCoordsNames,
-            spotDiameter = spotDiameter
+            spotDiameter = spotDiameter,
+            BPPARAM = BPPARAM
         ),
         SIMPLIFY = FALSE
     )

@@ -119,19 +119,23 @@
 
 .out_intdimdata_id <- function(x, out, MARGIN, sample_id) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    samples <- sampleIDs(x)
     if (!is.null(sample_id)) {
         if (MARGIN == 1L) {
             # OK, maybe applicable, say to crop the rowGeometries by bbox of a sample
             # I'll consider that later.
             message("sample_id is not applicable to rowGeometries.")
         } else if (MARGIN == 2L) {
-            # Somehow I lose the rownames after row subsetting
-            inds <- colData(x)$sample_id %in% sample_id
-            rns <- rownames(out)[inds]
-            out <- out[inds, , drop = FALSE]
-            rownames(out) <- rns
+            if (length(samples) > 1L) {
+              # Somehow I lose the rownames after row subsetting sf data frames
+              inds <- colData(x)$sample_id %in% sample_id
+              rns <- rownames(out)[inds]
+              out <- out[inds, , drop = FALSE]
+              rownames(out) <- rns
+            }
         } else {
-            out <- out[out$sample_id %in% sample_id, , drop = FALSE]
+            if (length(samples) > 1L)
+              out <- out[out$sample_id %in% sample_id, , drop = FALSE]
         }
     }
     out

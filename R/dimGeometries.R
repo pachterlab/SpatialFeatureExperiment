@@ -450,7 +450,7 @@ ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 .set_col_then_annot <- function(x, name, sample_id, withDimnames, translate,
                                 value) {
-    if (name %in% colGeometryNames(x)) {
+    if (nrow(value) == ncol(x)) {
         colGeometry(x, name, sample_id, withDimnames, translate) <- value
     } else {
         annotGeometry(x, name, sample_id, translate) <- value

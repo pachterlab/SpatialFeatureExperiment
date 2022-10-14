@@ -15,7 +15,8 @@
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   spotDiameter = NA,
-  unit = NULL
+  unit = NULL,
+  BPPARAM = SerialParam()
 )
 }
 \arguments{
@@ -86,6 +87,10 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 engineering CRS's which can convert units and invert the y axis for
 Cartesian vs. image orientations. Units are also helpful when plotting
 scale bars. Ignored for now, until I find a better way to deal with it.}
+
+\item{BPPARAM}{Passed to \code{\link{df2sf}}, to parallelize the conversion
+of centroid spatial coordinates in the SPE object to \code{sf} point
+geometry.}
 }
 \value{
 An SFE object

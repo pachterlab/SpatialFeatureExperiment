@@ -17,7 +17,10 @@
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @param x A \code{SpatialExperiment} object to be coerced to a
-#' \code{SpatialFeatureExperiment} object.
+#'   \code{SpatialFeatureExperiment} object.
+#' @param BPPARAM Passed to \code{\link{df2sf}}, to parallelize the conversion
+#'   of centroid spatial coordinates in the SPE object to \code{sf} point
+#'   geometry.
 #' @return An SFE object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords
@@ -32,9 +35,12 @@
 #' sfe <- toSpatialFeatureExperiment(spe)
 NULL
 
-.sc2cg <- function(coords_use) {
-    cg_sfc <- st_sfc(apply(coords_use, 1, st_point, simplify = FALSE))
-    st_sf(geometry = cg_sfc, row.names = rownames(coords_use))
+.sc2cg <- function(coords_use, spotDiameter = NA, BPPARAM = SerialParam()) {
+    colnames(coords_use) <- c("x", "y")
+    cg_sfc <- df2sf(coords_use, spotDiameter = spotDiameter, BPPARAM = BPPARAM,
+                    geometryType = "POINT")
+    rownames(cg_sfc) <- rownames(coords_use)
+    cg_sfc
 }
 setAs(
     from = "SpatialExperiment", to = "SpatialFeatureExperiment",
@@ -43,7 +49,7 @@ setAs(
         if (is.null(cg)) {
             coords_use <- spatialCoords(from)
             if (is.null(rownames(coords_use))) {
-                rownames(coords_use) <- rownames(from)
+                rownames(coords_use) <- colnames(from)
             }
             cg <- .sc2cg(coords_use)
             int_colData(from)[["colGeometries"]] <-
@@ -57,7 +63,8 @@ setAs(
             spatialCoordsNames(from), "POLYGON",
             int_metadata(from)[["spatialGraphs"]],
             spotDiameter = NA,
-            int_metadata(from)[["unit"]]
+            int_metadata(from)[["unit"]],
+            BPPARAM = SerialParam()
         )
     }
 )
@@ -69,7 +76,8 @@ setMethod(
     function(x, colGeometries = NULL, rowGeometries = NULL,
              annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
              annotGeometryType = "POLYGON",
-             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL,
+             BPPARAM = SerialParam()) {
         if (is.null(colGeometries)) {
             colGeometries <- int_colData(x)$colGeometries
         }
@@ -85,7 +93,7 @@ setMethod(
         .spe_to_sfe(
             x, colGeometries, rowGeometries, annotGeometries,
             spatialCoordsNames, annotGeometryType,
-            spatialGraphs, spotDiameter, unit
+            spatialGraphs, spotDiameter, unit, BPPARAM
         )
     }
 )

@@ -1,20 +1,4 @@
 # Validity of SFE object
-# 2. All elements of *Geometries must be sf objects
-.valid_geometry <- function(g, name_show) {
-    # Make message if something in an element of *Geometries is not valid
-    v <- st_is_valid(g, reason = TRUE)
-    which_invalid <- which(v != "Valid Geometry")
-    if (length(which_invalid)) {
-        paste0(
-            "The following items (index shown) in ", name_show,
-            " are invalid:\n", paste0(which_invalid, ": ", v[which_invalid],
-                collapse = "\n"
-            )
-        )
-    } else {
-        return(character(0))
-    }
-}
 .check_geometries <- function(gs, name_show) {
     msgs <- lapply(seq_along(gs), function(i) {
         if (!is(gs[[i]], "sf")) {

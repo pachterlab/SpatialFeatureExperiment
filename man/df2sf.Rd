@@ -33,12 +33,9 @@ data frame \code{df} must have a column "ID" specifying which coordinate
 belongs to which geometry. For MULTI* geometries, there must be a "group"
 column specifying which coordinates for which MULTI geometry.}
 
-\item{BPPARAM}{
-    An optional \code{\link[BiocParallel]{BiocParallelParam}} instance
-    determining the parallel back-end to be used during evaluation, or a
-    \code{list} of \code{BiocParallelParam} instances, to be applied in
-    sequence for nested calls to \pkg{BiocParallel} functions.
-  }
+\item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
+instance, passed to \code{\link{df2df}} to parallelize the conversion of
+data frames with coordinates to \code{sf} geometries.}
 }
 \value{
 An \code{sf} object.
