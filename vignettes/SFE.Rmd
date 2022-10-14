@@ -428,6 +428,7 @@ The original bounding box before moving is stored within the SFE object, which c
 
 # Limitations and future directions
 These are the limitations of the current version of SFE:
+
 1. By integrating with `sf`, which is designed for vector spatial data (specifying coordinates of points, lines, and polygons vertices), SFE only supports vector data for the geometries, and raster (like an image, with a value at each pixel) is not supported. Vector is chosen, as it is a more memory efficient way to represent cell and nuclei segmentation than a raster map. 
 2. The spatial graphs are `listw` objects so no conversion is necessary to use the well-established spatial statistical methods in the `spdep`, `spatialreg`, and `adespatial` packages. However, `igraph` implements many graph analysis methods, and conversion is required to use them. Whether future versions of SFE will stick to `listw` depends on importance of methods that use spatial graphs in `igraph` class.
 3. While Simple Features support 3D and spatiotemporal coordinates, most geospatial resources SFE leverages `sf` for is for 2D data. 
