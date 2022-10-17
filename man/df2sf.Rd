@@ -34,7 +34,7 @@ belongs to which geometry. For MULTI* geometries, there must be a "group"
 column specifying which coordinates for which MULTI geometry.}
 
 \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
-instance, passed to \code{\link{df2df}} to parallelize the conversion of
+instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
 }
 \value{

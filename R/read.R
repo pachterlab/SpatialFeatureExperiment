@@ -9,6 +9,7 @@
 #'
 #' @inheritParams SpatialExperiment::read10xVisium
 #' @inheritParams findVisiumGraph
+#' @inheritParams SpatialFeatureExperiment
 #' @param type Either "HDF5", and the matrix will be represented as
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
@@ -44,7 +45,8 @@ read10xVisiumSFE <- function(samples = "",
                              type = c("HDF5", "sparse"),
                              data = c("filtered", "raw"),
                              images = "lowres",
-                             load = TRUE, style = "W", zero.policy = NULL) {
+                             load = TRUE, style = "W", zero.policy = NULL,
+                             BPPARAM = SerialParam()) {
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(samples), function(i) {
         o <- read10xVisium(samples[i], sample_id[i], type, data, images, load)
@@ -59,7 +61,7 @@ read10xVisiumSFE <- function(samples = "",
             annotGeometries = NULL, spatialCoordsNames = NULL,
             annotGeometryType = NULL, spatialGraphs = NULL,
             spotDiameter = scalefactors[["spot_diameter_fullres"]],
-            unit = "full_res_image_pixels"
+            unit = "full_res_image_pixels", BPPARAM = BPPARAM
         )
     })
     out <- do.call(cbind, sfes)

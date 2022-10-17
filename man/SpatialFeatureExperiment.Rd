@@ -122,7 +122,7 @@ Cartesian vs. image orientations. Units are also helpful when plotting
 scale bars. Ignored for now, until I find a better way to deal with it.}
 
 \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
-instance, passed to \code{\link{df2df}} to parallelize the conversion of
+instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
 
 \item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
