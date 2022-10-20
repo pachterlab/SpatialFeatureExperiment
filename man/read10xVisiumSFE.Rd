@@ -43,7 +43,7 @@ as a \code{grob}? If FALSE, will store the path/URL instead.}
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 
 \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
-instance, passed to \code{\link{df2df}} to parallelize the conversion of
+instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
 }
 \value{
