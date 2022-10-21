@@ -31,7 +31,7 @@ NULL
         if (is.vector(value) && is.atomic(value)) {
             value <- setNames(list(value), feature)
         }
-        value <- df_fun(value)
+        value <- df_fun(value, check.names = FALSE)
     }
     value
 }
