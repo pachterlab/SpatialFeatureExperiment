@@ -3,6 +3,7 @@
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![codecov](https://codecov.io/github/pachterlab/SpatialFeatureExperiment/branch/main/graph/badge.svg?token=DHZ2I6C86M)](https://codecov.io/github/pachterlab/SpatialFeatureExperiment)
 <!-- badges: end -->
 
 ## Installation
