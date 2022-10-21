@@ -86,6 +86,14 @@ test_that("localResults setter, one type, multiple features, one sample, not geo
     expect_equal(lr$gene2, toy_res1b)
 })
 
+test_that("localResults setter, when a feature is not a valid R object name", {
+    values <- as.list(toy_df1)
+    names(values)[2] <- "gene-2"
+    localResults(sfe, name = "foo", features = names(values)) <- values
+    lr <- int_colData(sfe)$localResults$foo
+    expect_equal(names(lr), c("gene1", "gene-2"))
+})
+
 cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
     package = "SpatialFeatureExperiment"
 ))
