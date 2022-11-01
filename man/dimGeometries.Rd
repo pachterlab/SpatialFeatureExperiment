@@ -32,6 +32,8 @@
 \alias{rowGeometryNames<-}
 \alias{spotPoly}
 \alias{spotPoly<-}
+\alias{centroids}
+\alias{centroids<-}
 \alias{ROIPoly}
 \alias{ROIPoly<-}
 \alias{cellSeg}
@@ -125,6 +127,10 @@ rowGeometryNames(x) <- value
 spotPoly(x, sample_id = NULL, withDimnames = TRUE)
 
 spotPoly(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
+
+centroids(x, sample_id = NULL, withDimnames = TRUE)
+
+centroids(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
 
 ROIPoly(x, sample_id = NULL, withDimnames = TRUE)
 

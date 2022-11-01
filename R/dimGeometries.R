@@ -395,6 +395,23 @@ spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
     x
 }
 
+#' @rdname dimGeometries
+#' @export
+centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
+    colGeometry(x, "centroids", withDimnames, sample_id = sample_id)
+}
+
+#' @rdname dimGeometries
+#' @export
+`centroids<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                         translate = TRUE, value) {
+    colGeometry(x, "centroids", withDimnames,
+                sample_id = sample_id,
+                translate = translate
+    ) <- value
+    x
+}
+
 #' Add Visium spot polygons to colGeometry
 #'
 #' For adding the spot polygons to SFE objects converted from SPE.
