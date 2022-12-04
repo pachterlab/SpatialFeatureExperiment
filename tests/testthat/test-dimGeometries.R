@@ -88,12 +88,8 @@ test_that("colGeometry setter for one of the two samples (already present)", {
     cg_orig <- int_colData(sfe3)$colGeometries$spotPoly
     colGeometry(sfe3, "spotPoly", sample_id = "sample01") <- cg_toy[seq_len(3), ]
     expect_equal(int_colData(sfe3)$colGeometries$spotPoly[seq_len(3), ],
-        cg_toy[seq_len(3), ],
-        ignore_attr = "row.names"
-    )
-    expect_equal(int_colData(sfe3)$colGeometries$spotPoly[4:5, ], cg_orig[4:5, ],
-        ignore_attr = "row.names"
-    )
+        cg_toy[seq_len(3), ])
+    expect_equal(int_colData(sfe3)$colGeometries$spotPoly[4:5, ], cg_orig[4:5, ])
 })
 
 test_that("colGeometry getter for one of the two samples", {
@@ -101,5 +97,7 @@ test_that("colGeometry getter for one of the two samples", {
     int_colData(sfe3)$colGeometries$coords <- cg_toy
     coords_sample02 <- colGeometry(sfe3, "coords", "sample02")
     expect_equal(nrow(coords_sample02), 2L)
-    expect_equal(coords_sample02, cg_toy[4:5, ], ignore_attr = "row.names")
+    cg_expect <- cg_toy[4:5, ]
+    rownames(cg_expect) <- rownames(cg_toy)[4:5]
+    expect_equal(coords_sample02, cg_expect)
 })
