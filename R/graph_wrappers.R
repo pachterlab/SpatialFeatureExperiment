@@ -24,13 +24,11 @@
 }
 .knn_sfe <- function(coords, k = 1, use_kd_tree = TRUE) {
     knn2nb(knearneigh(coords,
-        k = k, use_kd_tree = use_kd_tree,
-        longlat = FALSE
+        k = k, use_kd_tree = use_kd_tree
     ))
 }
 .dnn_sfe <- function(coords, d1, d2, row.names = NULL, use_kd_tree = TRUE) {
     dnearneigh(coords, d1, d2,
-        longlat = FALSE,
         use_kd_tree = use_kd_tree, row.names = row.names
     )
 }
@@ -140,7 +138,7 @@
 #'   \code{method} argument, such as \code{k}, \code{use_kd_tree}, \code{d1},
 #'   \code{d2}, \code{nnmult}, \code{sym}, and \code{quadsegs}. Note that any
 #'   arguments about using longitude and latitude, which are irrelevant, are
-#'   ignored. The \code{longlat} argument is hard coded to \code{FALSE}.
+#'   ignored.
 #' @return For one sample, then a \code{listw} object representing the graph,
 #'   with an attribute "method" recording the function used to build the graph,
 #'   its arguments, and information about the geometry for which the graph was
