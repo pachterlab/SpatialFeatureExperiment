@@ -454,7 +454,8 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 .translate <- function(sfe, sample_id, v) {
     # spatialCoords
     inds <- colData(sfe)$sample_id == sample_id
-    spatialCoords(sfe)[inds, ] <- spatialCoords(sfe)[inds, ] + v
+    spatialCoords(sfe)[inds, ] <-
+        sweep(spatialCoords(sfe)[inds, ], 2, v, FUN = "+")
     # colGeometries
     for (n in colGeometryNames(sfe)) {
         cg <- colGeometry(sfe, n, sample_id = sample_id)

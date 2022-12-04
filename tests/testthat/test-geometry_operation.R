@@ -91,6 +91,12 @@ test_that("Remove empty space", {
         c("xmin", "ymin"),
         c("sample01", "sample02")
     ]) < .Machine$double.eps))
+    # Make sure that spatialCoords are correctly moved
+    coord_diffs <- spatialCoords(sfe_visium) - spatialCoords(sfe_moved)
+    diff1 <- unname(coord_diffs[sfe_visium$sample_id == "sample01",][1,])
+    diff2 <- unname(coord_diffs[sfe_visium$sample_id == "sample02",][1,])
+    expect_equal(diff1, unname(bboxes[c("xmin", "ymin"), "sample01"]))
+    expect_equal(diff2, unname(bboxes[c("xmin", "ymin"), "sample02"]))
 })
 
 library(SFEData)
