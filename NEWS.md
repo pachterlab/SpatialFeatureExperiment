@@ -1,5 +1,6 @@
-# Version 1.0.1 (12/03/2022)
+# Version 1.0.2 (12/03/2022)
 * Correctly move spatialCoords in removeEmptySpace
+* Preserve rownames when setting colGeometry for some of all samples
 
 # Version 1.0.0 (11/02/2022)
 * First version on Bioconductor

@@ -217,6 +217,7 @@
         existing <- .reconcile_cols(existing, value)
     }
     existing[all_sample_ids %in% sample_id, names(value)] <- value
+    rownames(existing) <- rownames_full
     existing
 }
 
