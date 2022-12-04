@@ -1,3 +1,9 @@
+# Version 1.0.1 (12/03/2022)
+* Correctly move spatialCoords in removeEmptySpace
+
+# Version 1.0.0 (11/02/2022)
+* First version on Bioconductor
+
 # Version 0.99.4 (09/07/2022)
 
 * Added \code{localResults} field
