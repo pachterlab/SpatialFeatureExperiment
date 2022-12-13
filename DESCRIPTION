@@ -17,6 +17,7 @@ Description: A new S4 class integrating Simple Features with the R package sf
     be used.
 Imports:
     BiocGenerics,
+    BiocNeighbors,
     BiocParallel,
     methods,
     rjson,

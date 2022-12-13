@@ -27,6 +27,227 @@
         k = k, use_kd_tree = use_kd_tree
     ))
 }
+
+#' @importFrom BiocNeighbors AnnoyParam KmknnParam
+.knn_bioc <- function(coords, k = 1, type = "idw", style = "W",
+                      alpha = 1, dmax = NULL, BNPARAM = AnnoyParam(),
+                      BPPARAM = SerialParam(), row.names = NULL) {
+    nn <- findKNN(coords, k = k, BNPARAM = BNPARAM)
+    # Split by row
+    nb <- asplit(nn$index, 1)
+
+    # Sort based on index
+    ord <- lapply(nb, order)
+    nb <- lapply(seq_along(nb), function(i) nb[[i]][ord[[i]]])
+    class(nb) <- "nb"
+
+    # Code adapted from spdep: https://github.com/r-spatial/spdep/blob/49c202d561da9565b0b70cf7462b7147feff59c2/R/nb2listwdist.R#L1
+    if (type == "idw") {
+        dmat <- nn$distance^-alpha
+        ind_finite <- is.finite(dmat)
+        if (all(!ind_finite)) stop("All edge weights are infinite")
+        if (any(!ind_finite)) {
+            dmat[!ind_finite] <- max(dmat[ind_finite])
+        }
+    } else if (type == "exp") {
+        dmat <- exp(-alpha * nn$distance)
+    } else if (type == "dpd") {
+        dmat <- (1 - (nn$distance/dmax)^alpha)^alpha
+        dmat[dmat < 0] <- 0
+    }
+
+    if (!is.null(dmax) && dmax > 0) {
+        dmat[nn$distance > dmax] <- 0
+    }
+
+    # Row normalize the weights
+    n <- nrow(dmat)
+    if (style == "W") {
+        dmat <- sweep(dmat, 1, rowSums(dmat), FUN = "/")
+    } else if (style == "B") {
+        dmat <- dmat > 0
+    } else if (style %in% c("C", "U")) {
+        D <- sum(dmat)
+        if (style == "C") dmat <- n/D * dmat
+        else dmat <- dmat/D
+    } else if (style == "S") {
+        q <- sqrt(rowSums(dmat^2))
+        dmat <- sweep(dmat, 1, STATS = q, FUN = "/")
+        Q <- sum(dmat)
+        if (is.na(Q) || !(Q > 0))
+            stop(paste("Failure in sum of intermediate weights:", Q))
+        dmat <- dmat * n/Q
+    } else if (style == "minmax") {
+        mm <- min(max(rowSums(dmat)), max(colSums(dmat)))
+        dmat <- dmat / mm
+    }
+
+    if (anyNA(dmat)) {
+        stop("NAs in coding scheme weights list")
+    }
+
+    # Construct the listw, should decouple finding edges and weights in future version
+    glist <- asplit(dmat, 1)
+    glist <- lapply(seq_along(glist), function(i) glist[[i]][ord[[i]]])
+
+    listw <- list(style = style,
+                  neighbours = nb,
+                  weights = glist)
+    class(listw) <- "listw"
+    attr(listw, "region.id") <- row.names
+    listw
+}
+
+.dnn_bioc <- function(coords, d2, type = "idw", style = "W",
+                      alpha = 1, dmax = NULL, BNPARAM = KmknnParam(),
+                      BPPARAM = SerialParam(), row.names = NULL,
+                      zero.policy = TRUE) {
+    nn <- findNeighbors(coords, threshold = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM)
+
+    # I might pad with 0 and convert the whole thing into a matrix
+    # and use the same matrix based code in .knn_bioc
+    # If that way is faster. But I'm not optimizing yet.
+    # Code adapted from spdep: https://github.com/r-spatial/spdep/blob/49c202d561da9565b0b70cf7462b7147feff59c2/R/nb2listwdist.R#L1
+    cardnb <- lengths(nn$index)
+    if (!zero.policy)
+        if (any(cardnb == 1)) stop("Empty neighbour sets found")
+
+    # Remove self from index and reorder
+    nb <- glist <- vlist <- vector("list", length = length(nn$index))
+    n <- length(nb)
+    for (i in seq_along(nb)) {
+        index <- nn$index[[i]]
+        ind_use <- index != i
+        if (any(ind_use)) {
+            v <- index[ind_use]
+            ord <- order(v)
+            nb[[i]] <- v[ord]
+            glist[[i]] <- nn$distance[[i]][ind_use][ord]
+        } else {
+            nb[[i]] <- 0L
+            glist[[i]] <- 0L
+        }
+    }
+    class(nb) <- "nb"
+    cardnb <- cardnb - 1L # removed self
+
+    if (type == "idw") {
+        for (i in 1:n) {
+            if (cardnb[i] > 0) {
+                vlist[[i]] <- glist[[i]]^-alpha
+                if(!is.null(dmax) && dmax > 0)
+                    vlist[[i]][which(glist[[i]] > dmax)] <- 0
+            }
+        }
+        uvlist <- unlist(vlist)
+        fins <- is.finite(uvlist)
+        if (all(!fins)) stop("no finite general weights")
+        if (any(!fins)) {
+            max_finite <- max(uvlist[fins])
+            for(i in 1:n) {
+                vlist[[i]][is.infinite(vlist[[i]])] <- max_finite
+            }
+        }
+    }
+
+    if (type == "exp") {
+        for (i in 1:n) {
+            if (cardnb[i] > 0) {
+                vlist[[i]] <- exp(glist[[i]] * ((-1) * alpha))
+                if(!is.null(dmax) && dmax > 0)
+                    vlist[[i]][glist[[i]] > dmax] <- 0
+            }
+        }
+    }
+
+    if (type == "dpd") {
+        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold")
+        if (dmax <= 0) stop("DPD weights require a positive maximum distance threshold")
+        for (i in 1:n) {
+            if (cardnb[i] > 0) {
+                vlist[[i]] <- (1 - (glist[[i]] / dmax)^alpha)^alpha
+                vlist[[i]][vlist[[i]] < 0] <- 0
+            }
+        }
+    }
+
+    if(style != "raw") {
+
+        if (zero.policy) {
+            eff.n <- n - sum(cardnb == 0)
+            if (eff.n < 1) stop("No valid observations")
+        } else eff.n <- n
+
+        if (style == "W") {
+            d <- unlist(lapply(glist, sum))
+            for (i in 1:n) {
+                if (cardnb[i] > 0) {
+                    if (d[i] > 0) vlist[[i]] <- glist[[i]] / d[i]
+                    else vlist[[i]] <- 0
+                }
+            }
+            attr(vlist, "comp") <- list(d=d)
+        }
+
+        if (style == "B") {
+            for (i in 1:n) {
+                if (cardnb[i] > 0) vlist[[i]] <- as.numeric(glist[[i]] > 0)
+            }
+        }
+
+        if (style == "C" || style == "U") {
+            D <- sum(unlist(glist))
+            if (is.na(D) || !(D > 0))
+                stop(paste("Failure in sum of weights:", D))
+            for (i in 1:n) {
+                if (cardnb[i] > 0) {
+                    if (style == "C")
+                        vlist[[i]] <- (eff.n/D) * glist[[i]]
+                    else
+                        vlist[[i]] <- (1/D) * glist[[i]]
+                }
+            }
+        }
+
+        if (style == "S") {
+            glist2 <- lapply(glist, function(x) x^2)
+            q <- sqrt(unlist(lapply(glist2, sum)))
+            for (i in 1:n) {
+                if (cardnb[i] > 0) {
+                    if (q[i] > 0) glist[[i]] <- (1/q[i]) * glist[[i]]
+                    else glist[[i]] <- 0
+                }
+            }
+            Q <- sum(unlist(glist))
+            if (is.na(Q) || !(Q > 0))
+                stop(paste("Failure in sum of intermediate weights:", Q))
+            for (i in 1:n) {
+                if (cardnb[i] > 0)
+                    vlist[[i]] <- (eff.n/Q) * glist[[i]]
+            }
+            attr(vlist, "comp") <- list(q=q, Q=Q, eff.n=eff.n)
+        }
+    }
+
+    if (!zero.policy)
+        if (any(is.na(unlist(vlist))))
+            stop ("NAs in coding scheme weights list")
+
+    if (style == "minmax") {
+        res <- list(style=style, neighbours=neighbours, weights=vlist)
+        class(res) <- c("listw", "nb")
+        mm <- minmax.listw(res)
+        vlist <- lapply(vlist, function(x) (1/c(mm)) * x)
+    }
+
+    listw <- list(style = style,
+                  neighbours = nb,
+                  weights = vlist)
+    class(listw) <- "listw"
+    attr(listw, "region.id") <- row.names
+    listw
+}
+
 .dnn_sfe <- function(coords, d1, d2, row.names = NULL, use_kd_tree = TRUE) {
     dnearneigh(coords, d1, d2,
         use_kd_tree = use_kd_tree, row.names = row.names
