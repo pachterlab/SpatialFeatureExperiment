@@ -22,42 +22,28 @@
         return(coords)
     }
 }
-.knn_sfe <- function(coords, k = 1, use_kd_tree = TRUE) {
-    knn2nb(knearneigh(coords,
-        k = k, use_kd_tree = use_kd_tree
-    ))
-}
+.nb2listwdist2 <- function(nb, ...) UseMethod(".nb2listwdist2")
 
-#' @importFrom BiocNeighbors AnnoyParam KmknnParam
-.knn_bioc <- function(coords, k = 1, type = "idw", style = "W",
-                      alpha = 1, dmax = NULL, BNPARAM = AnnoyParam(),
-                      BPPARAM = SerialParam(), row.names = NULL) {
-    nn <- findKNN(coords, k = k, BNPARAM = BNPARAM)
-    # Split by row
-    nb <- asplit(nn$index, 1)
-
-    # Sort based on index
-    ord <- lapply(nb, order)
-    nb <- lapply(seq_along(nb), function(i) nb[[i]][ord[[i]]])
-    class(nb) <- "nb"
-
+.nb2listwdist2.nbknn <- function(nb, type = "idw", style = "W", alpha = 1,
+                                 dmax = NULL) {
     # Code adapted from spdep: https://github.com/r-spatial/spdep/blob/49c202d561da9565b0b70cf7462b7147feff59c2/R/nb2listwdist.R#L1
+    distance <- attr(nb, "distance")
     if (type == "idw") {
-        dmat <- nn$distance^-alpha
+        dmat <- distance^-alpha
         ind_finite <- is.finite(dmat)
         if (all(!ind_finite)) stop("All edge weights are infinite")
         if (any(!ind_finite)) {
             dmat[!ind_finite] <- max(dmat[ind_finite])
         }
     } else if (type == "exp") {
-        dmat <- exp(-alpha * nn$distance)
+        dmat <- exp(-alpha * distance)
     } else if (type == "dpd") {
-        dmat <- (1 - (nn$distance/dmax)^alpha)^alpha
+        dmat <- (1 - (distance/dmax)^alpha)^alpha
         dmat[dmat < 0] <- 0
     }
 
     if (!is.null(dmax) && dmax > 0) {
-        dmat[nn$distance > dmax] <- 0
+        dmat[distance > dmax] <- 0
     }
 
     # Row normalize the weights
@@ -94,43 +80,17 @@
                   neighbours = nb,
                   weights = glist)
     class(listw) <- "listw"
-    attr(listw, "region.id") <- row.names
+    attr(listw, "region.id") <- attr(nb, "region.id")
     listw
 }
 
-.dnn_bioc <- function(coords, d2, type = "idw", style = "W",
-                      alpha = 1, dmax = NULL, BNPARAM = KmknnParam(),
-                      BPPARAM = SerialParam(), row.names = NULL,
-                      zero.policy = TRUE) {
-    nn <- findNeighbors(coords, threshold = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM)
-
-    # I might pad with 0 and convert the whole thing into a matrix
-    # and use the same matrix based code in .knn_bioc
-    # If that way is faster. But I'm not optimizing yet.
+#' @importFrom spdep card
+.nb2listwdist2.nbdnn <- function(nb, type = "idw", style = "W", alpha = 1,
+                                 dmax = NULL) {
     # Code adapted from spdep: https://github.com/r-spatial/spdep/blob/49c202d561da9565b0b70cf7462b7147feff59c2/R/nb2listwdist.R#L1
-    cardnb <- lengths(nn$index)
-    if (!zero.policy)
-        if (any(cardnb == 1)) stop("Empty neighbour sets found")
-
-    # Remove self from index and reorder
-    nb <- glist <- vlist <- vector("list", length = length(nn$index))
-    n <- length(nb)
-    for (i in seq_along(nb)) {
-        index <- nn$index[[i]]
-        ind_use <- index != i
-        if (any(ind_use)) {
-            v <- index[ind_use]
-            ord <- order(v)
-            nb[[i]] <- v[ord]
-            glist[[i]] <- nn$distance[[i]][ind_use][ord]
-        } else {
-            nb[[i]] <- 0L
-            glist[[i]] <- 0L
-        }
-    }
-    class(nb) <- "nb"
-    cardnb <- cardnb - 1L # removed self
-
+    cardnb <- card(nb)
+    vlist <- vector("list", length = length(nn$index))
+    glist <- attr(nb, "distance")
     if (type == "idw") {
         for (i in 1:n) {
             if (cardnb[i] > 0) {
@@ -244,14 +204,78 @@
                   neighbours = nb,
                   weights = vlist)
     class(listw) <- "listw"
-    attr(listw, "region.id") <- row.names
+    attr(listw, "region.id") <- attr(nb, "region.id")
     listw
 }
 
-.dnn_sfe <- function(coords, d1, d2, row.names = NULL, use_kd_tree = TRUE) {
-    dnearneigh(coords, d1, d2,
-        use_kd_tree = use_kd_tree, row.names = row.names
-    )
+#' @importFrom BiocNeighbors AnnoyParam KmknnParam
+.knn_bioc <- function(coords, k = 1, BNPARAM = AnnoyParam(),
+                      BPPARAM = SerialParam(), row.names = NULL) {
+    nn <- findKNN(coords, k = k, BNPARAM = BNPARAM, BPPARAM = BPPARAM)
+    # Split by row
+    nb <- asplit(nn$index, 1)
+
+    # Sort based on index
+    ord <- lapply(nb, order)
+    nb <- lapply(seq_along(nb), function(i) nb[[i]][ord[[i]]])
+    attr(nb, "distance") <- nn$distance
+    attr(nb, "region.id") <- row.names
+    class(nb) <- c("nb", "nbknn")
+    nb
+}
+
+.dnn_bioc <- function(coords, d2, BNPARAM = KmknnParam(),
+                      BPPARAM = SerialParam(), row.names = NULL,
+                      zero.policy = TRUE) {
+    nn <- findNeighbors(coords, threshold = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM)
+
+    # I might pad with 0 and convert the whole thing into a matrix
+    # and use the same matrix based code in .knn_bioc
+    # If that way is faster. But I'm not optimizing yet.
+    cardnb <- lengths(nn$index)
+    if (!zero.policy)
+        if (any(cardnb == 1)) stop("Empty neighbour sets found")
+
+    # Remove self from index and reorder
+    nb <- glist <- vector("list", length = length(nn$index))
+    n <- length(nb)
+    for (i in seq_along(nb)) {
+        index <- nn$index[[i]]
+        ind_use <- index != i
+        if (any(ind_use)) {
+            v <- index[ind_use]
+            ord <- order(v)
+            nb[[i]] <- v[ord]
+            glist[[i]] <- nn$distance[[i]][ind_use][ord]
+        } else {
+            nb[[i]] <- 0L
+            glist[[i]] <- 0L
+        }
+    }
+    attr(nb, "distance") <- glist
+    attr(nb, "region.id") <- row.names
+    class(nb) <- c("nb", "nbdnn")
+    nb
+}
+
+.knn_sfe <- function(coords, k = 1, row.names = NULL, nn_method = "bioc",
+                     use_kd_tree = TRUE, BNPARAM = KmknnParam(),
+                     BPPARAM = SerialParam()) {
+    if (nn_method == "spdep")
+        knn2nb(knearneigh(coords, k = k, use_kd_tree = use_kd_tree),
+               row.names = row.names)
+    else
+        .knn_bioc(coords, k = k, BPPARAM = BPPARAM, BNPARAM = BNPARAM)
+}
+
+.dnn_sfe <- function(coords, d1, d2, row.names = NULL, nn_method = "bioc",
+                     use_kd_tree = TRUE, BNPARAM = KmknnParam(),
+                     BPPARAM = SerialParam(), zero.policy = TRUE) {
+    if (nn_method == "spdep")
+        dnearneigh(coords, d1, d2, use_kd_tree = use_kd_tree, row.names = row.names)
+    else
+        .dnn_bioc(coords, d2 = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM,
+                  row.names = row.names, zero.policy = zero.policy)
 }
 .g2nb_sfe <- function(coords, fun, nnmult = 3, sym = FALSE, row.names = NULL) {
     # Either gabrielneigh or relativeneigh
@@ -353,6 +377,18 @@
 #'   inverse distance weighting. "exp" means exponential decay. "dpd" means
 #'   double-power distance weights. See \code{\link[spdep]{nb2listwdist}} for
 #'   details.
+#' @param nn_method Method to find k nearest neighbors and distance based
+#' neighbors. Can be either "bioc" or "spdep". For "bioc", methods from
+#' \code{BiocNeighbors} are used. For "spdep", methods from the \code{spdep}
+#' package are used. The "bioc" option is more scalable to larger datasets and
+#' supports multithreading.
+#' @param BPPARAM A \code{\link{BiocParallelParam}} object for multithreading.
+#' Only used for k nearest neighbor and distance based neighbor with
+#' \code{nn_method = "bioc"}.
+#' @param BNPARAM A \code{\link{BiocNeighborParam}} object specifying the
+#' algorithm to find k nearest neighbors and distance based neighbors with
+#' \code{nn_method = "bioc"}. For distance based neighbors, only
+#' \code{\link{KmknnParam}} and \code{\link{VptreeParam}} are applicable.
 #' @param alpha Only relevant when \code{dist_type = "dpd"}.
 #' @param dmax Only relevant when \code{dist_type = "dpd"}.
 #' @param ... Extra arguments passed to the \code{spdep} function stated in the
@@ -401,7 +437,7 @@ setMethod(
              glist = NULL, style = c(
                  "raw", "W", "B", "C", "U",
                  "minmax", "S"
-             ),
+             ), nn_method = c("bioc", "spdep"),
              alpha = 1, dmax = NULL, zero.policy = NULL, ...) {
         method <- match.arg(method)
         dist_type <- match.arg(dist_type)
