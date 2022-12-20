@@ -7,7 +7,7 @@ cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
 ))
 
 test_that("Get the correct graph and attr for reconstruction", {
-    g <- findSpatialNeighbors(sfe2, "sample01",
+    g <- findSpatialNeighbors(sfe2, sample_id = "sample01",
         type = "spatialCoords",
         MARGIN = 2, method = "tri2nb"
     )
@@ -33,6 +33,83 @@ test_that("Use distance weighting", {
     attrs_reconst <- attr(g, "method")
     expect_equal(attrs_reconst$args$dist_type, "idw")
     expect_equal(attrs_reconst$args$style, "raw")
+})
+
+library(SFEData)
+sfe_muscle1 <- McKellarMuscleData("small")
+sfe_muscle2 <- McKellarMuscleData("small2")
+sfe <- cbind(sfe_muscle1, sfe_muscle2)
+
+dist_types <- c("none", "idw", "exp", "dpd")
+styles <- c("raw", "W", "B", "C", "U", "minmax", "S")
+test_that("Exact Bioc methods for knn return same results as spdep methods", {
+    # Types of distance weights
+    for (d in dist_types) {
+        s <- "W"
+        cat("Testing dist_type", d, "style", s, "\n")
+        g1 <- findSpatialNeighbors(sfe, k = 3, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "knearneigh",
+                                   nn_method = "spdep", dmax = 200)
+        g2 <- findSpatialNeighbors(sfe, k = 3, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "knearneigh",
+                                   nn_method = "bioc", dmax = 200)
+        expect_equal(g1, g2, ignore_attr = c("call", "knn-k", "type", "sym", "method"))
+    }
+    # Types of normalization
+    for (s in styles) {
+        d <- "idw"
+        cat("Testing dist_type", d, "style", s, "\n")
+        g1 <- findSpatialNeighbors(sfe, k = 3, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "knearneigh",
+                                   nn_method = "spdep")
+        g2 <- findSpatialNeighbors(sfe, k = 3, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "knearneigh",
+                                   nn_method = "bioc")
+        expect_equal(g1, g2, ignore_attr = c("call", "knn-k", "type", "sym", "method"))
+    }
+})
+
+test_that("Exact Bioc methods for dnearneigh return same results as spdep methods", {
+    # Types of distance weights
+    for (d in dist_types) {
+        s <- "W"
+        cat("Testing dist_type", d, "style", s, "\n")
+        g1 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "dnearneigh",
+                                   nn_method = "spdep", dmax = 200)
+        g2 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "dnearneigh",
+                                   nn_method = "bioc", dmax = 200)
+        expect_equal(g1, g2, ignore_attr = c("call", "type", "sym", "method", "bounds"))
+    }
+    # Types of normalization
+    for (s in styles) {
+        d <- "idw"
+        cat("Testing dist_type", d, "style", s, "\n")
+        g1 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "dnearneigh",
+                                   nn_method = "spdep")
+        g2 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+                                   dist_type = d, style = s,
+                                   type = "myofiber_simplified",
+                                   method = "dnearneigh",
+                                   nn_method = "bioc")
+        expect_equal(g1, g2, ignore_attr = c("call", "type", "sym", "method", "bounds"))
+    }
 })
 
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
