@@ -137,7 +137,7 @@
             if (cardnb[i] > 0) {
                 vlist[[i]] <- glist[[i]]^-alpha
                 if(!is.null(dmax) && dmax > 0)
-                    vlist[[i]][which(glist[[i]] > dmax)] <- 0
+                    vlist[[i]][glist[[i]] > dmax] <- 0
             }
         }
         uvlist <- unlist(vlist)
@@ -154,7 +154,7 @@
     if (type == "exp") {
         for (i in 1:n) {
             if (cardnb[i] > 0) {
-                vlist[[i]] <- exp(glist[[i]] * ((-1) * alpha))
+                vlist[[i]] <- exp(glist[[i]] * (-alpha))
                 if(!is.null(dmax) && dmax > 0)
                     vlist[[i]][glist[[i]] > dmax] <- 0
             }
