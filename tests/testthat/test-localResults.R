@@ -1,5 +1,6 @@
 library(SingleCellExperiment)
 library(S4Vectors)
+library(sf)
 
 sfe <- readRDS(system.file("extdata/sfe_toy.rds",
     package = "SpatialFeatureExperiment"
@@ -141,6 +142,22 @@ test_that("localResults setter, one type, one feature, annotGeometry", {
     expect_equal(names(lrs), "foo")
     expect_equal(names(lrs$foo), "gene1")
     expect_equal(lrs$foo$gene1, toy_res1[1, , drop = FALSE], ignore_attr = "class")
+})
+
+test_that("Not translating geometries after removing empty space", {
+    sfe_shifted <- removeEmptySpace(sfe)
+    # colGeometry
+    bbox_cg <- st_as_sfc(st_bbox(colGeometry(sfe_shifted)))
+    localResult(sfe_shifted, "foo", feature = "gene1", colGeometryName = "cg") <- toy_res1
+    bbox_cg2 <- st_as_sfc(st_bbox(colGeometry(sfe_shifted)))
+    expect_equal(bbox_cg, bbox_cg2)
+
+    # annotGeometry
+    bbox_ag <- st_as_sfc(st_bbox(annotGeometry(sfe_shifted)))
+    localResult(sfe_shifted, "foo", feature = "gene1", annotGeometryName = "ag") <-
+        toy_res1[1, , drop = FALSE]
+    bbox_ag2 <- st_as_sfc(st_bbox(annotGeometry(sfe_shifted)))
+    expect_equal(bbox_ag, bbox_ag2)
 })
 
 sfe3 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
