@@ -59,7 +59,7 @@ details.}
 \code{method} argument, such as \code{k}, \code{use_kd_tree}, \code{d1},
 \code{d2}, \code{nnmult}, \code{sym}, and \code{quadsegs}. Note that any
 arguments about using longitude and latitude, which are irrelevant, are
-ignored. The \code{longlat} argument is hard coded to \code{FALSE}.}
+ignored.}
 }
 \value{
 For one sample, then a \code{listw} object representing the graph,
