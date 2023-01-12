@@ -94,15 +94,13 @@
                                 translate = TRUE, sf = TRUE, getfun, setfun,
                                 key, xdimfun, funstr, xdimstr, value, ...) {
     if (sf) value <- .df2sf_list(value, ...)
-    if (withDimnames) {
-        for (v in seq_along(value)) {
-            value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
-                withDimnames = withDimnames,
-                vname = sprintf("value[[%s]]", v),
-                fun = funstr
-            )
-            if (sf) value[[v]] <- .translate_value(x, translate, value[[v]])
-        }
+    for (v in seq_along(value)) {
+        value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
+                                          withDimnames = withDimnames,
+                                          vname = sprintf("value[[%s]]", v),
+                                          fun = funstr
+        )
+        if (sf) value[[v]] <- .translate_value(x, translate, value[[v]])
     }
     .set_internal_all(x, value,
         getfun = getfun,
@@ -381,7 +379,8 @@
     }
     if (init_type) g$localResults[[lr_type]][["..1"]] <- NULL
     if (init_lr) g$localResults[["..1"]] <- NULL
-    x <- set_geom_fun(x, type = geometry_type, sample_id = "all", value = g)
+    x <- set_geom_fun(x, type = geometry_type, sample_id = "all", value = g,
+                      translate = FALSE)
     x
 }
 
