@@ -55,6 +55,7 @@ test_that("colGeometry getter", {
     expect_equal(cg2, cg_toy2)
     cg3 <- colGeometry(sfe2, 2L)
     expect_equal(cg3, cg_toy2)
+    expect_error(colGeometry(sfe2, "purr"), "not in")
 })
 
 test_that("colGeometryNames", {

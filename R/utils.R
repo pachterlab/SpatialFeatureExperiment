@@ -49,8 +49,21 @@ changeSampleIDs <- function(sfe, replacement) {
 
 .translate_value <- function(x, translate, value) {
     if (translate && !is.null(int_metadata(x)$orig_bbox)) {
-        value$geometry <- value$geometry -
-            int_metadata(x)$orig_bbox[c("xmin", "ymin")]
+        if (anyNA(value$sample_id) && nrow(value) == ncol(x))
+            value$sample_id <- colData(x)$sample_id
+        orig_bbox <- int_metadata(x)$orig_bbox
+        samples <- unique(value$sample_id)
+        if (length(samples) > 1L) {
+            df_split <- split(value, value$sample_id)
+            df_split <- lapply(samples, function(s) {
+                out <- df_split[[s]]
+                out$geometry <- out$geometry - orig_bbox[c("xmin", "ymin"), s]
+                out
+            })
+            value <- do.call(rbind, df_split)
+        } else {
+            value$geometry <- value$geometry - orig_bbox[c("xmin", "ymin"), samples]
+        }
     }
     value
 }

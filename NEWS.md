@@ -1,3 +1,8 @@
+# Version 1.0.3 (01/11/2023)
+* Correctly move the geometries when there are multiple samples
+* Use translate = FALSE when using localResult setter for geometries
+* More helpful error messages when geometries, localResult, or spatial graphs are absent
+
 # Version 1.0.2 (12/03/2022)
 * Correctly move spatialCoords in removeEmptySpace
 * Preserve rownames when setting colGeometry for some of all samples

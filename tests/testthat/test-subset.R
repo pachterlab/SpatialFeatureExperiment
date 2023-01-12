@@ -65,7 +65,7 @@ test_that("Warning message and dropping graphs when reconstruction info is unava
         sfe_visium <- sfe_visium[, -13],
         "Graph reconstruction info is missing for sample sample02 colGraph bar"
     )
-    expect_true(is.null(colGraph(sfe_visium, "bar", sample_id = "sample02")))
+    expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
 })
 
 test_that("Warning message and dropping graphs when package required for reconstruction is not installed", {
@@ -83,5 +83,5 @@ test_that("Warning message and dropping graphs when package required for reconst
         sfe_visium <- sfe_visium[, -13],
         "Package foobar used to construct graph for sample sample02 colGraph bar is not installed"
     )
-    expect_true(is.null(colGraph(sfe_visium, "bar", sample_id = "sample02")))
+    expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
 })

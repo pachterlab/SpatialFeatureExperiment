@@ -69,6 +69,10 @@ test_that("annotGeometry getter for one out of two sample_id", {
     expect_equal(out, ag2[1, ])
 })
 
+test_that("Error message when the geometry of interest is absent", {
+    expect_error(annotGeometry(sfe3, "meow"), "annotGeometry meow is absent")
+})
+
 test_that("annotGeometry setter for one sample_id when already present", {
     # when annotGeometry of the given name already exists
     foo <- st_sf(

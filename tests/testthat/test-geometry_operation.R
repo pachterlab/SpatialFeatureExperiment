@@ -100,12 +100,108 @@ test_that("Remove empty space", {
 })
 
 library(SFEData)
-sfe <- McKellarMuscleData("small")
+sfe1 <- McKellarMuscleData("small")
+sfe2 <- McKellarMuscleData("small2")
+sfe <- cbind(sfe1, sfe2)
+
+# Toy example before removing empty space
+bboxes <- bbox(sfe, sample_id = "all")
+set.seed(29)
+cg_toy1 <- data.frame(
+    x = runif(ncol(sfe1), bboxes["xmin", "Vis5A"], bboxes["xmax", "Vis5A"]),
+    y = runif(ncol(sfe1), bboxes["ymin", "Vis5A"], bboxes["ymax", "Vis5A"]),
+    sample_id = "Vis5A")
+cg_toy1 <- df2sf(cg_toy1)
+cg_toy2 <- data.frame(
+    x = runif(ncol(sfe2), bboxes["xmin", "sample02"], bboxes["xmax", "sample02"]),
+    y = runif(ncol(sfe2), bboxes["ymin", "sample02"], bboxes["ymax", "sample02"]),
+    sample_id = "sample02")
+cg_toy2 <- df2sf(cg_toy2)
+cg_toy <- rbind(cg_toy1, cg_toy2)
+
+sfe_shifted <- removeEmptySpace(sfe)
+bbox_new <- st_as_sfc(st_bbox(bbox(sfe_shifted, sample_id = "Vis5A")))
+bbox_old1 <- st_as_sfc(st_bbox(bbox(sfe, sample_id = "Vis5A")))
+bbox_old2 <- st_as_sfc(st_bbox(bbox(sfe, sample_id = "sample02")))
+
+test_that("colGeometry setter after removing empty space", {
+    # Two samples
+    colGeometry(sfe_shifted, "toy", sample_id = "all",
+                withDimnames = FALSE) <- cg_toy
+    cg <- colGeometry(sfe_shifted, "toy", sample_id = "all")
+    bb <- st_as_sfc(st_bbox(cg))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # One of two samples
+    colGeometry(sfe_shifted, "toy2", sample_id = "sample02",
+                withDimnames = FALSE) <- cg_toy2
+    cg <- colGeometry(sfe_shifted, "toy2", sample_id = "sample02")
+    bb <- st_as_sfc(st_bbox(cg))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # Use colGeometries setter
+    colGeometries(sfe_shifted, withDimnames = FALSE) <- list(foo = cg_toy)
+    cg <- colGeometry(sfe_shifted, "foo", sample_id = "all")
+    bb <- st_as_sfc(st_bbox(cg))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # Not moved with translate = FALSE
+    colGeometry(sfe_shifted, "bar", sample_id = "all", translate = FALSE,
+                withDimnames = FALSE) <- cg_toy
+    cg1 <- colGeometry(sfe_shifted, "bar", sample_id = "Vis5A")
+    cg2 <- colGeometry(sfe_shifted, "bar", sample_id = "sample02")
+    bb1 <- st_as_sfc(st_bbox(cg1))
+    bb2 <- st_as_sfc(st_bbox(cg2))
+    expect_true(st_covered_by(bb1, bbox_old1, sparse = FALSE))
+    expect_true(st_covered_by(bb2, bbox_old2, sparse = FALSE))
+})
+
+test_that("annotGeometry setter after removing empty space", {
+    # One sample, that it shifted
+    sfe_shifted1 <- removeEmptySpace(sfe1)
+    ag <- annotGeometry(sfe_shifted1, "myofiber_simplified")
+    bb <- st_as_sfc(st_bbox(ag))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # One sample setter
+    ag_old <- annotGeometry(sfe1, "myofiber_simplified")
+    annotGeometry(sfe_shifted1, "foo") <- ag_old
+    ag <- annotGeometry(sfe_shifted1, "foo")
+    bb <- st_as_sfc(st_bbox(ag))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # Two samples
+    ag_old2 <- annotGeometry(sfe, "myofiber_simplified", sample_id = "all")
+    annotGeometry(sfe_shifted, "foo", sample_id = "all") <- ag_old2
+    ag <- annotGeometry(sfe_shifted, "foo", sample_id = "all")
+    bb <- st_as_sfc(st_bbox(ag))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # One of two samples to modify existing annotGeometry
+    annotGeometry(sfe_shifted, "bar", sample_id = "Vis5A") <- ag_old
+    ag <- annotGeometry(sfe_shifted, "foo", sample_id = "Vis5A")
+    bb <- st_as_sfc(st_bbox(ag))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # Use annotGeometries setter
+    annotGeometries(sfe_shifted) <- list(foobar = ag_old2)
+    ag <- annotGeometry(sfe_shifted, "foobar", sample_id = "all")
+    bb <- st_as_sfc(st_bbox(ag))
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+
+    # Not moved when translate = FALSE
+    annotGeometry(sfe_shifted, "baz", sample_id = "all", translate = FALSE) <-
+        ag_old2
+    bb1 <- st_as_sfc(st_bbox(annotGeometry(sfe_shifted, "baz", sample_id = "Vis5A")))
+    bb2 <- st_as_sfc(st_bbox(annotGeometry(sfe_shifted, "baz", sample_id = "sample02")))
+    expect_true(st_covered_by(bb1, bbox_old1, sparse = FALSE))
+    expect_true(st_covered_by(bb2, bbox_old2, sparse = FALSE))
+})
 
 test_that("annotSummary", {
-    out <- annotSummary(sfe, "spotPoly", "myofiber_simplified", "area")
+    out <- annotSummary(sfe1, "spotPoly", "myofiber_simplified", "area")
     expect_s3_class(out, "data.frame")
-    expect_equal(rownames(out), colnames(sfe))
+    expect_equal(rownames(out), colnames(sfe1))
     expect_equal(names(out), "area")
     expect_true(is.numeric(out$area))
 })

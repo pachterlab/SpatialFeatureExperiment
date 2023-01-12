@@ -291,7 +291,7 @@ setMethod(
             .get_internal_fun = .get_internal_character,
             getfun = int_colData,
             key = "localResults", funstr = "localResult",
-            substr = "type", simplify = simplify
+            substr = "type", namestr = "localResult", simplify = simplify
         )
     }
 )

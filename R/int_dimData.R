@@ -37,6 +37,10 @@
     )
 }
 
+.dg_key2 <- function(MARGIN) {
+    switch (MARGIN, "rowGeometry", "colGeometry", "annotGeometry")
+}
+
 .unnamed <- "unnamed"
 # Modified from SCE to generalize to both rows and columns
 .check_dimgeo_names <- function(reference, incoming, MARGIN, withDimnames,
@@ -94,15 +98,13 @@
                                 translate = TRUE, sf = TRUE, getfun, setfun,
                                 key, xdimfun, funstr, xdimstr, value, ...) {
     if (sf) value <- .df2sf_list(value, ...)
-    if (withDimnames) {
-        for (v in seq_along(value)) {
-            value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
-                withDimnames = withDimnames,
-                vname = sprintf("value[[%s]]", v),
-                fun = funstr
-            )
-            if (sf) value[[v]] <- .translate_value(x, translate, value[[v]])
-        }
+    for (v in seq_along(value)) {
+        value[[v]] <- .check_dimgeo_names(x, value[[v]], MARGIN,
+                                          withDimnames = withDimnames,
+                                          vname = sprintf("value[[%s]]", v),
+                                          fun = funstr
+        )
+        if (sf) value[[v]] <- .translate_value(x, translate, value[[v]])
     }
     .set_internal_all(x, value,
         getfun = getfun,
@@ -142,12 +144,14 @@
 }
 
 .get_internal_id <- function(x, type, MARGIN, sample_id, withDimnames,
-                             .get_internal_fun, getfun, key, funstr, substr) {
+                             .get_internal_fun, getfun, key, funstr, substr,
+                             ...) {
     out <- .get_internal_fun(x, type,
         getfun = getfun,
         key = key,
         funstr = funstr,
-        substr = substr
+        substr = substr,
+        ...
     )
 
     if (withDimnames) {
@@ -381,7 +385,8 @@
     }
     if (init_type) g$localResults[[lr_type]][["..1"]] <- NULL
     if (init_lr) g$localResults[["..1"]] <- NULL
-    x <- set_geom_fun(x, type = geometry_type, sample_id = "all", value = g)
+    x <- set_geom_fun(x, type = geometry_type, sample_id = "all", value = g,
+                      translate = FALSE)
     x
 }
 
