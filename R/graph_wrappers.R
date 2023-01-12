@@ -74,10 +74,8 @@
         if (style == "raw") style <- "W"
         out <- nb2listw(nb_out, glist, style, zero.policy)
     } else {
-        out <- nb2listwdist(nb_out, coords,
-            type = dist_type, style = style,
-            longlat = FALSE, zero.policy = zero.policy,
-            alpha = alpha, dmax = dmax
+        out <- nb2listwdist(nb_out, coords, type = dist_type, style = style,
+            zero.policy = zero.policy, alpha = alpha, dmax = dmax
         )
     }
 
