@@ -213,7 +213,7 @@ setMethod(
             .get_internal_character,
             getfun = .getfun(MARGIN),
             key = .dg_key(MARGIN), funstr = "dimGeometry",
-            substr = "type"
+            substr = "type", namestr = .dg_key2(MARGIN)
         )
     }
 )

@@ -205,7 +205,7 @@ test_that("Get one item in one margin and one sample_id", {
     out <- spatialGraph(sfe2, "foo", 2, "sample01")
     expect_equal(out, cgr1)
     # When the requested item doesn't exist
-    expect_true(is.null(spatialGraph(sfe2, "bar", 1, "sample01")))
+    expect_error(spatialGraph(sfe2, "bar", 1, "sample01"), "is absent")
 })
 
 test_that("spatialGraphNames getter", {

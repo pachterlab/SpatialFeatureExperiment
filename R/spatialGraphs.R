@@ -624,13 +624,20 @@ annotGraphNames <- function(x, sample_id = NULL) {
     `spatialGraphNames<-`(x, 3, sample_id, value)
 }
 
+.dgr_key <- function(MARGIN) {
+    switch(MARGIN, "rowGraph", "colGraph", "annotGraph")
+}
+
 # For single listws, not in a list-------
 #' @rdname spatialGraphs
 #' @export
 setMethod(
     "spatialGraph", c("SpatialFeatureExperiment", "missing", "numeric"),
     function(x, type, MARGIN, sample_id = NULL) {
-        spatialGraph(x, 1L, MARGIN, sample_id)
+        out <- spatialGraph(x, 1L, MARGIN, sample_id)
+        if (is.null(out))
+            stop("No ", .dgr_key(MARGIN), " is present in this SFE object.")
+        out
     }
 )
 
@@ -640,7 +647,10 @@ setMethod(
     "spatialGraph", c("SpatialFeatureExperiment", "numeric", "numeric"),
     function(x, type, MARGIN, sample_id = NULL) {
         sample_id <- .check_sample_id(x, sample_id)
-        spatialGraphs(x, MARGIN, sample_id)[[type]]
+        out <- spatialGraphs(x, MARGIN, sample_id)[[type]]
+        if (is.null(out))
+            stop(.dgr_key(MARGIN), " ", type, " is absent.")
+        out
     }
 )
 
@@ -650,7 +660,10 @@ setMethod(
     "spatialGraph", c("SpatialFeatureExperiment", "character", "numeric"),
     function(x, type, MARGIN, sample_id = NULL) {
         sample_id <- .check_sample_id(x, sample_id)
-        spatialGraphs(x, MARGIN, sample_id)[[type]]
+        out <- spatialGraphs(x, MARGIN, sample_id)[[type]]
+        if (is.null(out))
+            stop(.dgr_key(MARGIN), " '", type, "' is absent.")
+        out
     }
 )
 

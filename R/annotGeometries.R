@@ -127,6 +127,8 @@ setMethod(
     if (!is.null(sample_id)) {
         out <- out[out$sample_id %in% sample_id, ]
     }
+    if (is.null(out))
+        stop("annotGeometry ", type, " is absent.")
     return(out)
 }
 

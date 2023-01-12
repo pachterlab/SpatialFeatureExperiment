@@ -572,3 +572,7 @@ test_that("When features are absent in the results", {
         "are absent in"
     )
 })
+
+test_that("When a type of localResult is absent", {
+    expect_error(localResult(sfe, type = "purr", feature = "purr"), "not in")
+})

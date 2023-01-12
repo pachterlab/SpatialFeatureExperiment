@@ -37,6 +37,10 @@
     )
 }
 
+.dg_key2 <- function(MARGIN) {
+    switch (MARGIN, "rowGeometry", "colGeometry", "annotGeometry")
+}
+
 .unnamed <- "unnamed"
 # Modified from SCE to generalize to both rows and columns
 .check_dimgeo_names <- function(reference, incoming, MARGIN, withDimnames,
@@ -140,12 +144,14 @@
 }
 
 .get_internal_id <- function(x, type, MARGIN, sample_id, withDimnames,
-                             .get_internal_fun, getfun, key, funstr, substr) {
+                             .get_internal_fun, getfun, key, funstr, substr,
+                             ...) {
     out <- .get_internal_fun(x, type,
         getfun = getfun,
         key = key,
         funstr = funstr,
-        substr = substr
+        substr = substr,
+        ...
     )
 
     if (withDimnames) {
