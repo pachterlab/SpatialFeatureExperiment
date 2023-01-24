@@ -64,11 +64,17 @@ geometries can be added later after the dataset is read. If \code{data =
 and stored in the colGraph called "visium" in all samples for downstream
 spatial analyses.
 }
+\note{
+The \code{as(<dgTMatrix>, "dgCMatrix") is deprecated} warning comes
+  from the \code{DropletUtils} package which is used by
+  \code{SpatialExperiment} to read 10X outputs. This will be fixed when
+  \code{SpatialExperiment} switches to TENxIO.
+}
 \examples{
 dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 
 sample_ids <- c("sample01", "sample02")
-samples <- file.path(dir, sample_ids, "outs")
+samples <- file.path(dir, sample_ids)
 
 list.files(samples[1])
 list.files(file.path(samples[1], "spatial"))

@@ -31,7 +31,7 @@
 #' dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 #'
 #' sample_ids <- c("sample01", "sample02")
-#' samples <- file.path(dir, sample_ids, "outs")
+#' samples <- file.path(dir, sample_ids)
 #'
 #' list.files(samples[1])
 #' list.files(file.path(samples[1], "spatial"))

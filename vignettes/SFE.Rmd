@@ -314,23 +314,36 @@ sfe3 <- SpatialFeatureExperiment(list(counts = mat), colGeometries = list(foo = 
 Space Ranger output can be read in a similar manner as in `SpatialExperiment`; the returned SFE object has the `spotPoly` column geometry for the spot polygons. If the filtered matrix is read in, then a column graph called `visium` will also be present, for the spatial neighborhood graph of the Visium spots on tissue. The graph is not computed if all spots are read in regardless of whether they are on tissue.
 
 ```{r}
-# Example from SpatialExperiment
-dir <- system.file(
-  file.path("extdata", "10xVisium"), 
-  package = "SpatialExperiment")
-  
-sample_ids <- c("section1", "section2")
-samples <- file.path(dir, sample_ids, "outs")
-  
-list.files(samples[1])
-list.files(file.path(samples[1], "spatial"))
-file.path(samples[1], "raw_feature_bc_matrix")
+dir <- system.file("extdata", package = "SpatialFeatureExperiment")
+sample_ids <- c("sample01", "sample02")
+samples <- file.path(dir, sample_ids)
 ```
+
+Inside the `outs` directory:
+```{r}
+list.files(file.path(samples[1], "outs"))
+```
+
+There should also be `raw_feature_bc_matrix` though this toy example only has the filtered matrix.
+
+Inside the matrix directory:
+```{r}
+list.files(file.path(samples[1], "outs", "filtered_feature_bc_matrix"))
+```
+
+Inside the `spatial` directory:
+```{r}
+list.files(file.path(samples[1], "outs", "spatial"))
+```
+
+Not all Visium datasets have all the files here. The `barcode_fluorescence_intensity.csv` file is only present for datasets with fluorescent imaging rather than bright field H&E. 
 
 ```{r}
 (sfe3 <- read10xVisiumSFE(samples, sample_ids, type = "sparse", data = "raw",
                          load = FALSE))
 ```
+
+The `barcode_fluorescence_intensity.csv` file is read into `colData`. The `spatial_enrichment.csv` file contains Moran's I and its p-values for each gene; it is read into `rowData`. 
 
 ## Coercion from `SpatialExperiment`
 SPE objects can be coerced into SFE objects. If column geometries or spot diameter are not specified, then a column geometry called "centroids" will be created.
