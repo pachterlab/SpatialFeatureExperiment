@@ -18,20 +18,15 @@
 #' @return A SpatialFeatureExperiment object
 #' @export
 #' @examples
-#' library(SpatialExperiment) # Just for the example directory
-#' dir <- system.file(
-#'     file.path("extdata", "10xVisium"),
-#'     package = "SpatialExperiment"
-#' )
+#' dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 #'
-#' sample_ids <- c("section1", "section2")
+#' sample_ids <- c("sample01", "sample02")
 #' samples <- file.path(dir, sample_ids, "outs")
 #'
 #' list.files(samples[1])
 #' list.files(file.path(samples[1], "spatial"))
-#' file.path(samples[1], "raw_feature_bc_matrix")
 #' (sfe <- read10xVisiumSFE(samples, sample_ids,
-#'     type = "sparse", data = "raw",
+#'     type = "sparse", data = "filtered",
 #'     load = FALSE
 #' ))
 read10xVisiumSFE <- function(samples = "",
@@ -56,13 +51,34 @@ read10xVisiumSFE <- function(samples = "",
             samples[i], "spatial",
             "scalefactors_json.json"
         ))
-        .spe_to_sfe(o,
+        o <- .spe_to_sfe(o,
             colGeometries = NULL, rowGeometries = NULL,
             annotGeometries = NULL, spatialCoordsNames = NULL,
             annotGeometryType = NULL, spatialGraphs = NULL,
             spotDiameter = scalefactors[["spot_diameter_fullres"]],
             unit = "full_res_image_pixels", BPPARAM = BPPARAM
         )
+        # Add spatial enrichment if present
+        fn <- file.path(samples[i], "spatial", "spatial_enrichment.csv")
+        if (file.exists(fn)) {
+            enrichment <- read.csv(fn)
+            row_inds <- match(rownames(o), enrichment$Feature.ID)
+            cols_use <- c("Feature.Type", "I", "P.value", "Adjusted.p.value", 
+                          "Feature.Counts.in.Spots.Under.Tissue", 
+                          "Median.Normalized.Average.Counts", 
+                          "Barcodes.Detected.per.Feature")
+            rowData(o) <- cbind(rowData(o), enrichment[row_inds, cols_use])
+        }
+        # Add barcode fluorescence intensity if present
+        fn2 <- file.path(samples[i], "spatial", "barcode_fluorescence_intensity.csv")
+        if (file.exists(fn)) {
+            fluo <- read.csv(fn2)
+            row_inds <- match(colnames(o), fluo$barcode)
+            fluo$barcode <- NULL
+            fluo$in_tissue <- NULL
+            colData(o) <- cbind(colData(o), fluo[row_inds,])
+        }
+        o
     })
     out <- do.call(cbind, sfes)
     if (data == "filtered") {
