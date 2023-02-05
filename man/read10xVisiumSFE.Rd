@@ -6,6 +6,7 @@
 \usage{
 read10xVisiumSFE(
   samples = "",
+  dirs = file.path(samples, "outs"),
   sample_id = paste0("sample", sprintf("\%02d", seq_along(samples))),
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
@@ -20,6 +21,12 @@ read10xVisiumSFE(
 \item{samples}{a character vector specifying one or more directories, 
 each corresponding to a 10x Genomics Visium sample (see Details);
 if provided, names will be used as sample identifiers}
+
+\item{dirs}{Directory for each sample that contains the \code{spatial} and
+\code{raw/filtered_featues_bc_matrix} directories. By default, the
+\code{outs} directory under the directory specified in the \code{samples}
+argument, as in Space Ranger output. Change the \code{dirs} argument if you
+have moved or renamed the output directory.}
 
 \item{sample_id}{character string specifying unique sample identifiers,
 one for each directory specified via \code{samples}; 
@@ -57,21 +64,22 @@ geometries can be added later after the dataset is read. If \code{data =
 and stored in the colGraph called "visium" in all samples for downstream
 spatial analyses.
 }
+\note{
+The \code{as(<dgTMatrix>, "dgCMatrix") is deprecated} warning comes
+  from the \code{DropletUtils} package which is used by
+  \code{SpatialExperiment} to read 10X outputs. This will be fixed when
+  \code{SpatialExperiment} switches to TENxIO.
+}
 \examples{
-library(SpatialExperiment) # Just for the example directory
-dir <- system.file(
-    file.path("extdata", "10xVisium"),
-    package = "SpatialExperiment"
-)
+dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 
-sample_ids <- c("section1", "section2")
-samples <- file.path(dir, sample_ids, "outs")
+sample_ids <- c("sample01", "sample02")
+samples <- file.path(dir, sample_ids)
 
 list.files(samples[1])
 list.files(file.path(samples[1], "spatial"))
-file.path(samples[1], "raw_feature_bc_matrix")
 (sfe <- read10xVisiumSFE(samples, sample_ids,
-    type = "sparse", data = "raw",
+    type = "sparse", data = "filtered",
     load = FALSE
 ))
 }
