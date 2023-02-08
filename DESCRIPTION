@@ -30,7 +30,7 @@ Imports:
     utils
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Collate: 
     'AllGenerics.R'
     'utils.R'
@@ -47,6 +47,7 @@ Collate:
     'internal-Voyager.R'
     'localResults.R'
     'read.R'
+    'reexports.R'
     'spatialGraphs.R'
     'subset.R'
     'validity.R'
