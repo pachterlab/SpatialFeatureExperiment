@@ -53,6 +53,8 @@ read10xVisiumSFE <- function(samples = "",
                              images = "lowres",
                              load = TRUE, style = "W", zero.policy = NULL,
                              BPPARAM = SerialParam()) {
+    type <- match.arg(type)
+    data <- match.arg(data)
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(samples), function(i) {
         suppressWarnings(o <- read10xVisium(dirs[i], sample_id[i], type, data, images, load))
