@@ -23,13 +23,13 @@
 #'   geometry.
 #' @return An SFE object
 #' @importFrom S4Vectors make_zero_col_DFrame
-#' @importFrom SpatialExperiment spatialCoords
+#' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
 #' @examples
 #' library(SpatialExperiment)
 #' example(read10xVisium)
-#' # There can't be suplicate barcodes
+#' # There can't be duplicate barcodes
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)
 #' sfe <- toSpatialFeatureExperiment(spe)
@@ -69,6 +69,12 @@ setAs(
     }
 )
 
+setAs(from = "SingleCellExperiment", to = "SpatialFeatureExperiment",
+      function(from) {
+          spe <- as(from, "SpatialExperiment")
+          as(spe, "SpatialFeatureExperiment")
+      })
+
 #' @rdname SpatialFeatureExperiment-coercion
 #' @export
 setMethod(
@@ -97,3 +103,39 @@ setMethod(
         )
     }
 )
+
+#' @rdname SpatialFeatureExperiment-coercion
+#' @export
+setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
+          function(x, sample_id="sample01",
+                   spatialCoordsNames = c("x", "y"),
+                   spatialCoords=NULL,
+                   colGeometries = NULL, rowGeometries = NULL,
+                   annotGeometries = NULL,
+                   annotGeometryType = "POLYGON",
+                   spatialGraphs = NULL, spotDiameter = NA,
+                   scaleFactors=1,
+                   imageSources=NULL,
+                   image_id=NULL,
+                   loadImage=TRUE,
+                   imgData=NULL,
+                   unit = NULL,
+                   BPPARAM = SerialParam()) {
+              spe <- toSpatialExperiment(x, sample_id=sample_id,
+                                         spatialCoordsNames=spatialCoordsNames,
+                                         spatialCoords=spatialCoords,
+                                         scaleFactors=scaleFactors,
+                                         imageSources=imageSources,
+                                         image_id=image_id,
+                                         loadImage=loadImage,
+                                         imgData=imgData)
+              toSpatialFeatureExperiment(spe, colGeometries = colGeometries,
+                                         rowGeometries = rowGeometries,
+                                         annotGeometries = annotGeometries,
+                                         spatialCoordsNames = spatialCoordsNames,
+                                         annotGeometryType = annotGeometryType,
+                                         spatialGraphs = spatialGraphs,
+                                         spotDiameter = spotDiameter,
+                                         unit = unit,
+                                         BPPARAM = BPPARAM)
+          })
