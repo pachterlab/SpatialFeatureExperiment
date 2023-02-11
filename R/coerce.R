@@ -16,6 +16,7 @@
 #' \code{SingleCellExperiment} later.
 #'
 #' @inheritParams SpatialFeatureExperiment
+#' @inheritParams SpatialExperiment::toSpatialExperiment
 #' @param x A \code{SpatialExperiment} object to be coerced to a
 #'   \code{SpatialFeatureExperiment} object.
 #' @param BPPARAM Passed to \code{\link{df2sf}}, to parallelize the conversion

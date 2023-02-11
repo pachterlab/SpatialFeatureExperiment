@@ -97,7 +97,8 @@
   annotGeometryName = NULL,
   sample_id = NULL,
   withDimnames = TRUE,
-  simplify = TRUE
+  simplify = TRUE,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,numeric}(
@@ -108,7 +109,8 @@
   annotGeometryName = NULL,
   sample_id = NULL,
   withDimnames = TRUE,
-  simplify = TRUE
+  simplify = TRUE,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,character}(
@@ -119,7 +121,8 @@
   annotGeometryName = NULL,
   sample_id = NULL,
   withDimnames = TRUE,
-  simplify = TRUE
+  simplify = TRUE,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,missing}(
@@ -187,6 +190,12 @@ the *Geometry to query or replace. If missing, then the first item in the
 \item{simplify}{Basically whether to return the content of the list rather
 than a list when the list only has one element, such as results for one
 type and one feature.}
+
+\item{swap_rownames}{Name of a column in \code{rowData} to identify features
+instead of the row names of the SFE object. For example, if the row names
+of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
+column in \code{rowData}, then putting "symbol" for this argument will use
+the gene symbols to identify which gene's local results to get or set.}
 }
 \value{
 \code{localResults} returns a named list each element of which is a

@@ -4,6 +4,7 @@
 \alias{SpatialFeatureExperiment-coercion}
 \alias{toSpatialFeatureExperiment}
 \alias{toSpatialFeatureExperiment,SpatialExperiment-method}
+\alias{toSpatialFeatureExperiment,SingleCellExperiment-method}
 \title{SpatialFeatureExperiment coercion methods}
 \usage{
 \S4method{toSpatialFeatureExperiment}{SpatialExperiment}(
@@ -15,6 +16,26 @@
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   spotDiameter = NA,
+  unit = NULL,
+  BPPARAM = SerialParam()
+)
+
+\S4method{toSpatialFeatureExperiment}{SingleCellExperiment}(
+  x,
+  sample_id = "sample01",
+  spatialCoordsNames = c("x", "y"),
+  spatialCoords = NULL,
+  colGeometries = NULL,
+  rowGeometries = NULL,
+  annotGeometries = NULL,
+  annotGeometryType = "POLYGON",
+  spatialGraphs = NULL,
+  spotDiameter = NA,
+  scaleFactors = 1,
+  imageSources = NULL,
+  image_id = NULL,
+  loadImage = TRUE,
+  imgData = NULL,
   unit = NULL,
   BPPARAM = SerialParam()
 )
@@ -91,6 +112,38 @@ scale bars. Ignored for now, until I find a better way to deal with it.}
 \item{BPPARAM}{Passed to \code{\link{df2sf}}, to parallelize the conversion
 of centroid spatial coordinates in the SPE object to \code{sf} point
 geometry.}
+
+\item{sample_id}{A \code{character} sample identifier, which matches the
+\code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
+be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
+Default = \code{sample01}.}
+
+\item{spatialCoords}{A numeric matrix containing columns of spatial
+coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+centroids of the entities represented by the columns of the gene count
+matrix. If \code{colGeometries} is also specified, then it will be given
+priority and a warning is issued. Otherwise, the \code{sf} representation
+of the centroids will be stored in the \code{colGeometry} called
+\code{centroids}.}
+
+\item{scaleFactors}{Optional scale factors associated with the image(s). This
+can be provided as a numeric value, numeric vector, list, or file path to a
+JSON file for the 10x Genomics Visium platform. For 10x Genomics Visium,
+the correct scale factor will automatically be selected depending on the
+resolution of the image from \code{imageSources}. Default = \code{1}.}
+
+\item{imageSources}{Optional file path(s) or URL(s) for one or more image
+sources.}
+
+\item{image_id}{Optional character vector (same length as
+\code{imageSources}) containing unique image identifiers.}
+
+\item{loadImage}{Logical indicating whether to load image into memory.
+Default = \code{FALSE}.}
+
+\item{imgData}{Optional \code{\link{DataFrame}} containing the image data.
+Alternatively, this can be built from the arguments \code{imageSources} and
+\code{image_id} (see Details).}
 }
 \value{
 An SFE object
@@ -114,7 +167,7 @@ using \code{toSpatialFeatureExperiment}. For now coercion only works for
 \examples{
 library(SpatialExperiment)
 example(read10xVisium)
-# There can't be suplicate barcodes
+# There can't be duplicate barcodes
 colnames(spe) <- make.unique(colnames(spe), sep = "-")
 rownames(spatialCoords(spe)) <- colnames(spe)
 sfe <- toSpatialFeatureExperiment(spe)

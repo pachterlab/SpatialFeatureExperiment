@@ -339,8 +339,8 @@ list.files(file.path(samples[1], "outs", "spatial"))
 Not all Visium datasets have all the files here. The `barcode_fluorescence_intensity.csv` file is only present for datasets with fluorescent imaging rather than bright field H&E. 
 
 ```{r}
-(sfe3 <- read10xVisiumSFE(samples, sample_ids, type = "sparse", data = "raw",
-                         load = FALSE))
+(sfe3 <- read10xVisiumSFE(samples, sample_id = sample_ids, type = "sparse", 
+                          data = "filtered", load = FALSE))
 ```
 
 The `barcode_fluorescence_intensity.csv` file is read into `colData`. The `spatial_enrichment.csv` file contains Moran's I and its p-values for each gene; it is read into `rowData`. 
@@ -348,7 +348,7 @@ The `barcode_fluorescence_intensity.csv` file is read into `colData`. The `spati
 ## Coercion from `SpatialExperiment`
 SPE objects can be coerced into SFE objects. If column geometries or spot diameter are not specified, then a column geometry called "centroids" will be created.
 ```{r}
-spe <- read10xVisium(samples, sample_ids, type = "sparse", data = "raw", 
+spe <- read10xVisium(samples, sample_ids, type = "sparse", data = "filtered", 
   images = "lowres", load = FALSE)
 ```
 

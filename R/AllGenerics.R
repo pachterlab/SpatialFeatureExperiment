@@ -220,7 +220,7 @@ setGeneric(
     "localResult",
     function(x, type, feature, colGeometryName = NULL,
              annotGeometryName = NULL, sample_id = NULL,
-             withDimnames = TRUE, simplify = TRUE) {
+             withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         standardGeneric("localResult")
     }
 )

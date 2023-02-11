@@ -12,11 +12,11 @@
 \usage{
 .value2df(value, use_geometry, feature = NULL)
 
-.check_features(x, features, colGeometryName = NULL)
+.check_features(x, features, colGeometryName = NULL, swap_rownames = NULL)
 
 .warn_symbol_duplicate(x, symbols)
 
-.symbol2id(x, features)
+.symbol2id(x, features, swap_rownames)
 
 .check_sample_id(x, sample_id, one = TRUE)
 

@@ -25,6 +25,7 @@
 #' @importFrom SpatialExperiment read10xVisium
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
+#' @importFrom utils read.csv
 #' @return A SpatialFeatureExperiment object
 #' @export
 #' @examples
@@ -35,7 +36,7 @@
 #'
 #' list.files(samples[1])
 #' list.files(file.path(samples[1], "spatial"))
-#' (sfe <- read10xVisiumSFE(samples, sample_ids,
+#' (sfe <- read10xVisiumSFE(samples, sample_id = sample_ids,
 #'     type = "sparse", data = "filtered",
 #'     load = FALSE
 #' ))
@@ -78,15 +79,15 @@ read10xVisiumSFE <- function(samples = "",
             row_inds <- match(rownames(o), enrichment$Feature.ID)
             # Let me not worry about different samples having different genes for now
             if (i == 1L) {
-                rowData(o) <- cbind(rowData(o), 
+                rowData(o) <- cbind(rowData(o),
                                     Feature.Type = enrichment[row_inds, "Feature.Type"])
             }
-            cols_use <- c("I", "P.value", "Adjusted.p.value", 
-                          "Feature.Counts.in.Spots.Under.Tissue", 
-                          "Median.Normalized.Average.Counts", 
+            cols_use <- c("I", "P.value", "Adjusted.p.value",
+                          "Feature.Counts.in.Spots.Under.Tissue",
+                          "Median.Normalized.Average.Counts",
                           "Barcodes.Detected.per.Feature")
             enrichment2 <- enrichment[row_inds, cols_use]
-            names(enrichment2) <- paste(names(enrichment2), sample_id[i], 
+            names(enrichment2) <- paste(names(enrichment2), sample_id[i],
                                         sep = "_")
             rowData(o) <- cbind(rowData(o), enrichment2)
         }

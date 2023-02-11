@@ -78,7 +78,7 @@ samples <- file.path(dir, sample_ids)
 
 list.files(samples[1])
 list.files(file.path(samples[1], "spatial"))
-(sfe <- read10xVisiumSFE(samples, sample_ids,
+(sfe <- read10xVisiumSFE(samples, sample_id = sample_ids,
     type = "sparse", data = "filtered",
     load = FALSE
 ))
