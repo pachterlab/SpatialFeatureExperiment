@@ -56,6 +56,7 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   withDimnames = TRUE,
+  swap_rownames = NULL,
   ...
 )
 
@@ -78,7 +79,8 @@
   x,
   type = 1L,
   colGeometryName = NULL,
-  annotGeometryName = NULL
+  annotGeometryName = NULL,
+  swap_rownames = NULL
 )
 
 \S4method{localResultAttrs}{SpatialFeatureExperiment}(
@@ -86,7 +88,8 @@
   type = 1L,
   feature,
   colGeometryName = NULL,
-  annotGeometryName = NULL
+  annotGeometryName = NULL,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,missing}(
@@ -180,6 +183,12 @@ rownames) of the gene count matrix should correspond to row names of the
 
 \item{value}{Values to set, should be either a matrix or a data frame.}
 
+\item{swap_rownames}{Name of a column in \code{rowData} to identify features
+instead of the row names of the SFE object. For example, if the row names
+of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
+column in \code{rowData}, then putting "symbol" for this argument will use
+the gene symbols to identify which gene's local results to get or set.}
+
 \item{type}{An integer specifying the index or string specifying the name of
 the *Geometry to query or replace. If missing, then the first item in the
 *Geometries will be returned or replaced.}
@@ -190,12 +199,6 @@ the *Geometry to query or replace. If missing, then the first item in the
 \item{simplify}{Basically whether to return the content of the list rather
 than a list when the list only has one element, such as results for one
 type and one feature.}
-
-\item{swap_rownames}{Name of a column in \code{rowData} to identify features
-instead of the row names of the SFE object. For example, if the row names
-of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
-column in \code{rowData}, then putting "symbol" for this argument will use
-the gene symbols to identify which gene's local results to get or set.}
 }
 \value{
 \code{localResults} returns a named list each element of which is a

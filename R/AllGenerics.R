@@ -247,7 +247,8 @@ setGeneric(
 #' @export
 setGeneric(
     "localResultFeatures",
-    function(x, type, colGeometryName = NULL, annotGeometryName = NULL) {
+    function(x, type, colGeometryName = NULL, annotGeometryName = NULL,
+             swap_rownames = NULL) {
         standardGeneric("localResultFeatures")
     }
 )
@@ -256,7 +257,7 @@ setGeneric(
 setGeneric(
     "localResultAttrs",
     function(x, type, feature, colGeometryName = NULL,
-             annotGeometryName = NULL) {
+             annotGeometryName = NULL, swap_rownames = NULL) {
         standardGeneric("localResultAttrs")
     }
 )

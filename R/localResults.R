@@ -146,13 +146,13 @@ setMethod(
     "localResults", c("SpatialFeatureExperiment", "ANY", "character"),
     function(x, sample_id = NULL, name, features = NULL,
              colGeometryName = NULL, annotGeometryName = NULL,
-             withDimnames = TRUE, ...) {
+             withDimnames = TRUE, swap_rownames = NULL, ...) {
         localResult(x, name,
             feature = features, sample_id = sample_id,
             withDimnames = withDimnames,
             colGeometryName = colGeometryName,
             annotGeometryName = annotGeometryName,
-            simplify = FALSE
+            simplify = FALSE, swap_rownames = swap_rownames
         )
     }
 )
@@ -213,10 +213,11 @@ setReplaceMethod(
 setMethod(
     "localResultFeatures", "SpatialFeatureExperiment",
     function(x, type = 1L, colGeometryName = NULL,
-             annotGeometryName = NULL) {
+             annotGeometryName = NULL, swap_rownames = NULL) {
         tryCatch(names(localResults(x, "all", type,
             colGeometryName = colGeometryName,
-            annotGeometryName = annotGeometryName, withDimnames = FALSE
+            annotGeometryName = annotGeometryName, withDimnames = FALSE,
+            swap_rownames = swap_rownames
         )), error = function(e) NULL)
     }
 )
@@ -226,10 +227,10 @@ setMethod(
 setMethod(
     "localResultAttrs", "SpatialFeatureExperiment",
     function(x, type = 1L, feature, colGeometryName = NULL,
-             annotGeometryName = NULL) {
+             annotGeometryName = NULL, swap_rownames = NULL) {
         tryCatch(colnames(localResult(x, type, feature, colGeometryName,
-            annotGeometryName,
-            sample_id = "all", withDimnames = FALSE
+            annotGeometryName, sample_id = "all", withDimnames = FALSE,
+            swap_rownames = swap_rownames
         )), error = function(e) NULL)
     }
 )
@@ -297,7 +298,7 @@ setMethod(
             getfun = int_colData,
             key = "localResults", funstr = "localResult",
             substr = "type", namestr = "localResult", simplify = simplify,
-            swap_rownames = NULL
+            swap_rownames = swap_rownames
         )
     }
 )
