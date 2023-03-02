@@ -344,6 +344,7 @@
     graph2nb(g, sym = sym, row.names = row.names)
 }
 
+#' @importFrom utils packageVersion
 .comp_graph_sample <- function(x, sample_id, type, MARGIN, method, dist_type,
                                args, extra_args_use, glist, style, zero.policy,
                                alpha, dmax, fun_use, return_sf) {
@@ -385,7 +386,8 @@
 
     attr(out, "method") <- list(
         FUN = "findSpatialNeighbors",
-        package = "SpatialFeatureExperiment",
+        package = list("SpatialFeatureExperiment",
+                       packageVersion("SpatialFeatureExperiment")),
         args = c(
             method = method, args,
             dist_type = dist_type,
@@ -581,7 +583,8 @@ setMethod(
     out <- nb2listw(g, style = style, zero.policy = zero.policy)
     attr(out, "method") <- list(
         FUN = "findVisiumGraph",
-        package = "SpatialFeatureExperiment",
+        package = list("SpatialFeatureExperiment",
+                       packageVersion("SpatialFeatureExperiment")),
         args = list(
             style = style,
             zero.policy = zero.policy,

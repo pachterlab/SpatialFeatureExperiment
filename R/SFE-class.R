@@ -212,6 +212,7 @@ SpatialFeatureExperiment <- function(assays,
     annotGeometries(sfe) <- annotGeometries
     spatialGraphs(sfe) <- spatialGraphs
     int_metadata(sfe)$unit <- unit
+    int_metadata(sfe)$SFE_version <- packageVersion("SpatialFeatureExperiment")
     return(sfe)
 }
 
