@@ -49,6 +49,7 @@ Collate:
     'internal-Voyager.R'
     'localResults.R'
     'read.R'
+    'reexports.R'
     'spatialGraphs.R'
     'subset.R'
     'updateObject.R'
