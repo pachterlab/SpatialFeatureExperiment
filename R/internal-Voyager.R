@@ -112,7 +112,7 @@ NULL
     } else if (!all(sample_id %in% sampleIDs(x))) {
         sample_use <- intersect(sample_id, sampleIDs(x))
         if (!length(sample_use)) {
-            stop("None of the samples is present in the SFE object.")
+            stop("None of the samples are present in the SFE object.")
         }
         sample_show <- setdiff(sample_id, sampleIDs(x))
         warning(
