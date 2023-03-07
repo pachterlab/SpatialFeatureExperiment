@@ -54,13 +54,18 @@ changeSampleIDs <- function(sfe, replacement) {
         orig_bbox <- int_metadata(x)$orig_bbox
         samples <- unique(value$sample_id)
         if (length(samples) > 1L) {
-            df_split <- split(value, value$sample_id)
+            value$ID_ <- seq_len(nrow(value)) # Unlikely name
+            df <- value[,c("ID_", "sample_id", "geometry")]
+            df_split <- split(df, value$sample_id)
             df_split <- lapply(samples, function(s) {
                 out <- df_split[[s]]
                 out$geometry <- out$geometry - orig_bbox[c("xmin", "ymin"), s]
                 out
             })
-            value <- do.call(rbind, df_split)
+            df <- do.call(rbind, df_split)
+            df <- df[match(value$ID_, df$ID_),]
+            value$geometry <- df$geometry
+            value$ID_ <- NULL
         } else {
             value$geometry <- value$geometry - orig_bbox[c("xmin", "ymin"), samples]
         }
