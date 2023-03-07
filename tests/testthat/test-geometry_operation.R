@@ -198,6 +198,17 @@ test_that("annotGeometry setter after removing empty space", {
     expect_true(st_covered_by(bb2, bbox_old2, sparse = FALSE))
 })
 
+test_that("Don't translate value if it's already translated", {
+    bb <- st_bbox(cg_toy)
+    cg_translated <- cg_toy
+    cg_translated$geometry <- cg_translated$geometry - bb[c("xmin", "ymin")]
+    bb2 <- st_as_sfc(st_bbox(cg_translated))
+    colGeometry(sfe_shifted, "cg_translated", sample_id = "all",
+                translate = TRUE, withDimnames = FALSE) <- cg_translated
+    cg_check <- colGeometry(sfe_shifted, "cg_translated", "all")
+    expect_true(all(st_covered_by(cg_check, bb2, sparse = FALSE)))
+})
+
 test_that("annotSummary", {
     out <- annotSummary(sfe1, "spotPoly", "myofiber_simplified", "area")
     expect_s3_class(out, "data.frame")
