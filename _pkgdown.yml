@@ -1,0 +1,8 @@
+url: ~
+template:
+  bootstrap: 5
+  bootswatch: united
+  bslib:
+    text-muted: "#cccccc"
+development:
+  mode: auto
