@@ -84,10 +84,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 #'   diameter must be in the same unit as the coordinates in the *Geometry
 #'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
-#' @param unit Unit the coordinates are in. I'm thinking about using some custom
-#'   engineering CRS's which can convert units and invert the y axis for
-#'   Cartesian vs. image orientations. Units are also helpful when plotting
-#'   scale bars. Ignored for now, until I find a better way to deal with it.
+#' @param unit Unit the coordinates are in, either microns or pixels in full
+#' resolution image.
 #' @param BPPARAM An optional \code{\link[BiocParallel]{BiocParallelParam}}
 #'   instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 #'   data frames with coordinates to \code{sf} geometries.
@@ -143,7 +141,7 @@ SpatialFeatureExperiment <- function(assays,
                                      spotDiameter = NA_real_,
                                      annotGeometryType = "POLYGON",
                                      spatialGraphs = NULL,
-                                     unit = "full_res_image_pixels",
+                                     unit = c("full_res_image_pixel", "micron"),
                                      BPPARAM = SerialParam(),
                                      ...) {
     if (!length(colData)) {
@@ -223,6 +221,21 @@ SpatialFeatureExperiment <- function(assays,
     paste(paste0(names(l), " (", types, ")"), collapse = ", ")
 }
 
+#' Get unit of a SpatialFeatureExperiment
+#'
+#' Length units can be microns or pixels in full resolution image in SFE
+#' objects.
+#'
+#' @param x A \code{SpatialFeatureExperiment} object.
+#' @return A string for the name of the unit. At present it's merely a
+#'   string and \code{udunits} is not used.
+#' @export
+#' @examples
+#' # example code
+#'
+setMethod("unit", "SpatialFeatureExperiment",
+          function(x) int_metadata(x)$unit)
+
 #' Print method for SpatialFeatureExperiment
 #'
 #' Printing summaries of \code{colGeometries}, \code{rowGeometries}, and
@@ -240,9 +253,10 @@ setMethod(
     "show", "SpatialFeatureExperiment",
     function(object) {
         callNextMethod()
-      cg_names <- names(int_colData(object)$colGeometries)
-      rg_names <- names(int_elementMetadata(object)$rowGeometries)
-      ag_names <- names(int_metadata(object)$annotGeometries)
+        cat("\nunit:", unit(object))
+        cg_names <- names(int_colData(object)$colGeometries)
+        rg_names <- names(int_elementMetadata(object)$rowGeometries)
+        ag_names <- names(int_metadata(object)$annotGeometries)
         skip_geometries <- length(cg_names) < 1 & length(rg_names) < 1 &
             is.null(ag_names)
         if (!skip_geometries) {

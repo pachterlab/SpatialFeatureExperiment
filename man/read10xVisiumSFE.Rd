@@ -10,8 +10,8 @@ read10xVisiumSFE(
   sample_id = paste0("sample", sprintf("\%02d", seq_along(samples))),
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
-  images = "lowres",
-  load = TRUE,
+  images = c("lowres", "hires"),
+  unit = c("full_res_image_pixel", "micron"),
   style = "W",
   zero.policy = NULL,
   BPPARAM = SerialParam()
@@ -42,8 +42,10 @@ filtered (spots mapped to tissue) or raw data (all spots).}
 \item{images}{character vector specifying which images to include. 
 Valid values are \code{"lowres", "hires", "fullres", "detected", "aligned"}}
 
-\item{load}{logical; should the image(s) be loaded into memory
-as a \code{grob}? If FALSE, will store the path/URL instead.}
+\item{unit}{Whether to use pixels in full resolution image or microns as the
+unit. If using microns, then spacing between spots in pixels will be used
+to convert the coordinates into microns, as the spacing is known to be 100
+microns. This is used to plot scale bar.}
 
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
@@ -54,7 +56,9 @@ instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
 }
 \value{
-A SpatialFeatureExperiment object
+A SpatialFeatureExperiment object. The images might need to be
+manually rotated and/or mirrored to match the spots in this version of this
+package.
 }
 \description{
 Read Space Ranger output as a SpatialFeatureExperiment object, where spots

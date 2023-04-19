@@ -104,10 +104,8 @@ fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
-\item{unit}{Unit the coordinates are in. I'm thinking about using some custom
-engineering CRS's which can convert units and invert the y axis for
-Cartesian vs. image orientations. Units are also helpful when plotting
-scale bars. Ignored for now, until I find a better way to deal with it.}
+\item{unit}{Unit the coordinates are in, either microns or pixels in full
+resolution image.}
 
 \item{BPPARAM}{Passed to \code{\link{df2sf}}, to parallelize the conversion
 of centroid spatial coordinates in the SPE object to \code{sf} point

@@ -29,6 +29,7 @@ Imports:
     spdep (>= 1.1-7),
     SummarizedExperiment,
     stats,
+    terra,
     utils
 License: Artistic-2.0
 Encoding: UTF-8
@@ -45,6 +46,7 @@ Collate:
     'dimGeometries.R'
     'geometry_operation.R'
     'graph_wrappers.R'
+    'image.R'
     'int_dimData.R'
     'internal-Voyager.R'
     'localResults.R'
@@ -56,10 +58,14 @@ Collate:
     'validity.R'
 Suggests: 
     BiocStyle,
+    dplyr,
     DropletUtils,
     knitr,
+    rhdf5,
     rmarkdown,
+    sfarrow,
     SFEData,
+    vroom,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 

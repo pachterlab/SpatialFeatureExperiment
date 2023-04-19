@@ -1,16 +1,16 @@
 outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
-bc_flou1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial", 
+bc_flou1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial",
                                "barcode_fluorescence_intensity.csv"))
-sp_enr1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial", 
+sp_enr1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial",
                               "spatial_enrichment.csv"))
-pos1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial", 
+pos1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial",
                            "tissue_positions.csv"))
 
-bc_flou2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial", 
+bc_flou2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
                                "barcode_fluorescence_intensity.csv"))
-sp_enr2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial", 
+sp_enr2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
                               "spatial_enrichment.csv"))
-pos2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial", 
+pos2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
                            "tissue_positions.csv"))
 
 samples <- file.path(outdir, paste0("sample0", 1:2))
@@ -36,4 +36,143 @@ test_that("Correctly read Space Ranger output", {
                  ignore_attr = "row.names")
     expect_equal(as.data.frame(colData(sfe)[,5:10]), cd_expect,
                  ignore_attr = "row.names")
+})
+
+# Need uncropped image
+if (!dir.exists("outs")) dir.create("outs")
+mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!file.exists(mat_fn))
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
+                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"))
+if (!dir.exists(file.path("outs", "spatial"))) {
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
+                  destfile = file.path("outs", "spatial.tar.gz"))
+    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+}
+
+library(terra)
+library(sf)
+library(SingleCellExperiment)
+library(SpatialExperiment)
+
+test_that("Image is properly aligned in pixel space", {
+    sfe <- read10xVisiumSFE(".")
+    expect_equal(unit(sfe), "full_res_image_pixel")
+    cg <- spotPoly(sfe)
+    cg$nCounts <- Matrix::colSums(counts(sfe))
+    cg$geometry <- st_centroid(cg$geometry)
+    img_lo <- getImg(sfe, image_id = "lowres")@image
+    img_lo <- terra::mean(img_lo)
+    v_lo <- terra::extract(img_lo, cg)
+    expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
+    img_hi <- getImg(sfe, image_id = "hires")@image
+    img_hi <- terra::mean(img_hi)
+    v_hi <- terra::extract(img_hi, cg)
+    expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
+    bbox_cg <- st_as_sfc(st_bbox(cg))
+    bbox_img_lo <- st_as_sfc(st_bbox(as.vector(ext(img_lo))))
+    bbox_img_hi <- st_as_sfc(st_bbox(as.vector(ext(img_hi))))
+    expect_equal(bbox_img_lo, bbox_img_hi)
+    expect_true(st_covered_by(bbox_cg, bbox_img_lo, sparse = FALSE))
+    expect_true(st_area(bbox_cg)/st_area(bbox_img_lo) > 0.1)
+})
+
+test_that("Image is properly aligned in micron space", {
+    sfe <- read10xVisiumSFE(".", unit = "micron")
+    expect_equal(unit(sfe), "micron")
+    cg <- spotPoly(sfe)
+    cg$nCounts <- Matrix::colSums(counts(sfe))
+    cg$geometry <- st_centroid(cg$geometry)
+    img_lo <- getImg(sfe, image_id = "lowres")@image
+    img_lo <- terra::mean(img_lo)
+    v_lo <- terra::extract(img_lo, cg)
+    expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
+    img_hi <- getImg(sfe, image_id = "hires")@image
+    img_hi <- terra::mean(img_hi)
+    v_hi <- terra::extract(img_hi, cg)
+    expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
+    bbox_cg <- st_as_sfc(st_bbox(cg))
+    bbox_img_lo <- st_as_sfc(st_bbox(as.vector(ext(img_lo))))
+    bbox_img_hi <- st_as_sfc(st_bbox(as.vector(ext(img_hi))))
+    expect_equal(bbox_img_lo, bbox_img_hi)
+    expect_true(st_covered_by(bbox_cg, bbox_img_lo, sparse = FALSE))
+    expect_true(st_area(bbox_cg)/st_area(bbox_img_lo) > 0.1)
+    expect_true(all(st_coordinates(bbox_img_lo) < 1e4))
+    expect_true(all(st_coordinates(bbox_cg) < 1e4))
+})
+
+dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+
+if (!dir.exists("vizgen")) {
+    file.copy(dir_use, ".", recursive = TRUE)
+}
+dir_use <- "vizgen"
+test_that("readVizgen flip geometry, use cellpose", {
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+                      flip = "geometry")
+    expect_equal(unit(sfe), "micron")
+    expect_equal(imgData(sfe)$image_id, "PolyT")
+    img <- getImg(sfe)@image
+    cg <- SpatialFeatureExperiment::centroids(sfe)
+    v <- terra::extract(img, cg)
+    nCounts <- Matrix::colSums(counts(sfe))
+    expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+    # Make sure both segmentations and centroids are flipped
+    hulls <- st_convex_hull(cellSeg(sfe))
+    expect_true(all(vapply(seq_len(nrow(cg)), function(i) {
+        st_covered_by(cg[i,], hulls[i,], sparse = FALSE)[1,1]
+    }, FUN.VALUE = logical(1))))
+})
+
+test_that("readVizgen flip geometry, don't use cellpose", {
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
+                      flip = "geometry")
+    expect_equal(unit(sfe), "micron")
+    img <- getImg(sfe)@image
+    cg <- SpatialFeatureExperiment::centroids(sfe)
+    v <- terra::extract(img, cg)
+    nCounts <- Matrix::colSums(counts(sfe))
+    expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+    hulls <- st_convex_hull(cellSeg(sfe))
+    expect_true(all(vapply(seq_len(nrow(cg)), function(i) {
+        st_covered_by(cg[i,], hulls[i,], sparse = FALSE)[1,1]
+    }, FUN.VALUE = logical(1))))
+})
+
+test_that("readVizgen flip image", {
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+                      flip = "image")
+    expect_equal(unit(sfe), "micron")
+    img <- getImg(sfe)@image
+    cg <- SpatialFeatureExperiment::centroids(sfe)
+    v <- terra::extract(img, cg)
+    nCounts <- Matrix::colSums(counts(sfe))
+    expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+})
+
+test_that("readVizgen don't flip image when image is too large", {
+    expect_error(readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+                            flip = "image", max_size = "0.02 TB"),
+                 "max_size must be in either MB or GB")
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+                      flip = "image", max_size = "0.02 MB")
+    suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z0.tif")))
+    img <- getImg(sfe)@image
+    # Make sure image was not flipped
+    expect_equal(terra::values(img), terra::values(img_orig))
+    cg <- SpatialFeatureExperiment::centroids(sfe)
+    v <- terra::extract(img, cg)
+    nCounts <- Matrix::colSums(counts(sfe))
+    expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+})
+
+test_that("Don't flip image if it's GeoTIFF", {
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+                      flip = "image")
+    terra::writeRaster(getImg(sfe)@image,
+                       filename = file.path("vizgen", "images", "mosaic_DAPI_z0.tif"),
+                       overwrite = TRUE)
+    sfe2 <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "DAPI",
+                       flip = "image")
+    expect_equal(terra::values(getImg(sfe)@image), terra::values(getImg(sfe2)@image))
 })

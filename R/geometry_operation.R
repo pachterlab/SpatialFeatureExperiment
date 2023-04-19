@@ -470,6 +470,14 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
             annotGeometry(sfe, n, sample_id = sample_id) <- ag
         }
     }
+    # Images
+    if (nrow(imgData(sfe))) {
+        inds <- imgData(sfe)$sample_id == sample_id
+        for (i in inds) {
+            imgData(sfe)$data[[i]]@image <-
+                terra::shift(imgData(sfe)$data[[i]]@image, dx = v[1], dy = v[2])
+        }
+    }
     sfe
 }
 

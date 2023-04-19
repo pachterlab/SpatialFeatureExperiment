@@ -98,6 +98,7 @@ test_that("Remove empty space", {
     expect_equal(diff1, unname(bboxes[c("xmin", "ymin"), "sample01"]))
     expect_equal(diff2, unname(bboxes[c("xmin", "ymin"), "sample02"]))
 })
+# Image is shifted after removing empty space
 
 library(SFEData)
 sfe1 <- McKellarMuscleData("small")

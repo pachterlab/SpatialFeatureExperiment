@@ -261,3 +261,10 @@ setGeneric(
         standardGeneric("localResultAttrs")
     }
 )
+
+#' @export
+setGeneric("unit", function(x) standardGeneric("unit"))
+
+#' @export
+setGeneric("transposeImg", function(x, ...) standardGeneric("transposeImg"))
+
