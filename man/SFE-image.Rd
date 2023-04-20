@@ -35,6 +35,10 @@ xmax, and ymax, specifying the extent of the image.}
 resolution image by this scale factor should yield pixel coordinates in a
 different resolution. \code{extent} takes precedence over \code{scale_fct}.}
 }
+\value{
+Methods for \code{SpatRasterImage} return a modified
+  \code{SpatRasterImage}, and methods for SFE return a modified SFE object.
+}
 \description{
 \code{SpatialFeatureExperiment} and the \code{Voyager} package work with
 images differently from \code{SpatialExperiment}. In SFE and
@@ -46,6 +50,20 @@ downsampled version is plotted.
 }
 \note{
 If the image is already a GeoTIFF file that already has an extent, then
-the extent associated with the file will be honored and the \code{extent} and
-\code{scale_fct} arguments are ignored.
+  the extent associated with the file will be honored and the \code{extent}
+  and \code{scale_fct} arguments are ignored.
+}
+\examples{
+library(SFEData)
+sfe <- McKellarMuscleData("small")
+img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
+"tissue_lowres_image.png"),
+package = "SpatialFeatureExperiment")
+sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
+scale_fct = 0.023)
+img <- getImg(sfe)
+# SpatRasterImage method
+img_t <- transposeImg(img)
+# SFE method
+sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 }

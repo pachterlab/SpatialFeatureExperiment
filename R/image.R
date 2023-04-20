@@ -23,6 +23,19 @@
 #'   imgSource
 #' @importFrom terra ext ext<-
 #' @importClassesFrom terra SpatRaster
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
+#' "tissue_lowres_image.png"),
+#' package = "SpatialFeatureExperiment")
+#' sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
+#' scale_fct = 0.023)
+#' img <- getImg(sfe)
+#' # SpatRasterImage method
+#' img_t <- transposeImg(img)
+#' # SFE method
+#' sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 #' @name SFE-image
 NULL
 
@@ -152,6 +165,7 @@ setMethod("imgSource",
     # Only works for SpatRaster
     if (nrow(imgData(x))) {
         samples <- sampleIDs(x)
+        imgData(x) <- imgData(x)[order(imgData(x)$sample_id)]
         if (length(samples) == 1L) {
             bboxes <- matrix(bboxes, ncol = 1)
             colnames(bboxes) <- samples
