@@ -12,3 +12,9 @@ SpatialExperiment::spatialCoords
 
 #' @export
 SpatialExperiment::`spatialCoords<-`
+
+#' @export
+SpatialExperiment::spatialCoordsNames
+
+#' @export
+SpatialExperiment::getImg
