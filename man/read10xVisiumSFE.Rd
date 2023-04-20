@@ -57,8 +57,8 @@ data frames with coordinates to \code{sf} geometries.}
 }
 \value{
 A SpatialFeatureExperiment object. The images might need to be
-manually rotated and/or mirrored to match the spots in this version of this
-package.
+  manually transposed and/or mirrored to match the spots in this version of
+  this package.
 }
 \description{
 Read Space Ranger output as a SpatialFeatureExperiment object, where spots
@@ -73,6 +73,9 @@ The \code{as(<dgTMatrix>, "dgCMatrix") is deprecated} warning comes
   from the \code{DropletUtils} package which is used by
   \code{SpatialExperiment} to read 10X outputs. This will be fixed when
   \code{SpatialExperiment} switches to TENxIO.
+
+It is assumed that the images have not been cropped. Otherwise the
+images might not align with the spots.
 }
 \examples{
 dir <- system.file("extdata", package = "SpatialFeatureExperiment")

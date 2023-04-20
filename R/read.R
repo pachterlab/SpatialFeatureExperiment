@@ -30,9 +30,11 @@
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
+#' @note It is assumed that the images have not been cropped. Otherwise the
+#' images might not align with the spots.
 #' @return A SpatialFeatureExperiment object. The images might need to be
-#' manually rotated and/or mirrored to match the spots in this version of this
-#' package.
+#'   manually transposed and/or mirrored to match the spots in this version of
+#'   this package.
 #' @export
 #' @examples
 #' dir <- system.file("extdata", package = "SpatialFeatureExperiment")
@@ -263,8 +265,9 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply
 #' @examples
-#' # example code
-#'
+#' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+#' sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+#' flip = "geometry")
 readVizgen <- function(data_dir, z = 3L, use_cellpose = TRUE,
                        sample_id = "sample01", min_area = 15,
                        image = c("DAPI", "PolyT"),
