@@ -152,10 +152,10 @@ test_that("readVizgen flip image", {
 
 test_that("readVizgen don't flip image when image is too large", {
     expect_error(readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
-                            flip = "image", max_size = "0.02 TB"),
-                 "max_size must be in either MB or GB")
+                            flip = "image", max_flip = "0.02 TB"),
+                 "max_flip must be in either MB or GB")
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
-                      flip = "image", max_size = "0.02 MB")
+                      flip = "image", max_flip = "0.02 MB")
     suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z0.tif")))
     img <- getImg(sfe)@image
     # Make sure image was not flipped

@@ -1,3 +1,16 @@
+# Version 1.1.6 (04/20/2023)
+* Read images as SpatRaster, in read10xVisiumSFE
+* read10xVisiumSFE can also convert full resolution image pixels to microns based
+on Visium spot spacing
+* read10xVisiumSFE no longer transposes output from read10xVisium so the spots
+would match the image by default, and to be consistent with SpatialExperiment
+* Read standard Vizgen MERFISH output with readVizgen
+* SpatRasterImage class inheriting from VirtualSpatialImage for SpatialExperiment compatibility
+* Methods of addImg, mirrorImg, and transposeImg for SpatRasterImage and SFE
+* Mirror and transpose SFE objects, operating on both geometries and images
+* Images are cropped when the SFE object is cropped
+* Images are also shifted when removeEmptySpace is called
+
 # Version 1.1.4 (03/02/2023)
 * Store SFE package version in object and added SFE method of updateObject to pave way for a potential reimplementation of spatialGraphs.
 

@@ -184,6 +184,7 @@ SpatialFeatureExperiment <- function(assays,
     return(sfe)
 }
 
+#' @importFrom grDevices col2rgb
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
                         spotDiameter, unit, BPPARAM) {
@@ -203,6 +204,41 @@ SpatialFeatureExperiment <- function(assays,
             spotDiameter = NA,
             geometryType = annotGeometryType, BPPARAM = BPPARAM
         )
+    }
+    if (nrow(imgData(spe))) {
+        # Convert to SpatRaster
+        img_data <- imgData(spe)$data
+        new_imgs <- lapply(seq_along(img_data), function(i) {
+            img <- img_data[[i]]
+            if (is(img, "LoadedSpatialImage")) {
+                im <- imgRaster(img)
+                rgb_v <- col2rgb(im)
+                nrow <- dim(im)[2]
+                ncol <- dim(im)[1]
+                r <- t(matrix(rgb_v["red",], nrow = nrow, ncol = ncol))
+                g <- t(matrix(rgb_v["green",], nrow = nrow, ncol = ncol))
+                b <- t(matrix(rgb_v["blue",], nrow = nrow, ncol = ncol))
+                arr <- simplify2array(list(r, g, b))
+                im_new <- rast(arr)
+                terra::RGB(im_new) <- seq_len(3)
+            } else if (is(img, "RemoteSpatialImage") || is(img, "StoredSpatialImage")) {
+                suppressWarnings(im_new <- rast(imgSource(img)))
+            } else if (!is(img, "SpatRasterImage")) {
+                warning("Don't know how to convert image ", i, " to SpatRaster, ",
+                        "dropping image.")
+                im_new <- NULL
+            }
+            # Use scale factor for extent
+            ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+            im_new
+        })
+        inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
+        new_imgs <- new_imgs[inds]
+        new_imgs <- lapply(new_imgs, function(im) {
+            new("SpatRasterImage", image = im)
+        })
+        imgData(spe) <- imgData(spe)[inds,]
+        if (length(new_imgs)) imgData(spe)$data <- new_imgs
     }
     sfe <- new("SpatialFeatureExperiment", spe)
     colGeometries(sfe, withDimnames = FALSE) <- colGeometries
@@ -230,9 +266,11 @@ SpatialFeatureExperiment <- function(assays,
 #' @return A string for the name of the unit. At present it's merely a
 #'   string and \code{udunits} is not used.
 #' @export
+#' @aliases unit
 #' @examples
-#' # example code
-#'
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' unit(sfe)
 setMethod("unit", "SpatialFeatureExperiment",
           function(x) int_metadata(x)$unit)
 

@@ -12,7 +12,7 @@ readVizgen(
   min_area = 15,
   image = c("DAPI", "PolyT"),
   flip = c("geometry", "image", "none"),
-  max_size = "50 MB",
+  max_flip = "50 MB",
   BPPARAM = SerialParam()
 )
 }
@@ -43,6 +43,10 @@ bottom left, one of them needs to be flipped for them to match. If one of
 them is already flipped, then use "none". The image will not be flipped if
 it's GeoTIFF.}
 
+\item{max_flip}{Maximum size of the image allowed to flip the image. Because
+the image will be loaded into memory to be flipped. If the image is larger
+than this size then the coordinates will be flipped instead.}
+
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
 processing backend and number of threads to use to load cell segmentation
 from HDF5 files from different fields of view (FOVs) with multiple cores. A
@@ -51,10 +55,6 @@ object. When there are numerous FOVs, reading in the geometries can be time
 consuming, so we recommend using a server and larger number of threads.
 This argument is not used if \code{use_cellpose = TRUE} and the parquet
 file is present.}
-
-\item{max_flip}{Maximum size of the image allowed to flip the image. Because
-the image will be loaded into memory to be flipped. If the image is larger
-than this size then the coordinates will be flipped instead.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.

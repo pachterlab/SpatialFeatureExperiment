@@ -11,9 +11,7 @@
 #' geometries can also be converted; the coordinates in the \code{spatialCoords}
 #' field will be used to make POINT geometries named "centroids" to add to
 #' \code{colGeometries}. The geometries can also be supplied separately when
-#' using \code{toSpatialFeatureExperiment}. For now coercion only works for
-#' \code{SpatialExperiment}. I'll deal with \code{Seurat} and
-#' \code{SingleCellExperiment} later.
+#' using \code{toSpatialFeatureExperiment}. Images are converted to \code{SpatRaster}.
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams SpatialExperiment::toSpatialExperiment

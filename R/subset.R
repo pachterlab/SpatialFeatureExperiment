@@ -58,6 +58,8 @@ setMethod(
             }
             annotGeometries(x) <- ag_sub
         }
+        # Crop images with new bbox
+        x <- .crop_imgs(x, bbox(x))
         # Subset *Graphs based on sample_id and reconstruct row and colGraphs
         if (!is.null(spatialGraphs(x))) {
             graphs_sub <- int_metadata(x)$spatialGraphs

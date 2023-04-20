@@ -18,3 +18,6 @@ SpatialExperiment::spatialCoordsNames
 
 #' @export
 SpatialExperiment::getImg
+
+#' @export
+SpatialExperiment::imgData

@@ -43,14 +43,14 @@ test_that("mirrorImg", {
     img <- getImg(sfe)
     # SpatRasterImage method
     img_m <- mirrorImg(img)
-    mat1 <- as.array(mean(img@image))[,,1]
-    mat2 <- as.array(mean(img_m@image))[,,1]
+    mat1 <- terra::as.array(terra::mean(img@image))[,,1]
+    mat2 <- terra::as.array(terra::mean(img_m@image))[,,1]
     mat2_rev <- apply(mat2, 2, rev)
     expect_equal(mat1, mat2_rev)
     # SFE method
     sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
     img_m2 <- getImg(sfe)
-    mat3 <- as.array(mean(img_m2@image))[,,1]
+    mat3 <- terra::as.array(terra::mean(img_m2@image))[,,1]
     mat3_rev <- apply(mat3, 2, rev)
     expect_equal(mat1, mat3_rev)
 })

@@ -3,11 +3,17 @@
 #' \code{SpatialFeatureExperiment} and the \code{Voyager} package work with
 #' images differently from \code{SpatialExperiment}. In SFE and
 #' \code{Voyager}'s, plotting functions for SFE objects, the images are read
-#' with \code{\link{terra::rast}} and represented as \code{SpatRaster}, so the
-#' image is not entirely loaded into memory unless necessary. Plotting will not
-#' load a large image into memory; rather the image will be downsampled and the
+#' with \code{\link{rast}} and represented as \code{SpatRaster}, so the image is
+#' not entirely loaded into memory unless necessary. Plotting will not load a
+#' large image into memory; rather the image will be downsampled and the
 #' downsampled version is plotted.
 #'
+#' @inheritParams terra::flip
+#' @param sample_id Which sample the image is associated with. Use
+#'   \code{\link{sampleIDs}} to get sample IDs present in the SFE object.
+#' @param image_id Image ID, such as "lowres" and "hires" for Visium data and
+#' "DAPI" and "PolyT" for Vizgen MERFISH data.
+#' @param file File from which to read the image.
 #' @param extent A numeric vector of length 4 with names of the set xmin, ymin,
 #'   xmax, and ymax, specifying the extent of the image.
 #' @param scale_fct Scale factor -- multiply pixel coordinates in full
@@ -15,12 +21,14 @@
 #'   different resolution. \code{extent} takes precedence over \code{scale_fct}.
 #' @note If the image is already a GeoTIFF file that already has an extent, then
 #'   the extent associated with the file will be honored and the \code{extent}
-#'   and \code{scale_fct} arguments are ignored.
+#'   and \code{scale_fct} arguments are ignored. Also, when the image is
+#'   transposed, it is flipped about the axis going from top left to bottom
+#'   right.
 #' @return Methods for \code{SpatRasterImage} return a modified
 #'   \code{SpatRasterImage}, and methods for SFE return a modified SFE object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
 #' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster
-#'   imgSource
+#'   imgSource getImg
 #' @importFrom terra ext ext<-
 #' @importClassesFrom terra SpatRaster
 #' @examples
@@ -37,6 +45,7 @@
 #' # SFE method
 #' sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 #' @name SFE-image
+#' @aliases transposeImg
 NULL
 
 #' @rdname SFE-image
@@ -108,7 +117,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("transposeImg", "SpatRasterImage",
-          function(x, left = TRUE) {
+          function(x) {
               x@image <- terra::trans(x@image)
               x
           })
@@ -157,7 +166,7 @@ setMethod("imgRaster", "SpatRasterImage", function(x) x@image)
 #' @export
 setMethod("imgSource",
           "SpatRasterImage",
-          function(x, path=FALSE) {
+          function(x) {
               NA_character_
           })
 
@@ -165,16 +174,15 @@ setMethod("imgSource",
     # Only works for SpatRaster
     if (nrow(imgData(x))) {
         samples <- sampleIDs(x)
-        imgData(x) <- imgData(x)[order(imgData(x)$sample_id)]
+        imgData(x) <- imgData(x)[order(imgData(x)$sample_id),]
         if (length(samples) == 1L) {
-            bboxes <- matrix(bboxes, ncol = 1)
-            colnames(bboxes) <- samples
+            bboxes <- matrix(bboxes, ncol = 1, dimnames = list(names(bboxes), samples))
         }
         new_imgs <- lapply(samples, function(s) {
             img_data <- imgData(x)$data[imgData(x)$sample_id == s]
             bbox_use <- ext(bboxes[c("xmin", "xmax", "ymin", "ymax"),s])
             lapply(img_data, function(img) {
-                new("SpatRasterImage", image = terra::crop(img@image, bbox_use))
+                new("SpatRasterImage", image = terra::crop(img@image, bbox_use, snap = "out"))
             })
         })
         new_imgs <- unlist(new_imgs, recursive = FALSE)

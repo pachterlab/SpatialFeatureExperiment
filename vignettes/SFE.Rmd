@@ -340,7 +340,7 @@ Not all Visium datasets have all the files here. The `barcode_fluorescence_inten
 
 ```{r}
 (sfe3 <- read10xVisiumSFE(samples, sample_id = sample_ids, type = "sparse", 
-                          data = "filtered", load = FALSE))
+                          data = "filtered"))
 ```
 
 The `barcode_fluorescence_intensity.csv` file is read into `colData`. The `spatial_enrichment.csv` file contains Moran's I and its p-values for each gene; it is read into `rowData`. 

@@ -3,6 +3,7 @@
 \docType{class}
 \name{SFE-image}
 \alias{SFE-image}
+\alias{transposeImg}
 \alias{SpatRasterImage-class}
 \alias{addImg,SpatialFeatureExperiment-method}
 \alias{transposeImg,SpatRasterImage-method}
@@ -15,7 +16,7 @@
 \usage{
 \S4method{addImg}{SpatialFeatureExperiment}(x, file, sample_id, image_id, extent = NULL, scale_fct = 1)
 
-\S4method{transposeImg}{SpatRasterImage}(x, left = TRUE)
+\S4method{transposeImg}{SpatRasterImage}(x)
 
 \S4method{mirrorImg}{SpatRasterImage}(x, direction = "vertical")
 
@@ -25,15 +26,27 @@
 
 \S4method{imgRaster}{SpatRasterImage}(x)
 
-\S4method{imgSource}{SpatRasterImage}(x, path = FALSE)
+\S4method{imgSource}{SpatRasterImage}(x)
 }
 \arguments{
+\item{x}{SpatRaster or SpatVector}
+
+\item{file}{File from which to read the image.}
+
+\item{sample_id}{Which sample the image is associated with. Use
+\code{\link{sampleIDs}} to get sample IDs present in the SFE object.}
+
+\item{image_id}{Image ID, such as "lowres" and "hires" for Visium data and
+"DAPI" and "PolyT" for Vizgen MERFISH data.}
+
 \item{extent}{A numeric vector of length 4 with names of the set xmin, ymin,
 xmax, and ymax, specifying the extent of the image.}
 
 \item{scale_fct}{Scale factor -- multiply pixel coordinates in full
 resolution image by this scale factor should yield pixel coordinates in a
 different resolution. \code{extent} takes precedence over \code{scale_fct}.}
+
+\item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 }
 \value{
 Methods for \code{SpatRasterImage} return a modified
@@ -43,15 +56,17 @@ Methods for \code{SpatRasterImage} return a modified
 \code{SpatialFeatureExperiment} and the \code{Voyager} package work with
 images differently from \code{SpatialExperiment}. In SFE and
 \code{Voyager}'s, plotting functions for SFE objects, the images are read
-with \code{\link{terra::rast}} and represented as \code{SpatRaster}, so the
-image is not entirely loaded into memory unless necessary. Plotting will not
-load a large image into memory; rather the image will be downsampled and the
+with \code{\link{rast}} and represented as \code{SpatRaster}, so the image is
+not entirely loaded into memory unless necessary. Plotting will not load a
+large image into memory; rather the image will be downsampled and the
 downsampled version is plotted.
 }
 \note{
 If the image is already a GeoTIFF file that already has an extent, then
   the extent associated with the file will be honored and the \code{extent}
-  and \code{scale_fct} arguments are ignored.
+  and \code{scale_fct} arguments are ignored. Also, when the image is
+  transposed, it is flipped about the axis going from top left to bottom
+  right.
 }
 \examples{
 library(SFEData)

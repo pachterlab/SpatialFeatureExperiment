@@ -2,6 +2,7 @@
 % Please edit documentation in R/SFE-class.R
 \name{unit,SpatialFeatureExperiment-method}
 \alias{unit,SpatialFeatureExperiment-method}
+\alias{unit}
 \title{Get unit of a SpatialFeatureExperiment}
 \usage{
 \S4method{unit}{SpatialFeatureExperiment}(x)
@@ -18,6 +19,7 @@ Length units can be microns or pixels in full resolution image in SFE
 objects.
 }
 \examples{
-# example code
-
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+unit(sfe)
 }

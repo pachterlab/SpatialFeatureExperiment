@@ -14,7 +14,8 @@ read10xVisiumSFE(
   unit = c("full_res_image_pixel", "micron"),
   style = "W",
   zero.policy = NULL,
-  BPPARAM = SerialParam()
+  BPPARAM = SerialParam(),
+  load = FALSE
 )
 }
 \arguments{
@@ -54,6 +55,8 @@ microns. This is used to plot scale bar.}
 \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
 instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
+
+\item{load}{Not used, kept for backward compatibility.}
 }
 \value{
 A SpatialFeatureExperiment object. The images might need to be

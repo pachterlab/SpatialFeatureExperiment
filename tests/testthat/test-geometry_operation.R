@@ -98,7 +98,57 @@ test_that("Remove empty space", {
     expect_equal(diff1, unname(bboxes[c("xmin", "ymin"), "sample01"]))
     expect_equal(diff2, unname(bboxes[c("xmin", "ymin"), "sample02"]))
 })
-# Image is shifted after removing empty space
+
+ag1 <- st_sfc(st_linestring(matrix(c(1, 5, 2, 2), ncol = 2, byrow = TRUE)))
+ag2 <- st_sfc(st_linestring(matrix(c(2,2,1,5), ncol = 2, byrow = TRUE)))
+ag <- c(ag1, ag2)
+ag <- st_sf(sample_id = c("sample01", "sample02"),
+            geometry = ag)
+annotGeometry(sfe_visium, "foo", sample_id = "all") <- ag
+test_that("Transpose SFE, no images", {
+    sfe_visium2 <- transpose(sfe_visium)
+    coords1 <- spatialCoords(sfe_visium)
+    coords2 <- spatialCoords(sfe_visium2)
+    expect_equal(coords1[,1], coords2[,2])
+    coords_cg1 <- st_coordinates(spotPoly(sfe_visium, sample_id = "all"))
+    coords_cg2 <- st_coordinates(spotPoly(sfe_visium2, sample_id = "all"))
+    expect_equal(coords_cg1[,1], coords_cg2[,2])
+    coords_ag1 <- st_coordinates(annotGeometry(sfe_visium, "foo", "all"))
+    coords_ag2 <- st_coordinates(annotGeometry(sfe_visium2, "foo", "all"))
+    expect_equal(coords_ag1[,1], coords_ag2[,2])
+})
+
+test_that("Mirror SFE, no images, vertical", {
+    sfe_visium2 <- mirror(sfe_visium)
+    coords1 <- spatialCoords(sfe_visium)
+    coords2 <- spatialCoords(sfe_visium2)
+    expect_equal(coords1[,2], -coords2[,2])
+    expect_equal(coords1[,1], coords2[,1])
+    coords_cg1 <- st_coordinates(spotPoly(sfe_visium, sample_id = "all"))
+    coords_cg2 <- st_coordinates(spotPoly(sfe_visium2, sample_id = "all"))
+    expect_equal(coords_cg1[,2], -coords_cg2[,2])
+    expect_equal(coords_cg1[,1], coords_cg2[,1])
+    coords_ag1 <- st_coordinates(annotGeometry(sfe_visium, "foo", "all"))
+    coords_ag2 <- st_coordinates(annotGeometry(sfe_visium2, "foo", "all"))
+    expect_equal(coords_ag1[,1], coords_ag2[,1])
+    expect_equal(coords_ag1[,2], -coords_ag2[,2])
+})
+
+test_that("Mirror SFE, no images, horizontal", {
+    sfe_visium2 <- mirror(sfe_visium, direction = "horizontal")
+    coords1 <- spatialCoords(sfe_visium)
+    coords2 <- spatialCoords(sfe_visium2)
+    expect_equal(coords1[,1], -coords2[,1])
+    expect_equal(coords1[,2], coords2[,2])
+    coords_cg1 <- st_coordinates(spotPoly(sfe_visium, sample_id = "all"))
+    coords_cg2 <- st_coordinates(spotPoly(sfe_visium2, sample_id = "all"))
+    expect_equal(coords_cg1[,2], coords_cg2[,2])
+    expect_equal(coords_cg1[,1], -coords_cg2[,1])
+    coords_ag1 <- st_coordinates(annotGeometry(sfe_visium, "foo", "all"))
+    coords_ag2 <- st_coordinates(annotGeometry(sfe_visium2, "foo", "all"))
+    expect_equal(coords_ag1[,1], -coords_ag2[,1])
+    expect_equal(coords_ag1[,2], coords_ag2[,2])
+})
 
 library(SFEData)
 sfe1 <- McKellarMuscleData("small")
@@ -216,4 +266,87 @@ test_that("annotSummary", {
     expect_equal(rownames(out), colnames(sfe1))
     expect_equal(names(out), "area")
     expect_true(is.numeric(out$area))
+})
+
+# Need uncropped image
+if (!dir.exists("outs")) dir.create("outs")
+mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!file.exists(mat_fn))
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
+                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"))
+if (!dir.exists(file.path("outs", "spatial"))) {
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
+                  destfile = file.path("outs", "spatial.tar.gz"))
+    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+}
+library(sf)
+library(SpatialExperiment)
+library(terra)
+library(SingleCellExperiment)
+sfe <- read10xVisiumSFE(".")
+test_that("Image is shifted after removing empty space", {
+    sfe2 <- removeEmptySpace(sfe)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.98)
+})
+
+test_that("Image is cropped after cropping SFE object", {
+    bc <- bbox(sfe)
+    bbox_use <- c(xmin = bc["xmin"], xmax = bc["xmin"] + 2000,
+                  ymin = bc["ymin"], ymax = bc["ymin"] + 2000) |>
+        setNames(c("xmin", "xmax", "ymin", "ymax")) |>
+        st_bbox() |> st_as_sfc()
+    sfe2 <- crop(sfe, bbox_use)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean, use = "complete.obs")) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.98)
+})
+
+test_that("Transpose SFE object with image", {
+    sfe2 <- transpose(sfe)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+})
+
+test_that("Mirror SFE object with image, vertical", {
+    sfe2 <- mirror(sfe, direction = "vertical")
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+})
+
+test_that("Mirror SFE object with image, horizontal", {
+    sfe2 <- mirror(sfe, direction = "horizontal")
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 })

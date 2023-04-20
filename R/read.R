@@ -22,6 +22,7 @@
 #'   unit. If using microns, then spacing between spots in pixels will be used
 #'   to convert the coordinates into microns, as the spacing is known to be 100
 #'   microns. This is used to plot scale bar.
+#' @param load Not used, kept for backward compatibility.
 #' @note The \code{as(<dgTMatrix>, "dgCMatrix") is deprecated} warning comes
 #'   from the \code{DropletUtils} package which is used by
 #'   \code{SpatialExperiment} to read 10X outputs. This will be fixed when
@@ -62,7 +63,7 @@ read10xVisiumSFE <- function(samples = "",
                              images = c("lowres", "hires"),
                              unit = c("full_res_image_pixel", "micron"),
                              style = "W", zero.policy = NULL,
-                             BPPARAM = SerialParam()) {
+                             BPPARAM = SerialParam(), load = FALSE) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
@@ -72,8 +73,8 @@ read10xVisiumSFE <- function(samples = "",
         hires="tissue_hires_image.png")
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(samples), function(i) {
-        suppressWarnings(o <- read10xVisium(dirs[i], sample_id[i], type, data,
-                                            images, load = FALSE))
+        o <- read10xVisium(dirs[i], sample_id[i], type, data, images, load = FALSE)
+        imgData(o) <- NULL
 
         scalefactors <- fromJSON(file = file.path(
             dirs[i], "spatial",
@@ -205,18 +206,18 @@ read10xVisiumSFE <- function(samples = "",
     polys
 }
 
-.if_flip_img <- function(fn, max_size) {
-    max_size <- toupper(max_size)
-    unit <- gsub("^[0-9.]+\\s?", "", max_size)
+.if_flip_img <- function(fn, max_flip) {
+    max_flip <- toupper(max_flip)
+    unit <- gsub("^[0-9.]+\\s?", "", max_flip)
     if (!unit %in% c("MB", "GB"))
-        stop("max_size must be in either MB or GB.")
-    max_size <- as.numeric(gsub("\\s?[A-Z.]+$", "", max_size))
-    max_size <- switch (unit,
-        MB = max_size * 1024^2,
-        GB = max_size * 1024^3
+        stop("max_flip must be in either MB or GB.")
+    max_flip <- as.numeric(gsub("\\s?[A-Z.]+$", "", max_flip))
+    max_flip <- switch (unit,
+        MB = max_flip * 1024^2,
+        GB = max_flip * 1024^3
     )
     size <- file.info(fn)[["size"]] # NA if file doesn't exist
-    size < max_size
+    size < max_flip
 }
 
 #' Read Vizgen MERFISH output as SpatialFeatureExperiment
@@ -261,9 +262,10 @@ read10xVisiumSFE <- function(samples = "",
 #'   file is present.
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
-#' @importFrom sf st_area
+#' @importFrom sf st_area st_geometry<-
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply
+#' @importFrom rlang check_installed
 #' @examples
 #' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 #' sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
@@ -272,7 +274,7 @@ readVizgen <- function(data_dir, z = 3L, use_cellpose = TRUE,
                        sample_id = "sample01", min_area = 15,
                        image = c("DAPI", "PolyT"),
                        flip = c("geometry", "image", "none"),
-                       max_size = "50 MB",
+                       max_flip = "50 MB",
                        BPPARAM = SerialParam()) {
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
@@ -281,7 +283,7 @@ readVizgen <- function(data_dir, z = 3L, use_cellpose = TRUE,
 
     img_fn <- file.path(data_dir, "images", paste0("mosaic_", image, "_z", z, ".tif"))
     names(img_fn) <- image
-    do_flip <- .if_flip_img(img_fn, max_size)
+    do_flip <- .if_flip_img(img_fn, max_flip)
     if (anyNA(do_flip)) {
         warning("The image file(s) for ", image[is.na(do_flip)],
                 " don't exist, or have non-standard file name(s).")
