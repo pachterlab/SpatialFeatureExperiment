@@ -198,7 +198,12 @@ read10xVisiumSFE <- function(samples = "",
         }
         inds <- lengths(which_keep) > 0L
         polys <- polys[inds,]
-        st_geometry(polys) <- st_cast(st_geometry(polys), "POLYGON")
+        which_keep <- unlist(which_keep[inds])
+        geo <- st_geometry(polys)
+        new_geo <- lapply(seq_along(which_keep), function(i) {
+            geo[[i]] <- st_cast(geo[i], "POLYGON")[[which_keep[i]]]
+        }) |> st_sfc()
+        st_geometry(polys) <- new_geo
     } else {
         inds <- st_area(st_geometry(polys)) > min_area
         polys <- polys[inds,]
@@ -280,20 +285,20 @@ readVizgen <- function(data_dir, z = 3L, use_cellpose = TRUE,
     flip <- match.arg(flip)
     image <- match.arg(image, several.ok = TRUE)
     rlang::check_installed("vroom")
-
-    img_fn <- file.path(data_dir, "images", paste0("mosaic_", image, "_z", z, ".tif"))
-    names(img_fn) <- image
-    do_flip <- .if_flip_img(img_fn, max_flip)
-    if (anyNA(do_flip)) {
-        warning("The image file(s) for ", image[is.na(do_flip)],
-                " don't exist, or have non-standard file name(s).")
-        img_fn <- img_fn[!is.na(do_flip)]
-    }
-    if (!length(img_fn)) flip <- "none"
-    else if (!any(do_flip) && flip == "image") flip <- "geometry"
     if (z < 0 || z > 6) {
         stop("z must be beween 0 and 6 (inclusive).")
     }
+    img_fn <- file.path(data_dir, "images", paste0("mosaic_", image, "_z", z, ".tif"))
+    names(img_fn) <- image
+    do_flip <- .if_flip_img(img_fn, max_flip)
+    if_exists <- file.exists(img_fn)
+    if (!all(if_exists)) {
+        warning("The image file(s) for ", image[!if_exists],
+                " don't exist, or have non-standard file name(s).")
+        img_fn <- img_fn[if_exists]
+    }
+    if (!length(img_fn)) flip <- "none"
+    else if (!any(do_flip) && flip == "image") flip <- "geometry"
     parq_files <- list.files(data_dir, "*.parquet")
     use_cellpose <- use_cellpose & length(parq_files)
     if (use_cellpose) {

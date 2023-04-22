@@ -109,7 +109,7 @@ if (!dir.exists("vizgen")) {
 dir_use <- "vizgen"
 test_that("readVizgen flip geometry, use cellpose", {
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
-                      flip = "geometry")
+                      flip = "geometry", min_area = 15)
     expect_equal(unit(sfe), "micron")
     expect_equal(imgData(sfe)$image_id, "PolyT")
     img <- getImg(sfe)@image
@@ -122,6 +122,10 @@ test_that("readVizgen flip geometry, use cellpose", {
     expect_true(all(vapply(seq_len(nrow(cg)), function(i) {
         st_covered_by(cg[i,], hulls[i,], sparse = FALSE)[1,1]
     }, FUN.VALUE = logical(1))))
+    # Make sure that cells that are too small are removed
+    cg <- cellSeg(sfe)
+    areas <- st_area(cg)
+    expect_true(all(areas > 15))
 })
 
 test_that("readVizgen flip geometry, don't use cellpose", {
@@ -175,4 +179,54 @@ test_that("Don't flip image if it's GeoTIFF", {
     sfe2 <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "DAPI",
                        flip = "image")
     expect_equal(terra::values(getImg(sfe)@image), terra::values(getImg(sfe2)@image))
+    file.remove(file.path("vizgen", "images", "mosaic_DAPI_z0.tif"))
+})
+
+test_that("Errors and warnings", {
+    expect_warning(sfe <- readVizgen(dir_use, z = 0L, image = "DAPI"),
+                   "don't exist")
+    expect_equal(nrow(imgData(sfe)), 0L)
+    expect_error(readVizgen(dir_use, z = 7L, image = "PolyT"),
+                 "z must be beween 0 and 6")
+})
+
+# Make toy examples of multiple pieces
+parq <- sfarrow::st_read_parquet(file.path(dir_use, "cellpose_micron_space.parquet"))
+parq2 <- parq[1:4,]
+# One large piece and one small piece
+large <- list(matrix(c(2500, 0,
+                       2510, 0,
+                       2510, 10,
+                       2500, 10,
+                       2500, 0), ncol = 2, byrow = TRUE))
+small <- list(matrix(c(2515, 0,
+                       2516, 0,
+                       2516, 1,
+                       2515, 0), ncol = 2, byrow = TRUE))
+small2 <- list(small[[1]] + 5)
+large2 <- list(large[[1]] * 0.9 + 20)
+large_small <- st_multipolygon(list(large, small))
+large_g <- st_multipolygon(list(large))
+small_small <- st_multipolygon(list(small, small2))
+large_large <- st_multipolygon(list(large, large2))
+
+new_geo <- st_sfc(large_g, large_small, small_small, large_large)
+parq2$Geometry <- new_geo
+if (!dir.exists("multi")) {
+    dir.create("multi")
+    file.copy("vizgen", "multi", recursive = TRUE)
+}
+
+dir_use <- file.path("multi", "vizgen")
+file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
+suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cellpose_micron_space.parquet")))
+test_that("Deal with multiple pieces, remove pieces that are too small", {
+    expect_warning(sfe <- readVizgen(dir_use, z = 0L, image = "PolyT"),
+                   "The largest piece is kept")
+    cg <- cellSeg(sfe)
+    expect_equal(st_geometry_type(cg, by_geometry = "FALSE") |> as.character(), "POLYGON")
+    expect_equal(colnames(sfe), parq2$EntityID[c(1,2,4)])
+    areas <- st_area(cg)
+    expect_true(all(vapply(areas, all.equal, target = st_area(large_g),
+                           FUN.VALUE = logical(1))))
 })
