@@ -71,6 +71,7 @@ read10xVisiumSFE <- function(samples = "",
     img_fns <- c(
         lowres="tissue_lowres_image.png",
         hires="tissue_hires_image.png")
+    img_fns <- img_fns[images]
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(samples), function(i) {
         o <- read10xVisium(dirs[i], sample_id[i], type, data, images, load = FALSE)

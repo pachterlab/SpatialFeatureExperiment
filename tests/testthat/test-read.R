@@ -77,6 +77,12 @@ test_that("Image is properly aligned in pixel space", {
     expect_true(st_area(bbox_cg)/st_area(bbox_img_lo) > 0.1)
 })
 
+test_that("Read when one out of multiple images are desired", {
+    sfe <- read10xVisiumSFE(".", images = "lowres")
+    expect_equal(nrow(imgData(sfe)), 1L)
+    expect_equal(imgData(sfe)$image_id, "lowres")
+})
+
 test_that("Image is properly aligned in micron space", {
     sfe <- read10xVisiumSFE(".", unit = "micron")
     expect_equal(unit(sfe), "micron")
