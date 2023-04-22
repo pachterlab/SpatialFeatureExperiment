@@ -58,6 +58,8 @@ setMethod(
             }
             annotGeometries(x) <- ag_sub
         }
+        # Crop images with new bbox
+        x <- .crop_imgs(x, bbox(x))
         # Subset *Graphs based on sample_id and reconstruct row and colGraphs
         if (!is.null(spatialGraphs(x))) {
             graphs_sub <- int_metadata(x)$spatialGraphs
@@ -93,8 +95,8 @@ setMethod(
                                 )
                                 graphs_sub[[s]][[m]][[g]] <- NULL
                             } else {
-                                if (requireNamespace(method_info$package, quietly = TRUE)) {
-                                    fun <- getFromNamespace(method_info$FUN, method_info$package)
+                                if (requireNamespace(method_info$package[[1]], quietly = TRUE)) {
+                                    fun <- getFromNamespace(method_info$FUN, method_info$package[[1]])
                                     if ("row.names" %in% names(method_info$args)) {
                                         method_info$args[["row.names"]] <-
                                             method_info$args[["row.names"]][j]
@@ -114,7 +116,7 @@ setMethod(
                                     )
                                 } else {
                                     warning(
-                                        "Package ", method_info$package,
+                                        "Package ", method_info$package[[1]],
                                         " used to construct graph for sample ",
                                         names(graphs_sub)[s], " ", .margin_name(m),
                                         "Graph ", names(graphs_sub[[s]][[m]])[g],

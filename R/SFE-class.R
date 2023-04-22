@@ -84,10 +84,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 #'   diameter must be in the same unit as the coordinates in the *Geometry
 #'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
-#' @param unit Unit the coordinates are in. I'm thinking about using some custom
-#'   engineering CRS's which can convert units and invert the y axis for
-#'   Cartesian vs. image orientations. Units are also helpful when plotting
-#'   scale bars. Ignored for now, until I find a better way to deal with it.
+#' @param unit Unit the coordinates are in, either microns or pixels in full
+#' resolution image.
 #' @param BPPARAM An optional \code{\link[BiocParallel]{BiocParallelParam}}
 #'   instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 #'   data frames with coordinates to \code{sf} geometries.
@@ -143,7 +141,7 @@ SpatialFeatureExperiment <- function(assays,
                                      spotDiameter = NA_real_,
                                      annotGeometryType = "POLYGON",
                                      spatialGraphs = NULL,
-                                     unit = "full_res_image_pixels",
+                                     unit = c("full_res_image_pixel", "micron"),
                                      BPPARAM = SerialParam(),
                                      ...) {
     if (!length(colData)) {
@@ -186,6 +184,7 @@ SpatialFeatureExperiment <- function(assays,
     return(sfe)
 }
 
+#' @importFrom grDevices col2rgb
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
                         spotDiameter, unit, BPPARAM) {
@@ -206,12 +205,48 @@ SpatialFeatureExperiment <- function(assays,
             geometryType = annotGeometryType, BPPARAM = BPPARAM
         )
     }
+    if (nrow(imgData(spe))) {
+        # Convert to SpatRaster
+        img_data <- imgData(spe)$data
+        new_imgs <- lapply(seq_along(img_data), function(i) {
+            img <- img_data[[i]]
+            if (is(img, "LoadedSpatialImage")) {
+                im <- imgRaster(img)
+                rgb_v <- col2rgb(im)
+                nrow <- dim(im)[2]
+                ncol <- dim(im)[1]
+                r <- t(matrix(rgb_v["red",], nrow = nrow, ncol = ncol))
+                g <- t(matrix(rgb_v["green",], nrow = nrow, ncol = ncol))
+                b <- t(matrix(rgb_v["blue",], nrow = nrow, ncol = ncol))
+                arr <- simplify2array(list(r, g, b))
+                im_new <- rast(arr)
+                terra::RGB(im_new) <- seq_len(3)
+            } else if (is(img, "RemoteSpatialImage") || is(img, "StoredSpatialImage")) {
+                suppressWarnings(im_new <- rast(imgSource(img)))
+            } else if (!is(img, "SpatRasterImage")) {
+                warning("Don't know how to convert image ", i, " to SpatRaster, ",
+                        "dropping image.")
+                im_new <- NULL
+            }
+            # Use scale factor for extent
+            ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+            im_new
+        })
+        inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
+        new_imgs <- new_imgs[inds]
+        new_imgs <- lapply(new_imgs, function(im) {
+            new("SpatRasterImage", image = im)
+        })
+        imgData(spe) <- imgData(spe)[inds,]
+        if (length(new_imgs)) imgData(spe)$data <- new_imgs
+    }
     sfe <- new("SpatialFeatureExperiment", spe)
     colGeometries(sfe, withDimnames = FALSE) <- colGeometries
     rowGeometries(sfe, withDimnames = FALSE) <- rowGeometries
     annotGeometries(sfe) <- annotGeometries
     spatialGraphs(sfe) <- spatialGraphs
     int_metadata(sfe)$unit <- unit
+    int_metadata(sfe)$SFE_version <- packageVersion("SpatialFeatureExperiment")
     return(sfe)
 }
 
@@ -221,6 +256,23 @@ SpatialFeatureExperiment <- function(assays,
     )
     paste(paste0(names(l), " (", types, ")"), collapse = ", ")
 }
+
+#' Get unit of a SpatialFeatureExperiment
+#'
+#' Length units can be microns or pixels in full resolution image in SFE
+#' objects.
+#'
+#' @param x A \code{SpatialFeatureExperiment} object.
+#' @return A string for the name of the unit. At present it's merely a
+#'   string and \code{udunits} is not used.
+#' @export
+#' @aliases unit
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' unit(sfe)
+setMethod("unit", "SpatialFeatureExperiment",
+          function(x) int_metadata(x)$unit)
 
 #' Print method for SpatialFeatureExperiment
 #'
@@ -239,9 +291,10 @@ setMethod(
     "show", "SpatialFeatureExperiment",
     function(object) {
         callNextMethod()
-      cg_names <- names(int_colData(object)$colGeometries)
-      rg_names <- names(int_elementMetadata(object)$rowGeometries)
-      ag_names <- names(int_metadata(object)$annotGeometries)
+        cat("\nunit:", unit(object))
+        cg_names <- names(int_colData(object)$colGeometries)
+        rg_names <- names(int_elementMetadata(object)$rowGeometries)
+        ag_names <- names(int_metadata(object)$annotGeometries)
         skip_geometries <- length(cg_names) < 1 & length(rg_names) < 1 &
             is.null(ag_names)
         if (!skip_geometries) {

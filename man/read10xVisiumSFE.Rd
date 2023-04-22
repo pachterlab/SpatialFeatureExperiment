@@ -6,20 +6,28 @@
 \usage{
 read10xVisiumSFE(
   samples = "",
+  dirs = file.path(samples, "outs"),
   sample_id = paste0("sample", sprintf("\%02d", seq_along(samples))),
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
-  images = "lowres",
-  load = TRUE,
+  images = c("lowres", "hires"),
+  unit = c("full_res_image_pixel", "micron"),
   style = "W",
   zero.policy = NULL,
-  BPPARAM = SerialParam()
+  BPPARAM = SerialParam(),
+  load = FALSE
 )
 }
 \arguments{
 \item{samples}{a character vector specifying one or more directories, 
 each corresponding to a 10x Genomics Visium sample (see Details);
 if provided, names will be used as sample identifiers}
+
+\item{dirs}{Directory for each sample that contains the \code{spatial} and
+\code{raw/filtered_featues_bc_matrix} directories. By default, the
+\code{outs} directory under the directory specified in the \code{samples}
+argument, as in Space Ranger output. Change the \code{dirs} argument if you
+have moved or renamed the output directory.}
 
 \item{sample_id}{character string specifying unique sample identifiers,
 one for each directory specified via \code{samples}; 
@@ -35,8 +43,10 @@ filtered (spots mapped to tissue) or raw data (all spots).}
 \item{images}{character vector specifying which images to include. 
 Valid values are \code{"lowres", "hires", "fullres", "detected", "aligned"}}
 
-\item{load}{logical; should the image(s) be loaded into memory
-as a \code{grob}? If FALSE, will store the path/URL instead.}
+\item{unit}{Whether to use pixels in full resolution image or microns as the
+unit. If using microns, then spacing between spots in pixels will be used
+to convert the coordinates into microns, as the spacing is known to be 100
+microns. This is used to plot scale bar.}
 
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
@@ -45,9 +55,13 @@ as a \code{grob}? If FALSE, will store the path/URL instead.}
 \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
 instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
+
+\item{load}{Not used, kept for backward compatibility.}
 }
 \value{
-A SpatialFeatureExperiment object
+A SpatialFeatureExperiment object. The images might need to be
+  manually transposed and/or mirrored to match the spots in this version of
+  this package.
 }
 \description{
 Read Space Ranger output as a SpatialFeatureExperiment object, where spots
@@ -57,21 +71,25 @@ geometries can be added later after the dataset is read. If \code{data =
 and stored in the colGraph called "visium" in all samples for downstream
 spatial analyses.
 }
-\examples{
-library(SpatialExperiment) # Just for the example directory
-dir <- system.file(
-    file.path("extdata", "10xVisium"),
-    package = "SpatialExperiment"
-)
+\note{
+The \code{as(<dgTMatrix>, "dgCMatrix") is deprecated} warning comes
+  from the \code{DropletUtils} package which is used by
+  \code{SpatialExperiment} to read 10X outputs. This will be fixed when
+  \code{SpatialExperiment} switches to TENxIO.
 
-sample_ids <- c("section1", "section2")
-samples <- file.path(dir, sample_ids, "outs")
+It is assumed that the images have not been cropped. Otherwise the
+images might not align with the spots.
+}
+\examples{
+dir <- system.file("extdata", package = "SpatialFeatureExperiment")
+
+sample_ids <- c("sample01", "sample02")
+samples <- file.path(dir, sample_ids)
 
 list.files(samples[1])
 list.files(file.path(samples[1], "spatial"))
-file.path(samples[1], "raw_feature_bc_matrix")
-(sfe <- read10xVisiumSFE(samples, sample_ids,
-    type = "sparse", data = "raw",
+(sfe <- read10xVisiumSFE(samples, sample_id = sample_ids,
+    type = "sparse", data = "filtered",
     load = FALSE
 ))
 }

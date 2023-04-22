@@ -52,16 +52,31 @@ changeSampleIDs <- function(sfe, replacement) {
         if (anyNA(value$sample_id) && nrow(value) == ncol(x))
             value$sample_id <- colData(x)$sample_id
         orig_bbox <- int_metadata(x)$orig_bbox
+        # Don't translate if already translated
+        curr_bbox <- st_bbox(value)
         samples <- unique(value$sample_id)
         if (length(samples) > 1L) {
-            df_split <- split(value, value$sample_id)
+            value$ID_ <- seq_len(nrow(value)) # Unlikely name
+            df <- value[,c("ID_", "sample_id", "geometry")]
+            df_split <- split(df, value$sample_id)
             df_split <- lapply(samples, function(s) {
                 out <- df_split[[s]]
-                out$geometry <- out$geometry - orig_bbox[c("xmin", "ymin"), s]
+                og <- out$geometry - orig_bbox[c("xmin", "ymin"), s]
+                bb <- st_bbox(og)
+                if ((bb["xmin"] < 0 || bb["ymin"] < 0) || anyNA(bb)) return(out)
+                else
+                    out$geometry <- og
                 out
             })
-            value <- do.call(rbind, df_split)
+            df <- do.call(rbind, df_split)
+            df <- df[match(value$ID_, df$ID_),]
+            value$geometry <- df$geometry
+            value$ID_ <- NULL
         } else {
+            if (curr_bbox["xmin"] - orig_bbox["xmin", samples] < 0 ||
+                curr_bbox["ymin"] - orig_bbox["ymin", samples] < 0) {
+                return(value)
+            }
             value$geometry <- value$geometry - orig_bbox[c("xmin", "ymin"), samples]
         }
     }

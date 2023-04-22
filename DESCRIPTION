@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.0.3
+Version: 1.1.6
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -17,9 +17,13 @@ Description: A new S4 class integrating Simple Features with the R package sf
     be used.
 Imports:
     BiocGenerics,
+    BiocNeighbors,
     BiocParallel,
+    grDevices,
+    Matrix,
     methods,
     rjson,
+    rlang,
     S4Vectors,
     sf,
     SingleCellExperiment,
@@ -27,6 +31,7 @@ Imports:
     spdep (>= 1.1-7),
     SummarizedExperiment,
     stats,
+    terra,
     utils
 License: Artistic-2.0
 Encoding: UTF-8
@@ -43,6 +48,7 @@ Collate:
     'dimGeometries.R'
     'geometry_operation.R'
     'graph_wrappers.R'
+    'image.R'
     'int_dimData.R'
     'internal-Voyager.R'
     'localResults.R'
@@ -50,14 +56,18 @@ Collate:
     'reexports.R'
     'spatialGraphs.R'
     'subset.R'
+    'updateObject.R'
     'validity.R'
 Suggests: 
     BiocStyle,
+    dplyr,
     DropletUtils,
     knitr,
-    Matrix,
+    rhdf5,
     rmarkdown,
+    sfarrow,
     SFEData,
+    vroom,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 

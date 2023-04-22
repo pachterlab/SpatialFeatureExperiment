@@ -56,6 +56,7 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   withDimnames = TRUE,
+  swap_rownames = NULL,
   ...
 )
 
@@ -78,7 +79,8 @@
   x,
   type = 1L,
   colGeometryName = NULL,
-  annotGeometryName = NULL
+  annotGeometryName = NULL,
+  swap_rownames = NULL
 )
 
 \S4method{localResultAttrs}{SpatialFeatureExperiment}(
@@ -86,7 +88,8 @@
   type = 1L,
   feature,
   colGeometryName = NULL,
-  annotGeometryName = NULL
+  annotGeometryName = NULL,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,missing}(
@@ -97,7 +100,8 @@
   annotGeometryName = NULL,
   sample_id = NULL,
   withDimnames = TRUE,
-  simplify = TRUE
+  simplify = TRUE,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,numeric}(
@@ -108,7 +112,8 @@
   annotGeometryName = NULL,
   sample_id = NULL,
   withDimnames = TRUE,
-  simplify = TRUE
+  simplify = TRUE,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,character}(
@@ -119,7 +124,8 @@
   annotGeometryName = NULL,
   sample_id = NULL,
   withDimnames = TRUE,
-  simplify = TRUE
+  simplify = TRUE,
+  swap_rownames = NULL
 )
 
 \S4method{localResult}{SpatialFeatureExperiment,missing}(
@@ -176,6 +182,12 @@ rownames) of the gene count matrix should correspond to row names of the
 \item{...}{Ignored}
 
 \item{value}{Values to set, should be either a matrix or a data frame.}
+
+\item{swap_rownames}{Name of a column in \code{rowData} to identify features
+instead of the row names of the SFE object. For example, if the row names
+of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
+column in \code{rowData}, then putting "symbol" for this argument will use
+the gene symbols to identify which gene's local results to get or set.}
 
 \item{type}{An integer specifying the index or string specifying the name of
 the *Geometry to query or replace. If missing, then the first item in the

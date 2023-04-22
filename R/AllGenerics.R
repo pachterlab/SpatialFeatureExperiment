@@ -220,7 +220,7 @@ setGeneric(
     "localResult",
     function(x, type, feature, colGeometryName = NULL,
              annotGeometryName = NULL, sample_id = NULL,
-             withDimnames = TRUE, simplify = TRUE) {
+             withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         standardGeneric("localResult")
     }
 )
@@ -247,7 +247,8 @@ setGeneric(
 #' @export
 setGeneric(
     "localResultFeatures",
-    function(x, type, colGeometryName = NULL, annotGeometryName = NULL) {
+    function(x, type, colGeometryName = NULL, annotGeometryName = NULL,
+             swap_rownames = NULL) {
         standardGeneric("localResultFeatures")
     }
 )
@@ -256,7 +257,14 @@ setGeneric(
 setGeneric(
     "localResultAttrs",
     function(x, type, feature, colGeometryName = NULL,
-             annotGeometryName = NULL) {
+             annotGeometryName = NULL, swap_rownames = NULL) {
         standardGeneric("localResultAttrs")
     }
 )
+
+#' @export
+setGeneric("unit", function(x) standardGeneric("unit"))
+
+#' @export
+setGeneric("transposeImg", function(x, ...) standardGeneric("transposeImg"))
+

@@ -38,12 +38,14 @@ NULL
 
 #' @rdname internal-Voyager
 #' @export
-.check_features <- function(x, features, colGeometryName = NULL) {
+.check_features <- function(x, features, colGeometryName = NULL,
+                            swap_rownames = NULL) {
     # Check if features are in the gene count matrix or colData.
     # If not found, then assume that they're in the colGeometry
     if (is.null(features)) features <- rownames(x)
     features_assay <- intersect(features, rownames(x))
-    if (!length(features_assay) && "symbol" %in% names(rowData(x))) {
+    if (!length(features_assay) && !is.null(swap_rownames) &&
+        swap_rownames %in% names(rowData(x))) {
         features_assay <- rownames(x)[match(features, rowData(x)$symbol)]
         features_assay <- features_assay[!is.na(features_assay)]
         .warn_symbol_duplicate(x, features_assay)
@@ -84,8 +86,9 @@ NULL
 
 #' @rdname internal-Voyager
 #' @export
-.symbol2id <- function(x, features) {
-    if (!any(features %in% rownames(x)) && "symbol" %in% names(rowData(x))) {
+.symbol2id <- function(x, features, swap_rownames) {
+    if (!any(features %in% rownames(x)) && !is.null(swap_rownames) &&
+        swap_rownames %in% names(rowData(x))) {
         .warn_symbol_duplicate(x, features)
         ind <- features %in% rowData(x)$symbol
         features[ind] <- rownames(x)[match(features[ind], rowData(x)$symbol)]
@@ -109,7 +112,7 @@ NULL
     } else if (!all(sample_id %in% sampleIDs(x))) {
         sample_use <- intersect(sample_id, sampleIDs(x))
         if (!length(sample_use)) {
-            stop("None of the samples is present in the SFE object.")
+            stop("None of the samples are present in the SFE object.")
         }
         sample_show <- setdiff(sample_id, sampleIDs(x))
         warning(

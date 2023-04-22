@@ -60,3 +60,10 @@ test_that("Supplying colGeometries, check centroids", {
     centroids <- .sc2cg(spatialCoords(sfe))
     expect_equal(centroids, st_centroid(cg), ignore_attr = TRUE)
 })
+library(SingleCellExperiment)
+test_that("Added object version", {
+    sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                    colGeometries = list(foo = cg))
+    expect_equal(int_metadata(sfe)$SFE_version,
+                 packageVersion("SpatialFeatureExperiment"))
+})

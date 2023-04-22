@@ -55,7 +55,7 @@ test_that("Correctly reconstruct the graphs when they need to be reconstructed",
     # Remove one item from sample01
     sfe_visium <- sfe_visium[, -1]
     expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
-        ignore_attr = "call"
+        ignore_attr = c("call", "method")
     )
 })
 
@@ -84,4 +84,37 @@ test_that("Warning message and dropping graphs when package required for reconst
         "Package foobar used to construct graph for sample sample02 colGraph bar is not installed"
     )
     expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
+})
+
+# Need uncropped image
+if (!dir.exists("outs")) dir.create("outs")
+mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!file.exists(mat_fn))
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
+                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"))
+if (!dir.exists(file.path("outs", "spatial"))) {
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
+                  destfile = file.path("outs", "spatial.tar.gz"))
+    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+}
+library(sf)
+library(SpatialExperiment)
+library(terra)
+library(SingleCellExperiment)
+sfe <- read10xVisiumSFE(".")
+test_that("Images are cropped after subsetting", {
+    bc <- bbox(sfe)
+    bbox_use <- c(xmin = bc["xmin"], xmax = bc["xmin"] + 2000,
+                  ymin = bc["ymin"], ymax = bc["ymin"] + 2000) |>
+        setNames(c("xmin", "xmax", "ymin", "ymax")) |>
+        st_bbox() |> st_as_sfc()
+    sfe2 <- sfe[,st_intersects(spotPoly(sfe), bbox_use, sparse = FALSE)[,1]]
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 })

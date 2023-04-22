@@ -11,11 +11,10 @@
 #' geometries can also be converted; the coordinates in the \code{spatialCoords}
 #' field will be used to make POINT geometries named "centroids" to add to
 #' \code{colGeometries}. The geometries can also be supplied separately when
-#' using \code{toSpatialFeatureExperiment}. For now coercion only works for
-#' \code{SpatialExperiment}. I'll deal with \code{Seurat} and
-#' \code{SingleCellExperiment} later.
+#' using \code{toSpatialFeatureExperiment}. Images are converted to \code{SpatRaster}.
 #'
 #' @inheritParams SpatialFeatureExperiment
+#' @inheritParams SpatialExperiment::toSpatialExperiment
 #' @param x A \code{SpatialExperiment} object to be coerced to a
 #'   \code{SpatialFeatureExperiment} object.
 #' @param BPPARAM Passed to \code{\link{df2sf}}, to parallelize the conversion
@@ -23,13 +22,13 @@
 #'   geometry.
 #' @return An SFE object
 #' @importFrom S4Vectors make_zero_col_DFrame
-#' @importFrom SpatialExperiment spatialCoords
+#' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
 #' @examples
 #' library(SpatialExperiment)
 #' example(read10xVisium)
-#' # There can't be suplicate barcodes
+#' # There can't be duplicate barcodes
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)
 #' sfe <- toSpatialFeatureExperiment(spe)
@@ -69,6 +68,12 @@ setAs(
     }
 )
 
+setAs(from = "SingleCellExperiment", to = "SpatialFeatureExperiment",
+      function(from) {
+          spe <- as(from, "SpatialExperiment")
+          as(spe, "SpatialFeatureExperiment")
+      })
+
 #' @rdname SpatialFeatureExperiment-coercion
 #' @export
 setMethod(
@@ -97,3 +102,39 @@ setMethod(
         )
     }
 )
+
+#' @rdname SpatialFeatureExperiment-coercion
+#' @export
+setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
+          function(x, sample_id="sample01",
+                   spatialCoordsNames = c("x", "y"),
+                   spatialCoords=NULL,
+                   colGeometries = NULL, rowGeometries = NULL,
+                   annotGeometries = NULL,
+                   annotGeometryType = "POLYGON",
+                   spatialGraphs = NULL, spotDiameter = NA,
+                   scaleFactors=1,
+                   imageSources=NULL,
+                   image_id=NULL,
+                   loadImage=TRUE,
+                   imgData=NULL,
+                   unit = NULL,
+                   BPPARAM = SerialParam()) {
+              spe <- toSpatialExperiment(x, sample_id=sample_id,
+                                         spatialCoordsNames=spatialCoordsNames,
+                                         spatialCoords=spatialCoords,
+                                         scaleFactors=scaleFactors,
+                                         imageSources=imageSources,
+                                         image_id=image_id,
+                                         loadImage=loadImage,
+                                         imgData=imgData)
+              toSpatialFeatureExperiment(spe, colGeometries = colGeometries,
+                                         rowGeometries = rowGeometries,
+                                         annotGeometries = annotGeometries,
+                                         spatialCoordsNames = spatialCoordsNames,
+                                         annotGeometryType = annotGeometryType,
+                                         spatialGraphs = spatialGraphs,
+                                         spotDiameter = spotDiameter,
+                                         unit = unit,
+                                         BPPARAM = BPPARAM)
+          })

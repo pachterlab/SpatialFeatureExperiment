@@ -290,10 +290,11 @@
 
 .get_internal_feature <- function(x, type, feature, colGeometryName,
                                   annotGeometryName, sample_id, withDimnames,
-                                  .get_internal_fun, simplify = TRUE, ...) {
+                                  .get_internal_fun, simplify = TRUE,
+                                  swap_rownames = NULL,...) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (missing(type)) type <- 1L
-    feature <- .symbol2id(x, feature)
+    feature <- .symbol2id(x, feature, swap_rownames)
     if (is.null(colGeometryName) && is.null(annotGeometryName)) {
         lr <- .get_internal_id(x,
             type = type, sample_id = sample_id,

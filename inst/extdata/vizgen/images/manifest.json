@@ -1,0 +1,8 @@
+{
+  "microns_per_pixel": 0.108,
+  "mosaic_width_pixels": 503,
+  "mosaic_height_pixels": 512,
+  "bbox_microns": [2406.278, -106.8995, 2623.5707, 114.2828],
+  "hor_num_tiles_box": 1,
+  "vert_num_tiles_box": 1
+}

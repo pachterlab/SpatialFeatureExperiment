@@ -384,6 +384,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
         samples_use = samples_use, op = op,
         remove_empty = TRUE
     )
+    out <- .crop_imgs(out, bbox(out))
     samples_rmed <- setdiff(sample_id, sampleIDs(out))
     if (length(samples_rmed)) {
         warning(
@@ -451,24 +452,143 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
     out
 })
 
-.translate <- function(sfe, sample_id, v) {
+.transform <- function(sfe, sample_id, mult, add, img_fun,
+                       shift_img = TRUE, ...) {
+    # m is a 2x2 matrix for the transformation
+    if (isTRUE(all.equal(add, c(0,0)))) shift_img <- FALSE
     # spatialCoords
     inds <- colData(sfe)$sample_id == sample_id
+    spatialCoords(sfe)[inds, ] <- spatialCoords(sfe)[inds, ] %*% mult
     spatialCoords(sfe)[inds, ] <-
-        sweep(spatialCoords(sfe)[inds, ], 2, v, FUN = "+")
+        sweep(spatialCoords(sfe)[inds, ], 2, add, FUN = "+")
     # colGeometries
     for (n in colGeometryNames(sfe)) {
         cg <- colGeometry(sfe, n, sample_id = sample_id)
-        cg$geometry <- cg$geometry + v
+        cg$geometry <- cg$geometry * mult + add
         colGeometry(sfe, n, sample_id = sample_id) <- cg
     }
     # annotGeometries
     if (!is.null(annotGeometries(sfe))) {
         for (n in annotGeometryNames(sfe)) {
             ag <- annotGeometry(sfe, n, sample_id = sample_id)
-            ag$geometry <- ag$geometry + v
+            ag$geometry <- ag$geometry * mult + add
             annotGeometry(sfe, n, sample_id = sample_id) <- ag
         }
+    }
+    # Images
+    if (nrow(imgData(sfe))) {
+        inds <- imgData(sfe)$sample_id == sample_id
+        new_imgs <- lapply(imgData(sfe)$data[inds], function(img) {
+            img_new <- img_fun(img@image, ...)
+            if (shift_img)
+                img_new <- terra::shift(img_new, dx = add[1], dy = add[2])
+            new("SpatRasterImage", image = img_new)
+        })
+        imgData(sfe)$data[inds] <- I(new_imgs)
+    }
+    sfe
+}
+
+.transform_samples <- function(sfe, sample_id, mult, add, img_fun, ...) {
+    sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+    for (s in sample_id) {
+        sfe <- .transform(sfe, s, mult, add, img_fun, ...)
+    }
+    sfe
+}
+
+.translate <- function(sfe, sample_id, v) {
+    m <- matrix(c(1,0,0,1), ncol = 2)
+    .transform_samples(sfe, sample_id, mult = m, add = v,
+                       img_fun = function(x) x)
+}
+
+#' Transpose or mirror SFE object in histological space
+#'
+#' When images are present, transpose means switching rows and columns of the
+#' image (flipping about the axis from top left to bottom right) and geometries
+#' are transformed to match. When images are absent, transpose means switching x
+#' and y coordinates of the geometries. Mirroring means flipping either x or y
+#' coordinates, in histological space. When images are present, the geometries
+#' are flipped about the middle of the image. Whem images are absent, the
+#' geometries are flipped about the x or y axis. The transformation is applied
+#' to the geometries and the images, and can be applied to each sample
+#' independently.
+#'
+#' @inheritParams terra::flip
+#' @param sfe An SFE object.
+#' @param sample_id Sample(s) to transform.
+#' @return An SFE object with the sample(s) transformed.
+#' @name SFE-transform
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData("small")
+#' sfe2 <- transpose(sfe)
+#' sfe3 <- mirror(sfe)
+#'
+NULL
+
+#' @rdname SFE-transform
+#' @export
+transpose <- function(sfe, sample_id = "all") {
+    sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+    if (nrow(imgData(sfe))) {
+        m <- matrix(c(0,-1,-1,0), ncol = 2)
+        bboxes <- lapply(sample_id, function(s) {
+            # Assume that all images of the same sample have the same extent
+            img <- imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]]@image
+            as.vector(ext(img))
+        })
+        bboxes <- do.call(cbind, bboxes)
+        colnames(bboxes) <- sample_id
+        rownames(bboxes) <- c("xmin", "xmax", "ymin", "ymax")
+        v <- cbind(((bboxes["xmax",] - bboxes["xmin",])/2 + bboxes["xmin",])*2,
+                   ((bboxes["ymax",] - bboxes["ymin",])/2 + bboxes["ymin",])*2)
+        rownames(v) <- sample_id
+        for (s in sample_id) {
+            sfe <- .transform(sfe, s, mult = m, add = v[s,], img_fun = terra::trans,
+                              shift_img = FALSE)
+        }
+    } else {
+        m <- matrix(c(0,1,1,0), ncol = 2)
+        sfe <- .transform_samples(sfe, sample_id, mult = m, add = c(0,0))
+    }
+    sfe
+}
+
+#' @rdname SFE-transform
+#' @export
+mirror <- function(sfe, sample_id = "all",
+                   direction = c("vertical", "horizontal")) {
+    sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+    direction <- match.arg(direction)
+    vec <- switch (direction,
+        vertical = c(1,0,0,-1),
+        horizontal = c(-1,0,0,1)
+    )
+    m <- matrix(vec, ncol = 2)
+    # Retain original bbox, i.e. reflect about middle of the original bbox
+    if (nrow(imgData(sfe))) {
+        bboxes <- lapply(sample_id, function(s) {
+            # Assume that all images of the same sample have the same extent
+            img <- imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]]@image
+            as.vector(ext(img))
+        })
+        bboxes <- do.call(cbind, bboxes)
+        colnames(bboxes) <- sample_id
+        rownames(bboxes) <- c("xmin", "xmax", "ymin", "ymax")
+        v <- switch (
+            direction,
+            vertical = cbind(0, ((bboxes["ymax",] - bboxes["ymin",])/2 + bboxes["ymin",])*2),
+            horizontal = cbind(((bboxes["xmax",] - bboxes["xmin",])/2 + bboxes["xmin",])*2, 0)
+        )
+        rownames(v) <- sample_id
+        for (s in sample_id) {
+            sfe <- .transform(sfe, s, mult = m, add = v[s,], img_fun = terra::flip,
+                              direction = direction, shift_img = FALSE)
+        }
+    } else {
+        sfe <- .transform_samples(sfe, sample_id, mult = m, add = c(0,0), direction = direction)
     }
     sfe
 }
@@ -501,6 +621,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 removeEmptySpace <- function(sfe, sample_id = "all") {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     bboxes <- bbox(sfe, sample_id)
+    sfe <- .crop_imgs(sfe, bboxes)
     if (length(sample_id) == 1L) {
         sfe <- .translate(sfe, sample_id, v = -bboxes[c("xmin", "ymin")])
     } else {

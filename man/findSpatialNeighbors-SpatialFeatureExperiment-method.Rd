@@ -7,7 +7,7 @@
 \usage{
 \S4method{findSpatialNeighbors}{SpatialFeatureExperiment}(
   x,
-  sample_id = NULL,
+  sample_id = "all",
   type = "spatialCoords",
   MARGIN = 2,
   method = c("tri2nb", "knearneigh", "dnearneigh", "gabrielneigh", "relativeneigh",
@@ -15,9 +15,12 @@
   dist_type = c("none", "idw", "exp", "dpd"),
   glist = NULL,
   style = c("raw", "W", "B", "C", "U", "minmax", "S"),
+  nn_method = c("bioc", "spdep"),
   alpha = 1,
   dmax = NULL,
-  zero.policy = NULL,
+  BPPARAM = SerialParam(),
+  BNPARAM = KmknnParam(),
+  zero.policy = TRUE,
   ...
 )
 }
@@ -49,9 +52,24 @@ details.}
 
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
+\item{nn_method}{Method to find k nearest neighbors and distance based
+neighbors. Can be either "bioc" or "spdep". For "bioc", methods from
+\code{BiocNeighbors} are used. For "spdep", methods from the \code{spdep}
+package are used. The "bioc" option is more scalable to larger datasets and
+supports multithreading.}
+
 \item{alpha}{Only relevant when \code{dist_type = "dpd"}.}
 
 \item{dmax}{Only relevant when \code{dist_type = "dpd"}.}
+
+\item{BPPARAM}{A \code{\link{BiocParallelParam}} object for multithreading.
+Only used for k nearest neighbor and distance based neighbor with
+\code{nn_method = "bioc"}.}
+
+\item{BNPARAM}{A \code{\link{BiocNeighborParam}} object specifying the
+algorithm to find k nearest neighbors and distance based neighbors with
+\code{nn_method = "bioc"}. For distance based neighbors, only
+\code{\link{KmknnParam}} and \code{\link{VptreeParam}} are applicable.}
 
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 

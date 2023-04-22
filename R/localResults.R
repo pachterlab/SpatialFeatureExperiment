@@ -24,6 +24,11 @@
 #' @param simplify Basically whether to return the content of the list rather
 #'   than a list when the list only has one element, such as results for one
 #'   type and one feature.
+#' @param swap_rownames Name of a column in \code{rowData} to identify features
+#'   instead of the row names of the SFE object. For example, if the row names
+#'   of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
+#'   column in \code{rowData}, then putting "symbol" for this argument will use
+#'   the gene symbols to identify which gene's local results to get or set.
 #' @aliases localResults localResults<- localResult localResult<-
 #'   localResultNames localResultNames<- localResultFeatures localResultAttrs
 #' @return \code{localResults} returns a named list each element of which is a
@@ -141,13 +146,13 @@ setMethod(
     "localResults", c("SpatialFeatureExperiment", "ANY", "character"),
     function(x, sample_id = NULL, name, features = NULL,
              colGeometryName = NULL, annotGeometryName = NULL,
-             withDimnames = TRUE, ...) {
+             withDimnames = TRUE, swap_rownames = NULL, ...) {
         localResult(x, name,
             feature = features, sample_id = sample_id,
             withDimnames = withDimnames,
             colGeometryName = colGeometryName,
             annotGeometryName = annotGeometryName,
-            simplify = FALSE
+            simplify = FALSE, swap_rownames = swap_rownames
         )
     }
 )
@@ -208,10 +213,11 @@ setReplaceMethod(
 setMethod(
     "localResultFeatures", "SpatialFeatureExperiment",
     function(x, type = 1L, colGeometryName = NULL,
-             annotGeometryName = NULL) {
+             annotGeometryName = NULL, swap_rownames = NULL) {
         tryCatch(names(localResults(x, "all", type,
             colGeometryName = colGeometryName,
-            annotGeometryName = annotGeometryName, withDimnames = FALSE
+            annotGeometryName = annotGeometryName, withDimnames = FALSE,
+            swap_rownames = swap_rownames
         )), error = function(e) NULL)
     }
 )
@@ -221,10 +227,10 @@ setMethod(
 setMethod(
     "localResultAttrs", "SpatialFeatureExperiment",
     function(x, type = 1L, feature, colGeometryName = NULL,
-             annotGeometryName = NULL) {
+             annotGeometryName = NULL, swap_rownames = NULL) {
         tryCatch(colnames(localResult(x, type, feature, colGeometryName,
-            annotGeometryName,
-            sample_id = "all", withDimnames = FALSE
+            annotGeometryName, sample_id = "all", withDimnames = FALSE,
+            swap_rownames = swap_rownames
         )), error = function(e) NULL)
     }
 )
@@ -237,7 +243,7 @@ setMethod(
     "localResult", c("SpatialFeatureExperiment", "missing"),
     function(x, type, feature, colGeometryName = NULL,
              annotGeometryName = NULL, sample_id = NULL,
-             withDimnames = TRUE, simplify = TRUE) {
+             withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         .get_internal_feature(x,
             feature = feature, MARGIN = 2L,
             colGeometryName = colGeometryName,
@@ -247,7 +253,7 @@ setMethod(
             .get_internal_fun = .get_internal_integer,
             getfun = int_colData,
             key = "localResults", funstr = "localResult",
-            substr = "type", simplify = simplify
+            substr = "type", simplify = simplify, swap_rownames = NULL
         )
     }
 )
@@ -258,7 +264,7 @@ setMethod(
     "localResult", c("SpatialFeatureExperiment", "numeric"),
     function(x, type, feature, colGeometryName = NULL,
              annotGeometryName = NULL, sample_id = NULL,
-             withDimnames = TRUE, simplify = TRUE) {
+             withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         .get_internal_feature(x,
             type = type, feature = feature,
             MARGIN = 2L,
@@ -269,7 +275,7 @@ setMethod(
             .get_internal_fun = .get_internal_integer,
             getfun = int_colData,
             key = "localResults", funstr = "localResult",
-            substr = "type", simplify = simplify
+            substr = "type", simplify = simplify, swap_rownames = swap_rownames
         )
     }
 )
@@ -280,7 +286,7 @@ setMethod(
     "localResult", c("SpatialFeatureExperiment", "character"),
     function(x, type, feature, colGeometryName = NULL,
              annotGeometryName = NULL, sample_id = NULL,
-             withDimnames = TRUE, simplify = TRUE) {
+             withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         .get_internal_feature(x,
             type = type, feature = feature,
             MARGIN = 2L,
@@ -291,7 +297,8 @@ setMethod(
             .get_internal_fun = .get_internal_character,
             getfun = int_colData,
             key = "localResults", funstr = "localResult",
-            substr = "type", namestr = "localResult", simplify = simplify
+            substr = "type", namestr = "localResult", simplify = simplify,
+            swap_rownames = swap_rownames
         )
     }
 )
