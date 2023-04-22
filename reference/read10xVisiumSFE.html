@@ -20,7 +20,7 @@ spatial analyses.'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
     
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.6</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,14 +74,16 @@ spatial analyses.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read10xVisiumSFE</span><span class="op">(</span></span>
 <span>  samples <span class="op">=</span> <span class="st">""</span>,</span>
+<span>  dirs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">samples</span>, <span class="st">"outs"</span><span class="op">)</span>,</span>
 <span>  sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"sample"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HDF5"</span>, <span class="st">"sparse"</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"filtered"</span>, <span class="st">"raw"</span><span class="op">)</span>,</span>
-<span>  images <span class="op">=</span> <span class="st">"lowres"</span>,</span>
-<span>  load <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  images <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lowres"</span>, <span class="st">"hires"</span><span class="op">)</span>,</span>
+<span>  unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"full_res_image_pixel"</span>, <span class="st">"micron"</span><span class="op">)</span>,</span>
 <span>  style <span class="op">=</span> <span class="st">"W"</span>,</span>
 <span>  zero.policy <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  BPPARAM <span class="op">=</span> <span class="fu">SerialParam</span><span class="op">(</span><span class="op">)</span></span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">SerialParam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  load <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -91,6 +93,14 @@ spatial analyses.</p>
 <dd><p>a character vector specifying one or more directories, 
 each corresponding to a 10x Genomics Visium sample (see Details);
 if provided, names will be used as sample identifiers</p></dd>
+
+
+<dt>dirs</dt>
+<dd><p>Directory for each sample that contains the <code>spatial</code> and
+<code>raw/filtered_featues_bc_matrix</code> directories. By default, the
+<code>outs</code> directory under the directory specified in the <code>samples</code>
+argument, as in Space Ranger output. Change the <code>dirs</code> argument if you
+have moved or renamed the output directory.</p></dd>
 
 
 <dt>sample_id</dt>
@@ -115,9 +125,11 @@ filtered (spots mapped to tissue) or raw data (all spots).</p></dd>
 Valid values are <code>"lowres", "hires", "fullres", "detected", "aligned"</code></p></dd>
 
 
-<dt>load</dt>
-<dd><p>logical; should the image(s) be loaded into memory
-as a <code>grob</code>? If FALSE, will store the path/URL instead.</p></dd>
+<dt>unit</dt>
+<dd><p>Whether to use pixels in full resolution image or microns as the
+unit. If using microns, then spacing between spots in pixels will be used
+to convert the coordinates into microns, as the spacing is known to be 100
+microns. This is used to plot scale bar.</p></dd>
 
 
 <dt>style</dt>
@@ -133,60 +145,75 @@ as a <code>grob</code>? If FALSE, will store the path/URL instead.</p></dd>
 instance, passed to <code><a href="df2sf.html">df2sf</a></code> to parallelize the conversion of
 data frames with coordinates to <code>sf</code> geometries.</p></dd>
 
+
+<dt>load</dt>
+<dd><p>Not used, kept for backward compatibility.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>A SpatialFeatureExperiment object</p>
+<p>A SpatialFeatureExperiment object. The images might need to be
+  manually transposed and/or mirrored to match the spots in this version of
+  this package.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
+    <p>The <code>as(&lt;dgTMatrix&gt;, "dgCMatrix") is deprecated</code> warning comes
+  from the <code>DropletUtils</code> package which is used by
+  <code>SpatialExperiment</code> to read 10X outputs. This will be fixed when
+  <code>SpatialExperiment</code> switches to TENxIO.</p>
+<p>It is assumed that the images have not been cropped. Otherwise the
+images might not align with the spots.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/drighelli/SpatialExperiment" class="external-link">SpatialExperiment</a></span><span class="op">)</span> <span class="co"># Just for the example directory</span></span></span>
-<span class="r-in"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"10xVisium"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    package <span class="op">=</span> <span class="st">"SpatialExperiment"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"SpatialFeatureExperiment"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">sample_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"section1"</span>, <span class="st">"section2"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="va">sample_ids</span>, <span class="st">"outs"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sample_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sample01"</span>, <span class="st">"sample02"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="va">sample_ids</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "raw_feature_bc_matrix" "spatial"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "outs"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"spatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "scalefactors_json.json"    "tissue_lowres_image.png"  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "tissue_positions_list.csv"</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"raw_feature_bc_matrix"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/Users/runner/work/_temp/Library/SpatialExperiment/extdata/10xVisium/section1/outs/raw_feature_bc_matrix"</span>
-<span class="r-in"><span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">read10xVisiumSFE</span><span class="op">(</span><span class="va">samples</span>, <span class="va">sample_ids</span>,</span></span>
-<span class="r-in"><span>    type <span class="op">=</span> <span class="st">"sparse"</span>, data <span class="op">=</span> <span class="st">"raw"</span>,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
+<span class="r-in"><span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">read10xVisiumSFE</span><span class="op">(</span><span class="va">samples</span>, sample_id <span class="op">=</span> <span class="va">sample_ids</span>,</span></span>
+<span class="r-in"><span>    type <span class="op">=</span> <span class="st">"sparse"</span>, data <span class="op">=</span> <span class="st">"filtered"</span>,</span></span>
 <span class="r-in"><span>    load <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>as(&lt;dgTMatrix&gt;, "dgCMatrix") is deprecated since Matrix 1.5-0; do as(., "CsparseMatrix") instead</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>as(&lt;dgTMatrix&gt;, "dgCMatrix") is deprecated since Matrix 1.5-0; do as(., "CsparseMatrix") instead</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'as(&lt;dgTMatrix&gt;, "dgCMatrix")' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'as(., "CsparseMatrix")' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated") and help("Matrix-deprecated").</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'as(&lt;dgTMatrix&gt;, "dgCMatrix")' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'as(., "CsparseMatrix")' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated") and help("Matrix-deprecated").</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: SpatialFeatureExperiment </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 50 99 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 5 25 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(0):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): counts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(50): ENSMUSG00000051951 ENSMUSG00000089699 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ENSMUSG00000005886 ENSMUSG00000101476</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(1): symbol</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(99): AAACAACGAATAGTTC-1 AAACAAGTATCTCCCA-1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   AAAGTCGACCCTCAGT-1-1 AAAGTGCCATCAATTA-1-1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(4): in_tissue array_row array_col sample_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(5): ENSG00000014257 ENSG00000142515 ENSG00000263639</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ENSG00000163810 ENSG00000149591</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(14): symbol Feature.Type ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Median.Normalized.Average.Counts_sample02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Barcodes.Detected.per.Feature_sample02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(25): GTGGCGTGCACCAGAG-1 GGTCCCATAACATAGA-1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   TGCAATTTGGGCACGG-1 ATGCCAATCGCTCTGC-1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(10): in_tissue array_row ... channel3_mean channel3_stdev</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> reducedDimNames(0):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mainExpName: NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> altExpNames(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> spatialCoords names(2) : pxl_row_in_fullres pxl_col_in_fullres</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> spatialCoords names(2) : pxl_col_in_fullres pxl_row_in_fullres</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> imgData names(4): sample_id image_id data scaleFactor</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> unit: full_res_image_pixel</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geometries:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colGeometries: spotPoly (POLYGON) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Graphs:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> section1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> section2: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sample01: col: visium</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sample02: col: visium</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

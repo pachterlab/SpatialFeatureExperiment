@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.6</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,27 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.6" id="version-116-04202023">Version 1.1.6 (04/20/2023)<a class="anchor" aria-label="anchor" href="#version-116-04202023"></a></h2>
+<ul><li>Read images as SpatRaster, in read10xVisiumSFE</li>
+<li>read10xVisiumSFE can also convert full resolution image pixels to microns based on Visium spot spacing</li>
+<li>read10xVisiumSFE no longer transposes output from read10xVisium so the spots would match the image by default, and to be consistent with SpatialExperiment</li>
+<li>Read standard Vizgen MERFISH output with readVizgen</li>
+<li>SpatRasterImage class inheriting from VirtualSpatialImage for SpatialExperiment compatibility</li>
+<li>Methods of addImg, mirrorImg, and transposeImg for SpatRasterImage and SFE</li>
+<li>Mirror and transpose SFE objects, operating on both geometries and images</li>
+<li>Images are cropped when the SFE object is cropped</li>
+<li>Images are also shifted when removeEmptySpace is called</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.4" id="version-114-03022023">Version 1.1.4 (03/02/2023)<a class="anchor" aria-label="anchor" href="#version-114-03022023"></a></h2>
+<ul><li>Store SFE package version in object and added SFE method of updateObject to pave way for a potential reimplementation of spatialGraphs.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.3" id="version-113-12202022">Version 1.1.3 (12/20/2022)<a class="anchor" aria-label="anchor" href="#version-113-12202022"></a></h2>
+<ul><li>Use BiocNeighbors for k nearest neighbors and distance based neighbors, preserving distance info to avoid slow step to refind distances with sf as done in spdep.</li>
+<li>Added swap_rownames argument in localResult(s) getters so gene symbols from any rowData column can be used to get local results stored under Ensembl IDs.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.3" id="version-103-01112023">Version 1.0.3 (01/11/2023)<a class="anchor" aria-label="anchor" href="#version-103-01112023"></a></h2>
 <ul><li>Correctly move the geometries when there are multiple samples</li>
 <li>Use translate = FALSE when using localResult setter for geometries</li>
@@ -68,7 +89,7 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.4" id="version-0994-09072022">Version 0.99.4 (09/07/2022)<a class="anchor" aria-label="anchor" href="#version-0994-09072022"></a></h2>
 <ul><li>Added  field</li>
-<li>Also reimplemented some of the internals behind  as well</li>
+<li>Also reimplemented some of the internals behind </li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.0" id="version-0990-02092022">Version 0.99.0 (02/09/2022)<a class="anchor" aria-label="anchor" href="#version-0990-02092022"></a></h2>

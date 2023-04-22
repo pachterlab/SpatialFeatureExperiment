@@ -30,7 +30,7 @@ neighbours field of the listw object."><!-- mathjax --><script src="https://cdnj
     
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.6</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,7 +90,7 @@ weights of the graph in the <code>listw</code> object are by default style W (se
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S4 method for SpatialFeatureExperiment</span></span>
 <span><span class="fu">findSpatialNeighbors</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  sample_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="st">"all"</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"spatialCoords"</span>,</span>
 <span>  MARGIN <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tri2nb"</span>, <span class="st">"knearneigh"</span>, <span class="st">"dnearneigh"</span>, <span class="st">"gabrielneigh"</span>, <span class="st">"relativeneigh"</span>,</span>
@@ -98,9 +98,12 @@ weights of the graph in the <code>listw</code> object are by default style W (se
 <span>  dist_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"idw"</span>, <span class="st">"exp"</span>, <span class="st">"dpd"</span><span class="op">)</span>,</span>
 <span>  glist <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw"</span>, <span class="st">"W"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"U"</span>, <span class="st">"minmax"</span>, <span class="st">"S"</span><span class="op">)</span>,</span>
+<span>  nn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bioc"</span>, <span class="st">"spdep"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  dmax <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  zero.policy <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">SerialParam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  BNPARAM <span class="op">=</span> <span class="fu">KmknnParam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  zero.policy <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -150,12 +153,33 @@ details.</p></dd>
 <dd><p><code>style</code> can take values “W”, “B”, “C”, “U”, “minmax” and “S”</p></dd>
 
 
+<dt>nn_method</dt>
+<dd><p>Method to find k nearest neighbors and distance based
+neighbors. Can be either "bioc" or "spdep". For "bioc", methods from
+<code>BiocNeighbors</code> are used. For "spdep", methods from the <code>spdep</code>
+package are used. The "bioc" option is more scalable to larger datasets and
+supports multithreading.</p></dd>
+
+
 <dt>alpha</dt>
 <dd><p>Only relevant when <code>dist_type = "dpd"</code>.</p></dd>
 
 
 <dt>dmax</dt>
 <dd><p>Only relevant when <code>dist_type = "dpd"</code>.</p></dd>
+
+
+<dt>BPPARAM</dt>
+<dd><p>A <code>BiocParallelParam</code> object for multithreading.
+Only used for k nearest neighbor and distance based neighbor with
+<code>nn_method = "bioc"</code>.</p></dd>
+
+
+<dt>BNPARAM</dt>
+<dd><p>A <code>BiocNeighborParam</code> object specifying the
+algorithm to find k nearest neighbors and distance based neighbors with
+<code>nn_method = "bioc"</code>. For distance based neighbors, only
+<code>KmknnParam</code> and <code>VptreeParam</code> are applicable.</p></dd>
 
 
 <dt>zero.policy</dt>
@@ -211,7 +235,12 @@ ignored.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "findSpatialNeighbors"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $package</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $package[[1]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "SpatialFeatureExperiment"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $package[[2]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] ‘1.1.6’</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $args</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $args$method</span>
@@ -247,6 +276,9 @@ ignored.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $args$alpha</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $args$zero.policy</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $args$sample_id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Vis5A"</span>

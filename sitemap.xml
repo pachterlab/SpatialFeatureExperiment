@@ -22,6 +22,12 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/SFE-image.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SFE-transform.html</loc>
+  </url>
+  <url>
     <loc>/reference/SpatialFeatureExperiment-class.html</loc>
   </url>
   <url>
@@ -85,6 +91,9 @@
     <loc>/reference/read10xVisiumSFE.html</loc>
   </url>
   <url>
+    <loc>/reference/readVizgen.html</loc>
+  </url>
+  <url>
     <loc>/reference/reexports.html</loc>
   </url>
   <url>
@@ -101,6 +110,12 @@
   </url>
   <url>
     <loc>/reference/st_any_pred.html</loc>
+  </url>
+  <url>
+    <loc>/reference/unit-SpatialFeatureExperiment-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/updateObject.html</loc>
   </url>
   <url>
     <loc>/reference/visium_row_col.html</loc>
