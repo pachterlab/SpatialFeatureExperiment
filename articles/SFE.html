@@ -943,12 +943,54 @@ into memory when plotted; rather, it’s downsampled.</p>
 <span><span class="co">#&gt; [1] "terra"</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="vizgen-merfish-output">Vizgen MERFISH output<a class="anchor" aria-label="anchor" href="#vizgen-merfish-output"></a>
+</h3>
+<p>The commercialized MERFISH from Vizgen has a standard output format,
+that can be read into SFE with <code><a href="../reference/readVizgen.html">readVizgen()</a></code>. Because the
+cell segmentation from each field of view (FOV) has a separate HDF5 file
+and a MERFISH dataset can have hundreds of FOVs, we strongly recommend
+reading the MERFISH output on a server with a large number of CPU cores.
+Alternatively, some but not all MERFISH datasets store cell segmentation
+in a <code>parquet</code> file, which can be more easily read into R.
+Here we read a toy dataset which is the first FOV from a real
+dataset:</p>
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dir_use</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"vizgen"</span><span class="op">)</span>, </span>
+<span>                       package <span class="op">=</span> <span class="st">"SpatialFeatureExperiment"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_mer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readVizgen.html">readVizgen</a></span><span class="op">(</span><span class="va">dir_use</span>, z <span class="op">=</span> <span class="fl">0L</span>, image <span class="op">=</span> <span class="st">"PolyT"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
+<span><span class="co">#&gt; dim: 385 98 </span></span>
+<span><span class="co">#&gt; metadata(0):</span></span>
+<span><span class="co">#&gt; assays(1): counts</span></span>
+<span><span class="co">#&gt; rownames(385): Comt Ldha ... Blank-36 Blank-37</span></span>
+<span><span class="co">#&gt; rowData names(0):</span></span>
+<span><span class="co">#&gt; colnames(98): 103327291694389284070574461648020091166</span></span>
+<span><span class="co">#&gt;   105028411815552368766949841604861213395 ...</span></span>
+<span><span class="co">#&gt;   99103300832376657987379734140330816574</span></span>
+<span><span class="co">#&gt;   99471994882184799235845481075474519252</span></span>
+<span><span class="co">#&gt; colData names(7): fov volume ... max_y sample_id</span></span>
+<span><span class="co">#&gt; reducedDimNames(0):</span></span>
+<span><span class="co">#&gt; mainExpName: NULL</span></span>
+<span><span class="co">#&gt; altExpNames(0):</span></span>
+<span><span class="co">#&gt; spatialCoords names(2) : center_x center_y</span></span>
+<span><span class="co">#&gt; imgData names(4): sample_id image_id data scaleFactor</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; unit: micron</span></span>
+<span><span class="co">#&gt; Geometries:</span></span>
+<span><span class="co">#&gt; colGeometries: centroids (POINT), cellSeg (POLYGON) </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Graphs:</span></span>
+<span><span class="co">#&gt; sample01:</span></span></code></pre></div>
+<p>The unit is always in microns.</p>
+</div>
+<div class="section level3">
 <h3 id="coercion-from-spatialexperiment">Coercion from <code>SpatialExperiment</code><a class="anchor" aria-label="anchor" href="#coercion-from-spatialexperiment"></a>
 </h3>
 <p>SPE objects can be coerced into SFE objects. If column geometries or
 spot diameter are not specified, then a column geometry called
 “centroids” will be created.</p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/read10xVisium.html" class="external-link">read10xVisium</a></span><span class="op">(</span><span class="va">samples</span>, <span class="va">sample_ids</span>, type <span class="op">=</span> <span class="st">"sparse"</span>, data <span class="op">=</span> <span class="st">"filtered"</span>, </span>
 <span>  images <span class="op">=</span> <span class="st">"hires"</span>, load <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: 'as(&lt;dgTMatrix&gt;, "dgCMatrix")' is deprecated.</span></span>
@@ -959,10 +1001,10 @@ spot diameter are not specified, then a column geometry called
 <span><span class="co">#&gt; Use 'as(., "CsparseMatrix")' instead.</span></span>
 <span><span class="co">#&gt; See help("Deprecated") and help("Matrix-deprecated").</span></span></code></pre></div>
 <p>For the coercion, column names must not be duplicate.</p>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/make.unique.html" class="external-link">make.unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"-"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
 <span><span class="co">#&gt; dim: 5 25 </span></span>
@@ -1001,7 +1043,7 @@ Plotting functions in the <code>Voyager</code> package relies on
 </h3>
 <p>SFE objects can be concatenated with <code>cbind</code>, as was done
 just now to create a toy example with 2 samples.</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sfe1</span>, <span class="va">sfe2</span><span class="op">)</span></span></code></pre></div>
 <p>The SFE object can also be subsetted like a matrix, like an SCE
 object. More complexity arises when it comes to the spatial graphs. The
@@ -1016,7 +1058,7 @@ with <code>findSpatialNeighbors</code> or <code>findVisiumGraph</code>
 in this package, which records the method and parameters used to
 construct the graphs. If reconstruction fails, then a waning will be
 issued and the graphs removed.</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_subset</span> <span class="op">&lt;-</span> <span class="va">sfe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, drop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Node indices in the graphs are no longer valid after subsetting. Dropping all row and col graphs.</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
@@ -1042,7 +1084,7 @@ issued and the graphs removed.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Graphs:</span></span>
 <span><span class="co">#&gt; Vis5A:</span></span></code></pre></div>
-<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Will give warning because graph reconstruction fails</span></span>
 <span><span class="va">sfe_subset</span> <span class="op">&lt;-</span> <span class="va">sfe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></span></code></pre></div>
 <p>If images are present, then they will be cropped to the bounding box
@@ -1067,23 +1109,23 @@ in QuPath or LabKit (the latter needs to be converted into polygon).</p>
 <p>Use the <code>crop</code> function to directly get the subsetted SFE
 object. When images are present, they are cropped by the bounding box of
 the cropped geometries.</p>
-<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Before</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/dimGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-58-1.png" width="700"></p>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<p><img src="SFE_files/figure-html/unnamed-chunk-60-1.png" width="700"></p>
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_in_tissue</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crop.html">crop</a></span><span class="op">(</span><span class="va">sfe</span>, y <span class="op">=</span> <span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, colGeometryName <span class="op">=</span> <span class="st">"spotPoly"</span><span class="op">)</span></span></code></pre></div>
 <p>Note that for large datasets with many geometries, cropping can take
 a while to run.</p>
-<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># After</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/dimGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe_in_tissue</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-60-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-62-1.png" width="700"></p>
 <p><code>crop</code> can also be used in the conventional sense of
 cropping, i.e. specifying a bounding box.</p>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_cropped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crop.html">crop</a></span><span class="op">(</span><span class="va">sfe</span>, colGeometryName <span class="op">=</span> <span class="st">"spotPoly"</span>, sample_id <span class="op">=</span> <span class="st">"Vis5A"</span>,</span>
 <span>                    xmin <span class="op">=</span> <span class="fl">5500</span>, xmax <span class="op">=</span> <span class="fl">6500</span>, ymin <span class="op">=</span> <span class="fl">13500</span>, ymax <span class="op">=</span> <span class="fl">14500</span><span class="op">)</span></span></code></pre></div>
 <p>The <code>colGeometryName</code> is used to determine which columns
@@ -1106,7 +1148,7 @@ spot. Or get the intersections between each Visium spot and nuclei.
 Again, the geometry predicates and operations are performed
 independently for each sample, and the <code>sample_id</code> argument
 is optional when there is only one sample.</p>
-<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get logical vector</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">$</span><span class="va">in_tissue</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/annotPred.html">annotPred</a></span><span class="op">(</span><span class="va">sfe</span>, colGeometryName <span class="op">=</span> <span class="st">"spotPoly"</span>, </span>
 <span>                                    annotGeometryName <span class="op">=</span> <span class="st">"tissueBoundary"</span>,</span>
@@ -1123,12 +1165,12 @@ origin, which would facilitate plotting and comparison across samples
 with <code>geom_sf</code> and <code>facet_*</code>.</p>
 <p>To find the bounding box of all geometries in each sample of an SFE
 object:</p>
-<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bbox-SpatialFeatureExperiment-method.html">bbox</a></span><span class="op">(</span><span class="va">sfe</span>, sample_id <span class="op">=</span> <span class="st">"Vis5A"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  xmin  ymin  xmax  ymax </span></span>
 <span><span class="co">#&gt;  5000 13000  7000 15000</span></span></code></pre></div>
 <p>To move the coordinates:</p>
-<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_moved</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/removeEmptySpace.html">removeEmptySpace</a></span><span class="op">(</span><span class="va">sfe</span>, sample_id <span class="op">=</span> <span class="st">"Vis5A"</span><span class="op">)</span></span></code></pre></div>
 <p>The original bounding box before moving is stored within the SFE
 object, which can be read by <code>dimGeometry</code> setters so newly
@@ -1154,32 +1196,32 @@ class. Transformations can be applied to <code>SpatRasterImage</code>,
 as well as SFE objects with sample and image IDs specified.</p>
 <p>When an image is transposed, it is flipped about the line going from
 top left to bottom right:</p>
-<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">img</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/imgData-methods.html" class="external-link">getImg</a></span><span class="op">(</span><span class="va">sfe3</span>, image_id <span class="op">=</span> <span class="st">"hires"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">imgRaster</a></span><span class="op">(</span><span class="va">img</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-65-1.png" width="96"></p>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<p><img src="SFE_files/figure-html/unnamed-chunk-67-1.png" width="96"></p>
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/SFE-image.html">transposeImg</a></span><span class="op">(</span><span class="va">img</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">imgRaster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-65-2.png" width="96"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-67-2.png" width="96"></p>
 <p>Arguments for the SFE method of <code><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">mirrorImg()</a></code> differ from
 those of the SPE method, to match <code><a href="https://rdrr.io/pkg/terra/man/flip.html" class="external-link">terra::flip()</a></code>:</p>
-<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">mirrorImg</a></span><span class="op">(</span><span class="va">img</span>, direction <span class="op">=</span> <span class="st">"vertical"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">imgRaster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-66-1.png" width="96"></p>
-<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<p><img src="SFE_files/figure-html/unnamed-chunk-68-1.png" width="96"></p>
+<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">mirrorImg</a></span><span class="op">(</span><span class="va">img</span>, direction <span class="op">=</span> <span class="st">"horizontal"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">imgRaster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-66-2.png" width="96"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-68-2.png" width="96"></p>
 <p>Here we apply the transformation to an SFE object, where the image
 specified by the sample and image IDs are transformed:</p>
-<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">mirrorImg</a></span><span class="op">(</span><span class="va">sfe3</span>, sample_id <span class="op">=</span> <span class="st">"sample01"</span>, image_id <span class="op">=</span> <span class="st">"hires"</span><span class="op">)</span></span></code></pre></div>
 <p>So far, <code><a href="../reference/SFE-image.html">transposeImg()</a></code> and <code><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialImage-class.html" class="external-link">mirrorImg()</a></code> only
 transform the image. But the entire SFE object, including all the
 geometries and images, can be transformed at once.</p>
-<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_mirrored</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SFE-transform.html">mirror</a></span><span class="op">(</span><span class="va">sfe_in_tissue</span><span class="op">)</span></span>
 <span><span class="va">sfe_transposed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SFE-transform.html">transpose</a></span><span class="op">(</span><span class="va">sfe_in_tissue</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>, mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe_in_tissue</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/dimGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe_in_tissue</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -1189,7 +1231,7 @@ geometries and images, can be transformed at once.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe_transposed</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/dimGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe_transposed</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-69-1.png" width="576"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-71-1.png" width="576"></p>
 <p>Transforming the entire SFE object can be useful when the tissue has
 a orientation and a conventional direction of the orientation, such as
 rostral is conventionally at the top while caudal is at the bottom in
@@ -1241,7 +1283,7 @@ helpful to plotting scale bars when plotting geometries.</li>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.2.3 (2023-03-15)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-apple-darwin17.0 (64-bit)</span></span>
@@ -1269,65 +1311,67 @@ helpful to plotting scale bars when plotting geometries.</li>
 <span><span class="co">#&gt; [15] SpatialFeatureExperiment_1.1.6 BiocStyle_2.26.0              </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] rjson_0.2.21                  deldir_1.0-6                 </span></span>
-<span><span class="co">#&gt;   [3] ellipsis_0.3.2                class_7.3-21                 </span></span>
-<span><span class="co">#&gt;   [5] rprojroot_2.0.3               scuttle_1.8.4                </span></span>
-<span><span class="co">#&gt;   [7] XVector_0.38.0                BiocNeighbors_1.16.0         </span></span>
-<span><span class="co">#&gt;   [9] fs_1.6.1                      proxy_0.4-27                 </span></span>
-<span><span class="co">#&gt;  [11] bit64_4.0.5                   AnnotationDbi_1.60.2         </span></span>
-<span><span class="co">#&gt;  [13] interactiveDisplayBase_1.36.0 fansi_1.0.4                  </span></span>
-<span><span class="co">#&gt;  [15] codetools_0.2-19              R.methodsS3_1.8.2            </span></span>
-<span><span class="co">#&gt;  [17] sparseMatrixStats_1.10.0      cachem_1.0.7                 </span></span>
-<span><span class="co">#&gt;  [19] knitr_1.42                    jsonlite_1.8.4               </span></span>
-<span><span class="co">#&gt;  [21] dbplyr_2.3.2                  png_0.1-8                    </span></span>
-<span><span class="co">#&gt;  [23] R.oo_1.25.0                   shiny_1.7.4                  </span></span>
-<span><span class="co">#&gt;  [25] HDF5Array_1.26.0              BiocManager_1.30.20          </span></span>
-<span><span class="co">#&gt;  [27] compiler_4.2.3                httr_1.4.5                   </span></span>
-<span><span class="co">#&gt;  [29] dqrng_0.3.0                   fastmap_1.1.1                </span></span>
-<span><span class="co">#&gt;  [31] limma_3.54.2                  cli_3.6.1                    </span></span>
-<span><span class="co">#&gt;  [33] later_1.3.0                   s2_1.1.2                     </span></span>
-<span><span class="co">#&gt;  [35] htmltools_0.5.5               tools_4.2.3                  </span></span>
-<span><span class="co">#&gt;  [37] glue_1.6.2                    GenomeInfoDbData_1.2.9       </span></span>
-<span><span class="co">#&gt;  [39] dplyr_1.1.2                   rappdirs_0.3.3               </span></span>
-<span><span class="co">#&gt;  [41] wk_0.7.2                      Rcpp_1.0.10                  </span></span>
-<span><span class="co">#&gt;  [43] jquerylib_0.1.4               pkgdown_2.0.7                </span></span>
-<span><span class="co">#&gt;  [45] Biostrings_2.66.0             vctrs_0.6.2                  </span></span>
-<span><span class="co">#&gt;  [47] rhdf5filters_1.10.1           spdep_1.2-8                  </span></span>
-<span><span class="co">#&gt;  [49] ExperimentHub_2.6.0           DelayedMatrixStats_1.20.0    </span></span>
-<span><span class="co">#&gt;  [51] xfun_0.39                     stringr_1.5.0                </span></span>
-<span><span class="co">#&gt;  [53] beachmat_2.14.2               mime_0.12                    </span></span>
-<span><span class="co">#&gt;  [55] lifecycle_1.0.3               terra_1.7-28                 </span></span>
-<span><span class="co">#&gt;  [57] AnnotationHub_3.6.0           edgeR_3.40.2                 </span></span>
-<span><span class="co">#&gt;  [59] zlibbioc_1.44.0               promises_1.2.0.1             </span></span>
-<span><span class="co">#&gt;  [61] ragg_1.2.5                    parallel_4.2.3               </span></span>
-<span><span class="co">#&gt;  [63] rhdf5_2.42.1                  curl_5.0.0                   </span></span>
-<span><span class="co">#&gt;  [65] yaml_2.3.7                    memoise_2.0.1                </span></span>
-<span><span class="co">#&gt;  [67] sass_0.4.5                    stringi_1.7.12               </span></span>
-<span><span class="co">#&gt;  [69] RSQLite_2.3.1                 BiocVersion_3.16.0           </span></span>
-<span><span class="co">#&gt;  [71] highr_0.10                    desc_1.4.2                   </span></span>
-<span><span class="co">#&gt;  [73] e1071_1.7-13                  filelock_1.0.2               </span></span>
-<span><span class="co">#&gt;  [75] boot_1.3-28.1                 BiocParallel_1.32.6          </span></span>
-<span><span class="co">#&gt;  [77] spData_2.2.2                  rlang_1.1.0                  </span></span>
-<span><span class="co">#&gt;  [79] pkgconfig_2.0.3               systemfonts_1.0.4            </span></span>
-<span><span class="co">#&gt;  [81] bitops_1.0-7                  evaluate_0.20                </span></span>
-<span><span class="co">#&gt;  [83] lattice_0.21-8                purrr_1.0.1                  </span></span>
-<span><span class="co">#&gt;  [85] Rhdf5lib_1.20.0               bit_4.0.5                    </span></span>
-<span><span class="co">#&gt;  [87] tidyselect_1.2.0              magrittr_2.0.3               </span></span>
-<span><span class="co">#&gt;  [89] bookdown_0.33                 R6_2.5.1                     </span></span>
-<span><span class="co">#&gt;  [91] magick_2.7.4                  generics_0.1.3               </span></span>
-<span><span class="co">#&gt;  [93] DelayedArray_0.24.0           DBI_1.1.3                    </span></span>
-<span><span class="co">#&gt;  [95] withr_2.5.0                   pillar_1.9.0                 </span></span>
-<span><span class="co">#&gt;  [97] units_0.8-1                   KEGGREST_1.38.0              </span></span>
-<span><span class="co">#&gt;  [99] RCurl_1.98-1.12               sp_1.6-0                     </span></span>
-<span><span class="co">#&gt; [101] tibble_3.2.1                  crayon_1.5.2                 </span></span>
-<span><span class="co">#&gt; [103] DropletUtils_1.18.1           KernSmooth_2.23-20           </span></span>
-<span><span class="co">#&gt; [105] utf8_1.2.3                    BiocFileCache_2.6.1          </span></span>
-<span><span class="co">#&gt; [107] rmarkdown_2.21                locfit_1.5-9.7               </span></span>
-<span><span class="co">#&gt; [109] grid_4.2.3                    blob_1.2.4                   </span></span>
-<span><span class="co">#&gt; [111] digest_0.6.31                 classInt_0.4-9               </span></span>
-<span><span class="co">#&gt; [113] xtable_1.8-4                  httpuv_1.6.9                 </span></span>
-<span><span class="co">#&gt; [115] R.utils_2.12.2                textshaping_0.3.6            </span></span>
-<span><span class="co">#&gt; [117] bslib_0.4.2</span></span></code></pre></div>
+<span><span class="co">#&gt;   [1] AnnotationHub_3.6.0           BiocFileCache_2.6.1          </span></span>
+<span><span class="co">#&gt;   [3] systemfonts_1.0.4             sp_1.6-0                     </span></span>
+<span><span class="co">#&gt;   [5] BiocParallel_1.32.6           digest_0.6.31                </span></span>
+<span><span class="co">#&gt;   [7] htmltools_0.5.5               magick_2.7.4                 </span></span>
+<span><span class="co">#&gt;   [9] fansi_1.0.4                   magrittr_2.0.3               </span></span>
+<span><span class="co">#&gt;  [11] memoise_2.0.1                 tzdb_0.3.0                   </span></span>
+<span><span class="co">#&gt;  [13] limma_3.54.2                  Biostrings_2.66.0            </span></span>
+<span><span class="co">#&gt;  [15] R.utils_2.12.2                vroom_1.6.1                  </span></span>
+<span><span class="co">#&gt;  [17] pkgdown_2.0.7                 blob_1.2.4                   </span></span>
+<span><span class="co">#&gt;  [19] rappdirs_0.3.3                textshaping_0.3.6            </span></span>
+<span><span class="co">#&gt;  [21] xfun_0.39                     dplyr_1.1.2                  </span></span>
+<span><span class="co">#&gt;  [23] crayon_1.5.2                  RCurl_1.98-1.12              </span></span>
+<span><span class="co">#&gt;  [25] jsonlite_1.8.4                glue_1.6.2                   </span></span>
+<span><span class="co">#&gt;  [27] zlibbioc_1.44.0               XVector_0.38.0               </span></span>
+<span><span class="co">#&gt;  [29] DelayedArray_0.24.0           DropletUtils_1.18.1          </span></span>
+<span><span class="co">#&gt;  [31] Rhdf5lib_1.20.0               HDF5Array_1.26.0             </span></span>
+<span><span class="co">#&gt;  [33] DBI_1.1.3                     edgeR_3.40.2                 </span></span>
+<span><span class="co">#&gt;  [35] Rcpp_1.0.10                   xtable_1.8-4                 </span></span>
+<span><span class="co">#&gt;  [37] spData_2.2.2                  units_0.8-1                  </span></span>
+<span><span class="co">#&gt;  [39] dqrng_0.3.0                   bit_4.0.5                    </span></span>
+<span><span class="co">#&gt;  [41] spdep_1.2-8                   proxy_0.4-27                 </span></span>
+<span><span class="co">#&gt;  [43] httr_1.4.5                    wk_0.7.2                     </span></span>
+<span><span class="co">#&gt;  [45] ellipsis_0.3.2                pkgconfig_2.0.3              </span></span>
+<span><span class="co">#&gt;  [47] R.methodsS3_1.8.2             scuttle_1.8.4                </span></span>
+<span><span class="co">#&gt;  [49] sass_0.4.5                    dbplyr_2.3.2                 </span></span>
+<span><span class="co">#&gt;  [51] deldir_1.0-6                  locfit_1.5-9.7               </span></span>
+<span><span class="co">#&gt;  [53] utf8_1.2.3                    tidyselect_1.2.0             </span></span>
+<span><span class="co">#&gt;  [55] rlang_1.1.0                   later_1.3.0                  </span></span>
+<span><span class="co">#&gt;  [57] AnnotationDbi_1.60.2          BiocVersion_3.16.0           </span></span>
+<span><span class="co">#&gt;  [59] tools_4.2.3                   cachem_1.0.7                 </span></span>
+<span><span class="co">#&gt;  [61] cli_3.6.1                     generics_0.1.3               </span></span>
+<span><span class="co">#&gt;  [63] RSQLite_2.3.1                 ExperimentHub_2.6.0          </span></span>
+<span><span class="co">#&gt;  [65] evaluate_0.20                 stringr_1.5.0                </span></span>
+<span><span class="co">#&gt;  [67] fastmap_1.1.1                 yaml_2.3.7                   </span></span>
+<span><span class="co">#&gt;  [69] ragg_1.2.5                    knitr_1.42                   </span></span>
+<span><span class="co">#&gt;  [71] bit64_4.0.5                   fs_1.6.1                     </span></span>
+<span><span class="co">#&gt;  [73] purrr_1.0.1                   s2_1.1.2                     </span></span>
+<span><span class="co">#&gt;  [75] KEGGREST_1.38.0               sparseMatrixStats_1.10.0     </span></span>
+<span><span class="co">#&gt;  [77] mime_0.12                     R.oo_1.25.0                  </span></span>
+<span><span class="co">#&gt;  [79] arrow_11.0.0.3                compiler_4.2.3               </span></span>
+<span><span class="co">#&gt;  [81] filelock_1.0.2                curl_5.0.0                   </span></span>
+<span><span class="co">#&gt;  [83] png_0.1-8                     interactiveDisplayBase_1.36.0</span></span>
+<span><span class="co">#&gt;  [85] e1071_1.7-13                  tibble_3.2.1                 </span></span>
+<span><span class="co">#&gt;  [87] bslib_0.4.2                   stringi_1.7.12               </span></span>
+<span><span class="co">#&gt;  [89] highr_0.10                    desc_1.4.2                   </span></span>
+<span><span class="co">#&gt;  [91] lattice_0.21-8                classInt_0.4-9               </span></span>
+<span><span class="co">#&gt;  [93] vctrs_0.6.2                   pillar_1.9.0                 </span></span>
+<span><span class="co">#&gt;  [95] lifecycle_1.0.3               rhdf5filters_1.10.1          </span></span>
+<span><span class="co">#&gt;  [97] BiocManager_1.30.20           jquerylib_0.1.4              </span></span>
+<span><span class="co">#&gt;  [99] BiocNeighbors_1.16.0          bitops_1.0-7                 </span></span>
+<span><span class="co">#&gt; [101] httpuv_1.6.9                  R6_2.5.1                     </span></span>
+<span><span class="co">#&gt; [103] bookdown_0.33                 promises_1.2.0.1             </span></span>
+<span><span class="co">#&gt; [105] KernSmooth_2.23-20            codetools_0.2-19             </span></span>
+<span><span class="co">#&gt; [107] assertthat_0.2.1              boot_1.3-28.1                </span></span>
+<span><span class="co">#&gt; [109] rhdf5_2.42.1                  rprojroot_2.0.3              </span></span>
+<span><span class="co">#&gt; [111] rjson_0.2.21                  withr_2.5.0                  </span></span>
+<span><span class="co">#&gt; [113] GenomeInfoDbData_1.2.9        sfarrow_0.4.1                </span></span>
+<span><span class="co">#&gt; [115] parallel_4.2.3                terra_1.7-28                 </span></span>
+<span><span class="co">#&gt; [117] grid_4.2.3                    beachmat_2.14.2              </span></span>
+<span><span class="co">#&gt; [119] class_7.3-21                  rmarkdown_2.21               </span></span>
+<span><span class="co">#&gt; [121] DelayedMatrixStats_1.20.0     shiny_1.7.4</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
