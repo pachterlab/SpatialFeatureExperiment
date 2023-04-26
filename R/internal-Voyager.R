@@ -46,7 +46,7 @@ NULL
     features_assay <- intersect(features, rownames(x))
     if (!length(features_assay) && !is.null(swap_rownames) &&
         swap_rownames %in% names(rowData(x))) {
-        features_assay <- rownames(x)[match(features, rowData(x)$symbol)]
+        features_assay <- rownames(x)[match(features, rowData(x)[[swap_rownames]])]
         features_assay <- features_assay[!is.na(features_assay)]
         .warn_symbol_duplicate(x, features_assay)
         if (all(is.na(features_assay))) features_assay <- NULL
