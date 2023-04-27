@@ -46,9 +46,9 @@ NULL
     features_assay <- intersect(features, rownames(x))
     if (!length(features_assay) && !is.null(swap_rownames) &&
         swap_rownames %in% names(rowData(x))) {
-        features_assay <- rownames(x)[match(features, rowData(x)$symbol)]
+        .warn_symbol_duplicate(x, features, swap_rownames = swap_rownames)
+        features_assay <- rownames(x)[match(features, rowData(x)[[swap_rownames]])]
         features_assay <- features_assay[!is.na(features_assay)]
-        .warn_symbol_duplicate(x, features_assay)
         if (all(is.na(features_assay))) features_assay <- NULL
     }
     features_coldata <- intersect(features, names(colData(x)))
@@ -71,8 +71,8 @@ NULL
 
 #' @rdname internal-Voyager
 #' @export
-.warn_symbol_duplicate <- function(x, symbols) {
-    all_matches <- rowData(x)$symbol[rowData(x)$symbol %in% symbols]
+.warn_symbol_duplicate <- function(x, symbols, swap_rownames = "symbol") {
+    all_matches <- rowData(x)[[swap_rownames]][rowData(x)[[swap_rownames]] %in% symbols]
     which_duplicated <- duplicated(all_matches)
     genes_show <- all_matches[which_duplicated]
     if (anyDuplicated(all_matches)) {
@@ -89,9 +89,9 @@ NULL
 .symbol2id <- function(x, features, swap_rownames) {
     if (!any(features %in% rownames(x)) && !is.null(swap_rownames) &&
         swap_rownames %in% names(rowData(x))) {
-        .warn_symbol_duplicate(x, features)
-        ind <- features %in% rowData(x)$symbol
-        features[ind] <- rownames(x)[match(features[ind], rowData(x)$symbol)]
+        .warn_symbol_duplicate(x, features, swap_rownames = swap_rownames)
+        ind <- features %in% rowData(x)[[swap_rownames]]
+        features[ind] <- rownames(x)[match(features[ind], rowData(x)[[swap_rownames]])]
     }
     features
 }
