@@ -1,3 +1,6 @@
+# Version 1.2.1 (04/26/2023)
+* Fixed bug in .check_features and .symbol2id where "symbol" column is hard coded
+
 # Version 1.1.6 (04/20/2023)
 * Read images as SpatRaster, in read10xVisiumSFE
 * read10xVisiumSFE can also convert full resolution image pixels to microns based
