@@ -14,7 +14,7 @@
 
 .check_features(x, features, colGeometryName = NULL, swap_rownames = NULL)
 
-.warn_symbol_duplicate(x, symbols)
+.warn_symbol_duplicate(x, symbols, swap_rownames = "symbol")
 
 .symbol2id(x, features, swap_rownames)
 
