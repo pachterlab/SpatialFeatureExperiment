@@ -304,7 +304,7 @@ test_that("Image is cropped after cropping SFE object", {
                   ymin = bc["ymin"], ymax = bc["ymin"] + 2000) |>
         setNames(c("xmin", "xmax", "ymin", "ymax")) |>
         st_bbox() |> st_as_sfc()
-    sfe2 <- crop(sfe, bbox_use)
+    sfe2 <- SpatialFeatureExperiment::crop(sfe, bbox_use)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
     img <- getImg(sfe2)@image
     v <- terra::extract(terra::mean(img), cg)
@@ -317,6 +317,19 @@ test_that("Image is cropped after cropping SFE object", {
 })
 
 test_that("Transpose SFE object with image", {
+    sfe2 <- transpose(sfe)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2)@image
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+})
+
+test_that("Transpose SFE object with image, after cropping image", {
+    sfe <- sfe[,sfe$in_tissue]
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
     img <- getImg(sfe2)@image

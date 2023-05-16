@@ -1,5 +1,6 @@
 library(SFEData)
 library(SpatialExperiment)
+library(SingleCellExperiment)
 library(terra)
 sfe <- McKellarMuscleData("small")
 img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
@@ -65,3 +66,31 @@ test_that("imgRaster, trivial", {
 test_that("imgSource, trivial", {
     expect_true(is.na(imgSource(getImg(sfe))))
 })
+
+# Need uncropped image
+if (!dir.exists("outs")) dir.create("outs")
+mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!file.exists(mat_fn))
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
+                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"),
+                  mode = "wb")
+if (!dir.exists(file.path("outs", "spatial"))) {
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
+                  destfile = file.path("outs", "spatial.tar.gz"))
+    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+}
+
+sfe <- read10xVisiumSFE("tests/testthat/")
+sfe$nCounts <- Matrix::colSums(counts(sfe))
+plotSpatialFeature(sfe, "nCounts", image_id = "lowres")
+# Crop the image
+sfe <- sfe[,sfe$in_tissue]
+img <- imgData(sfe)$data[[1]]@image
+bbox(sfe)
+ext(img)
+img2 <- trans(img)
+ext(img2)
+# Bug
+sfe <- transpose(sfe)
+
+

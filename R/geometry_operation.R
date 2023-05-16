@@ -542,8 +542,8 @@ transpose <- function(sfe, sample_id = "all") {
         bboxes <- do.call(cbind, bboxes)
         colnames(bboxes) <- sample_id
         rownames(bboxes) <- c("xmin", "xmax", "ymin", "ymax")
-        v <- cbind(((bboxes["xmax",] - bboxes["xmin",])/2 + bboxes["xmin",])*2,
-                   ((bboxes["ymax",] - bboxes["ymin",])/2 + bboxes["ymin",])*2)
+        v <- cbind(((bboxes["ymax",] - bboxes["ymin",])/2 + bboxes["ymin",])*2,
+                   ((bboxes["xmax",] - bboxes["xmin",])/2 + bboxes["xmin",])*2)
         rownames(v) <- sample_id
         for (s in sample_id) {
             sfe <- .transform(sfe, s, mult = m, add = v[s,], img_fun = terra::trans,
