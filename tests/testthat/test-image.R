@@ -79,18 +79,3 @@ if (!dir.exists(file.path("outs", "spatial"))) {
                   destfile = file.path("outs", "spatial.tar.gz"))
     untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
 }
-
-sfe <- read10xVisiumSFE("tests/testthat/")
-sfe$nCounts <- Matrix::colSums(counts(sfe))
-plotSpatialFeature(sfe, "nCounts", image_id = "lowres")
-# Crop the image
-sfe <- sfe[,sfe$in_tissue]
-img <- imgData(sfe)$data[[1]]@image
-bbox(sfe)
-ext(img)
-img2 <- trans(img)
-ext(img2)
-# Bug
-sfe <- transpose(sfe)
-
-
