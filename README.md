@@ -8,21 +8,15 @@
 
 ## Installation
 
-The development version of SpatialFeatureExperiment can be installed from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("remotes")
-remotes::install_github("pachterlab/SpatialFeatureExperiment")
-```
-Documentation of the development version can be accessed [on this website](https://pachterlab.github.io/SpatialFeatureExperiment/dev/). 
-
-This package has been submitted to Bioconductor. Once accepted, it can be installed with
+This package is available on Bioconductor version 3.16 and above. It can be installed with
 
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install("SpatialFeatureExperiment")
 ```
+
+Documentation can be accessed [on this website](https://pachterlab.github.io/SpatialFeatureExperiment/dev/). 
 
 ## Introduction
 `SpatialFeatureExperiment` (SFE) is a new [S4](http://adv-r.had.co.nz/S4.html) class built on top of [`SpatialExperiment`](https://bioconductor.org/packages/release/bioc/html/SpatialExperiment.html) (SPE). `SpatialFeatureExperiment` incorporates geometries and geometry operations with the [`sf`](https://cran.r-project.org/web/packages/sf/index.html) package. Examples of supported geometries are Visium spots represented with polygons corresponding to their size, cell or nuclei segmentation polygons, tissue boundary polygons, pathologist annotation of histological regions, and transcript spots of genes. Using `sf`, `SpatialFeatureExperiment` leverages well-established and optimized C++ libraries underlying `sf` for geometry operations, including algorithms for determining whether geometries intersect, finding intersection geometries, buffering geometries with margins, etc. A schematic of the SFE object is shown below:
