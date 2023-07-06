@@ -384,7 +384,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
         samples_use = samples_use, op = op,
         remove_empty = TRUE
     )
-    out <- .crop_imgs(out, bbox(out))
+    out <- .crop_imgs(out, bbox(out, sample_id = "all"))
     samples_rmed <- setdiff(sample_id, sampleIDs(out))
     if (length(samples_rmed)) {
         warning(
