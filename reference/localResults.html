@@ -26,7 +26,7 @@ value for each spatial location."><!-- mathjax --><script src="https://cdnjs.clo
     
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -239,9 +239,7 @@ value for each spatial location.</p>
 
 
 <dt>name</dt>
-<dd><p>Name of the graphs to add to each sample_id; used in the
-<code>spatialGraphs</code> replacement method as it must be character while
-<code>type</code> can be either an integer index or a name.</p></dd>
+<dd><p>Name of the spatial method used, such as "localmoran".</p></dd>
 
 
 <dt>features</dt>
@@ -281,9 +279,7 @@ the gene symbols to identify which gene's local results to get or set.</p></dd>
 
 
 <dt>type</dt>
-<dd><p>An integer specifying the index or string specifying the name of
-the *Geometry to query or replace. If missing, then the first item in the
-*Geometries will be returned or replaced.</p></dd>
+<dd><p>Name or index of the spatial method used, such as "localmoran".</p></dd>
 
 
 <dt>feature</dt>
