@@ -163,9 +163,7 @@
 
 \item{sample_id}{Sample ID to get or set geometries.}
 
-\item{name}{Name of the graphs to add to each sample_id; used in the
-\code{spatialGraphs} replacement method as it must be character while
-\code{type} can be either an integer index or a name.}
+\item{name}{Name of the spatial method used, such as "localmoran".}
 
 \item{features}{Features whose local results to get or set, for
 \code{localResults} getter and setter for multiple features at a time.}
@@ -189,9 +187,7 @@ of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
 column in \code{rowData}, then putting "symbol" for this argument will use
 the gene symbols to identify which gene's local results to get or set.}
 
-\item{type}{An integer specifying the index or string specifying the name of
-the *Geometry to query or replace. If missing, then the first item in the
-*Geometries will be returned or replaced.}
+\item{type}{Name or index of the spatial method used, such as "localmoran".}
 
 \item{feature}{Feature whose local results to get or set, for
 \code{localResult} getter and setter for one feature at a time.}

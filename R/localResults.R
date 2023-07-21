@@ -13,6 +13,8 @@
 #' @inheritParams dimGeometries
 #' @inheritParams spatialGraphs
 #' @param ... Ignored
+#' @param type Name or index of the spatial method used, such as "localmoran".
+#' @param name Name of the spatial method used, such as "localmoran".
 #' @param value Values to set, should be either a matrix or a data frame.
 #' @param feature Feature whose local results to get or set, for
 #'   \code{localResult} getter and setter for one feature at a time.
