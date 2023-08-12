@@ -141,24 +141,25 @@ read10xVisiumSFE <- function(samples = "",
         })
         img_df <- do.call(rbind, img_dfs)
         imgData(o) <- img_df
+        # Create Visium graph for filtered data
+        if (data == "filtered") {
+            colGraph(o, "visium") <- findVisiumGraph(
+                o, sample_id = "all", style = style,
+                zero.policy = zero.policy
+            )
+        }
         o
     })
     out <- do.call(cbind, sfes)
-    if (data == "filtered") {
-        colGraphs(out, sample_id = "all", name = "visium") <-
-            findVisiumGraph(out,
-                sample_id = "all", style = style,
-                zero.policy = zero.policy
-            )
-    }
     out
 }
 
 #' @importFrom sf st_nearest_feature st_distance
 .pixel2micron <- function(sfe) {
-    min_row <- min(sfe$array_row)
-    min_col <- min(sfe$array_col)
-    inds_sub <- sfe$array_row <= min_row + 8 & sfe$array_col <= min_col + 8
+    # Use center spots rather than corner, to be more robust for filtered data
+    mid_row <- median(sfe$array_row)
+    mid_col <- median(sfe$array_col)
+    inds_sub <- abs(sfe$array_row - mid_row) <= 2 & abs(sfe$array_col - mid_col) <= 2
     coords_sub <- df2sf(spatialCoords(sfe)[inds_sub,], spatialCoordsNames(sfe))
     inds <- st_nearest_feature(coords_sub)
     dists <- vapply(seq_along(inds), function(i) {

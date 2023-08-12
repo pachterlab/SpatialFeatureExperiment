@@ -269,22 +269,22 @@ test_that("annotSummary", {
 })
 
 # Need uncropped image
-if (!dir.exists("outs")) dir.create("outs")
-mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
+mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "outs", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("outs", "spatial.tar.gz"))
-    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
+    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
 }
 library(sf)
 library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
-sfe <- read10xVisiumSFE(".")
+sfe <- read10xVisiumSFE("ob")
 test_that("Image is shifted after removing empty space", {
     sfe2 <- removeEmptySpace(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))

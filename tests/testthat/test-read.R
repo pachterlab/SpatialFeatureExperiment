@@ -38,17 +38,34 @@ test_that("Correctly read Space Ranger output", {
                  ignore_attr = "row.names")
 })
 
+test_that("Correctly add visium graph when there's 1 sample", {
+    sfe <- read10xVisiumSFE(samples[1], type = "sparse", data = "filtered")
+    expect_equal(colGraphNames(sfe, "sample01"), "visium")
+})
+
 # Need uncropped image
-if (!dir.exists("outs")) dir.create("outs")
-mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
+mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "outs", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("outs", "spatial.tar.gz"))
-    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
+    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
+}
+
+if (!dir.exists("kidney")) dir.create(file.path("kidney", "outs"), recursive = TRUE)
+mat_fn <- file.path("kidney", "outs", "filtered_feature_bc_matrix.h5")
+if (!file.exists(mat_fn))
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
+                  destfile = file.path("kidney", "outs", "filtered_feature_bc_matrix.h5"),
+                  mode = "wb")
+if (!dir.exists(file.path("kidney", "outs", "spatial"))) {
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
+                  destfile = file.path("kidney", "outs", "spatial.tar.gz"))
+    untar(file.path("kidney", "outs", "spatial.tar.gz"), exdir = file.path("kidney", "outs"))
 }
 
 library(terra)
@@ -57,7 +74,7 @@ library(SingleCellExperiment)
 library(SpatialExperiment)
 
 test_that("Image is properly aligned in pixel space", {
-    sfe <- read10xVisiumSFE(".")
+    sfe <- read10xVisiumSFE("ob")
     expect_equal(unit(sfe), "full_res_image_pixel")
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
@@ -65,6 +82,7 @@ test_that("Image is properly aligned in pixel space", {
     img_lo <- getImg(sfe, image_id = "lowres")@image
     img_lo <- terra::mean(img_lo)
     v_lo <- terra::extract(img_lo, cg)
+    # This test only works for this tissue for filtered data
     expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
     img_hi <- getImg(sfe, image_id = "hires")@image
     img_hi <- terra::mean(img_hi)
@@ -79,13 +97,13 @@ test_that("Image is properly aligned in pixel space", {
 })
 
 test_that("Read when one out of multiple images are desired", {
-    sfe <- read10xVisiumSFE(".", images = "lowres")
+    sfe <- read10xVisiumSFE("ob", images = "lowres")
     expect_equal(nrow(imgData(sfe)), 1L)
     expect_equal(imgData(sfe)$image_id, "lowres")
 })
 
 test_that("Image is properly aligned in micron space", {
-    sfe <- read10xVisiumSFE(".", unit = "micron")
+    sfe <- read10xVisiumSFE("ob", unit = "micron")
     expect_equal(unit(sfe), "micron")
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
@@ -106,6 +124,11 @@ test_that("Image is properly aligned in micron space", {
     expect_true(st_area(bbox_cg)/st_area(bbox_img_lo) > 0.1)
     expect_true(all(st_coordinates(bbox_img_lo) < 1e4))
     expect_true(all(st_coordinates(bbox_cg) < 1e4))
+})
+
+test_that("Micron spot spacing works when there're singletons", {
+    sfe <- read10xVisiumSFE("kidney", unit = "micron", zero.policy = TRUE)
+    expect_equal(unit(sfe), "micron")
 })
 
 dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")

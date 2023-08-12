@@ -173,7 +173,7 @@ setMethod("imgSource",
 .crop_imgs <- function(x, bboxes) {
     # Only works for SpatRaster
     if (nrow(imgData(x))) {
-        samples <- sampleIDs(x)
+        samples <- sort(sampleIDs(x))
         imgData(x) <- imgData(x)[order(imgData(x)$sample_id),]
         if (length(samples) == 1L) {
             bboxes <- matrix(bboxes, ncol = 1, dimnames = list(names(bboxes), samples))
