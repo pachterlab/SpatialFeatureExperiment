@@ -87,35 +87,62 @@ test_that("Warning message and dropping graphs when package required for reconst
 })
 
 # Need uncropped image
-if (!dir.exists("outs")) dir.create("outs")
-mat_fn <- file.path("outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
+mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "outs", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("outs", "spatial.tar.gz"))
-    untar(file.path("outs", "spatial.tar.gz"), exdir = "outs")
+                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
+    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
 }
+
+if (!dir.exists("kidney")) dir.create(file.path("kidney", "outs"), recursive = TRUE)
+mat_fn <- file.path("kidney", "outs", "filtered_feature_bc_matrix.h5")
+if (!file.exists(mat_fn))
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
+                  destfile = file.path("kidney", "outs", "filtered_feature_bc_matrix.h5"),
+                  mode = "wb")
+if (!dir.exists(file.path("kidney", "outs", "spatial"))) {
+    download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
+                  destfile = file.path("kidney", "outs", "spatial.tar.gz"))
+    untar(file.path("kidney", "outs", "spatial.tar.gz"), exdir = file.path("kidney", "outs"))
+}
+
 library(sf)
 library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
-sfe <- read10xVisiumSFE(".")
-test_that("Images are cropped after subsetting", {
-    bc <- bbox(sfe)
-    bbox_use <- c(xmin = bc["xmin"], xmax = bc["xmin"] + 2000,
-                  ymin = bc["ymin"], ymax = bc["ymin"] + 2000) |>
-        setNames(c("xmin", "xmax", "ymin", "ymax")) |>
-        st_bbox() |> st_as_sfc()
-    sfe2 <- sfe[,st_intersects(spotPoly(sfe), bbox_use, sparse = FALSE)[,1]]
-    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
-    v <- terra::extract(terra::mean(img), cg)
-    nCounts <- Matrix::colSums(counts(sfe2))
-    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
-    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+sfe1 <- read10xVisiumSFE("ob", sample_id = "ob", unit = "micron")
+sfe2 <- read10xVisiumSFE("kidney", sample_id = "kidney", zero.policy = TRUE,
+                         unit = "micron")
+
+genes_use <- intersect(rownames(sfe1), rownames(sfe2))
+sfe1 <- sfe1[genes_use,]
+sfe2 <- sfe2[genes_use,]
+rowData(sfe2)$symbol <- rowData(sfe1)$symbol
+sfe <- cbind(sfe1, sfe2)
+
+# Cropping: remove the singletons in the kidney dataset
+g <- colGraph(sfe2, "visium")
+not_singleton <- card(g$neighbour) >= 1
+inds <- c(rep(TRUE, ncol(sfe1)), not_singleton)
+
+test_that("Images are cropped after subsetting, multiple samples", {
+    sfe3 <- sfe[,inds]
+    cg <- st_centroid(spotPoly(sfe3, sample_id = "all"))
+    nCounts <- Matrix::colSums(counts(sfe3))
+    # For sample 1
+    img1 <- getImg(sfe3, sample_id = "ob")@image
+    bbox_geom <- st_bbox(spotPoly(sfe3, "ob")) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img1)) |> st_bbox() |> st_as_sfc()
+    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    
+    # For sample 2
+    img2 <- getImg(sfe3, sample_id = "kidney")@image
+    bbox_geom <- st_bbox(spotPoly(sfe3, "kidney")) |> st_as_sfc()
+    bbox_img <- as.vector(ext(img2)) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 })
