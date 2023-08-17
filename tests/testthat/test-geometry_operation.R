@@ -288,7 +288,7 @@ sfe <- read10xVisiumSFE("ob")
 test_that("Image is shifted after removing empty space", {
     sfe2 <- removeEmptySpace(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
+    img <- imgRaster(getImg(sfe2))
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -306,7 +306,7 @@ test_that("Image is cropped after cropping SFE object", {
         st_bbox() |> st_as_sfc()
     sfe2 <- SpatialFeatureExperiment::crop(sfe, bbox_use)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
+    img <- imgRaster(getImg(sfe2))
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean, use = "complete.obs")) > 0.4)
@@ -319,7 +319,7 @@ test_that("Image is cropped after cropping SFE object", {
 test_that("Transpose SFE object with image", {
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
+    img <- imgRaster(getImg(sfe2))
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -332,7 +332,7 @@ test_that("Transpose SFE object with image, after cropping image", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
+    img <- imgRaster(getImg(sfe2))
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -344,7 +344,7 @@ test_that("Transpose SFE object with image, after cropping image", {
 test_that("Mirror SFE object with image, vertical", {
     sfe2 <- mirror(sfe, direction = "vertical")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
+    img <- imgRaster(getImg(sfe2))
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -356,7 +356,7 @@ test_that("Mirror SFE object with image, vertical", {
 test_that("Mirror SFE object with image, horizontal", {
     sfe2 <- mirror(sfe, direction = "horizontal")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2)@image
+    img <- imgRaster(getImg(sfe2))
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
