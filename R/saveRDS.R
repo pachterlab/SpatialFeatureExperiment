@@ -23,7 +23,7 @@
 setMethod("saveRDS", "SpatialFeatureExperiment",
           function(object, file = "", ascii = FALSE, version = NULL,
                    compress = TRUE, refhook = NULL) {
-              if (is.null(imgData(object)))
+              if (!nrow(imgData(object)))
                   base::saveRDS(object, file = file, ascii = ascii,
                                 version = version, compress = compress,
                                 refhook = refhook)
