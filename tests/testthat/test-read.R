@@ -79,12 +79,12 @@ test_that("Image is properly aligned in pixel space", {
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
     cg$geometry <- st_centroid(cg$geometry)
-    img_lo <- getImg(sfe, image_id = "lowres")@image
+    img_lo <- getImg(sfe, image_id = "lowres") |> imgRaster()
     img_lo <- terra::mean(img_lo)
     v_lo <- terra::extract(img_lo, cg)
     # This test only works for this tissue for filtered data
     expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
-    img_hi <- getImg(sfe, image_id = "hires")@image
+    img_hi <- getImg(sfe, image_id = "hires") |> imgRaster()
     img_hi <- terra::mean(img_hi)
     v_hi <- terra::extract(img_hi, cg)
     expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
@@ -108,11 +108,11 @@ test_that("Image is properly aligned in micron space", {
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
     cg$geometry <- st_centroid(cg$geometry)
-    img_lo <- getImg(sfe, image_id = "lowres")@image
+    img_lo <- getImg(sfe, image_id = "lowres") |> imgRaster()
     img_lo <- terra::mean(img_lo)
     v_lo <- terra::extract(img_lo, cg)
     expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
-    img_hi <- getImg(sfe, image_id = "hires")@image
+    img_hi <- getImg(sfe, image_id = "hires") |> imgRaster()
     img_hi <- terra::mean(img_hi)
     v_hi <- terra::extract(img_hi, cg)
     expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
@@ -142,7 +142,7 @@ test_that("readVizgen flip geometry, use cellpose", {
                       flip = "geometry", min_area = 15)
     expect_equal(unit(sfe), "micron")
     expect_equal(imgData(sfe)$image_id, "PolyT")
-    img <- getImg(sfe)@image
+    img <- imgRaster(getImg(sfe))
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     nCounts <- Matrix::colSums(counts(sfe))
@@ -162,7 +162,7 @@ test_that("readVizgen flip geometry, don't use cellpose", {
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "geometry")
     expect_equal(unit(sfe), "micron")
-    img <- getImg(sfe)@image
+    img <- imgRaster(getImg(sfe))
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     nCounts <- Matrix::colSums(counts(sfe))
@@ -177,7 +177,7 @@ test_that("readVizgen flip image", {
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
                       flip = "image")
     expect_equal(unit(sfe), "micron")
-    img <- getImg(sfe)@image
+    img <- imgRaster(getImg(sfe))
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     nCounts <- Matrix::colSums(counts(sfe))
@@ -191,7 +191,7 @@ test_that("readVizgen don't flip image when image is too large", {
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
                       flip = "image", max_flip = "0.02 MB")
     suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z0.tif")))
-    img <- getImg(sfe)@image
+    img <- imgRaster(getImg(sfe))
     # Make sure image was not flipped
     expect_equal(terra::values(img), terra::values(img_orig))
     cg <- SpatialFeatureExperiment::centroids(sfe)
@@ -203,12 +203,12 @@ test_that("readVizgen don't flip image when image is too large", {
 test_that("Don't flip image if it's GeoTIFF", {
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
                       flip = "image")
-    terra::writeRaster(getImg(sfe)@image,
+    terra::writeRaster(imgRaster(getImg(sfe)),
                        filename = file.path("vizgen", "images", "mosaic_DAPI_z0.tif"),
                        overwrite = TRUE)
     sfe2 <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "DAPI",
                        flip = "image")
-    expect_equal(terra::values(getImg(sfe)@image), terra::values(getImg(sfe2)@image))
+    expect_equal(terra::values(imgRaster(getImg(sfe))), terra::values(imgRaster(getImg(sfe2))))
     file.remove(file.path("vizgen", "images", "mosaic_DAPI_z0.tif"))
 })
 

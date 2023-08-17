@@ -31,11 +31,11 @@ test_that("transposeImg", {
     # SpatRasterImage method
     img_t <- transposeImg(img)
     expect_s4_class(img_t, "SpatRasterImage")
-    expect_equal(dim(img@image)[1:2], dim(img_t@image)[2:1])
+    expect_equal(dim(imgRaster(img))[1:2], dim(imgRaster(img_t))[2:1])
     # SFE method
     sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
     img_t2 <- getImg(sfe, sample_id = "Vis5A", image_id = "lowres")
-    expect_equal(dim(img@image)[1:2], dim(img_t2@image)[2:1])
+    expect_equal(dim(imgRaster(img))[1:2], dim(imgRaster(img_t2))[2:1])
 })
 
 test_that("mirrorImg", {
@@ -44,14 +44,14 @@ test_that("mirrorImg", {
     img <- getImg(sfe)
     # SpatRasterImage method
     img_m <- mirrorImg(img)
-    mat1 <- terra::as.array(terra::mean(img@image))[,,1]
-    mat2 <- terra::as.array(terra::mean(img_m@image))[,,1]
+    mat1 <- terra::as.array(terra::mean(imgRaster(img)))[,,1]
+    mat2 <- terra::as.array(terra::mean(imgRaster(img_m)))[,,1]
     mat2_rev <- apply(mat2, 2, rev)
     expect_equal(mat1, mat2_rev)
     # SFE method
     sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
     img_m2 <- getImg(sfe)
-    mat3 <- terra::as.array(terra::mean(img_m2@image))[,,1]
+    mat3 <- terra::as.array(terra::mean(imgRaster(img_m2)))[,,1]
     mat3_rev <- apply(mat3, 2, rev)
     expect_equal(mat1, mat3_rev)
 })
@@ -63,6 +63,14 @@ test_that("imgRaster, trivial", {
     expect_s4_class(img, "SpatRaster")
 })
 
+test_that("imgRaster, loaded from RDS", {
+    saveRDS(sfe, "baz.rds")
+    sfe_read <- readRDS("baz.rds")
+    img <- imgRaster(getImg(sfe))
+    expect_s4_class(img, "SpatRaster")
+    unlink("baz.rds")
+})
+
 test_that("imgSource, trivial", {
-    expect_true(is.na(imgSource(getImg(sfe))))
+    expect_type(imgSource(getImg(sfe)), "character")
 })

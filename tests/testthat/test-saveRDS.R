@@ -6,7 +6,7 @@ test_that("Save SFE with SpatRaster images as RDS", {
     saveRDS(sfe, "foo.rds")
     sfe2 <- readRDS("foo.rds")
     imgs <- imgData(sfe2)$data
-    classes <- vapply(imgs, function(x) class(imgRaster(x)), FUN.VALUE = character(1))
+    classes <- vapply(imgs, function(x) class(x@image), FUN.VALUE = character(1))
     expect_true(all(classes == "PackedSpatRaster"))
     expect_s4_class(sfe2, "SpatialFeatureExperiment")
     unlink("foo.rds")

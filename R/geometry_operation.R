@@ -479,7 +479,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
     if (nrow(imgData(sfe))) {
         inds <- imgData(sfe)$sample_id == sample_id
         new_imgs <- lapply(imgData(sfe)$data[inds], function(img) {
-            img_new <- img_fun(img@image, ...)
+            img_new <- img_fun(imgRaster(img), ...)
             if (shift_img)
                 img_new <- terra::shift(img_new, dx = add[1], dy = add[2])
             new("SpatRasterImage", image = img_new)
@@ -536,7 +536,7 @@ transpose <- function(sfe, sample_id = "all") {
         m <- matrix(c(0,-1,-1,0), ncol = 2)
         bboxes <- lapply(sample_id, function(s) {
             # Assume that all images of the same sample have the same extent
-            img <- imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]]@image
+            img <- imgRaster(imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]])
             as.vector(ext(img))
         })
         bboxes <- do.call(cbind, bboxes)
@@ -571,7 +571,7 @@ mirror <- function(sfe, sample_id = "all",
     if (nrow(imgData(sfe))) {
         bboxes <- lapply(sample_id, function(s) {
             # Assume that all images of the same sample have the same extent
-            img <- imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]]@image
+            img <- imgRaster(imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]])
             as.vector(ext(img))
         })
         bboxes <- do.call(cbind, bboxes)

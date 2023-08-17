@@ -133,7 +133,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("transposeImg", "SpatRasterImage",
           function(x) {
-              x@image <- terra::trans(x@image)
+              x@image <- terra::trans(imgRaster(x))
               x
           })
 
@@ -141,7 +141,7 @@ setMethod("transposeImg", "SpatRasterImage",
 #' @export
 setMethod("mirrorImg", "SpatRasterImage",
           function(x, direction = "vertical") {
-              x@image <- terra::flip(x@image, direction = direction)
+              x@image <- terra::flip(imgRaster(x), direction = direction)
               x
           })
 
@@ -175,14 +175,18 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
 
 #' @rdname SFE-image
 #' @export
-setMethod("imgRaster", "SpatRasterImage", function(x) x@image)
+setMethod("imgRaster", "SpatRasterImage", function(x) {
+    if (is(x@image, "PackedSpatRaster")) unwrap(x@image)
+    else x@image
+})
 
 #' @rdname SFE-image
 #' @export
+#' @importFrom terra sources
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              NA_character_
+              sources(imgRaster(x))
           })
 
 .crop_imgs <- function(x, bboxes) {
@@ -197,7 +201,7 @@ setMethod("imgSource",
             img_data <- imgData(x)$data[imgData(x)$sample_id == s]
             bbox_use <- ext(bboxes[c("xmin", "xmax", "ymin", "ymax"),s])
             lapply(img_data, function(img) {
-                new("SpatRasterImage", image = terra::crop(img@image, bbox_use, snap = "out"))
+                new("SpatRasterImage", image = terra::crop(imgRaster(img), bbox_use, snap = "out"))
             })
         })
         new_imgs <- unlist(new_imgs, recursive = FALSE)
