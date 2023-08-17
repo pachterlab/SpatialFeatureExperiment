@@ -54,6 +54,7 @@ Collate:
     'localResults.R'
     'read.R'
     'reexports.R'
+    'saveRDS.R'
     'spatialGraphs.R'
     'subset.R'
     'updateObject.R'

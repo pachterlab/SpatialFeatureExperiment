@@ -31,6 +31,7 @@
 #'   imgSource getImg
 #' @importFrom terra ext ext<-
 #' @importClassesFrom terra SpatRaster
+#' @importFrom methods setClassUnion
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")
@@ -48,10 +49,24 @@
 #' @aliases transposeImg
 NULL
 
+# Not exported by terra
+setClass("PackedSpatRaster",
+         representation (
+             definition = "character",
+             values = "matrix",
+             attributes = "list"
+         ),
+         prototype (
+             attributes = list()
+         )
+)
+
+setClassUnion("GeneralizedSpatRaster", members = c("SpatRaster", "PackedSpatRaster"))
+
 #' @rdname SFE-image
 #' @export
 setClass("SpatRasterImage", contains="VirtualSpatialImage",
-         slots=c(image="SpatRaster"))
+         slots=c(image="GeneralizedSpatRaster"))
 
 #' @rdname SFE-image
 #' @export
