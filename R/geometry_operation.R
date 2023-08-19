@@ -286,6 +286,41 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
         summary_fun = summary_fun, return_df = TRUE
     )
 }
+
+.check_bbox <- function(bbox) {
+    if (!is.numeric(bbox))
+        stop("bbox must be a numeric vector or matrix.")
+    if (is.vector(bbox)) {
+        if (!setequal(names(bbox), c("xmin", "xmax", "ymin", "ymax")))
+            stop("Vector bbox must be a vector of length 4 with names xmin, xmax, ymin, ymax in any order.")
+    } else if (is.matrix(bbox)) {
+        if (!setequal(rownames(bbox), c("xmin", "xmax", "ymin", "ymax"))) {
+            stop("Matrix bbox must have rownames xmin, xmax, ymin, ymax, in any order.")
+        }
+        if (is.null(colnames(bbox))) {
+            stop("Matrix bbox must have colnames to indicate sample ID.")
+        }
+    }
+}
+
+.bbox2sf <- function(bbox, sample_id) {
+    if (is.vector(bbox)) {
+        bbox <- matrix(bbox, ncol = 1, dimnames = list(names(bbox), sample_id[1]))
+    } else {
+        samples_use <- intersect(colnames(bbox), sample_id)
+        if (!length(samples_use))
+            stop("No bounding boxes for samples specified.")
+        bbox <- bbox[, samples_use, drop = FALSE]
+    }
+    bbox <- bbox[c("xmin", "ymin", "xmax", "ymax"),, drop = FALSE]
+    bbox_sfc <- apply(bbox, 2, function(x) st_as_sfc(st_bbox(x)),
+                      simplify = FALSE)
+    bbox_sfc <- Reduce(c, bbox_sfc)
+    bbox_sf <- st_sf(geometry = bbox_sfc)
+    if (!is.null(sample_id)) bbox_sf$sample_id <- colnames(bbox)
+    bbox_sf
+}
+
 #' Crop an SFE object with a geometry
 #'
 #' Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
@@ -296,31 +331,32 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' will be cropped.
 #'
 #' @param x An SFE object.
-#' @param y An object of class \code{sf}, \code{sfg}, or \code{sfc} with which
-#'   to crop the SFE object. Optional if \code{xmin}, \code{xmax}, \code{ymin},
-#'   and \code{ymax} are specified for a bounding box.
+#' @param y An object of class \code{sf}, \code{sfg}, \code{sfc} with which to
+#'   crop the SFE object, or a bounding box with the format of the output of
+#'   \code{\link{bbox,SpatialFeatureExperiment-method}}.
 #' @param colGeometryName Column geometry to used to indicate which cells/spots
 #'   to keep.
 #' @param sample_id Samples to crop. Optional when only one sample is present.
 #'   Can be multiple samples, or "all", which means all samples. For multiple
-#'   samples, \code{y} may have column \code{sample_id} indicating which
-#'   geometry subsets which sample. Only samples included in the
-#'   \code{sample_id} column are subsetted. If there is no \code{sample_id}
-#'   column or \code{y} is not specified, then the same geometry or bounding box
-#'   is used to subset all samples specified in the \code{sample_id} argument.
+#'   samples, \code{sf} data frame \code{y} may have column \code{sample_id}
+#'   indicating which geometry subsets which sample or matrix \code{y} may
+#'   indicate sample specific bounding boxes in its column names. Only samples
+#'   included in the indicated sample IDs are subsetted. If sample is not
+#'   indicated in \code{y}, then the same geometry or bounding box is used to
+#'   subset all samples specified in the \code{sample_id} argument.
 #' @param pred A geometric binary predicate function to indicate which
 #'   cells/spots to keep, defaults to \code{\link{st_intersects}}.
 #' @param op A geometric operation function to crop the geometries in the SFE
 #'   object. Defaults to \code{\link{st_intersection}}.
-#' @param xmin Minimum x coordinate of bounding box. Ignored if \code{y} is
-#'   specified.
-#' @param xmax Maximum x coordinate of bounding box.
-#' @param ymin Minimum y coordinate of bounding box.
-#' @param ymax Maximum y coordinate of bounding box.
+#' @param xmin Deprecated. Supply the bounding box to argument \code{y} instead.
+#' @param xmax Deprecated.
+#' @param ymin Deprecated.
+#' @param ymax Deprecated.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @note In this version, this function does NOT crop the image.
 #' @importFrom sf st_intersection st_union st_agr
+#' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @export
 #' @examples
 #' library(SFEData)
@@ -338,26 +374,28 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
-                 pred = st_intersects, op = st_intersection, xmin = NULL,
-                 xmax = NULL, ymin = NULL, ymax = NULL) {
-    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-    if (is.null(y)) {
-        y <- st_sf(
-            geometry = st_as_sfc(st_bbox(c(
-                xmin = xmin, xmax = xmax,
-                ymin = ymin, ymax = ymax
-            ),
-            crs = NA
-            )),
-            sf_column_name = "geometry"
-        )
+                 pred = st_intersects, op = st_intersection, xmin = deprecated(),
+                 xmax = deprecated(), ymin = deprecated(), ymax = deprecated()) {
+    if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
+                       is_present(ymin) || is_present(ymax))) {
+        deprecate_warn("1.4.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
+                       details = "Please use argument `y` to specify bounding box instead.")
+        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+        y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
+                      sample_id)
     }
     if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
-        stop("y must be a sf, sfc, or sfg object")
+        # y should be bbox, either named vector or matrix with samples in columns
+        .check_bbox(y)
+        if (is.matrix(y) && is.null(sample_id)) sample_id <- colnames(y)
+        y <- .bbox2sf(y, sample_id)
     }
     if ("sample_id" %in% names(y)) {
         samples_use <- intersect(unique(y$sample_id), sample_id)
+        if (!length(samples_use))
+            stop("No bounding boxes for samples specified.")
     } else {
+        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         samples_use <- sample_id
     }
     preds <- .annot_fun(x, y, colGeometryName,

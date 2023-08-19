@@ -1,5 +1,21 @@
 library(sf)
 
+# From sf's examples
+pts = st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
+pol = st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
+
+test_that("trivial, st_any_intersects", {
+    o <- st_any_intersects(pts, pol)
+    expect_equal(o, c(TRUE, TRUE, FALSE))
+})
+
+test_that("trivial, st_n_intersects", {
+    n1 <- st_n_intersects(pts, pol)
+    expect_equal(n1, c(1,1,0))
+    n2 <- st_n_intersects(pol, pts)
+    expect_equal(n2, 2)
+})
+
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
     package = "SpatialFeatureExperiment"
 ))
@@ -7,24 +23,86 @@ sfe_visium <- addVisiumSpotPoly(sfe_visium, 0.5)
 bbox_use <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 1, ymax = 6),
     crs = NA
 ))
-bbox_use2 <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
+bbox_use2 <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 5, ymax = 9)))
+bbox_sf <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
     sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all")
     cg <- spotPoly(sfe_cropped, "all")
     expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
-    sfe_cropped2 <- crop(sfe_visium, y = bbox_use2, sample_id = "sample01")
+})
+
+test_that("Only crop one sample out of two, with sf", {
+    expect_error(crop(sfe_visium, y = bbox_sf, sample_id = "sample02"),
+                 "No bounding boxes for samples specified.")
+    sfe_cropped2 <- crop(sfe_visium, y = bbox_sf, sample_id = "sample01")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use,
-        pred = st_covered_by
+                                pred = st_covered_by
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped2, "sample02"), bbox_use,
-        pred = st_covered_by
+                                 pred = st_covered_by
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped2, "sample02"),
         bbox_use
     )), 2)
+})
+
+test_that("Using a bounding box to crop SFE objects, deprecated way", {
+    expect_warning(sfe_cropped <- crop(sfe_visium, sample_id = "sample01",
+                                       xmin = 1, xmax = 3, ymin = 1, ymax = 6),
+                   "deprecated")
+    cg <- spotPoly(sfe_cropped, "sample01")
+    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
+})
+
+test_that("Using a bounding box to crop SFE objects, current way, expected errors", {
+    expect_error(crop(sfe_visium, y = "foobar"),
+                 "bbox must be a numeric vector or matrix.")
+    expect_error(crop(sfe_visium, y = c(meow = 1, purr = 2)),
+                 "must be a vector of length 4")
+    m <- matrix(1:8, ncol = 2)
+    expect_error(crop(sfe_visium, y = m),
+                 "must have rownames xmin, xmax")
+    rownames(m) <- c("xmin", "ymin", "xmax", "ymax")
+    expect_error(crop(sfe_visium, y = m),
+                 "must have colnames")
+})
+
+test_that("Using a bounding box to crop SFE objects, current way, one sample", {
+    # Sample ID for bbox doesn't match sample specified in crop function
+    m <- matrix(c(1, 3, 1, 6), ncol = 1,
+                dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
+                                "sample01"))
+    expect_error(crop(sfe_visium, y = m, sample_id = "sample02"),
+                 "No bounding boxes for samples specified.")
+    sfe_cropped <- crop(sfe_visium, y = m)
+    expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
+                                pred = st_covered_by
+    )))
+    expect_false(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use,
+                                 pred = st_covered_by
+    )))
+    expect_equal(sum(st_any_intersects(
+        spotPoly(sfe_cropped, "sample02"),
+        bbox_use
+    )), 2)
+})
+
+# I don't expect it to be common to use the same bbox to crop all samples,
+# because the ROIs in different samples most likely have different bboxes
+test_that("Using a bounding box to crop SFE objects, current way, all samples", {
+    m <- matrix(c(1, 3, 1, 6, 1, 3, 5, 9), ncol = 2,
+                dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
+                                c("sample01", "sample02")))
+    sfe_cropped <- crop(sfe_visium, y = m)
+    expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
+                                pred = st_covered_by
+    )))
+    expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use2,
+                                pred = st_covered_by
+    )))
 })
 
 test_that("When a geometry is broken into multiple pieces", {
@@ -35,7 +113,19 @@ test_that("When a geometry is broken into multiple pieces", {
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "MULTIPOLYGON")
 })
 
-annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_use2
+test_that("When a sample is removed by cropping", {
+    m <- matrix(c(1, 3, 1, 6, 6, 9, 10, 13), ncol = 2,
+                dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
+                                c("sample01", "sample02")))
+    expect_warning(sfe_cropped <- crop(sfe_visium, m), "were removed")
+    expect_equal(sampleIDs(sfe_cropped), "sample01")
+})
+
+test_that("Crop to subset with intersection without cropping geometries", {
+
+})
+
+annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_sf
 test_that("annotPred", {
     out <- annotPred(sfe_visium,
         colGeometryName = "spotPoly",

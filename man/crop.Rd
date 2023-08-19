@@ -11,29 +11,30 @@ crop(
   sample_id = NULL,
   pred = st_intersects,
   op = st_intersection,
-  xmin = NULL,
-  xmax = NULL,
-  ymin = NULL,
-  ymax = NULL
+  xmin = deprecated(),
+  xmax = deprecated(),
+  ymin = deprecated(),
+  ymax = deprecated()
 )
 }
 \arguments{
 \item{x}{An SFE object.}
 
-\item{y}{An object of class \code{sf}, \code{sfg}, or \code{sfc} with which
-to crop the SFE object. Optional if \code{xmin}, \code{xmax}, \code{ymin},
-and \code{ymax} are specified for a bounding box.}
+\item{y}{An object of class \code{sf}, \code{sfg}, \code{sfc} with which to
+crop the SFE object, or a bounding box with the format of the output of
+\code{\link{bbox,SpatialFeatureExperiment-method}}.}
 
 \item{colGeometryName}{Column geometry to used to indicate which cells/spots
 to keep.}
 
 \item{sample_id}{Samples to crop. Optional when only one sample is present.
 Can be multiple samples, or "all", which means all samples. For multiple
-samples, \code{y} may have column \code{sample_id} indicating which
-geometry subsets which sample. Only samples included in the
-\code{sample_id} column are subsetted. If there is no \code{sample_id}
-column or \code{y} is not specified, then the same geometry or bounding box
-is used to subset all samples specified in the \code{sample_id} argument.}
+samples, \code{sf} data frame \code{y} may have column \code{sample_id}
+indicating which geometry subsets which sample or matrix \code{y} may
+indicate sample specific bounding boxes in its column names. Only samples
+included in the indicated sample IDs are subsetted. If sample is not
+indicated in \code{y}, then the same geometry or bounding box is used to
+subset all samples specified in the \code{sample_id} argument.}
 
 \item{pred}{A geometric binary predicate function to indicate which
 cells/spots to keep, defaults to \code{\link{st_intersects}}.}
@@ -41,14 +42,13 @@ cells/spots to keep, defaults to \code{\link{st_intersects}}.}
 \item{op}{A geometric operation function to crop the geometries in the SFE
 object. Defaults to \code{\link{st_intersection}}.}
 
-\item{xmin}{Minimum x coordinate of bounding box. Ignored if \code{y} is
-specified.}
+\item{xmin}{Deprecated. Supply the bounding box to argument \code{y} instead.}
 
-\item{xmax}{Maximum x coordinate of bounding box.}
+\item{xmax}{Deprecated.}
 
-\item{ymin}{Minimum y coordinate of bounding box.}
+\item{ymin}{Deprecated.}
 
-\item{ymax}{Maximum y coordinate of bounding box.}
+\item{ymax}{Deprecated.}
 }
 \value{
 An SFE object. There is no guarantee that the geometries after
