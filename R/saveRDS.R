@@ -30,7 +30,7 @@ setMethod("saveRDS", "SpatialFeatureExperiment",
               else {
                   for (i in seq_len(nrow(imgData(object)))) {
                       img <- int_metadata(object)$imgData$data[[i]]
-                      if (is(imgRaster(img), "SpatRaster"))
+                      if (is(img@image, "SpatRaster"))
                           img@image <- wrap(img@image)
                       int_metadata(object)$imgData$data[[i]] <- img
                       # Then I need to add unwrap to functions that use the image
