@@ -23,7 +23,7 @@
 setMethod("saveRDS", "SpatialFeatureExperiment",
           function(object, file = "", ascii = FALSE, version = NULL,
                    compress = TRUE, refhook = NULL) {
-              if (is.null(imgData(object)))
+              if (!nrow(imgData(object)))
                   base::saveRDS(object, file = file, ascii = ascii,
                                 version = version, compress = compress,
                                 refhook = refhook)
@@ -33,7 +33,6 @@ setMethod("saveRDS", "SpatialFeatureExperiment",
                       if (is(img@image, "SpatRaster"))
                           img@image <- wrap(img@image)
                       int_metadata(object)$imgData$data[[i]] <- img
-                      # Then I need to add unwrap to functions that use the image
                   }
                   base::saveRDS(object, file = file, ascii = ascii,
                                 version = version, compress = compress,
