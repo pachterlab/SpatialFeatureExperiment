@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.3</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,17 @@
       <small>Source: <a href="https://github.com/pachterlab/SpatialFeatureExperiment/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.3" id="version-123-08182023">Version 1.2.3 (08/18/2023)<a class="anchor" aria-label="anchor" href="#version-123-08182023"></a></h2>
+<ul><li>Fixed bug when Visium graph is not added when filtered matrix from only one sample is read with read10xVisiumSFE.</li>
+<li>Changed the way pixels are converted to microns in Visium. Old way: use top left corner of Visium spot array to compute spacing between spots, doesn’t work for filtered data when there’re singleton spots. New way: Use median row/col indices, more robust when there’re singletons. When spacing is used for the conversion, spot size is found to vary across datasets.</li>
+<li>Added saveRDS method for SFE objects, so SpatRaster images are wrapped before saving and unwrapped on the fly when they’re requested.</li>
+<li>Fixed bug when the wrong bounding boxes are used to crop images when SFE object is subsetted and there’re multiple samples.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.2" id="version-122-07212023">Version 1.2.2 (07/21/2023)<a class="anchor" aria-label="anchor" href="#version-122-07212023"></a></h2>
+<ul><li>Fixed embarrasing documentation mismatch in localResults</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.1" id="version-121-04262023">Version 1.2.1 (04/26/2023)<a class="anchor" aria-label="anchor" href="#version-121-04262023"></a></h2>
 <ul><li>Fixed bug in .check_features and .symbol2id where “symbol” column is hard coded</li>
