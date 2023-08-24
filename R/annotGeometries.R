@@ -29,6 +29,7 @@
 #' @name annotGeometries
 #' @aliases annotGeometries<- annotGeometry annotGeometry<- annotGeometryNames
 #'   annotGeometryNames<-
+#' @concept Annotation geometries
 #' @examples
 #' # Example dataset
 #' library(SFEData)

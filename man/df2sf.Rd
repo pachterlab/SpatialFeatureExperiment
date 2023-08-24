@@ -81,3 +81,4 @@ multipts_df <- readRDS(system.file("extdata/multipts_df.rds",
 ))
 sf_use <- df2sf(multipts_df, geometryType = "MULTIPOINT")
 }
+\concept{Utilities}

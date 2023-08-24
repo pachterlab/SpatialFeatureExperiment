@@ -7,6 +7,7 @@
 #' column in \code{colData(x)}.
 #' @export
 #' @importFrom SummarizedExperiment colData colData<- rowData
+#' @concept Utilities
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
@@ -23,6 +24,7 @@ sampleIDs <- function(sfe) unique(colData(sfe)$sample_id)
 #'   sample IDs to be changed and whose values are the corresponding
 #'   replacements.
 #' @return An SFE object.
+#' @concept Utilities
 #' @export
 #' @examples
 #' library(SFEData)

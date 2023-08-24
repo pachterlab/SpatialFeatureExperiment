@@ -57,6 +57,7 @@
 #' @return Getters for multiple geometries return a named list. Getters for names
 #'   return a character vector of the names. Getters for single geometries
 #'   return an \code{sf} data frame. Setters return an SFE object.
+#' @concept Column or row geometries
 #' @name dimGeometries
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
 #'   dimGeometryNames<-
@@ -421,6 +422,7 @@ centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
 #' @return A SFE object with a new colGeometry called spotPoly, which has
 #' polygons of the spots.
 #' @importFrom SpatialExperiment spatialCoordsNames
+#' @concept Column or row geometries
 #' @export
 #' @examples
 #' library(SpatialExperiment)

@@ -48,6 +48,7 @@
 #'   the results are a vector.
 #' @docType methods
 #' @name localResults
+#' @concept Local spatial results
 #' @examples
 #' # Toy example
 #' sfe <- readRDS(system.file("extdata/sfe_toy.rds",

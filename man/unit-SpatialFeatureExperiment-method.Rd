@@ -23,3 +23,4 @@ library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
 unit(sfe)
 }
+\concept{SpatialFeatureExperiment class}

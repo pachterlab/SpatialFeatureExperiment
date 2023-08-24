@@ -273,3 +273,4 @@ colGeometry(sfe_combined, "foobar", sample_id = "Vis5A") <- spots1
 # Only entries for the specified sample are set.
 foobar <- colGeometry(sfe_combined, "foobar", sample_id = "sample02")
 }
+\concept{Column or row geometries}

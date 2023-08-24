@@ -82,3 +82,4 @@ img_t <- transposeImg(img)
 # SFE method
 sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 }
+\concept{Image and raster}

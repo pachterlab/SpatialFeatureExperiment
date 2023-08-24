@@ -473,6 +473,7 @@
 #'   will default to "W". Using distance based weights does not supplant finding
 #'   a spatial neighborhood graph. The spatial neighborhood graph is first found
 #'   and then its edges weighted based on distance in this function.
+#' @concept Spatial neighborhood graph
 #' @export
 #' @examples
 #' library(SFEData)
@@ -620,6 +621,7 @@ setMethod(
 #'   samples to a SFE object, specify the \code{name} argument in the
 #'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
 #'   will be added to the SFE object for each sample.
+#' @concept Spatial neighborhood graph
 #' @export
 #' @examples
 #' library(SFEData)

@@ -277,3 +277,4 @@ localResult(sfe, "localmoran",
 # Get results for a feature in colGeometries
 lr <- localResult(sfe, "localmoran", "gene1", colGeometryName = "cg")
 }
+\concept{Local spatial results}

@@ -168,3 +168,4 @@ colnames(spe) <- make.unique(colnames(spe), sep = "-")
 rownames(spatialCoords(spe)) <- colnames(spe)
 sfe <- toSpatialFeatureExperiment(spe)
 }
+\concept{Coercion}

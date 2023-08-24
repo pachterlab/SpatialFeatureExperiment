@@ -20,6 +20,7 @@
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
 #'   x.
+#' @concept Geometric operations
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
 #'   st_is_empty st_disjoint
@@ -160,6 +161,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #'   of interest with barcodes as names, indicating the number of geometries
 #'   in the \code{annotGeometry} of interest returns TRUE for the predicate for
 #'   each each geometry in the \code{colGeometry} of interest.
+#' @concept Geometric operations
 #' @export
 #' @seealso annotOp
 #' @examples
@@ -207,6 +209,7 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' geometries and corresponding column names of sfe as row names. There is no
 #' guarantee that the returned geometries are valid or preserve the geometry
 #' class (e.g. when the intersection of polygons result into a line of a point).
+#' @concept Geometric operations
 #' @export
 #' @seealso annotPred
 #' @examples
@@ -262,6 +265,7 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @return A data frame whose row names are the relevant column names of
 #'   \code{sfe}, and each column of which is the summary of each column
 #'   specified in \code{annotColName}.
+#' @concept Geometric operations
 #' @importFrom sf st_join
 #' @export
 #' @examples
@@ -360,7 +364,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @param ymax Deprecated.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
-#' @note In this version, this function does NOT crop the image.
+#' @concept Geometric operations
 #' @importFrom sf st_intersection st_union st_agr
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @export
@@ -477,6 +481,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
 #'   \code{ymin}, \code{xmax}, and \code{ymax} specifying the bounding box. For
 #'   multiple samples, then a matrix whose columns are samples and whose rows
 #'   delineate the bounding box.
+#' @concept Geometric operations
 #' @aliases bbox
 #' @importFrom sf st_bbox
 #' @export
@@ -564,6 +569,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 #' @param sample_id Sample(s) to transform.
 #' @return An SFE object with the sample(s) transformed.
 #' @name SFE-transform
+#' @concept Geometric operations
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")
@@ -653,6 +659,7 @@ mirror <- function(sfe, sample_id = "all",
 #' @return An SFE object with empty space removed.
 #' @note Unlike other functions in this package, this function operates on all
 #' samples by default.
+#' @concept Geometric operations
 #' @export
 #' @examples
 #' library(SFEData)

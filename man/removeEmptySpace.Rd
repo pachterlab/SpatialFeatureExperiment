@@ -33,3 +33,4 @@ sfe <- sfe[, colData(sfe)$in_tissue]
 # Move the coordinates of the tissue
 sfe <- removeEmptySpace(sfe)
 }
+\concept{Geometric operations}

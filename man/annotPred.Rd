@@ -60,3 +60,4 @@ n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 \seealso{
 annotOp
 }
+\concept{Geometric operations}

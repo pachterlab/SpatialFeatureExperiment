@@ -54,6 +54,7 @@
 #' @return A combined SFE object.
 #' @importFrom BiocGenerics cbind
 #' @export
+#' @concept Non-spatial operations
 #' @examples
 #' library(SFEData)
 #' sfe_small <- McKellarMuscleData(dataset = "small")

@@ -31,6 +31,7 @@
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
+#' @concept Read data into SFE
 #' @note It is assumed that the images have not been cropped. Otherwise the
 #' images might not align with the spots.
 #' @return A SpatialFeatureExperiment object. The images might need to be
@@ -267,6 +268,7 @@ read10xVisiumSFE <- function(samples = "",
 #'   consuming, so we recommend using a server and larger number of threads.
 #'   This argument is not used if \code{use_cellpose = TRUE} and the parquet
 #'   file is present.
+#' @concept Read data into SFE
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
 #' @importFrom sf st_area st_geometry<-

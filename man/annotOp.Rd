@@ -50,3 +50,4 @@ myofibers_on_spots <- annotOp(sfe, "spotPoly",
 \seealso{
 annotPred
 }
+\concept{Geometric operations}

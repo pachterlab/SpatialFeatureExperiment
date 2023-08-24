@@ -31,3 +31,4 @@ library(SFEData)
 sfe <- McKellarMuscleData("small")
 bbox(sfe, sample_id = "Vis5A")
 }
+\concept{Geometric operations}

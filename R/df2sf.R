@@ -184,6 +184,7 @@
 #' column specifying which coordinates for which MULTI geometry.
 #' @return An \code{sf} object.
 #' @export
+#' @concept Utilities
 #' @importFrom BiocParallel bplapply SerialParam
 #' @examples
 #' # Points, use spotDiameter to convert to circle polygons
@@ -258,7 +259,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     if (is(x, "sf") || is.null(x)) {
         return(x)
     } else if (is.data.frame(x) || is.matrix(x)) {
-        return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType, 
+        return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType,
                      BPPARAM = BPPARAM))
     }
 }

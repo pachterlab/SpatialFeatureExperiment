@@ -32,6 +32,7 @@
 #' @importFrom terra ext ext<-
 #' @importClassesFrom terra SpatRaster
 #' @importFrom methods setClassUnion
+#' @concept Image and raster
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")

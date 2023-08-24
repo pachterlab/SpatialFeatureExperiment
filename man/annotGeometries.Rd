@@ -135,3 +135,4 @@ tb <- tissueBoundary(sfe_small, sample_id = "Vis5A")
 # Setter
 tissueBoundary(sfe_small, sample_id = "Vis5A") <- tb
 }
+\concept{Annotation geometries}

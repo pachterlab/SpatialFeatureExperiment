@@ -15,3 +15,4 @@ pathologist annotations, and objects (e.g. nuclei segmentation in a Visium
 dataset) are stored in \code{sf} objects in a named list called
 \code{annotGeometries} in \code{int_metadata}.
 }
+\concept{SpatialFeatureExperiment class}

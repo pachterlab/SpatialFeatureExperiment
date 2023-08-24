@@ -41,3 +41,4 @@ sfe_subset <- sfe[seq_len(10), seq_len(10), drop = TRUE]
 sfe_subset <- sfe[seq_len(10), seq_len(10)]
 }
 }
+\concept{Non-spatial operations}

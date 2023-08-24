@@ -47,3 +47,4 @@ sfe2 <- McKellarMuscleData(dataset = "small2")
 sfe_combined <- cbind(sfe, sfe2)
 gs <- findVisiumGraph(sfe, sample_id = "all")
 }
+\concept{Spatial neighborhood graph}

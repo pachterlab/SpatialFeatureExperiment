@@ -26,3 +26,4 @@ sfe <- McKellarMuscleData(dataset = "small")
 sfe <- changeSampleIDs(sfe, c(Vis5A = "sample01"))
 sampleIDs(sfe)
 }
+\concept{Utilities}
