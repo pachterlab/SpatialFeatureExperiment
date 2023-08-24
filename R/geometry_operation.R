@@ -75,16 +75,22 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
             .g <- gs[[s]][, c("geometry", id_col)]
             st_agr(.g) <- "constant"
             o <- op(.g, y_use)
-            # Aggregate in case cropping broke some items into multiple pieces
-            if (any(!rownames(o) %in% rownames(.g))) {
-                o <- aggregate(o,
-                    by = setNames(list(id = o[[id_col]]), id_col),
-                    FUN = unique
-                )
+            # If it's a predicate
+            if (is(o, "sgbp")) {
+                inds <- lengths(o) > 0L
+                return(gs[[s]][inds,])
+            } else {
+                # Aggregate in case cropping broke some items into multiple pieces
+                if (any(!rownames(o) %in% rownames(.g))) {
+                    o <- aggregate(o,
+                                   by = setNames(list(id = o[[id_col]]), id_col),
+                                   FUN = unique
+                    )
+                }
+                return(merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE))
             }
-            merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
         } else {
-            gs[[s]]
+            return(gs[[s]])
         }
     })
     gs_sub <- do.call(rbind, gs_sub)

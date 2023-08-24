@@ -121,8 +121,13 @@ test_that("When a sample is removed by cropping", {
     expect_equal(sampleIDs(sfe_cropped), "sample01")
 })
 
-test_that("Crop to subset with intersection without cropping geometries", {
-
+test_that("Use geometry predicate to crop", {
+    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all", op = st_intersects)
+    cg <- spotPoly(sfe_cropped, "all")
+    expect_true(all(st_any_pred(cg, bbox_use, pred = st_intersects)))
+    # Not actually cropped
+    expect_false(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
+    expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
 })
 
 annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_sf
