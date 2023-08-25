@@ -54,3 +54,4 @@ sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
 saveRDS(sfe, "foo.rds")
 
 }
+\concept{SpatialFeatureExperiment class}

@@ -25,7 +25,7 @@
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
-#' @concept Coercion
+#' @concept SpatialFeatureExperiment class
 #' @examples
 #' library(SpatialExperiment)
 #' example(read10xVisium)
