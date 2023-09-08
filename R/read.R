@@ -401,7 +401,7 @@ readVizgen <-
       list.files(data_dir,
                  pattern = ".parquet$",
                  full.names = TRUE) %>%
-      { if (is.empty(.)) { 
+      { if (length(.) == 0) { 
         # look in the sub directory (if nothing is found)
         list.files(data_dir,
                    pattern = ".parquet$",
@@ -460,7 +460,7 @@ readVizgen <-
       list.files(data_dir, 
                  pattern = "cell_by_gene",
                  full.names = TRUE) %>%
-      { if (is.empty(.)) { 
+      { if (length(.) == 0) { 
         list.files(data_dir,
                    pattern = "cell_by_gene",
                    full.names = TRUE,
@@ -483,7 +483,7 @@ readVizgen <-
       list.files(data_dir, 
                  pattern = "cell_metadata",
                  full.names = TRUE) %>%
-      { if (is.empty(.)) { 
+      { if (length(.) == 0) { 
         list.files(data_dir,
                    pattern = "cell_metadata",
                    full.names = TRUE,
@@ -573,7 +573,7 @@ readVizgen <-
         list.files(data_dir, 
                    pattern = "detected_transcripts",
                    full.names = TRUE) %>%
-        { if (is.empty(.)) { 
+        { if (length(.) == 0) { 
           list.files(data_dir,
                      pattern = "detected_transcripts",
                      full.names = TRUE,
