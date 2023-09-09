@@ -135,9 +135,9 @@ read10xVisiumSFE <- function(samples = "",
     img_fns2 <- file.path(dirs[i], "spatial", img_fns)
     img_dfs <- lapply(seq_along(img_fns), function(j) {
       .get_imgData(img_fns2[j], sample_id = sample_id[i],
-                                              image_id = names(img_fns)[j],
-                                              extent = NULL, scale_fct = scale_imgs[[j]],
-                                              flip = TRUE)
+                   image_id = names(img_fns)[j],
+                   extent = NULL, scale_fct = scale_imgs[[j]],
+                   flip = TRUE)
     })
     img_df <- do.call(rbind, img_dfs)
     imgData(o) <- img_df
@@ -329,7 +329,8 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
-#' @import dplyr
+#' @importFrom SpatialExperiment imgData<-
+#' @importFrom dplyr slice filter pull
 #' @import magrittr
 #' 
 #' @examples
@@ -558,8 +559,8 @@ readVizgen <-
       # Set up ImgData
       img_dfs <- lapply(names(img_fn), function(n) {
         .get_imgData(img_fn[n], sample_id = sample_id, image_id = n,
-                                                extent = extent,
-                                                flip = (flip == "image"))
+                     extent = extent,
+                     flip = (flip == "image"))
       })
       img_df <- do.call(rbind, img_dfs)
     }
