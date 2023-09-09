@@ -330,7 +330,7 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#' @importFrom dplyr slice filter pull
+#' @importFrom dplyr
 #' @import magrittr
 #' 
 #' @examples
@@ -499,7 +499,7 @@ readVizgen <-
     suppressMessages(metadata <- vroom::vroom(meta_fn, col_types = c("c")))
     metadata %<>% 
       { if (!is.null(polys)) {
-        slice(., match(polys %>% pull(ID), table = pull(., 1))) 
+        dplyr::slice(., match(polys %>% pull(ID), table = pull(., 1))) 
       } else { (.) }} %>%
       { if ((names(.) == "transcript_count") %>% any() && filter_counts) {
         message(">>> ..filtering `cell_metadata` - keep cells with `transcript_count` > 0")
@@ -515,7 +515,7 @@ readVizgen <-
     m <-
       mat %>% 
       { if (!is.null(polys)) {
-        slice(., match(polys %>% pull(ID), table = pull(., 1))) 
+        dplyr::slice(., match(polys %>% pull(ID), table = pull(., 1))) 
       } else { (.) }} %>%
       tibble::column_to_rownames(., var = names(.)[1]) %>%
       # add filtering or match to (filtered) metadata
@@ -547,7 +547,7 @@ readVizgen <-
       matched.cells <- match(m %>% colnames, polys %>% pull(ID))
       message(">>> filtering geometries to match ", length(matched.cells), 
               " cells with counts > 0") 
-      polys %<>% slice(matched.cells)
+      polys %<>% dplyr::slice(matched.cells)
     }
     
     if (any(if_exists)) {
@@ -594,11 +594,11 @@ readVizgen <-
         { if ((names(.) == "cell_id") %>% any) {
           # keep only selected z-plane
           # remove transcripts that are not associated with a cell
-          filter(., global_z == 3L, !cell_id == "-1") %>%
-            slice(pull(., cell_id) %>% match(., m %>% colnames))
+          filter(., global_z == z, !cell_id == "-1") %>%
+            dplyr::slice(pull(., cell_id) %>% match(., m %>% colnames))
         } else { 
           # keep only selected z-plane
-          filter(., global_z == 3L) }} %>%
+          filter(., global_z == z) }} %>%
         # keep x,y coords (in µm), gene and cell_id cols
         select(contains(c("global_x", "global_y",
                           "gene", "cell_id"))) %>%
@@ -622,7 +622,7 @@ readVizgen <-
       rownames(mols) <- mols %>% pull(gene)
       # make sure genes names correspond to rows of count matrix, ie same order
       mols %<>%
-        slice(., match(m %>% rownames(), table = rownames(.)))
+        dplyr::slice(., match(m %>% rownames(), table = rownames(.)))
     }
     
     # Takes a while to make the POINT geometry for the centroids, not too bad
@@ -653,7 +653,7 @@ readVizgen <-
       rownames(bboxes) <- bboxes %>% pull(ID)
       # make sure genes names correspond to rows of count matrix, ie same order
       bboxes %<>%
-        slice(., match(sfe %>% colnames(), table = rownames(.)))
+        dplyr::slice(., match(sfe %>% colnames(), table = rownames(.)))
       bboxes$ID <- NULL
       cellSeg(sfe) <- bboxes
     }
