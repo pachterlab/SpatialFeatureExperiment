@@ -330,7 +330,7 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#' @importFrom dplyr
+#' @import dplyr
 #' @import magrittr
 #' 
 #' @examples
@@ -603,7 +603,7 @@ readVizgen <-
         select(contains(c("global_x", "global_y",
                           "gene", "cell_id"))) %>%
         # rename to standard x and y
-        rename(x = global_x, y = global_y) %>%
+        dplyr::rename(x = global_x, y = global_y) %>%
         as.data.frame() %>%
         # split by gene
         group_by(gene) %>%
@@ -640,9 +640,9 @@ readVizgen <-
         bplapply(metadata %>% nrow() %>% seq(), 
                  function(cell.id) {
                    st_sf(ID = sfe %>% colnames() %>% .[cell.id],
-                         geometry = select(slice(metadata, cell.id), 
+                         geometry = select(dplyr::slice(metadata, cell.id), 
                                            starts_with(c("min_", "max_"))) %>%
-                           setNames(c("xmin", "ymin", 
+                           setNames(c("xmin", "ymin",
                                       "xmax", "ymax")) %>%
                            unlist() %>%
                            st_bbox() %>% st_as_sfc())
