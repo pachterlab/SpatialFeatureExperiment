@@ -298,8 +298,6 @@ read10xVisiumSFE <- function(samples = "",
 #'   \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 #'   \code{detected_transcripts.csv}.
 #' @param z Index of z plane to read.
-#' @param use_cellpose Logical, whether to use Cellpose parquet files if
-#'   present.
 #' @param max_flip Maximum size of the image allowed to flip the image. Because
 #' the image will be loaded into memory to be flipped. If the image is larger
 #' than this size then the coordinates will be flipped instead.
@@ -320,8 +318,6 @@ read10xVisiumSFE <- function(samples = "",
 #'   progress bar can be configured in the \code{\link{BiocParallelParam}}
 #'   object. When there are numerous FOVs, reading in the geometries can be time
 #'   consuming, so we recommend using a server and larger number of threads.
-#'   This argument is not used if \code{use_cellpose = TRUE} and the parquet
-#'   file is present.
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
 #' 
