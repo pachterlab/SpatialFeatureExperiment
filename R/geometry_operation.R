@@ -386,11 +386,11 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
                  pred = st_intersects, op = st_intersection, xmin = deprecated(),
                  xmax = deprecated(), ymin = deprecated(), ymax = deprecated()) {
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
                        is_present(ymin) || is_present(ymax))) {
         deprecate_warn("1.4.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
                        details = "Please use argument `y` to specify bounding box instead.")
-        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
                       sample_id)
     }
@@ -405,7 +405,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
         if (!length(samples_use))
             stop("No bounding boxes for samples specified.")
     } else {
-        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         samples_use <- sample_id
     }
     preds <- .annot_fun(x, y, colGeometryName,
