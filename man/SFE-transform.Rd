@@ -38,3 +38,4 @@ sfe2 <- transpose(sfe)
 sfe3 <- mirror(sfe)
 
 }
+\concept{Geometric operations}

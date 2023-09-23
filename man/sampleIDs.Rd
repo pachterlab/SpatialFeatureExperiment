@@ -21,3 +21,4 @@ library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
 sampleIDs(sfe)
 }
+\concept{Utilities}

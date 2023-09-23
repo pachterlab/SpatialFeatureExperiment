@@ -108,6 +108,10 @@ test_that("Set one item in one margin and one sample_id", {
     expect_equal(rownames(df), c("row", "col", "annot"))
     expect_true(is.null(df[2, 1][[1]]))
     expect_equal(df[3, 1][[1]]$foo, agr1)
+    # Use integer index
+    spatialGraph(sfe2, 1L, 3L, "sample01") <- agr2
+    df <- int_metadata(sfe2)$spatialGraphs
+    expect_equal(df[3, 1][[1]][[1]], agr2, ignore_attr = "call")
     # Error when wrong length
     expect_error(
         spatialGraph(sfe2, "foo", 2L, "sample01") <- cgr2,

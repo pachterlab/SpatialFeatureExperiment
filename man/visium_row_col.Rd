@@ -16,4 +16,5 @@ visium_row_col
 \description{
 From Space Ranger 1.3.1.
 }
+\concept{Utilities}
 \keyword{datasets}

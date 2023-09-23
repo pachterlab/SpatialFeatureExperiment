@@ -16,6 +16,7 @@
 #' callNextMethod is
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
+#' @concept SpatialFeatureExperiment class
 setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 
 #' Constructor of SpatialFeatureExperiment object
@@ -106,6 +107,7 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   st_multipoint st_multilinestring st_multipolygon st_coordinates st_centroid
 #'   st_geometry_type st_geometry st_is_valid st_geometrycollection
 #' @importFrom S4Vectors DataFrame SimpleList
+#' @concept SpatialFeatureExperiment class
 #' @export
 #' @examples
 #' library(Matrix)
@@ -267,6 +269,7 @@ SpatialFeatureExperiment <- function(assays,
 #'   string and \code{udunits} is not used.
 #' @export
 #' @aliases unit
+#' @concept SpatialFeatureExperiment class
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
@@ -282,6 +285,7 @@ setMethod("unit", "SpatialFeatureExperiment",
 #'
 #' @param object A \code{SpatialFeatureExperiment} object.
 #' @return None (invisible \code{NULL}).
+#' @concept SpatialFeatureExperiment class
 #' @export
 #' @examples
 #' library(SFEData)

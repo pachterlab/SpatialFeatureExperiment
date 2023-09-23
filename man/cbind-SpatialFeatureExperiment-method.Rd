@@ -25,3 +25,4 @@ sfe_small <- McKellarMuscleData(dataset = "small")
 sfe_small2 <- McKellarMuscleData(dataset = "small2")
 sfe2 <- cbind(sfe_small, sfe_small2)
 }
+\concept{Non-spatial operations}

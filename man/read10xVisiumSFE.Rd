@@ -93,3 +93,4 @@ list.files(file.path(samples[1], "spatial"))
     load = FALSE
 ))
 }
+\concept{Read data into SFE}

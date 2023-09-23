@@ -58,15 +58,15 @@ test_that("Using a bounding box to crop SFE objects, deprecated way", {
 })
 
 test_that("Using a bounding box to crop SFE objects, current way, expected errors", {
-    expect_error(crop(sfe_visium, y = "foobar"),
+    expect_error(crop(sfe_visium, y = "foobar", sample_id = "sample01"),
                  "bbox must be a numeric vector or matrix.")
-    expect_error(crop(sfe_visium, y = c(meow = 1, purr = 2)),
+    expect_error(crop(sfe_visium, y = c(meow = 1, purr = 2), sample_id = "sample01"),
                  "must be a vector of length 4")
     m <- matrix(1:8, ncol = 2)
-    expect_error(crop(sfe_visium, y = m),
+    expect_error(crop(sfe_visium, y = m, sample_id = "sample01"),
                  "must have rownames xmin, xmax")
     rownames(m) <- c("xmin", "ymin", "xmax", "ymax")
-    expect_error(crop(sfe_visium, y = m),
+    expect_error(crop(sfe_visium, y = m, sample_id = "sample01"),
                  "must have colnames")
 })
 
@@ -121,8 +121,13 @@ test_that("When a sample is removed by cropping", {
     expect_equal(sampleIDs(sfe_cropped), "sample01")
 })
 
-test_that("Crop to subset with intersection without cropping geometries", {
-
+test_that("Use geometry predicate to crop", {
+    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all", op = st_intersects)
+    cg <- spotPoly(sfe_cropped, "all")
+    expect_true(all(st_any_pred(cg, bbox_use, pred = st_intersects)))
+    # Not actually cropped
+    expect_false(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
+    expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
 })
 
 annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_sf

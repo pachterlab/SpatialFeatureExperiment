@@ -164,3 +164,4 @@ sfe2 <- SpatialFeatureExperiment(list(counts = mat),
     colGeometries = list(foo = cg)
 )
 }
+\concept{SpatialFeatureExperiment class}

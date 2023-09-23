@@ -6,3 +6,26 @@ template:
     text-muted: "#cccccc"
 development:
   mode: auto
+reference:
+  - title: SpatialFeatureExperiment class
+  - contents: has_concept("SpatialFeatureExperiment class")
+  - title: Read data into SFE
+  - contents: has_concept("Read data into SFE")
+  - title: Column or row geometries
+  - contents: has_concept("Column or row geometries")
+  - title: Annotation geometries
+  - contents: has_concept("Annotation geometries")
+  - title: Spatial neighborhood graph field in SFE objects
+  - contents: has_concept("Spatial neighborhood graph field in SFE objects")
+  - title: Field to store local spatial results
+  - contents: has_concept("Local spatial results")
+  - title: Find spatial neighborhood graph
+  - contents: has_concept("Spatial neighborhood graph")
+  - title: Image and raster
+  - contents: has_concept("Image and raster")
+  - title: Geometric/spatial operations
+  - contents: has_concept("Geometric operations")
+  - title: Non-spatial operations
+  - contents: has_concept("Non-spatial operations")
+  - title: Utilities
+  - contents: has_concept("Utilities")

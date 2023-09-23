@@ -55,3 +55,4 @@ s <- annotSummary(sfe, "spotPoly", "myofiber_simplified",
     annotColNames = c("area", "convexity")
 )
 }
+\concept{Geometric operations}

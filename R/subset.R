@@ -19,6 +19,7 @@
 #' @return A subsetted \code{SpatialFeatureExperiment} object.
 #' @name SpatialFeatureExperiment-subset
 #' @aliases [,SpatialFeatureExperiment,ANY,ANY,ANY-method
+#' @concept Non-spatial operations
 #' @export
 #' @examples
 #' # Just like subsetting matrices and SingleCellExperiment

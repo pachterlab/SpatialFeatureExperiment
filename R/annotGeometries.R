@@ -29,6 +29,7 @@
 #' @name annotGeometries
 #' @aliases annotGeometries<- annotGeometry annotGeometry<- annotGeometryNames
 #'   annotGeometryNames<-
+#' @concept Annotation geometries
 #' @examples
 #' # Example dataset
 #' library(SFEData)
@@ -114,14 +115,7 @@ setReplaceMethod(
     }
 )
 
-#' @rdname annotGeometries
-#' @export
-setMethod(
-    "annotGeometry", c("SpatialFeatureExperiment", "missing"),
-    function(x, type, sample_id = NULL) annotGeometry(x, 1L, sample_id)
-)
-
-.ag <- function(x, type, sample_id = NULL) {
+.ag <- function(x, type = 1L, sample_id = NULL) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     out <- int_metadata(x)$annotGeometries[[type]]
     if (!is.null(sample_id)) {
@@ -134,22 +128,9 @@ setMethod(
 
 #' @rdname annotGeometries
 #' @export
-setMethod("annotGeometry", c("SpatialFeatureExperiment", "numeric"), .ag)
+setMethod("annotGeometry", "SpatialFeatureExperiment", .ag)
 
-#' @rdname annotGeometries
-#' @export
-setMethod("annotGeometry", c("SpatialFeatureExperiment", "character"), .ag)
-
-#' @rdname annotGeometries
-#' @export
-setReplaceMethod(
-    "annotGeometry", c("SpatialFeatureExperiment", "missing"),
-    function(x, type, sample_id = NULL, value) {
-        annotGeometry(x, 1L, sample_id) <- value
-    }
-)
-
-.ag_r <- function(x, type, sample_id = NULL, translate = TRUE, ..., value) {
+.ag_r <- function(x, type = 1L, sample_id = NULL, translate = TRUE, ..., value) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (length(sampleIDs(x)) == 1L && !"sample_id" %in% names(value)) {
         value$sample_id <- sample_id
@@ -178,17 +159,7 @@ setReplaceMethod(
 
 #' @rdname annotGeometries
 #' @export
-setReplaceMethod(
-    "annotGeometry", c("SpatialFeatureExperiment", "numeric"),
-    .ag_r
-)
-
-#' @rdname annotGeometries
-#' @export
-setReplaceMethod(
-    "annotGeometry", c("SpatialFeatureExperiment", "character"),
-    .ag_r
-)
+setReplaceMethod("annotGeometry", "SpatialFeatureExperiment", .ag_r)
 
 #' @rdname annotGeometries
 #' @export

@@ -18,6 +18,7 @@
 #' @export
 #' @name updateObject
 #' @aliases updateObject,SpatialFeatureExperiment-method
+#' @concept SpatialFeatureExperiment class
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")

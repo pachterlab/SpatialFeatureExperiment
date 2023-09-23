@@ -57,6 +57,7 @@
 #' @return Getters for multiple geometries return a named list. Getters for names
 #'   return a character vector of the names. Getters for single geometries
 #'   return an \code{sf} data frame. Setters return an SFE object.
+#' @concept Column or row geometries
 #' @name dimGeometries
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
 #'   dimGeometryNames<-
@@ -177,40 +178,10 @@ setReplaceMethod(
 #' @rdname dimGeometries
 #' @export
 setMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "missing"),
-    function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) {
-        .get_internal_missing(x,
-            basefun = dimGeometry,
-            namefun = dimGeometryNames,
-            funstr = "dimGeometry",
-            withDimnames = withDimnames,
-            sample_id = sample_id,
-            MARGIN = MARGIN
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "numeric"),
-    function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) {
+    "dimGeometry", "SpatialFeatureExperiment",
+    function(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE) {
         .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
-            .get_internal_integer,
-            getfun = .getfun(MARGIN),
-            key = .dg_key(MARGIN), funstr = "dimGeometry",
-            substr = "type"
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "character"),
-    function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE) {
-        .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
-            .get_internal_character,
+            .get_internal,
             getfun = .getfun(MARGIN),
             key = .dg_key(MARGIN), funstr = "dimGeometry",
             substr = "type", namestr = .dg_key2(MARGIN)
@@ -221,54 +192,15 @@ setMethod(
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "missing"),
-    function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE,
-             translate = TRUE, ..., value) {
-        .set_internal_missing(x, value,
-            withDimnames = withDimnames,
-            MARGIN = MARGIN, translate = translate,
-            sample_id = sample_id,
-            basefun = `dimGeometry<-`,
-            namefun = dimGeometryNames, ...
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setReplaceMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "numeric"),
-    function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE,
+    "dimGeometry", "SpatialFeatureExperiment",
+    function(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE,
              translate = TRUE, ..., value) {
         .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
             translate,
             sf = TRUE,
             .get_all_fun = dimGeometries,
             .set_all_fun = `dimGeometries<-`,
-            .set_internal_fun = .set_internal_numeric,
-            getfun = .getfun(MARGIN),
-            setfun = .setfun(MARGIN),
-            key = .dg_key(MARGIN),
-            xdimfun = .xdimfun(MARGIN),
-            funstr = "dimGeometry",
-            xdimstr = .xdimstr(MARGIN),
-            substr = "type", value, ...
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setReplaceMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "character"),
-    function(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE,
-             translate = TRUE, ..., value) {
-        .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
-            translate,
-            sf = TRUE,
-            .get_all_fun = dimGeometries,
-            .set_all_fun = `dimGeometries<-`,
-            .set_internal_fun = .set_internal_character,
+            .set_internal_fun = .set_internal,
             getfun = .getfun(MARGIN),
             setfun = .setfun(MARGIN),
             key = .dg_key(MARGIN),
@@ -421,6 +353,7 @@ centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
 #' @return A SFE object with a new colGeometry called spotPoly, which has
 #' polygons of the spots.
 #' @importFrom SpatialExperiment spatialCoordsNames
+#' @concept Column or row geometries
 #' @export
 #' @examples
 #' library(SpatialExperiment)

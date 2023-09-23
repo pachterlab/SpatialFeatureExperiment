@@ -54,3 +54,4 @@ st_any_intersects(pts, pol)
 st_n_pred(pts, pol, pred = st_disjoint)
 st_n_intersects(pts, pol)
 }
+\concept{Geometric operations}

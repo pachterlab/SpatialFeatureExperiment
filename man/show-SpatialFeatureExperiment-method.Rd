@@ -22,3 +22,4 @@ library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
 sfe # The show method is implicitly called
 }
+\concept{SpatialFeatureExperiment class}

@@ -20,6 +20,7 @@
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
 #'   x.
+#' @concept Geometric operations
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
 #'   st_is_empty st_disjoint
@@ -75,16 +76,22 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
             .g <- gs[[s]][, c("geometry", id_col)]
             st_agr(.g) <- "constant"
             o <- op(.g, y_use)
-            # Aggregate in case cropping broke some items into multiple pieces
-            if (any(!rownames(o) %in% rownames(.g))) {
-                o <- aggregate(o,
-                    by = setNames(list(id = o[[id_col]]), id_col),
-                    FUN = unique
-                )
+            # If it's a predicate
+            if (is(o, "sgbp")) {
+                inds <- lengths(o) > 0L
+                return(gs[[s]][inds,])
+            } else {
+                # Aggregate in case cropping broke some items into multiple pieces
+                if (any(!rownames(o) %in% rownames(.g))) {
+                    o <- aggregate(o,
+                                   by = setNames(list(id = o[[id_col]]), id_col),
+                                   FUN = unique
+                    )
+                }
+                return(merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE))
             }
-            merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
         } else {
-            gs[[s]]
+            return(gs[[s]])
         }
     })
     gs_sub <- do.call(rbind, gs_sub)
@@ -154,6 +161,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #'   of interest with barcodes as names, indicating the number of geometries
 #'   in the \code{annotGeometry} of interest returns TRUE for the predicate for
 #'   each each geometry in the \code{colGeometry} of interest.
+#' @concept Geometric operations
 #' @export
 #' @seealso annotOp
 #' @examples
@@ -201,6 +209,7 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' geometries and corresponding column names of sfe as row names. There is no
 #' guarantee that the returned geometries are valid or preserve the geometry
 #' class (e.g. when the intersection of polygons result into a line of a point).
+#' @concept Geometric operations
 #' @export
 #' @seealso annotPred
 #' @examples
@@ -256,6 +265,7 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @return A data frame whose row names are the relevant column names of
 #'   \code{sfe}, and each column of which is the summary of each column
 #'   specified in \code{annotColName}.
+#' @concept Geometric operations
 #' @importFrom sf st_join
 #' @export
 #' @examples
@@ -354,7 +364,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @param ymax Deprecated.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
-#' @note In this version, this function does NOT crop the image.
+#' @concept Geometric operations
 #' @importFrom sf st_intersection st_union st_agr
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @export
@@ -373,14 +383,14 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     colGeometryName = "spotPoly",
 #'     xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500
 #' )
-crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
+crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                  pred = st_intersects, op = st_intersection, xmin = deprecated(),
                  xmax = deprecated(), ymin = deprecated(), ymax = deprecated()) {
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
                        is_present(ymin) || is_present(ymax))) {
         deprecate_warn("1.4.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
                        details = "Please use argument `y` to specify bounding box instead.")
-        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
                       sample_id)
     }
@@ -395,7 +405,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
         if (!length(samples_use))
             stop("No bounding boxes for samples specified.")
     } else {
-        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         samples_use <- sample_id
     }
     preds <- .annot_fun(x, y, colGeometryName,
@@ -471,6 +480,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
 #'   \code{ymin}, \code{xmax}, and \code{ymax} specifying the bounding box. For
 #'   multiple samples, then a matrix whose columns are samples and whose rows
 #'   delineate the bounding box.
+#' @concept Geometric operations
 #' @aliases bbox
 #' @importFrom sf st_bbox
 #' @export
@@ -558,6 +568,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
 #' @param sample_id Sample(s) to transform.
 #' @return An SFE object with the sample(s) transformed.
 #' @name SFE-transform
+#' @concept Geometric operations
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")
@@ -647,6 +658,7 @@ mirror <- function(sfe, sample_id = "all",
 #' @return An SFE object with empty space removed.
 #' @note Unlike other functions in this package, this function operates on all
 #' samples by default.
+#' @concept Geometric operations
 #' @export
 #' @examples
 #' library(SFEData)

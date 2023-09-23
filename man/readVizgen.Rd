@@ -76,3 +76,4 @@ dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
 flip = "geometry")
 }
+\concept{Read data into SFE}
