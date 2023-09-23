@@ -11,12 +11,8 @@
 \alias{annotGeometries<-,SpatialFeatureExperiment-method}
 \alias{annotGeometryNames,SpatialFeatureExperiment-method}
 \alias{annotGeometryNames<-,SpatialFeatureExperiment,character-method}
-\alias{annotGeometry,SpatialFeatureExperiment,missing-method}
-\alias{annotGeometry,SpatialFeatureExperiment,numeric-method}
-\alias{annotGeometry,SpatialFeatureExperiment,character-method}
-\alias{annotGeometry<-,SpatialFeatureExperiment,missing-method}
-\alias{annotGeometry<-,SpatialFeatureExperiment,numeric-method}
-\alias{annotGeometry<-,SpatialFeatureExperiment,character-method}
+\alias{annotGeometry,SpatialFeatureExperiment-method}
+\alias{annotGeometry<-,SpatialFeatureExperiment-method}
 \alias{tissueBoundary}
 \alias{tissueBoundary<-}
 \title{Annotation geometry methods}
@@ -29,17 +25,9 @@
 
 \S4method{annotGeometryNames}{SpatialFeatureExperiment,character}(x) <- value
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type, sample_id = NULL)
+\S4method{annotGeometry}{SpatialFeatureExperiment}(x, type = 1L, sample_id = NULL)
 
-\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL)
-
-\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL)
-
-\S4method{annotGeometry}{SpatialFeatureExperiment,missing}(x, type, sample_id = NULL) <- value
-
-\S4method{annotGeometry}{SpatialFeatureExperiment,numeric}(x, type, sample_id = NULL, translate = TRUE, ...) <- value
-
-\S4method{annotGeometry}{SpatialFeatureExperiment,character}(x, type, sample_id = NULL, translate = TRUE, ...) <- value
+\S4method{annotGeometry}{SpatialFeatureExperiment}(x, type = 1L, sample_id = NULL, translate = TRUE, ...) <- value
 
 tissueBoundary(x, sample_id = NULL)
 

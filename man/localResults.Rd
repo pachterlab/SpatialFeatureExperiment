@@ -10,26 +10,20 @@
 \alias{localResultNames<-}
 \alias{localResultFeatures}
 \alias{localResultAttrs}
-\alias{localResults,SpatialFeatureExperiment,missing,missing-method}
-\alias{localResults<-,SpatialFeatureExperiment,missing,missing-method}
-\alias{localResults,SpatialFeatureExperiment,ANY,character-method}
-\alias{localResults<-,SpatialFeatureExperiment,ANY,character-method}
+\alias{localResults,SpatialFeatureExperiment-method}
+\alias{localResults<-,SpatialFeatureExperiment-method}
 \alias{localResultNames,SpatialFeatureExperiment-method}
 \alias{localResultNames<-,SpatialFeatureExperiment,character-method}
 \alias{localResultFeatures,SpatialFeatureExperiment-method}
 \alias{localResultAttrs,SpatialFeatureExperiment-method}
-\alias{localResult,SpatialFeatureExperiment,missing-method}
-\alias{localResult,SpatialFeatureExperiment,numeric-method}
-\alias{localResult,SpatialFeatureExperiment,character-method}
-\alias{localResult<-,SpatialFeatureExperiment,missing-method}
-\alias{localResult<-,SpatialFeatureExperiment,numeric-method}
-\alias{localResult<-,SpatialFeatureExperiment,character-method}
+\alias{localResult,SpatialFeatureExperiment-method}
+\alias{localResult<-,SpatialFeatureExperiment-method}
 \title{Organize results from local spatial statistics}
 \usage{
-\S4method{localResults}{SpatialFeatureExperiment,missing,missing}(
+\S4method{localResults}{SpatialFeatureExperiment}(
   x,
-  sample_id = NULL,
-  name,
+  sample_id = "all",
+  name = "all",
   features = NULL,
   colGeometryName = NULL,
   annotGeometryName = NULL,
@@ -37,33 +31,10 @@
   ...
 )
 
-\S4method{localResults}{SpatialFeatureExperiment,missing,missing}(
+\S4method{localResults}{SpatialFeatureExperiment}(
   x,
-  sample_id = NULL,
-  name,
-  features = NULL,
-  colGeometryName = NULL,
-  annotGeometryName = NULL,
-  withDimnames = TRUE,
-  ...
-) <- value
-
-\S4method{localResults}{SpatialFeatureExperiment,ANY,character}(
-  x,
-  sample_id = NULL,
-  name,
-  features = NULL,
-  colGeometryName = NULL,
-  annotGeometryName = NULL,
-  withDimnames = TRUE,
-  swap_rownames = NULL,
-  ...
-)
-
-\S4method{localResults}{SpatialFeatureExperiment,ANY,character}(
-  x,
-  sample_id = NULL,
-  name,
+  sample_id = "all",
+  name = "all",
   features = NULL,
   colGeometryName = NULL,
   annotGeometryName = NULL,
@@ -92,9 +63,9 @@
   swap_rownames = NULL
 )
 
-\S4method{localResult}{SpatialFeatureExperiment,missing}(
+\S4method{localResult}{SpatialFeatureExperiment}(
   x,
-  type,
+  type = 1L,
   feature,
   colGeometryName = NULL,
   annotGeometryName = NULL,
@@ -104,53 +75,9 @@
   swap_rownames = NULL
 )
 
-\S4method{localResult}{SpatialFeatureExperiment,numeric}(
+\S4method{localResult}{SpatialFeatureExperiment}(
   x,
-  type,
-  feature,
-  colGeometryName = NULL,
-  annotGeometryName = NULL,
-  sample_id = NULL,
-  withDimnames = TRUE,
-  simplify = TRUE,
-  swap_rownames = NULL
-)
-
-\S4method{localResult}{SpatialFeatureExperiment,character}(
-  x,
-  type,
-  feature,
-  colGeometryName = NULL,
-  annotGeometryName = NULL,
-  sample_id = NULL,
-  withDimnames = TRUE,
-  simplify = TRUE,
-  swap_rownames = NULL
-)
-
-\S4method{localResult}{SpatialFeatureExperiment,missing}(
-  x,
-  type,
-  feature,
-  colGeometryName = NULL,
-  annotGeometryName = NULL,
-  sample_id = NULL,
-  withDimnames = TRUE
-) <- value
-
-\S4method{localResult}{SpatialFeatureExperiment,numeric}(
-  x,
-  type,
-  feature,
-  colGeometryName = NULL,
-  annotGeometryName = NULL,
-  sample_id = NULL,
-  withDimnames = TRUE
-) <- value
-
-\S4method{localResult}{SpatialFeatureExperiment,character}(
-  x,
-  type,
+  type = 1L,
   feature,
   colGeometryName = NULL,
   annotGeometryName = NULL,
@@ -181,13 +108,13 @@ rownames) of the gene count matrix should correspond to row names of the
 
 \item{value}{Values to set, should be either a matrix or a data frame.}
 
+\item{type}{Name or index of the spatial method used, such as "localmoran".}
+
 \item{swap_rownames}{Name of a column in \code{rowData} to identify features
 instead of the row names of the SFE object. For example, if the row names
 of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
 column in \code{rowData}, then putting "symbol" for this argument will use
 the gene symbols to identify which gene's local results to get or set.}
-
-\item{type}{Name or index of the spatial method used, such as "localmoran".}
 
 \item{feature}{Feature whose local results to get or set, for
 \code{localResult} getter and setter for one feature at a time.}

@@ -12,12 +12,8 @@
 \alias{dimGeometries<-,SpatialFeatureExperiment-method}
 \alias{dimGeometryNames,SpatialFeatureExperiment-method}
 \alias{dimGeometryNames<-,SpatialFeatureExperiment,numeric,character-method}
-\alias{dimGeometry,SpatialFeatureExperiment,missing-method}
-\alias{dimGeometry,SpatialFeatureExperiment,numeric-method}
-\alias{dimGeometry,SpatialFeatureExperiment,character-method}
-\alias{dimGeometry<-,SpatialFeatureExperiment,missing-method}
-\alias{dimGeometry<-,SpatialFeatureExperiment,numeric-method}
-\alias{dimGeometry<-,SpatialFeatureExperiment,character-method}
+\alias{dimGeometry,SpatialFeatureExperiment-method}
+\alias{dimGeometry<-,SpatialFeatureExperiment-method}
 \alias{colGeometry}
 \alias{colGeometry<-}
 \alias{colGeometries}
@@ -52,35 +48,11 @@
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment,numeric,character}(x, MARGIN) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
+\S4method{dimGeometry}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE)
 
-\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
-
-\S4method{dimGeometry}{SpatialFeatureExperiment,character}(x, type, MARGIN, sample_id = NULL, withDimnames = TRUE)
-
-\S4method{dimGeometry}{SpatialFeatureExperiment,missing}(
+\S4method{dimGeometry}{SpatialFeatureExperiment}(
   x,
-  type,
-  MARGIN,
-  sample_id = NULL,
-  withDimnames = TRUE,
-  translate = TRUE,
-  ...
-) <- value
-
-\S4method{dimGeometry}{SpatialFeatureExperiment,numeric}(
-  x,
-  type,
-  MARGIN,
-  sample_id = NULL,
-  withDimnames = TRUE,
-  translate = TRUE,
-  ...
-) <- value
-
-\S4method{dimGeometry}{SpatialFeatureExperiment,character}(
-  x,
-  type,
+  type = 1L,
   MARGIN,
   sample_id = NULL,
   withDimnames = TRUE,

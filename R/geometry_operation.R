@@ -383,7 +383,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     colGeometryName = "spotPoly",
 #'     xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500
 #' )
-crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = NULL,
+crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                  pred = st_intersects, op = st_intersection, xmin = deprecated(),
                  xmax = deprecated(), ymin = deprecated(), ymax = deprecated()) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)

@@ -74,7 +74,7 @@
 .get_internal_names <- SingleCellExperiment:::.get_internal_names
 .set_internal_names <- SingleCellExperiment:::.set_internal_names
 
-.get_internal <- function(x, index, getfun, key, funstr, substr) {
+.get_internal <- function(x, index, getfun, key, funstr, substr, namestr) {
     x <- updateObject(x)
     internals <- getfun(x)[[key]]
 

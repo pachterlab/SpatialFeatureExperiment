@@ -58,15 +58,15 @@ test_that("Using a bounding box to crop SFE objects, deprecated way", {
 })
 
 test_that("Using a bounding box to crop SFE objects, current way, expected errors", {
-    expect_error(crop(sfe_visium, y = "foobar"),
+    expect_error(crop(sfe_visium, y = "foobar", sample_id = "sample01"),
                  "bbox must be a numeric vector or matrix.")
-    expect_error(crop(sfe_visium, y = c(meow = 1, purr = 2)),
+    expect_error(crop(sfe_visium, y = c(meow = 1, purr = 2), sample_id = "sample01"),
                  "must be a vector of length 4")
     m <- matrix(1:8, ncol = 2)
-    expect_error(crop(sfe_visium, y = m),
+    expect_error(crop(sfe_visium, y = m, sample_id = "sample01"),
                  "must have rownames xmin, xmax")
     rownames(m) <- c("xmin", "ymin", "xmax", "ymax")
-    expect_error(crop(sfe_visium, y = m),
+    expect_error(crop(sfe_visium, y = m, sample_id = "sample01"),
                  "must have colnames")
 })
 

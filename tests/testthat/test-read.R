@@ -174,7 +174,7 @@ test_that("readVizgen flip geometry, don't use cellpose", {
 })
 
 test_that("readVizgen flip image", {
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     expect_equal(unit(sfe), "micron")
     img <- imgRaster(getImg(sfe))
@@ -185,10 +185,10 @@ test_that("readVizgen flip image", {
 })
 
 test_that("readVizgen don't flip image when image is too large", {
-    expect_error(readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+    expect_error(readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
                             flip = "image", max_flip = "0.02 TB"),
                  "max_flip must be in either MB or GB")
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image", max_flip = "0.02 MB")
     suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z0.tif")))
     img <- imgRaster(getImg(sfe))
@@ -201,22 +201,22 @@ test_that("readVizgen don't flip image when image is too large", {
 })
 
 test_that("Don't flip image if it's GeoTIFF", {
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     terra::writeRaster(imgRaster(getImg(sfe)),
                        filename = file.path("vizgen", "images", "mosaic_DAPI_z0.tif"),
                        overwrite = TRUE)
-    sfe2 <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "DAPI",
+    sfe2 <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "DAPI",
                        flip = "image")
     expect_equal(terra::values(imgRaster(getImg(sfe))), terra::values(imgRaster(getImg(sfe2))))
     file.remove(file.path("vizgen", "images", "mosaic_DAPI_z0.tif"))
 })
 
 test_that("Errors and warnings", {
-    expect_warning(sfe <- readVizgen(dir_use, z = 0L, image = "DAPI"),
+    expect_warning(sfe <- readVizgen(dir_use, z = 0L, image = "DAPI", use_cellpose = FALSE),
                    "don't exist")
     expect_equal(nrow(imgData(sfe)), 0L)
-    expect_error(readVizgen(dir_use, z = 7L, image = "PolyT"),
+    expect_error(readVizgen(dir_use, z = 7L, image = "PolyT", use_cellpose = FALSE),
                  "z must be beween 0 and 6")
 })
 

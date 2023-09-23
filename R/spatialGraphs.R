@@ -138,9 +138,6 @@ NULL
 #' @export
 setMethod("spatialGraphs", "SpatialFeatureExperiment",
           function(x, MARGIN = NULL, sample_id = "all", name = "all") {
-              if (!is.numeric(MARGIN) && (MARGIN %in% c(1L, 2L, 3L))) {
-                  stop("MARGIN must be an integer, 1L, 2L, or 3L")
-              }
               if (is.null(MARGIN)) {
                   if (name != "all")
                       stop("Cannot get graphs of the same name across different margins")
@@ -151,6 +148,9 @@ setMethod("spatialGraphs", "SpatialFeatureExperiment",
                       return(.get_graphs(x, "sample_all", sample_id))
                   }
               } else {
+                  if (!is.numeric(MARGIN) && (MARGIN %in% c(1L, 2L, 3L))) {
+                      stop("MARGIN must be an integer, 1L, 2L, or 3L")
+                  }
                   if (name == "all" && sample_id == "all")
                       return(.get_graphs(x, "margin_all", MARGIN))
                   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -262,9 +262,6 @@ annotGraphs <- function(x, sample_id = "all", name = "all")
 setReplaceMethod("spatialGraphs", "SpatialFeatureExperiment",
                  function(x, MARGIN = NULL, sample_id = "all", name = "all",
                           value) {
-                     if (!is.numeric(MARGIN) && (MARGIN %in% c(1L, 2L, 3L))) {
-                         stop("MARGIN must be an integer, 1L, 2L, or 3L")
-                     }
                      if (is.null(MARGIN)) {
                          if (name != "all")
                              stop("Cannot set graphs of the same name across different margins")
@@ -278,6 +275,9 @@ setReplaceMethod("spatialGraphs", "SpatialFeatureExperiment",
                              ))
                          }
                      } else {
+                         if (!is.numeric(MARGIN) && (MARGIN %in% c(1L, 2L, 3L))) {
+                             stop("MARGIN must be an integer, 1L, 2L, or 3L")
+                         }
                          if (name == "all" && sample_id == "all")
                              return(.set_graphs(x, "margin_all", which = MARGIN, value = value))
                          sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -444,11 +444,17 @@ annotGraph <- function(x, type = 1L, sample_id = NULL) {
         .margin_name(MARGIN),
         sample_id
     ][[1]]
-    if (type %in% names(existing) || is.null(value)) {
-        existing <- existing[names(existing) != type]
+    if (is.character(type)) {
+        if (type %in% names(existing) || is.null(value)) {
+            existing <- existing[names(existing) != type]
+        }
+    } else if (is.numeric(type)) {
+        existing <- existing[-type]
     }
     if (!is.null(value)) {
-        value <- setNames(list(value), type)
+        if (is.character(type))
+            value <- setNames(list(value), type)
+        else value <- list(value)
         replacement <- c(existing, value)
     } else {
         replacement <- existing

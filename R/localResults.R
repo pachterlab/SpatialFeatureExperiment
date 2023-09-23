@@ -109,8 +109,10 @@ NULL
 #' @rdname localResults
 #' @export
 setMethod("localResults", "SpatialFeatureExperiment",
-          function(x, sample_id = "all", name = "all", features = NULL, colGeometryName = NULL,
-                   annotGeometryName = NULL, withDimnames = TRUE, ...) {
+          function(x, sample_id = "all", name = "all", features = NULL,
+                   colGeometryName = NULL,
+                   annotGeometryName = NULL, withDimnames = TRUE,
+                   swap_rownames = NULL, ...) {
               if (sample_id == "all" && name == "all") {
                   .get_intdimdata_all(x,
                                       MARGIN = 2L, withDimnames = withDimnames,
@@ -132,7 +134,7 @@ setMethod("localResults", "SpatialFeatureExperiment",
 setReplaceMethod("localResults", "SpatialFeatureExperiment",
                  function(x, sample_id = "all", name = "all", features = NULL,
                           colGeometryName = NULL, annotGeometryName = NULL,
-                          withDimnames = TRUE, ..., value) {
+                          withDimnames = TRUE, swap_rownames = NULL,..., value) {
                      if (sample_id == "all" && name == "all") {
                          .set_intdimdata_all(x,
                                              MARGIN = 2L,
