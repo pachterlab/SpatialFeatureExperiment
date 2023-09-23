@@ -1,3 +1,7 @@
+# Version 1.3.1 (09/22/2023)
+* Refactored to remove "missing" methods for geometries, graphs, and local results.
+* Changed defaults from sample_id = NULL to sample_id = "all" unless only one sample can be specified.
+
 # Version 1.2.3 (08/18/2023)
 * Fixed bug when Visium graph is not added when filtered matrix from only one sample is read with read10xVisiumSFE.
 * Changed the way pixels are converted to microns in Visium. Old way: use top left corner of Visium spot array to compute spacing between spots, doesn't work for filtered data when there're singleton spots. New way: Use median row/col indices, more robust when there're singletons. When spacing is used for the conversion, spot size is found to vary across datasets.
@@ -5,7 +9,7 @@
 * Fixed bug when the wrong bounding boxes are used to crop images when SFE object is subsetted and there're multiple samples.
 
 # Version 1.2.2 (07/21/2023)
-* Fixed embarrasing documentation mismatch in localResults
+* Fixed embarrassing documentation mismatch in localResults
 
 # Version 1.2.1 (04/26/2023)
 * Fixed bug in .check_features and .symbol2id where "symbol" column is hard coded

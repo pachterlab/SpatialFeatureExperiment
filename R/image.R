@@ -150,6 +150,7 @@ setMethod("mirrorImg", "SpatRasterImage",
 #' @export
 setMethod("transposeImg", "SpatialFeatureExperiment",
           function(x, sample_id = NULL, image_id = NULL) {
+              sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
@@ -164,6 +165,7 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("mirrorImg", "SpatialFeatureExperiment",
           function(x, sample_id=NULL, image_id=NULL, direction = "vertical") {
+              sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
