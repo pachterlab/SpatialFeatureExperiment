@@ -631,7 +631,7 @@ setMethod(
 #' sfe2 <- McKellarMuscleData(dataset = "small2")
 #' sfe_combined <- cbind(sfe, sfe2)
 #' gs <- findVisiumGraph(sfe, sample_id = "all")
-findVisiumGraph <- function(x, sample_id = NULL, style = "W",
+findVisiumGraph <- function(x, sample_id = "all", style = "W",
                             zero.policy = NULL) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (length(sample_id) == 1L) {
