@@ -156,6 +156,7 @@ read10xVisiumSFE <- function(samples = "",
 }
 
 #' @importFrom sf st_nearest_feature st_distance
+#' @importFrom stats median
 .pixel2micron <- function(sfe) {
     # Use center spots rather than corner, to be more robust for filtered data
     mid_row <- median(sfe$array_row)
