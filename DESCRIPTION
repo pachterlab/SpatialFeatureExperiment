@@ -60,6 +60,7 @@ Collate:
     'updateObject.R'
     'validity.R'
 Suggests: 
+    arrow,
     BiocStyle,
     dplyr,
     DropletUtils,
