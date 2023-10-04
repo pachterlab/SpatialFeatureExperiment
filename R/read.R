@@ -356,8 +356,10 @@ read10xVisiumSFE <- function(samples = "",
 #'   \item When the cell segmentation is unavailable, to convert cell bounding
 #'   boxes to POLYGON geometries.
 #'
-#'   \item Convert transript coordinates into MULTIPOLYGON for rowGeometry.
+#'   \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry.
 #'   }
+#' @param ... Other arguments passed to \code{\link{formatTxSpots}} to format
+#' and add the transcript spots data to the SFE object.
 #' @concept Read data into SFE
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
@@ -389,7 +391,7 @@ readVizgen <-  function(data_dir,
                         add_molecules = FALSE,
                         use_bboxes = FALSE,
                         use_cellpose = TRUE,
-                        BPPARAM = SerialParam()) {
+                        BPPARAM = SerialParam(), ...) {
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
     image <- match.arg(image, several.ok = TRUE)
@@ -570,7 +572,7 @@ readVizgen <-  function(data_dir,
         message(">>> Reading transcript coordinates")
         # get molecule coordiantes file
         mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts")
-        sfe <- addTxSpots(sfe, mols_fn)
+        sfe <- addTxSpots(sfe, mols_fn, sample_id, ...)
     }
     sfe
 }
