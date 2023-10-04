@@ -48,7 +48,6 @@
         }
     }
     if (multi) {
-        df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT")
         df_split <- split(df, df$group)
         geometry_use <- bplapply(df_split, function(x) {
             st_multipoint(as.matrix(x[, spatialCoordsNames]))
