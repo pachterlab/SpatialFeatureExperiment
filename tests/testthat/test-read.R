@@ -262,7 +262,9 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
                            FUN.VALUE = logical(1))))
 })
 
-#
+# Read all z-planes
+# When some cells are removed because they're too small
+# Message when removing empty geometries when reading Vizgen
 test_that("Read multiple z-planes for Vizgen", {
 # Need to make toy data for multiple z-planes
 })

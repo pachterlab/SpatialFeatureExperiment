@@ -558,13 +558,13 @@ readVizgen <-  function(data_dir,
         message(">>> Reading transcript coordinates")
         # get molecule coordiantes file
         mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts")
-        sfe <- addTxSpots(sfe, mols_fn, sample_id, ...)
+        sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM, ...)
     }
     sfe
 }
 
 .mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, digits,
-                      extent) {
+                      extent, BPPARAM) {
     # For one part of the split, e.g. cell compartment
     if (dest == "rowGeometry") {
         # Should have genes as row names
@@ -657,7 +657,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
                           gene_col = "gene", cell_col = "...1", z = 3L,
                           phred_col = "qv", min_phred = 20, split_col = NULL,
                           not_in_cell_id = "-1", extent = NULL, digits = 6L,
-                          file_out = NULL) {
+                          file_out = NULL, BPPARAM = SerialParam()) {
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
     ext <- file_ext(file)
@@ -743,7 +743,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
         }
     } else {
         mols <- .mols2geo(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                          digits, extent)
+                          digits, extent, BPPARAM)
     }
     if (dest == "colGeometry") {
         # So the names don't clash with those of genes and to make clear what the geometries are
@@ -782,12 +782,12 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
                        gene_col = "gene", cell_col = "...1", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,
                        not_in_cell_id = "-1", extent = NULL, digits = 6L,
-                       file_out = NULL) {
+                       file_out = NULL, BPPARAM = SerialParam()) {
     dest <- match.arg(dest)
     sample_id <- .check_sample_id(sfe, sample_id)
     mols <- formatTxSpots(file, dest, spatialCoordsNames, gene_col, cell_col,
                           z, phred_col, min_phred, split_col, not_in_cell_id,
-                          extent, digits, file_out)
+                          extent, digits, file_out, BPPARAM)
     if (dest == "rowGeometry") {
         if (is(mols, "sf")) {
             txSpots(sfe, withDimnames = TRUE) <- mols
