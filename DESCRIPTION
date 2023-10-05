@@ -32,7 +32,9 @@ Imports:
     SummarizedExperiment,
     stats,
     terra,
-    utils
+    tibble,
+    utils,
+    vroom
 License: Artistic-2.0
 Encoding: UTF-8
 RoxygenNote: 7.2.3
@@ -69,7 +71,6 @@ Suggests:
     rmarkdown,
     sfarrow,
     SFEData,
-    vroom,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 

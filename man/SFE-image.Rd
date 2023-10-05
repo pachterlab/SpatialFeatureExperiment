@@ -5,6 +5,7 @@
 \alias{SFE-image}
 \alias{transposeImg}
 \alias{SpatRasterImage-class}
+\alias{SpatRasterImage}
 \alias{addImg,SpatialFeatureExperiment-method}
 \alias{transposeImg,SpatRasterImage-method}
 \alias{mirrorImg,SpatRasterImage-method}
@@ -14,6 +15,8 @@
 \alias{imgSource,SpatRasterImage-method}
 \title{Images in SpatialFeatureExperiment object}
 \usage{
+SpatRasterImage(img)
+
 \S4method{addImg}{SpatialFeatureExperiment}(x, file, sample_id, image_id, extent = NULL, scale_fct = 1)
 
 \S4method{transposeImg}{SpatRasterImage}(x)
