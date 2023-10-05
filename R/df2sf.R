@@ -54,7 +54,7 @@
                                    group_col = group_col)
     } else {
         df$geometry <- bplapply(seq_len(nrow(df)), function(i) {
-            st_point(unlist(df[i, spatialCoordsNames]))
+            st_point(unlist(df[i, spatialCoordsNames], use.names = FALSE))
         }, BPPARAM = BPPARAM)
         df$geometry <- st_sfc(df$geometry)
         # Remove the original coordinate columns
