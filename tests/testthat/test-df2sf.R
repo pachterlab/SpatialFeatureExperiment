@@ -22,6 +22,7 @@ test_that("sample_id when I need to split the data frame", {
     multipts_df <- readRDS(system.file("extdata/multipts_df.rds",
         package = "SpatialFeatureExperiment"
     ))
+    multipts_df$ID <- NULL # shouldn't be required
     sf_use <- df2sf(multipts_df, geometryType = "MULTIPOINT")
     multipts_sf <- readRDS(system.file("extdata/multipts_sf.rds",
         package = "SpatialFeatureExperiment"

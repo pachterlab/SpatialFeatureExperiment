@@ -1,7 +1,9 @@
 .df2sf_check <- function(df, spatialCoordsNames, geometryType,
                          group_col = "group", id_col = "ID", subid_col = "subID") {
     # For anything other than points
-    if (!id_col %in% names(df) && geometryType != "MULTIPOINT") {
+    if (geometryType == "MULTIPOINT") {
+        id_col <- group_col # should be the same
+    } else if (!id_col %in% names(df)) {
         stop("Column ", id_col, " for individual geometries is absent.")
     }
     if (grepl("MULTI", geometryType) && !group_col %in% names(df)) {
