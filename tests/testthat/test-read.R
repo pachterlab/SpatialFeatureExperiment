@@ -141,7 +141,7 @@ test_that("readVizgen flip geometry, use cellpose", {
     sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
                       flip = "geometry", min_area = 15)
     expect_equal(unit(sfe), "micron")
-    expect_equal(imgData(sfe)$image_id, "PolyT")
+    expect_equal(imgData(sfe)$image_id, "PolyT_z0")
     img <- imgRaster(getImg(sfe))
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)

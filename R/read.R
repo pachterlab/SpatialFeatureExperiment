@@ -384,7 +384,6 @@ readVizgen <-  function(data_dir,
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
     image <- match.arg(image, several.ok = TRUE)
-    rlang::check_installed("vroom")
     if ((any(z < 0) || any(z > 6)) && z != "all") {
         stop("z must be beween 0 and 6 (inclusive).")
     }
@@ -392,15 +391,14 @@ readVizgen <-  function(data_dir,
     # Read images----------
     # in some older data, "PolyT" is named "polyT"
     if (z != "all") {
-        img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z\\d\\.tif$") |>
-            regex(ignore_case = TRUE)
+        img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z\\d\\.tif$")
     } else {
         num_pattern <- paste(z, collapse = "|")
         img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z",
-                              num_pattern, "\\.tif$") |>
-            regex(ignore_case = TRUE)
+                              num_pattern, "\\.tif$")
     }
-    img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern)
+    img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern,
+                         ignore.case = TRUE, full.names = TRUE)
     if_exists <- vapply(image, function(img) any(grepl(img, img_fn)),
                         FUN.VALUE = logical(1))
     if (!all(if_exists)) {
@@ -516,10 +514,12 @@ readVizgen <-  function(data_dir,
             extent[c("ymin", "ymax")] <- -extent[c("ymax", "ymin")]
         }
         # Set up ImgData
-        img_dfs <- lapply(names(img_fn), function(n) {
-            .get_imgData(img_fn[n], sample_id = sample_id, image_id = n,
-                         extent = extent,
-                         flip = (flip == "image"))
+        img_dfs <- lapply(img_fn, function(fn) {
+            # Now allowing multiple z planes
+            id_use <- sub("^mosaic_", "", basename(fn))
+            id_use <- sub("\\.tif$", "", id_use)
+            .get_imgData(fn, sample_id = sample_id, image_id = id_use,
+                         extent = extent, flip = (flip == "image"))
         })
         img_df <- do.call(rbind, img_dfs)
     }
@@ -700,7 +700,6 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
         check_installed("arrow")
         mols <- arrow::read_parquet(file)
     } else {
-        check_installed("vroom")
         colspec <- vroom::cols(x = "c")
         names(colspec$cols) <- cell_col
         mols <- vroom::vroom(file, col_types = colspec)
