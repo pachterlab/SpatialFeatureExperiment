@@ -33,6 +33,16 @@
             "Cannot construct ", geometryType
         )
     }
+    # Only keep other attributes with one value per geometry
+    cols_keep <- c(group_col, id_col, subid_col,
+                   "sample_id", spatialCoordsNames)
+    cols_check <- setdiff(names(df), c(group_col, id_col, subid_col,
+                                       "sample_id", spatialCoordsNames))
+    n_geos <- length(unique(df[[id_col]]))
+    if_keep <- vapply(df[cols_check], function(x) length(unique(x)) == n_geos,
+                      FUN.VALUE = logical(1))
+    cols_use <- c(cols_check[if_keep], intersect(names(df), cols_keep))
+    df <- df[,cols_use]
     df
 }
 
@@ -94,18 +104,12 @@
             row.names = names(df_split)
         )
     }
-    # The other attributes
+    # The other attributes, only keep those with one value per geometry
     cols_use <- setdiff(names(df_split[[1]]), c(group_col, id_col, subid_col,
                                                 "sample_id", spatialCoordsNames))
     if (length(cols_use)) {
         df_attrs <- lapply(df_split, function(x) {
-            o <- unique(x[, cols_use, drop = FALSE])
-            if (nrow(o) > 1L) {
-                warning("Multiple combinations of attributes per geometry found. ",
-                        "Only using the first.")
-                o <- o[1,,drop = FALSE]
-            }
-            o
+            unique(x[, cols_use, drop = FALSE])
         })
         df_attrs <- do.call(rbind, df_attrs)
         out <- cbind(out, df_attrs)

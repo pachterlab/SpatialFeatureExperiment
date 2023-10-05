@@ -122,17 +122,14 @@ test_that("When there're other attributes", {
     expect_equal(sf_use$foo, "D")
 })
 
-test_that("Multiple attributes per geometry", {
+test_that("Drop columns with multiple combinations per geometry", {
     pol_df <- readRDS(system.file("extdata/pol_df.rds",
                                   package = "SpatialFeatureExperiment"
     ))
     pol_df$foo <- c(rep("C", 4), rep("D", 4))
-    expect_warning({
-        sf_use <- df2sf(pol_df,
-                        geometryType = "POLYGON",
-                        spatialCoordsNames = c("V1", "V2")
-        )
-    }, "Multiple combinations")
-    expect_true(setequal(names(sf_use), c("ID", "foo", "geometry")))
-    expect_equal(sf_use$foo, "C")
+    sf_use <- df2sf(pol_df,
+                    geometryType = "POLYGON",
+                    spatialCoordsNames = c("V1", "V2")
+    )
+    expect_true(setequal(names(sf_use), c("ID", "geometry")))
 })
