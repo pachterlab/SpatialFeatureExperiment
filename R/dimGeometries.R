@@ -262,19 +262,19 @@ colGeometryNames <- function(x) {
 
 #' @rdname dimGeometries
 #' @export
-rowGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
+rowGeometry <- function(x, type = 1L, withDimnames = TRUE) {
     dimGeometry(x, type,
-        MARGIN = 1, sample_id = sample_id,
+        MARGIN = 1, sample_id = "all",
         withDimnames = withDimnames
     )
 }
 
 #' @rdname dimGeometries
 #' @export
-`rowGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE,
+`rowGeometry<-` <- function(x, type = 1L, withDimnames = TRUE,
                             translate = TRUE, value) {
     `dimGeometry<-`(x, type,
-        MARGIN = 1, sample_id = sample_id,
+        MARGIN = 1, sample_id = "all",
         withDimnames = withDimnames, translate = translate,
         value = value
     )
