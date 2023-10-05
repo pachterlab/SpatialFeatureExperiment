@@ -180,16 +180,14 @@ read10xVisiumSFE <- function(samples = "",
     })
     # NOTE: some coordinates can be empty, ie NULL
     # get boolean indices of cells, ie TRUE for non-empty
-    inds <- c(geometries |>
-                  purrr::map(., length) |>
-                  unlist() > 0)
+    inds <- lengths(geometries) > 0
     # remove empty elements
-    geometries %<>%
-        purrr::keep(., inds) |>
-        purrr::map(., .f = function(m) m |> t() |> list() |> sf::st_polygon())
+    geometries <- geometries[inds]
+    geometries <- lapply(geometries, function(m) st_polygon(list(t(m))))
+
     # keep non-emplty elements
     df <- st_sf(geometry = sf::st_sfc(geometries),
-                ID = cell_ids[inds |> which()],
+                ID = cell_ids[which(inds)],
                 ZIndex = z)
     df
 }
@@ -234,29 +232,19 @@ read10xVisiumSFE <- function(samples = "",
             polys <- polys[inds,]
             # using parallelization, else can take a while when `which_keep` length is towards 100K
             which_keep <- unlist(which_keep[inds])
-            geo <- st_geometry(polys)
-            new_geo <- # Should only iterate over those with multiple pieces
-                bplapply(seq_along(which_keep), function(i) {
-                    geo[[i]] <- st_cast(geo[i], "POLYGON")[[which_keep[i]]] |>
-                        unique() |> # remove any duplicates
-                        st_polygon()
-                }, BPPARAM = BPPARAM) |> st_sfc()
-            st_geometry(polys) <- new_geo
-
         } else if (is.null(min_area)) {
             # use only maximal area, ie the largest polygon
             warning(">>> ..keeping polygons with the largest area only")
-            which_keep <-
-                lapply(areas, function(x) which.max(x)) |> unlist()
-            geo <- st_geometry(polys)
-            new_geo <-
-                bplapply(seq_along(which_keep), function(i) {
-                    geo[[i]] <- st_cast(geo[i], "POLYGON")[[which_keep[i]]] |>
-                        unique() |> # remove any duplicates
-                        st_polygon()
-                }, BPPARAM = BPPARAM) |> st_sfc()
-            st_geometry(polys) <- new_geo
+            which_keep <- lapply(areas, function(x) which.max(x))
         }
+        geo <- st_geometry(polys)
+        new_geo <- # Should only iterate over those with multiple pieces
+            bplapply(seq_along(which_keep), function(i) {
+                geo[[i]] <- st_cast(geo[i], "POLYGON")[[which_keep[i]]] |>
+                    unique() |> # remove any duplicates
+                    st_polygon()
+            }, BPPARAM = BPPARAM) |> st_sfc()
+        st_geometry(polys) <- new_geo
     } else {
         inds <- st_area(st_geometry(polys)) > min_area
         polys <- polys[inds,]
@@ -371,7 +359,8 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#'
+#' @importFrom tibble column_to_rownames
+#' @importFrom vroom vroom
 #' @examples
 #' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 #' sfe <- readVizgen(dir_use, z = 0L, image = "PolyT",
@@ -396,31 +385,30 @@ readVizgen <-  function(data_dir,
     flip <- match.arg(flip)
     image <- match.arg(image, several.ok = TRUE)
     rlang::check_installed("vroom")
-    if ((z < 0 || z > 6) && z != "all") {
+    if ((any(z < 0) || any(z > 6)) && z != "all") {
         stop("z must be beween 0 and 6 (inclusive).")
     }
 
     # Read images----------
     # in some older data, "PolyT" is named "polyT"
-    img_fn <-
-        file.path(data_dir, "images") |>
-        list.files(ignore.case = TRUE,
-                   pattern = paste0(image, collapse = "|"))
-    img_fn <- grep(paste0("_z", z), img_fn, value = TRUE)
-    img_fn.names <-
-        paste0(c("mosaic_", paste0("_z", z), ".tif"),
-               collapse = "|") |>
-        gsub("", img_fn)
-    img_fn <- file.path(data_dir, "images", img_fn)
-    names(img_fn) <- img_fn.names
-
-    do_flip <- .if_flip_img(img_fn, max_flip)
-    if_exists <- file.exists(img_fn)
+    if (z != "all") {
+        img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z\\d\\.tif$") |>
+            regex(ignore_case = TRUE)
+    } else {
+        num_pattern <- paste(z, collapse = "|")
+        img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z",
+                              num_pattern, "\\.tif$") |>
+            regex(ignore_case = TRUE)
+    }
+    img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern)
+    if_exists <- vapply(image, function(img) any(grepl(img, img_fn)),
+                        FUN.VALUE = logical(1))
     if (!all(if_exists)) {
         warning("The image file(s) for ", image[!if_exists],
                 " don't exist, or have non-standard file name(s).")
         img_fn <- img_fn[if_exists]
     }
+    do_flip <- .if_flip_img(img_fn, max_flip)
     if (!length(img_fn)) flip <- "none"
     else if (!any(do_flip) && flip == "image") flip <- "geometry"
 
@@ -499,18 +487,16 @@ readVizgen <-  function(data_dir,
         metadata <- metadata[metadata$transcript_count > 0,]
     }
     if (!is.null(polys)) {
-        metadata <- metadata[match(polys$ID, metadata[,1]),]
+        metadata <- metadata[match(polys$ID, metadata[,1,drop = TRUE]),]
     }
-    rownames(metadata) <- metadata[,1]
-    metadata[,1] <- NULL
+    metadata <- column_to_rownames(metadata, var = names(metadata)[1])
     if (flip == "geometry") {
         metadata$center_y <- -metadata$center_y
     }
 
     # convert counts df to sparse matrix------------
-    mat <- mat[match(rownames(metadata), mat[,1]),] # polys already matched to metadata
-    rownames(mat) <- mat[,1]
-    mat[,1] <- NULL
+    mat <- mat[match(rownames(metadata), mat[,1,drop = TRUE]),] # polys already matched to metadata
+    mat <- column_to_rownames(mat, var = names(mat)[1])
     mat <- mat |>
         as.matrix() |>
         as("CsparseMatrix") |> # convert to sparse matrix
@@ -538,7 +524,7 @@ readVizgen <-  function(data_dir,
         img_df <- do.call(rbind, img_dfs)
     }
     # Takes a while to make the POINT geometry for the centroids, not too bad
-    sfe <- SpatialFeatureExperiment(assays = list(counts = m),
+    sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
                                     colData = metadata,
                                     sample_id = sample_id,
                                     spatialCoordsNames = c("center_x", "center_y"),
@@ -658,7 +644,7 @@ readVizgen <-  function(data_dir,
 #'   names. `parquet` files that can be read with `sfarrow::st_read_parquet` is
 #'   written for vector geometries and `geotiff` files that can be read with
 #'   `terra::rast` is written for raster.
-#' @importFrom tools file_ext file_path_snas_ext
+#' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom terra nlyr
 #' @export
 #' @return The `sf` data frame or the `SpatRaster` (for `dest = "imgData"`).
@@ -734,7 +720,11 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
             if (z != "all") {
                 if (!z %in% zs)
                     stop("z plane specified is not found.")
-                mols <- mols[mols[[spatialCoordsNames[3]]] == z,]
+                mols <- mols[mols[[spatialCoordsNames[3]]] %in% z,]
+                if (length(z) == 1L) {
+                    mols[,spatialCoordsNames[3]] <- NULL
+                    spatialCoordsNames <- spatialCoordsNames[-3]
+                }
             }
         } else z <- "all"
     }

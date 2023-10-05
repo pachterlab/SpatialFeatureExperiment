@@ -251,12 +251,35 @@ dir_use <- file.path("multi", "vizgen")
 file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
 suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cellpose_micron_space.parquet")))
 test_that("Deal with multiple pieces, remove pieces that are too small", {
-    expect_warning(sfe <- readVizgen(dir_use, z = 0L, image = "PolyT"),
-                   "The largest piece is kept")
+    w <- capture_warnings(sfe <- readVizgen(dir_use, z = 0L, image = "PolyT"))
+    expect_match(w, "Sanity check", all = FALSE)
+    expect_match(w, "The largest piece is kept", all = FALSE)
     cg <- cellSeg(sfe)
     expect_equal(st_geometry_type(cg, by_geometry = "FALSE") |> as.character(), "POLYGON")
     expect_equal(colnames(sfe), parq2$EntityID[c(1,2,4)])
     areas <- st_area(cg)
     expect_true(all(vapply(areas, all.equal, target = st_area(large_g),
                            FUN.VALUE = logical(1))))
+})
+
+#
+test_that("Read multiple z-planes for Vizgen", {
+# Need to make toy data for multiple z-planes
+})
+
+test_that("Read different versions of Vizgen data", {
+    # Version with HDF5 already tested
+
+})
+
+test_that("Read MERFISH transcript spots into rowGeometries", {
+
+})
+
+test_that("Read MERFISH transcript spots into colGeometries", {
+
+})
+
+test_that("Read MERFISH transcript spots into imgData", {
+
 })
