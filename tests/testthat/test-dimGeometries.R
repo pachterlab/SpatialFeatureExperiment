@@ -122,3 +122,38 @@ test_that("When rownames of value don't match those of sfe", {
     colGeometry(sfe, "bar") <- cg_sub_perm
     expect_equal(colGeometry(sfe, "bar")[1:3,], cg_sub, ignore_attr = "row.names")
 })
+
+rg_toy <- cg_toy
+rownames(rg_toy) <- rownames(sfe)
+
+test_that("rowGeometries setter", {
+    rowGeometries(sfe) <- list(foo = rg_toy)
+    rg <- int_elementMetadata(sfe)$rowGeometries$foo
+    expect_equal(rg, rg_toy)
+})
+
+test_that("rowGeometries getter", {
+    internals <- int_elementMetadata(sfe)
+    internals[['rowGeometries']] <- make_zero_col_DFrame(nrow(sfe))
+    internals[["rowGeometries"]][["foo"]] <- rg_toy
+    int_elementMetadata(sfe) <- internals
+    rg <- rowGeometries(sfe)
+    expect_s4_class(rg, "List")
+    expect_equal(names(rg), "foo")
+    expect_equal(rg[["foo"]], rg_toy)
+})
+
+test_that("rowGeometry setter", {
+    rowGeometry(sfe, "foo") <- rg_toy
+    rg <- int_elementMetadata(sfe)$rowGeometries$foo
+    expect_equal(rg, rg_toy)
+})
+
+test_that("rowGeometry getter", {
+    internals <- int_elementMetadata(sfe)
+    internals[['rowGeometries']] <- make_zero_col_DFrame(nrow(sfe))
+    internals[["rowGeometries"]][["foo"]] <- rg_toy
+    int_elementMetadata(sfe) <- internals
+    rg <- rowGeometry(sfe, "foo")
+    expect_equal(rg, rg_toy)
+})

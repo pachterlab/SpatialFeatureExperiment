@@ -278,7 +278,6 @@ rowGeometry <- function(x, type = 1L, withDimnames = TRUE) {
         withDimnames = withDimnames, translate = translate,
         value = value
     )
-    x
 }
 
 #' @rdname dimGeometries
