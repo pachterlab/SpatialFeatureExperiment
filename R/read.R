@@ -410,7 +410,7 @@ readVizgen <- function(data_dir,
   if_exists <- vapply(image, function(img) any(grepl(img, img_fn)),
                       FUN.VALUE = logical(1))
   if (!all(if_exists)) {
-    warning("The image file(s) for ", image[!if_exists],
+    warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
             " don't exist, or have non-standard file name(s).")
     img_fn <- img_fn[if_exists]
   }
@@ -516,9 +516,10 @@ readVizgen <- function(data_dir,
     metadata <- metadata[inds,]
     polys <- polys[inds,]
   }
-  manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
-  extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
+  
   if (any(if_exists)) {
+    manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
+    extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
     if (flip == "geometry") {
       extent[c("ymin", "ymax")] <- -extent[c("ymax", "ymin")]
     }
