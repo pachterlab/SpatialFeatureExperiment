@@ -392,11 +392,14 @@ readVizgen <- function(data_dir,
   }
   
   # Read images----------
-  # in some older data, "PolyT" is named "polyT"
-  # sanity on image names, "Cellbound" image has a digit, eg "Cellbound3"
+  # sanity on image names
+  # .."Cellbound" image usually has a digit, eg "Cellbound3"
   if (any("Cellbound" %in% image)) { 
     image[which(image %in% "Cellbound")] <- 
       paste0(grep("Cell", image, value = TRUE), "\\d") }
+  # in other versions, "PolyT" is named "polyT"
+  if (any(grep("o[lyT]", image))) {
+    image <- c(image, "polyT") }
   
   if (z == "all") {
     img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z\\d\\.tif$")
