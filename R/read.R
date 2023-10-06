@@ -573,6 +573,8 @@ readVizgen <-  function(data_dir,
                       spatialCoordsNames = spatialCoordsNames,
                       group_col = gene_col)
     } else if (dest == "colGeometry") {
+        if (!length(cell_col) || !cell_col %in% names(mols))
+            stop("Column indicating cell ID not found.")
         mols <- mols[mols[[cell_col]] != not_in_cell_id,]
         mols <- split(mols, mols[[gene_col]])
         mols <- bplapply(mols, df2sf, geometryType = "MULTIPOINT",
@@ -654,7 +656,7 @@ readVizgen <-  function(data_dir,
 #'
 formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                          gene_col = "gene", cell_col = "...1", z = 3L,
+                          gene_col = "gene", cell_col = "cell_id", z = 3L,
                           phred_col = "qv", min_phred = 20, split_col = NULL,
                           not_in_cell_id = "-1", extent = NULL, digits = 6L,
                           file_out = NULL, BPPARAM = SerialParam()) {
@@ -700,9 +702,15 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
         check_installed("arrow")
         mols <- arrow::read_parquet(file)
     } else {
-        colspec <- vroom::cols(x = "c")
-        names(colspec$cols) <- cell_col
-        mols <- vroom::vroom(file, col_types = colspec)
+        # Check if cell column exists
+        test <- suppressMessages(vroom(file, n_max = 2))
+        if (cell_col %in% names(test)) {
+            colspec <- vroom::cols(x = "c")
+            names(colspec$cols) <- cell_col
+            mols <- suppressMessages(vroom(file, col_types = colspec))
+        } else {
+            mols <- suppressMessages(vroom(file))
+        }
     }
     ind <- !spatialCoordsNames[1:2] %in% names(mols)
     if (any(ind)) {
@@ -730,7 +738,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
     if (phred_col %in% names(mols)) {
         mols <- mols[mols[[phred_col]] >= min_phred,]
     }
-    if (!is.null(split_col)) {
+    if (!is.null(split_col) && split_col %in% names(mols)) {
         mols <- split(mols, mols[[split_col]])
         mols <- lapply(mols, .mols2geo, dest = dest,
                        spatialCoordsNames = spatialCoordsNames,
@@ -779,7 +787,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
 addTxSpots <- function(sfe, file, sample_id = NULL,
                        dest = c("rowGeometry", "colGeometry", "imgData"),
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                       gene_col = "gene", cell_col = "...1", z = 3L,
+                       gene_col = "gene", cell_col = "cell_id", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,
                        not_in_cell_id = "-1", extent = NULL, digits = 6L,
                        file_out = NULL, BPPARAM = SerialParam()) {
