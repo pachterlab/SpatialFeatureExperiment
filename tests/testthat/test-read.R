@@ -273,15 +273,21 @@ test_that("Read different versions of Vizgen data", {
     # Version with HDF5 already tested
 
 })
-
+# Error messages when coordinate columns are not found
 test_that("Read MERFISH transcript spots into rowGeometries", {
+    sfe <- readVizgen("vizgen", z = 0L, image = "PolyT", add_molecules = TRUE)
 
 })
 
 test_that("Read MERFISH transcript spots into colGeometries", {
-
+# Error when column in cell_col is absent
 })
 
 test_that("Read MERFISH transcript spots into imgData", {
 
 })
+
+# formatTxSpots, rowGeometries, write to disk, not splitting by cell compartments
+# formatTxSpots, colGeometries, write to disk, not splitting by cell compartments
+# formatTxSpots, imgData, write to disk, not splitting by cell compartments
+# Same above, but do split, coming naturally when I get to CosMX.

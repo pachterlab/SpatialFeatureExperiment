@@ -266,7 +266,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     }
     if (.is_de_facto_point(df, group_col, id_col)) geometryType <- "POINT"
     geometryType <- match.arg(geometryType)
-    switch(geometryType,
+    out <- switch(geometryType,
         POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE, BPPARAM),
         MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE, BPPARAM,
                                   group_col = group_col),
@@ -280,6 +280,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                                       group_col = group_col, id_col = id_col,
                                       subid_col = subid_col)
     )
+    names(out$geometry) <- NULL
+    out
 }
 
 # Call in SFE constructor and *Geometries replacement methods

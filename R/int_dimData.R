@@ -53,17 +53,21 @@
             "colnames"
         )
         if (withDimnames && !is.null(rni)) {
-            if (!setequal(cnr, rni)) {
+            if (!all(rni %in% cnr)) {
                 msg <- paste0(
-                    "non-NULL 'rownames(", vname, ")' should be the same as '",
+                    "non-NULL 'rownames(", vname, ")' should all be in '",
                     fun_show, "(x)' for '", fun,
                     "<-'."
                 )
                 stop(strwrap(msg))
-            } else if (!identical(cnr, rni)) {
+            }
+            if (!identical(cnr, rni)) {
                 # Do the reordering if they have different orders
                 rni <- rni[match(cnr, rni)]
                 incoming <- incoming[rni, ]
+                if (anyNA(rownames(incoming))) {
+                    rownames(incoming) <- cnr
+                }
             }
         }
     }
@@ -110,7 +114,8 @@
         stop("'", substr, "' out of bounds in '", funstr, "(<", class(x), ">, type='numeric')")
     }
     internals[[key]][[type]] <- value
-    setfun(x, internals)
+    x <- setfun(x, internals)
+    x
 }
 
 .get_intdimdata_all <- function(x, MARGIN, withDimnames = TRUE, getfun, key) {

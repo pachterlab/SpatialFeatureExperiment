@@ -102,3 +102,23 @@ test_that("colGeometry getter for one of the two samples", {
     rownames(cg_expect) <- rownames(cg_toy)[4:5]
     expect_equal(coords_sample02, cg_expect)
 })
+
+test_that("When rownames of value don't match those of sfe", {
+    cg_sub <- cg_mut <- cg_toy[1:3,]
+    rownames(cg_sub) <- rownames(cg_toy)[1:3]
+    rownames(cg_mut) <- c(rownames(cg_toy)[1:2], "D")
+    # It's not a subset, get correct error message
+    expect_error(colGeometry(sfe, "foo") <- cg_mut,
+                 "should all be in")
+    # It's the same set, in different orders, do the reordering
+    rns <- sample(rownames(cg_toy), 5, replace = FALSE)
+    cg_perm <- cg_toy[rns,]
+    rownames(cg_perm) <- rns
+    colGeometry(sfe, "foo") <- cg_perm
+    expect_equal(colGeometry(sfe, "foo"), cg_toy)
+    # It's a subset, do the reordering
+    cg_sub_perm <- cg_sub[c(2,3,1),]
+    rownames(cg_sub_perm) <- rownames(cg_sub)[c(2,3,1)]
+    colGeometry(sfe, "bar") <- cg_sub_perm
+    expect_equal(colGeometry(sfe, "bar")[1:3,], cg_sub, ignore_attr = "row.names")
+})
