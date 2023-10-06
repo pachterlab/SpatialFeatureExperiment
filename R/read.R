@@ -347,7 +347,10 @@ read10xVisiumSFE <- function(samples = "",
 #'   \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry.
 #'   }
 #' @param ... Other arguments passed to \code{\link{formatTxSpots}} to format
-#' and add the transcript spots data to the SFE object.
+#' and add the transcript spots data to the SFE object, except that extent
+#' is read from `manifest.json` and that `dest = "rowGeometry"` because the
+#' spot coordinates are in micron space and are not discrete so converting the
+#' transcript spots to raster won't work.
 #' @concept Read data into SFE
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
@@ -506,10 +509,9 @@ readVizgen <-  function(data_dir,
         metadata <- metadata[inds,]
         polys <- polys[inds,]
     }
-
+    manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
+    extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
     if (any(if_exists)) {
-        manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
-        extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
         if (flip == "geometry") {
             extent[c("ymin", "ymax")] <- -extent[c("ymax", "ymin")]
         }
@@ -558,13 +560,14 @@ readVizgen <-  function(data_dir,
         message(">>> Reading transcript coordinates")
         # get molecule coordiantes file
         mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts")
-        sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM, ...)
+        sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM,
+                          dest = "rowGeometry", extent = extent, ...)
     }
     sfe
 }
 
 .mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, digits,
-                      extent, BPPARAM) {
+                      extent, BPPARAM, not_in_cell_id) {
     # For one part of the split, e.g. cell compartment
     if (dest == "rowGeometry") {
         # Should have genes as row names
@@ -613,12 +616,17 @@ readVizgen <-  function(data_dir,
 #'   gene the transcript is assigned to, and optionally cell the transcript is
 #'   assigned to. Must be csv, tsv, or parquet.
 #' @param dest Where in the SFE object to store the spot geometries. This
-#'   affects how the data is processed. If "rowGeometry", then all spots for
-#'   each gene will be a `MULTIPOINT` geometry, regardless of whether they are
-#'   in cells or which cells they are assigned to. If "colGeometry", then spots
-#'   for each gene assigned to a cell of interest will be a `MULTIPOINT`
-#'   geometry. If "imgData", the spots will be written to a TIFF file as raster
-#'   to be read to `imgData(sfe)`.
+#'   affects how the data is processed. Options:
+#'   \describe{
+#'   \item{rowGeometry}{All spots for each gene will be a `MULTIPOINT` geometry,
+#'   regardless of whether they are in cells or which cells they are assigned to.}
+#'   \item{colGeometry}{The spots for each gene assigned to a cell of interest
+#'   will be a `MULTIPOINT` geometry; since the gene count matrix is sparse, the
+#'   geometries are NOT returned to memory.}
+#'   \item{imgData}{The spots will be written to a TIFF file as raster to be
+#'   read to `imgData(sfe)`. This will only work if the spot coordinates are in
+#'   pixel space and are discrete.}
+#'   }
 #' @param spatialCoordsNames Column names for the x, y, and optionally z
 #'   coordinates of the spots. The defaults are for Vizgen.
 #' @param gene_col Column name for genes.
@@ -638,6 +646,9 @@ readVizgen <-  function(data_dir,
 #'   already exists, then the existing file(s) will be read, skipping the
 #'   processing. When writing the file, extensions supplied are ignored and
 #'   extensions are determined based on `dest`.
+#' @param return Logical, whether to return the geometries in memory. This does
+#'   not depend on whether the geometries are written to file. Always `FALSE`
+#'   when `dest = "colGeometry"`.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
@@ -645,7 +656,14 @@ readVizgen <-  function(data_dir,
 #'   extension) and the files are written to that directory with informative
 #'   names. `parquet` files that can be read with `sfarrow::st_read_parquet` is
 #'   written for vector geometries and `geotiff` files that can be read with
-#'   `terra::rast` is written for raster.
+#'   `terra::rast` is written for raster. When `return = FALSE`, the file name
+#'   or directory (when there're multiple files) is returned.
+#' @note When `dest = "colGeometry"`, the geometries are always written to disk
+#' and not returned in memory, because this is essentially the gene count
+#' matrix, which is sparse. This kind of reformatting is implemented so users
+#' can read in MULTIPOINT geometries with transcript spots for each gene
+#' assigned to each cell for spatial point process analyses, where not all genes
+#' are loaded at once.
 #' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom terra nlyr
 #' @export
@@ -659,41 +677,52 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
                           gene_col = "gene", cell_col = "cell_id", z = 3L,
                           phred_col = "qv", min_phred = 20, split_col = NULL,
                           not_in_cell_id = "-1", extent = NULL, digits = 6L,
-                          file_out = NULL, BPPARAM = SerialParam()) {
+                          file_out = NULL, BPPARAM = SerialParam(),
+                          return = TRUE) {
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
     ext <- file_ext(file)
+    if (dest == "colGeometry") {
+        return <- FALSE
+        if (is.null(file_out))
+            stop("file_out must be specified for dest = 'colGeometry'.")
+    }
     if (!ext %in% c("csv", "tsv", "txt", "parquet")) {
         stop("The file must be one of csv, tsv, txt, or parquet")
     }
     if (!is.null(file_out)) {
-        file_out <- normalizePath(file_out)
+        file_out <- normalizePath(file_out, mustWork = FALSE)
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
         file_dir <- file_path_sans_ext(file_out)
         # File already exists, skip processing
-        if (file.exists(file_out)) {
+        if (file.exists(file_out) && !dir.exists(file_out)) {
+            if (!return) return(file_out)
             if (file_ext(file_out) == "parquet") {
                 out <- sfarrow::st_read_parquet(file_out)
                 rownames(out) <- out$ID
             } else {
                 out <- rast(file_out)
             }
+            return(out)
         } else if (dir.exists(file_dir)) {
+            if (!return) return(file_dir)
             # Multiple files
-            if (dest == "imgData") {
-                fns <- list.files(file_dir, "\\.geotiff$", full.names = TRUE)
-                out <- lapply(fns, rast)
-            } else {
-                fns <- list.files(file_dir, "\\.parquet$", full.names = TRUE)
-                out <- lapply(fns, sfarrow::st_read_parquet)
-                out <- lapply(out, function(x) {
-                    # row names are dropped in st_read/write_parquet
-                    rownames(x) <- x$ID
-                })
+            pattern <- if (dest == "imgData") "\\.geotiff$" else "\\.parquet$"
+            fns <- list.files(file_dir, pattern, full.names = TRUE)
+            if (length(fns)) {
+                if (dest == "imgData") {
+                    out <- lapply(fns, rast)
+                } else {
+                    out <- lapply(fns, sfarrow::st_read_parquet)
+                    out <- lapply(out, function(x) {
+                        # row names are dropped in st_read/write_parquet
+                        rownames(x) <- x$ID
+                    })
+                }
+                return(out)
             }
         }
-        out
     }
     if (!is.numeric(z) && z != "all") {
         stop("z must either be numeric or be 'all' indicating all z-planes.")
@@ -743,7 +772,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
         mols <- lapply(mols, .mols2geo, dest = dest,
                        spatialCoordsNames = spatialCoordsNames,
                        gene_col = gene_col, cell_col = cell_col,
-                       digits = digits, extent = extent)
+                       digits = digits, extent = extent,
+                       not_in_cell_id = not_in_cell_id)
         if (dest == "colGeometry") {
             # Will be a nested list
             mols <- unlist(mols, recursive = FALSE)
@@ -751,32 +781,36 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
         }
     } else {
         mols <- .mols2geo(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                          digits, extent, BPPARAM)
-    }
-    if (dest == "colGeometry") {
-        # So the names don't clash with those of genes and to make clear what the geometries are
-        names(mols) <- paste(names(mols), "spots", sep = "_")
+                          digits, extent, BPPARAM, not_in_cell_id)
     }
     if (!is.null(file_out)) {
         if (dest == "imgData") {
             if (nlyr(mols) == 1L) {
                 file_out <- paste0(file_dir, ".geotiff")
                 writeRaster(mols, file_out)
+                if (!return) return(file_out)
             } else {
                 lyr_names <- names(mols)
                 mols <- split(mols, seq_len(nlyr(mols)))
+                if (!dir.exists(file_dir)) dir.create(file_dir)
                 fns <- file.path(file_dir, paste0(lyr_names, ".geotiff"))
                 for (i in seq_along(mols)) {
                     writeRaster(mols[[i]], fns[i])
                 }
+                if (!return) return(file_dir)
             }
         } else if (is(mols, "sf")) {
             sfarrow::st_write_parquet(mols, file_out)
+            if (!return) return(file_out)
         } else {
-            lapply(names(mols), function(n) {
-                sfarrow::st_write_parquet(mols[[n]],
-                                          file.path(file_dir, paste0(n, ".parquet")))
+            if (!dir.exists(file_dir)) dir.create(file_dir)
+            suppressWarnings({
+                bplapply(names(mols), function(n) {
+                    sfarrow::st_write_parquet(mols[[n]],
+                                              file.path(file_dir, paste0(n, ".parquet")))
+                }, BPPARAM = SerialParam(progressbar = TRUE))
             })
+            if (!return) return(file_dir)
         }
     }
     return(mols)
@@ -785,7 +819,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
 #' @rdname addTxSpots
 #' @export
 addTxSpots <- function(sfe, file, sample_id = NULL,
-                       dest = c("rowGeometry", "colGeometry", "imgData"),
+                       dest = c("rowGeometry", "imgData"),
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
                        gene_col = "gene", cell_col = "cell_id", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,
@@ -802,8 +836,6 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
         } else if (is.list(mols)) {
             rowGeometries(sfe) <- c(rowGeometries(sfe), mols)
         }
-    } else if (dest == "colGeometry") {
-        colGeometries(sfe) <- c(colGeometries(sfe), mols)
     } else {
         imgdata_old <- imgData(sfe)
         if (is(mols, "SpatRaster")) {

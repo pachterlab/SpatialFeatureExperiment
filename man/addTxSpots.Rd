@@ -10,7 +10,7 @@ formatTxSpots(
   dest = c("rowGeometry", "colGeometry", "imgData"),
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
-  cell_col = "...1",
+  cell_col = "cell_id",
   z = 3L,
   phred_col = "qv",
   min_phred = 20,
@@ -18,17 +18,19 @@ formatTxSpots(
   not_in_cell_id = "-1",
   extent = NULL,
   digits = 6L,
-  file_out = NULL
+  file_out = NULL,
+  BPPARAM = SerialParam(),
+  return = TRUE
 )
 
 addTxSpots(
   sfe,
   file,
   sample_id = NULL,
-  dest = c("rowGeometry", "colGeometry", "imgData"),
+  dest = c("rowGeometry", "imgData"),
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
-  cell_col = "...1",
+  cell_col = "cell_id",
   z = 3L,
   phred_col = "qv",
   min_phred = 20,
@@ -36,7 +38,8 @@ addTxSpots(
   not_in_cell_id = "-1",
   extent = NULL,
   digits = 6L,
-  file_out = NULL
+  file_out = NULL,
+  BPPARAM = SerialParam()
 )
 }
 \arguments{
@@ -46,12 +49,17 @@ gene the transcript is assigned to, and optionally cell the transcript is
 assigned to. Must be csv, tsv, or parquet.}
 
 \item{dest}{Where in the SFE object to store the spot geometries. This
-affects how the data is processed. If "rowGeometry", then all spots for
-each gene will be a `MULTIPOINT` geometry, regardless of whether they are
-in cells or which cells they are assigned to. If "colGeometry", then spots
-for each gene assigned to a cell of interest will be a `MULTIPOINT`
-geometry. If "imgData", the spots will be written to a TIFF file as raster
-to be read to `imgData(sfe)`.}
+affects how the data is processed. Options:
+\describe{
+\item{rowGeometry}{All spots for each gene will be a `MULTIPOINT` geometry,
+regardless of whether they are in cells or which cells they are assigned to.}
+\item{colGeometry}{The spots for each gene assigned to a cell of interest
+will be a `MULTIPOINT` geometry; since the gene count matrix is sparse, the
+geometries are NOT returned to memory.}
+\item{imgData}{The spots will be written to a TIFF file as raster to be
+read to `imgData(sfe)`. This will only work if the spot coordinates are in
+pixel space and are discrete.}
+}}
 
 \item{spatialCoordsNames}{Column names for the x, y, and optionally z
 coordinates of the spots. The defaults are for Vizgen.}
@@ -88,6 +96,30 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
+\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
+  processing backend and number of threads to use for parallelizable tasks:
+  \enumerate{
+  \item To load cell segmentation from HDF5 files from different fields of view
+  (FOVs) with multiple cores. A progress bar can be configured in the
+  \code{\link{BiocParallelParam}} object. When there are numerous FOVs,
+  reading in the geometries can be time consuming, so we recommend using a
+  server and larger number of threads. This argument is not used if
+  \code{use_cellpose = TRUE} and the parquet file is present.
+
+  \item To filter cell segmentation polygons based on size.
+
+  \item To convert centroid points to sf POINT geometry.
+
+  \item When the cell segmentation is unavailable, to convert cell bounding
+  boxes to POLYGON geometries.
+
+  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry.
+  }}
+
+\item{return}{Logical, whether to return the geometries in memory. This does
+not depend on whether the geometries are written to file. Always `FALSE`
+when `dest = "colGeometry"`.}
+
 \item{sfe}{A `SpatialFeatureExperiment` object.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
@@ -103,7 +135,8 @@ A sf data frame for vector geometries if `file_out` is not set.
   extension) and the files are written to that directory with informative
   names. `parquet` files that can be read with `sfarrow::st_read_parquet` is
   written for vector geometries and `geotiff` files that can be read with
-  `terra::rast` is written for raster.
+  `terra::rast` is written for raster. When `return = FALSE`, the file name
+  or directory (when there're multiple files) is returned.
 
 The `sf` data frame or the `SpatRaster` (for `dest = "imgData"`).
 }
@@ -118,6 +151,14 @@ transcript spot data. To only read a subset of transcript spot data, first
 use `formatTxSpots` to write the re-formatted data to disk. Then read the
 specific subset and add them separately to the SFE object with the setter
 functions.
+}
+\note{
+When `dest = "colGeometry"`, the geometries are always written to disk
+and not returned in memory, because this is essentially the gene count
+matrix, which is sparse. This kind of reformatting is implemented so users
+can read in MULTIPOINT geometries with transcript spots for each gene
+assigned to each cell for spatial point process analyses, where not all genes
+are loaded at once.
 }
 \examples{
 # example code

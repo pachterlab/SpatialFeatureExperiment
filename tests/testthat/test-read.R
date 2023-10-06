@@ -241,16 +241,16 @@ small_small <- st_multipolygon(list(small, small2))
 large_large <- st_multipolygon(list(large, large2))
 
 new_geo <- st_sfc(large_g, large_small, small_small, large_large)
-parq2$Geometry <- new_geo
-if (!dir.exists("multi")) {
+
+test_that("Deal with multiple pieces, remove pieces that are too small", {
+    parq2$Geometry <- new_geo
     dir.create("multi")
     file.copy("vizgen", "multi", recursive = TRUE)
-}
 
-dir_use <- file.path("multi", "vizgen")
-file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
-suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cellpose_micron_space.parquet")))
-test_that("Deal with multiple pieces, remove pieces that are too small", {
+    dir_use <- file.path("multi", "vizgen")
+    file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
+    suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cellpose_micron_space.parquet")))
+
     w <- capture_warnings(sfe <- readVizgen(dir_use, z = 0L, image = "PolyT"))
     expect_match(w, "Sanity check", all = FALSE)
     expect_match(w, "The largest piece is kept", all = FALSE)
@@ -260,6 +260,7 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
     areas <- st_area(cg)
     expect_true(all(vapply(areas, all.equal, target = st_area(large_g),
                            FUN.VALUE = logical(1))))
+    unlink("multi", recursive = TRUE)
 })
 
 # Read all z-planes
@@ -276,11 +277,58 @@ test_that("Read different versions of Vizgen data", {
 # Error messages when coordinate columns are not found
 test_that("Read MERFISH transcript spots into rowGeometries", {
     sfe <- readVizgen("vizgen", z = 0L, image = "PolyT", add_molecules = TRUE)
-
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    rg <- txSpots(sfe)
+    expect_equal(as.character(st_geometry_type(rg, FALSE)), "MULTIPOINT")
 })
 
-test_that("Read MERFISH transcript spots into colGeometries", {
-# Error when column in cell_col is absent
+test_that("Format MERFISH transcript spots for colGeometries", {
+    # Error when column in cell_col is absent
+    expect_error(formatTxSpots(file.path("vizgen", "detected_transcripts.csv"),
+                               dest = "colGeometry"),
+                 "file_out must be specified")
+    expect_error(formatTxSpots(file.path("vizgen", "detected_transcripts.csv"),
+                               dest = "colGeometry", file_out = "vizgen/tx_in_cells"),
+                 "Column indicating cell ID not found.")
+
+    dir.create("cg_vizgen")
+    file.copy(list.files("vizgen", full.names = TRUE), "cg_vizgen", recursive = TRUE)
+    df <- read.csv(file.path("cg_vizgen", "detected_transcripts.csv"),
+                   header = TRUE)
+    sfe <- readVizgen("vizgen", z = 0L, image = "PolyT")
+    df$cell_id <- sample(colnames(sfe), nrow(df), replace = TRUE)
+    rownames(df) <- df$X
+    df$X <- NULL
+    write.csv(df, file = file.path("cg_vizgen", "detected_transcripts.csv"),
+              row.names = TRUE, quote = FALSE)
+
+    # First run
+    cg <- formatTxSpots(file.path("cg_vizgen", "detected_transcripts.csv"),
+                        dest = "colGeometry",
+                        file_out = file.path("cg_vizgen", "tx_in_cells"),
+                        z = "all")
+    dir_check <- file.path("cg_vizgen", "tx_in_cells")
+    expect_equal(cg, dir_check)
+    expect_true(dir.exists(dir_check))
+    fns_expect <- paste0(unique(df$gene), "_spots.parquet")
+    fns <- list.files(dir_check)
+    expect_setequal(fns, fns_expect)
+
+    # Check contents
+    fn <- file.path(dir_check, fns_expect[1])
+    g <- sfarrow::st_read_parquet(fn)
+    expect_equal(as.character(st_geometry_type(g, FALSE)), "MULTIPOINT")
+
+    # Second run
+    time_note <- Sys.time() # Check the files weren't written again
+    cg <- formatTxSpots(file.path("cg_vizgen", "detected_transcripts.csv"),
+                        dest = "colGeometry",
+                        file_out = file.path("cg_vizgen", "tx_in_cells"))
+    expect_equal(cg, normalizePath(dir_check))
+    time_check <- file.info(fn)$mtime
+    expect_true(time_note > time_check)
+
+    unlink("cg_vizgen", recursive = TRUE)
 })
 
 test_that("Read MERFISH transcript spots into imgData", {
@@ -288,6 +336,5 @@ test_that("Read MERFISH transcript spots into imgData", {
 })
 
 # formatTxSpots, rowGeometries, write to disk, not splitting by cell compartments
-# formatTxSpots, colGeometries, write to disk, not splitting by cell compartments
-# formatTxSpots, imgData, write to disk, not splitting by cell compartments
+# formatTxSpots, imgData, write to disk
 # Same above, but do split, coming naturally when I get to CosMX.

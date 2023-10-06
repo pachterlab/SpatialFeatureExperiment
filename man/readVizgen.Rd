@@ -84,7 +84,10 @@ files.}
   }}
 
 \item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
-and add the transcript spots data to the SFE object.}
+and add the transcript spots data to the SFE object, except that extent
+is read from `manifest.json` and that `dest = "rowGeometry"` because the
+spot coordinates are in micron space and are not discrete so converting the
+transcript spots to raster won't work.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.
