@@ -21,6 +21,7 @@ Imports:
     BiocGenerics,
     BiocNeighbors,
     BiocParallel,
+    dplyr,
     grDevices,
     Matrix,
     methods,
@@ -66,7 +67,6 @@ Collate:
 Suggests: 
     arrow,
     BiocStyle,
-    dplyr,
     DropletUtils,
     knitr,
     rhdf5,

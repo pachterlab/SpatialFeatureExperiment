@@ -435,10 +435,10 @@ readVizgen <- function(data_dir,
   }
   # set to use .parquet" file if present
   use.parquet <- any(length(parq)) & use_cellpose
-
+  
+  rlang::check_installed("sfarrow")
   if (use.parquet) {
     message(">>> Cell segmentations are found in `.parquet` file")
-    rlang::check_installed("sfarrow")
     if (length(parq) > 1) {
       # eg, if two files are present:
       # `cellpose_micron_space.parquet`
@@ -466,7 +466,8 @@ readVizgen <- function(data_dir,
                         BPPARAM = BPPARAM,
                         MoreArgs = list(z = z))
       # dplyr is much more efficient than base R rbind
-      polys <- if (length(polys) == 1L) polys[[1]] else do.call(bind_rows, polys)
+      polys <- if (length(polys) == 1L) polys[[1]] else do.call(dplyr::bind_rows, polys)
+      #sfarrow::st_write_parquet(polys)
     } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
     }
@@ -535,7 +536,6 @@ readVizgen <- function(data_dir,
     })
     img_df <- do.call(rbind, img_dfs)
   }
-  # Takes a while to make the POINT geometry for the centroids, not too bad
   sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
                                   colData = metadata,
                                   sample_id = sample_id,
