@@ -77,7 +77,7 @@ read10xVisiumSFE <- function(samples = "",
   sfes <- lapply(seq_along(samples), function(i) {
     o <- read10xVisium(dirs[i], sample_id[i], type, data, images, load = FALSE)
     imgData(o) <- NULL
-    
+
     scalefactors <- fromJSON(file = file.path(
       dirs[i], "spatial",
       "scalefactors_json.json"
@@ -117,7 +117,7 @@ read10xVisiumSFE <- function(samples = "",
       fluo$in_tissue <- NULL
       colData(o) <- cbind(colData(o), fluo[row_inds,])
     }
-    
+
     names_use <- paste("tissue", images, "scalef", sep = "_")
     scale_imgs <- unlist(scalefactors[names_use])
     # Convert to microns and set extent for image
@@ -184,7 +184,7 @@ read10xVisiumSFE <- function(samples = "",
   # remove empty elements
   geometries <- geometries[inds]
   geometries <- lapply(geometries, function(m) st_polygon(list(t(m))))
-  
+
   # keep non-emplty elements
   df <- st_sf(geometry = sf::st_sfc(geometries),
               ID = cell_ids[which(inds)],
@@ -215,7 +215,7 @@ read10xVisiumSFE <- function(samples = "",
       st_cast(st_sfc(x), "POLYGON")
     })
     areas <- lapply(polys_sep, st_area)
-    
+
     if (!is.null(min_area)) {
       which_keep <- lapply(areas, function(x) which(x > min_area))
       multi_inds <- which(lengths(which_keep) > 1L)
@@ -390,17 +390,14 @@ readVizgen <- function(data_dir,
   if ((any(z < 0) || any(z > 6)) && z != "all") {
     stop("z must be beween 0 and 6 (inclusive).")
   }
-  
+
   # Read images----------
   # sanity on image names
   # .."Cellbound" image usually has a digit, eg "Cellbound3"
-  if (any("Cellbound" %in% image)) { 
-    image[which(image %in% "Cellbound")] <- 
+  if (any("Cellbound" %in% image)) {
+    image[which(image %in% "Cellbound")] <-
       paste0(grep("Cell", image, value = TRUE), "\\d") }
-  # in other versions, "PolyT" is named "polyT"
-  if (any(grep("o[lyT]", image))) {
-    image <- c(image, "polyT") }
-  
+
   if (z == "all") {
     img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z\\d\\.tif$")
   } else {
@@ -410,7 +407,7 @@ readVizgen <- function(data_dir,
   }
   img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern,
                        ignore.case = TRUE, full.names = TRUE)
-  if_exists <- vapply(image, function(img) any(grepl(img, img_fn)),
+  if_exists <- vapply(image, function(img) any(grepl(img, img_fn, ignore.case = TRUE)),
                       FUN.VALUE = logical(1))
   if (!all(if_exists)) {
     warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
@@ -420,7 +417,7 @@ readVizgen <- function(data_dir,
   do_flip <- .if_flip_img(img_fn, max_flip)
   if (!length(img_fn)) flip <- "none"
   else if (!any(do_flip) && flip == "image") flip <- "geometry"
-  
+
   # Read cell segmentation-------------
   # Use segmentation output from ".parquet" file
   # # check if ".parquet" file is present
@@ -438,7 +435,7 @@ readVizgen <- function(data_dir,
   }
   # set to use .parquet" file if present
   use.parquet <- any(length(parq)) & use_cellpose
-  
+
   if (use.parquet) {
     message(">>> Cell segmentations are found in `.parquet` file")
     rlang::check_installed("sfarrow")
@@ -450,9 +447,9 @@ readVizgen <- function(data_dir,
       parq  <- grep("micron", parq, value = TRUE)
     }
     fn <- parq
-    # read file and filter to keep selected z section
+    # read file and filter to keep selected 1 z section as they're the same anyway
     polys <- sfarrow::st_read_parquet(fn)
-    polys <- polys[polys$ZIndex == z,]
+    polys <- polys[polys$ZIndex == polys$ZIndex[1],]
     # filtering cell polygons
     polys <- .filter_polygons(polys, min_area,
                               BPPARAM = BPPARAM)
@@ -474,20 +471,22 @@ readVizgen <- function(data_dir,
       polys <- NULL
     }
   }
+  if (!is.null(polys) && nrow(polys) == 0L)
+      stop("No polygons left after filtering.")
   if (flip == "geometry" && !is.null(polys)) {
     # Flip the coordinates
     mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
     st_geometry(polys) <- st_geometry(polys) * mat_flip
   }
-  
+
   # get count data file
   mat_fn <- .check_vizgen_fns(data_dir, "cell_by_gene")
-  
+
   # cell ids col is stored in `...1` for older Vizgen data, new data has `cell` col
   suppressMessages(mat <- vroom::vroom(mat_fn,
                                        col_types = c("c") # convert 1st col to a character
   ))
-  
+
   # get spatial metadata file---------
   meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
   suppressMessages(metadata <- vroom::vroom(meta_fn, col_types = c("c")))
@@ -497,14 +496,14 @@ readVizgen <- function(data_dir,
   }
   if (!is.null(polys)) {
     # remove NAs when matching
-    metadata <- 
+    metadata <-
       metadata[match(polys$ID, metadata[,1,drop = TRUE]) |> stats::na.omit(),]
   }
   metadata <- column_to_rownames(metadata, var = names(metadata)[1])
   if (flip == "geometry") {
     metadata$center_y <- -metadata$center_y
   }
-  
+
   # convert counts df to sparse matrix------------
   mat <- mat[match(rownames(metadata), mat[,1,drop = TRUE]),] # polys already matched to metadata
   mat <- column_to_rownames(mat, var = names(mat)[1])
@@ -519,7 +518,7 @@ readVizgen <- function(data_dir,
     metadata <- metadata[inds,]
     polys <- polys[inds,]
   }
-  
+
   if (any(if_exists)) {
     manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
     extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
@@ -542,7 +541,7 @@ readVizgen <- function(data_dir,
                                   sample_id = sample_id,
                                   spatialCoordsNames = c("center_x", "center_y"),
                                   unit = "micron", BPPARAM = BPPARAM)
-  
+
   # If none of segmentations are present, make bounding boxes
   # NOTE: might take some time to run
   if (use_bboxes && is.null(polys)) {
@@ -558,15 +557,15 @@ readVizgen <- function(data_dir,
     rownames(bboxes) <- rownames(metadata)
     cellSeg(sfe) <- bboxes
   }
-  
+
   if (!is.null(polys)) {
     rownames(polys) <- polys$ID
     polys$ID <- NULL
     cellSeg(sfe) <- polys
   }
-  
+
   if (any(if_exists)) { imgData(sfe) <- img_df }
-  
+
   if (add_molecules) {
     message(">>> Reading transcript coordinates")
     # get molecule coordiantes file
@@ -765,7 +764,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
     zs <- mols[[spatialCoordsNames[3]]]
     if (all(floor(zs) == zs)) { # integer z values
       if (z != "all") {
-        if (!z %in% zs)
+        if (!z %in% unique(zs))
           stop("z plane specified is not found.")
         mols <- mols[mols[[spatialCoordsNames[3]]] %in% z,]
         if (length(z) == 1L) {

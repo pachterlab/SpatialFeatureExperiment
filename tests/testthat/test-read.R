@@ -222,7 +222,6 @@ test_that("Errors and warnings", {
 
 # Make toy examples of multiple pieces
 parq <- sfarrow::st_read_parquet(file.path(dir_use, "cellpose_micron_space.parquet"))
-parq2 <- parq[1:4,]
 # One large piece and one small piece
 large <- list(matrix(c(2500, 0,
                        2510, 0,
@@ -240,9 +239,9 @@ large_g <- st_multipolygon(list(large))
 small_small <- st_multipolygon(list(small, small2))
 large_large <- st_multipolygon(list(large, large2))
 
-new_geo <- st_sfc(large_g, large_small, small_small, large_large)
-
 test_that("Deal with multiple pieces, remove pieces that are too small", {
+    parq2 <- parq[1:4,]
+    new_geo <- st_sfc(large_g, large_small, small_small, large_large)
     parq2$Geometry <- new_geo
     dir.create("multi")
     file.copy("vizgen", "multi", recursive = TRUE)
@@ -261,6 +260,36 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
     expect_true(all(vapply(areas, all.equal, target = st_area(large_g),
                            FUN.VALUE = logical(1))))
     unlink("multi", recursive = TRUE)
+})
+
+test_that("No polygons left", {
+    # Like they're all too small, or when the polygon file is empty, unlikely
+    # but otherwise we get a mysterious error
+    parq2 <- parq[1:2,]
+    small <- st_polygon(small)
+    new_geo <- st_sfc(small, small)
+    parq2$Geometry <- new_geo
+    dir.create("small")
+    file.copy("vizgen", "small", recursive = TRUE)
+
+    dir_use <- file.path("small", "vizgen")
+    file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
+    suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cellpose_micron_space.parquet")))
+
+    expect_error(readVizgen(dir_use, z = 0L, image = "PolyT"),
+                 "No polygons left after filtering")
+    unlink("small", recursive = TRUE)
+})
+
+test_that("Image can be named polyT in older version", {
+    dir.create("polyT")
+    file.copy("vizgen", "polyT", recursive = TRUE)
+
+    dir_use <- file.path("polyT", "vizgen")
+    file.rename(file.path(dir_use, "images", "mosaic_PolyT_z0.tif"),
+                file.path(dir_use, "images", "mosaic_polyT_z0.tif"))
+    expect_no_warning(readVizgen(dir_use, z = 0L, image = "PolyT"))
+    unlink("polyT", recursive = TRUE)
 })
 
 # Read all z-planes
@@ -338,3 +367,5 @@ test_that("Read MERFISH transcript spots into imgData", {
 # formatTxSpots, rowGeometries, write to disk, not splitting by cell compartments
 # formatTxSpots, imgData, write to disk
 # Same above, but do split, coming naturally when I get to CosMX.
+
+unlink("vizgen", recursive = TRUE)
