@@ -65,13 +65,9 @@
         out <- .df_split_sample_id(names(df), df_split, geometry_use, spatialCoordsNames,
                                    group_col = group_col)
     } else {
-        df$geometry <- bplapply(seq_len(nrow(df)), function(i) {
-            st_point(unlist(df[i, spatialCoordsNames], use.names = FALSE))
-        }, BPPARAM = BPPARAM)
-        df$geometry <- st_sfc(df$geometry)
-        # Remove the original coordinate columns
-        df[, spatialCoordsNames] <- NULL
-        out <- st_sf(df, sf_column_name = "geometry", row.names = rownames(df))
+        rns <- rownames(df)
+        out <- sf::st_as_sf(df, coords = spatialCoordsNames, crs = NA,
+                            row.names = rns)
     }
     if (!is.na(spotDiameter)) {
         out$geometry <- st_buffer(out$geometry, spotDiameter / 2)
