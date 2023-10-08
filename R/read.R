@@ -522,9 +522,9 @@ readVizgen <- function(data_dir,
   
   # check matching cell ids in polygon geometries, should match the count matrix cell ids
   if (!is.null(polys) && 
-      !identical(polys$ID, colnames(m))) {
+      !identical(polys$ID, colnames(mat))) {
     # filter geometries
-    matched.cells <- match(colnames(m), polys$ID) |> stats::na.omit()
+    matched.cells <- match(colnames(mat), polys$ID) |> stats::na.omit()
     message(">>> filtering geometries to match ", length(matched.cells), 
             " cells with counts > 0") 
     polys <- polys[matched.cells, , drop = FALSE]
