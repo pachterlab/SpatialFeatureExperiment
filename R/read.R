@@ -519,7 +519,17 @@ readVizgen <- function(data_dir,
     metadata <- metadata[inds,]
     polys <- polys[inds,]
   }
-
+  
+  # check matching cell ids in polygon geometries, should match the count matrix cell ids
+  if (!is.null(polys) && 
+      !identical(polys$ID, colnames(m))) {
+    # filter geometries
+    matched.cells <- match(colnames(m), polys$ID) |> stats::na.omit()
+    message(">>> filtering geometries to match ", length(matched.cells), 
+            " cells with counts > 0") 
+    polys <- polys[matched.cells, , drop = FALSE]
+    }
+  
   if (any(if_exists)) {
     manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
     extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
