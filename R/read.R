@@ -571,7 +571,7 @@ readVizgen <- function(data_dir,
     # get molecule coordiantes file
     mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts")
     sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM,
-                      dest = "rowGeometry", extent = extent, ...)
+                      dest = "rowGeometry", extent = extent, z = z, ...)
   }
   sfe
 }
