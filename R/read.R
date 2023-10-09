@@ -447,9 +447,10 @@ readVizgen <- function(data_dir,
       parq  <- grep("micron", parq, value = TRUE)
     }
     fn <- parq
-    # read file and filter to keep selected 1 z section as they're the same anyway
+    # read file and filter to keep selected single z section as they're the same anyway
     polys <- sfarrow::st_read_parquet(fn)
-    polys <- polys[polys$ZIndex == polys$ZIndex[1],]
+    # use mid z section if z == "all"
+    polys <- polys[polys$ZIndex == polys$ZIndex[ifelse(z == "all", 3L, z)],]
     # filtering cell polygons
     polys <- .filter_polygons(polys, min_area,
                               BPPARAM = BPPARAM)
@@ -464,7 +465,8 @@ readVizgen <- function(data_dir,
       message(">>> Reading '.hdf5' files..")
       polys <- bpmapply(.h52poly_fov, fn = fns, SIMPLIFY = FALSE,
                         BPPARAM = BPPARAM,
-                        MoreArgs = list(z = z))
+                        # use mid z section
+                        MoreArgs = list(z = ifelse(z == "all", 3L, z)))
       # dplyr is much more efficient than base R rbind
       polys <- if (length(polys) == 1L) polys[[1]] else do.call(dplyr::bind_rows, polys)
       #sfarrow::st_write_parquet(polys)
