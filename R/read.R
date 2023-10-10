@@ -362,7 +362,7 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#' @importFrom data.table fread merge unique split rbindlist
+#' @importFrom data.table fread merge.data.table rbindlist
 #' @examples
 #' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 #' sfe <- readVizgen(dir_use, z = 0L, image = "PolyT",
@@ -467,7 +467,8 @@ readVizgen <- function(data_dir,
                         # use mid z section
                         MoreArgs = list(z = ifelse(z == "all", 3L, z)))
       polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys)
-      #sfarrow::st_write_parquet(polys)
+      polys$Type <- "cell"
+      suppressWarnings(sfarrow::st_write_parquet(polys))
     } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
     }
