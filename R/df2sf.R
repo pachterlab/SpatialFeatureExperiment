@@ -38,7 +38,8 @@
                    "sample_id", spatialCoordsNames)
     cols_check <- setdiff(names(df), c(group_col, id_col, subid_col,
                                        "sample_id", spatialCoordsNames))
-    n_geos <- length(unique(df[[id_col]]))
+
+    n_geos <- length(unique(if (group_col %in% names(df)) df[[group_col]] else df[[id_col]]))
     if_keep <- vapply(df[cols_check], function(x) length(unique(x)) == n_geos,
                       FUN.VALUE = logical(1))
     cols_use <- c(cols_check[if_keep], intersect(names(df), cols_keep))
@@ -57,13 +58,12 @@
     if (multi) {
         df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
                            group_col = group_col)
-        df_split <- split(df, df[[group_col]])
+        df_split <- split(df[,c(spatialCoordNames, group_col)], df[[group_col]])
         geometry_use <- bplapply(df_split, function(x) {
             st_multipoint(as.matrix(x[, spatialCoordsNames]))
         }, BPPARAM = BPPARAM)
         geometry_use <- st_sfc(geometry_use)
-        out <- .df_split_sample_id(names(df), df_split, geometry_use, spatialCoordsNames,
-                                   group_col = group_col)
+        out <- .df_attr(df, geometry_use, spatialCoordNames, group_col)
     } else {
         rns <- rownames(df)
         out <- sf::st_as_sf(df, coords = spatialCoordsNames, crs = NA,
@@ -83,35 +83,23 @@
     } else m
 }
 
-.df_split_sample_id <- function(nms, df_split, geometry_use, spatialCoordsNames,
-                                group_col = "group", id_col = "ID", subid_col = "subID") {
-    if ("sample_id" %in% nms) {
-        sample_ids <- vapply(df_split, function(d) unique(d$sample_id),
-            FUN.VALUE = character(1)
-        )
-        out <- st_sf(
-            ID = names(df_split), sample_id = sample_ids,
-            geometry = geometry_use, crs = NA,
-            row.names = names(df_split)
-        )
-    } else {
-        out <- st_sf(
-            ID = names(df_split), geometry = geometry_use, crs = NA,
-            row.names = names(df_split)
-        )
-    }
+.df_attr <- function(df, geometry_use, spatialCoordsNames,
+                     group_col = "group", id_col = "ID", subid_col = "subID") {
     # The other attributes, only keep those with one value per geometry
-    cols_use <- setdiff(names(df_split[[1]]), c(group_col, id_col, subid_col,
-                                                "sample_id", spatialCoordsNames))
+    cols_use <- setdiff(names(df), c(group_col, id_col, subid_col,
+                                     "sample_id", spatialCoordsNames))
+
     if (length(cols_use)) {
-        df_attrs <- lapply(df_split, function(x) {
-            unique(x[, cols_use, drop = FALSE])
-        })
-        df_attrs <- do.call(rbind, df_attrs)
-        out <- cbind(out, df_attrs)
+        df_attrs <- unique(df[,cols_use])
     }
+    col_merge <- if (group_col %in% names(df_attrs)) group_col else id_col
+    geometry_use <- st_as_sf(ID = names(geometry_use), geometry = geometry_use)
+    out <- merge(geometry_use, df_attrs, by.x = "ID", by.y = col_merge,
+                 all.x = TRUE)
+    names(out$geometry) <- NULL
     return(out)
 }
+
 .df2sf_polygon <- function(df, spatialCoordsNames, multi, BPPARAM,
                            group_col = "group", id_col, subid_col) {
     df <- unique(df)
@@ -149,8 +137,8 @@
         }
     }
     geometry_use <- st_sfc(geometry_use)
-    .df_split_sample_id(names(df), df_split, geometry_use, spatialCoordsNames,
-                        group_col = group_col, id_col = id_col, subid_col = subid_col)
+    .df_attr(df, geometry_use, spatialCoordNames, group_col,
+             id_col = id_col, subid_col = subid_col)
 }
 
 .df2sf_linestring <- function(df, spatialCoordsNames, multi, BPPARAM,
@@ -174,8 +162,8 @@
         }, BPPARAM = BPPARAM)
     }
     geometry_use <- st_sfc(geometry_use)
-    .df_split_sample_id(names(df), df_split, geometry_use, spatialCoordsNames,
-                        group_col = group_col, id_col = id_col)
+    .df_attr(df, geometry_use, spatialCoordNames, group_col,
+             id_col = id_col, subid_col = subid_col)
 }
 
 .is_de_facto_point <- function(df, group_col, id_col) {
@@ -276,7 +264,6 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                                       group_col = group_col, id_col = id_col,
                                       subid_col = subid_col)
     )
-    names(out$geometry) <- NULL
     out
 }
 

@@ -21,7 +21,7 @@ Imports:
     BiocGenerics,
     BiocNeighbors,
     BiocParallel,
-    dplyr,
+    data.table,
     grDevices,
     Matrix,
     methods,
@@ -35,9 +35,7 @@ Imports:
     SummarizedExperiment,
     stats,
     terra,
-    tibble,
-    utils,
-    vroom
+    utils
 License: Artistic-2.0
 Encoding: UTF-8
 RoxygenNote: 7.2.3

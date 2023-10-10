@@ -362,8 +362,7 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#' @importFrom tibble column_to_rownames
-#' @importFrom vroom vroom
+#' @importFrom data.table fread merge unique split rbindlist
 #' @examples
 #' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 #' sfe <- readVizgen(dir_use, z = 0L, image = "PolyT",
@@ -435,7 +434,7 @@ readVizgen <- function(data_dir,
   }
   # set to use .parquet" file if present
   use.parquet <- any(length(parq)) & use_cellpose
-  
+
   rlang::check_installed("sfarrow")
   if (use.parquet) {
     message(">>> Cell segmentations are found in `.parquet` file")
@@ -467,8 +466,7 @@ readVizgen <- function(data_dir,
                         BPPARAM = BPPARAM,
                         # use mid z section
                         MoreArgs = list(z = ifelse(z == "all", 3L, z)))
-      # dplyr is much more efficient than base R rbind
-      polys <- if (length(polys) == 1L) polys[[1]] else do.call(dplyr::bind_rows, polys)
+      polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys)
       #sfarrow::st_write_parquet(polys)
     } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
@@ -485,31 +483,33 @@ readVizgen <- function(data_dir,
   # get count data file
   mat_fn <- .check_vizgen_fns(data_dir, "cell_by_gene")
 
-  # cell ids col is stored in `...1` for older Vizgen data, new data has `cell` col
-  suppressMessages(mat <- vroom::vroom(mat_fn,
-                                       col_types = c("c") # convert 1st col to a character
-  ))
+  # Column without colname is read as V1
+  mat <- fread(mat_fn)
 
   # get spatial metadata file---------
   meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
-  suppressMessages(metadata <- vroom::vroom(meta_fn, col_types = c("c")))
+  metadata <- fread(mat_fn)
   if (any(names(metadata) == "transcript_count") && filter_counts) {
     message(">>> ..filtering `cell_metadata` - keep cells with `transcript_count` > 0")
     metadata <- metadata[metadata$transcript_count > 0,]
   }
+  rns <- metadata[,1,drop = TRUE]
   if (!is.null(polys)) {
     # remove NAs when matching
     metadata <-
-      metadata[match(polys$ID, metadata[,1,drop = TRUE]) |> stats::na.omit(),]
+      metadata[match(polys$ID, rns) |> stats::na.omit(),]
   }
-  metadata <- column_to_rownames(metadata, var = names(metadata)[1])
+  rownames(metadata) <- rns
+  metadata[,1] <- NULL
   if (flip == "geometry") {
     metadata$center_y <- -metadata$center_y
   }
 
   # convert counts df to sparse matrix------------
-  mat <- mat[match(rownames(metadata), mat[,1,drop = TRUE]),] # polys already matched to metadata
-  mat <- column_to_rownames(mat, var = names(mat)[1])
+  rns <- mat[,1,drop = TRUE]
+  mat <- mat[match(rownames(metadata), rns)] # polys already matched to metadata
+  rownames(mat) <- rns
+  mat[,1] <- NULL
   mat <- mat |>
     as.matrix() |>
     as("CsparseMatrix") |> # convert to sparse matrix
@@ -521,17 +521,17 @@ readVizgen <- function(data_dir,
     metadata <- metadata[inds,]
     polys <- polys[inds,]
   }
-  
+
   # check matching cell ids in polygon geometries, should match the count matrix cell ids
-  if (!is.null(polys) && 
+  if (!is.null(polys) &&
       !identical(polys$ID, colnames(mat))) {
     # filter geometries
     matched.cells <- match(colnames(mat), polys$ID) |> stats::na.omit()
-    message(">>> filtering geometries to match ", length(matched.cells), 
-            " cells with counts > 0") 
+    message(">>> filtering geometries to match ", length(matched.cells),
+            " cells with counts > 0")
     polys <- polys[matched.cells, , drop = FALSE]
     }
-  
+
   if (any(if_exists)) {
     manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
     extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
@@ -546,7 +546,7 @@ readVizgen <- function(data_dir,
       .get_imgData(fn, sample_id = sample_id, image_id = id_use,
                    extent = extent, flip = (flip == "image"))
     })
-    img_df <- do.call(rbind, img_dfs)
+    img_df <- rbindlist(img_dfs)
   }
   sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
                                   colData = metadata,
@@ -753,15 +753,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
     check_installed("arrow")
     mols <- arrow::read_parquet(file)
   } else {
-    # Check if cell column exists
-    test <- suppressMessages(vroom(file, n_max = 2))
-    if (cell_col %in% names(test)) {
-      colspec <- vroom::cols(x = "c")
-      names(colspec$cols) <- cell_col
-      mols <- suppressMessages(vroom(file, col_types = colspec))
-    } else {
-      mols <- suppressMessages(vroom(file))
-    }
+    mols <- fread(file)
   }
   ind <- !spatialCoordsNames[1:2] %in% names(mols)
   if (any(ind)) {
