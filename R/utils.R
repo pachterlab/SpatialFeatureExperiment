@@ -70,7 +70,7 @@ changeSampleIDs <- function(sfe, replacement) {
                     out$geometry <- og
                 out
             })
-            df <- rbindlist(df_split) |> st_as_sf()
+            df <- do.call(rbind, df_split)
             df <- df[match(value$ID_, df$ID_),]
             value$geometry <- df$geometry
             value$ID_ <- NULL

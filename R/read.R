@@ -329,12 +329,12 @@ read10xVisiumSFE <- function(samples = "",
 #'   files. Note that reading HDF5 files for numerous FOVs is very slow.
 #' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
 #'   processing backend and number of threads to use for parallelizable tasks:
-#'   \enumerate{
-#'   \item To load cell segmentation from HDF5 files from different fields of view
-#'   (FOVs) with multiple cores. A progress bar can be configured in the
-#'   \code{\link{BiocParallelParam}} object. When there are numerous FOVs,
-#'   reading in the geometries can be time consuming, so we recommend using a
-#'   server and larger number of threads. This argument is not used if
+#'   \enumerate{ 
+#'   \item To load cell segmentation from HDF5 files from different
+#'   fields of view (FOVs) with multiple cores. A progress bar can be configured
+#'   in the \code{\link{BiocParallelParam}} object. When there are numerous
+#'   FOVs, reading in the geometries can be time consuming, so we recommend
+#'   using a server and larger number of threads. This argument is not used if
 #'   \code{use_cellpose = TRUE} and the parquet file is present.
 #'
 #'   \item To filter cell segmentation polygons based on size.
@@ -344,22 +344,22 @@ read10xVisiumSFE <- function(samples = "",
 #'   \item When the cell segmentation is unavailable, to convert cell bounding
 #'   boxes to POLYGON geometries.
 #'
-#'   \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry.
-#'   }
+#'   \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }
 #' @param ... Other arguments passed to \code{\link{formatTxSpots}} to format
-#' and add the transcript spots data to the SFE object, except that extent
-#' is read from `manifest.json` and that `dest = "rowGeometry"` because the
-#' spot coordinates are in micron space and are not discrete so converting the
-#' transcript spots to raster won't work. A default is set for `file_out` to
-#' save the reformatted transcript spots to disk by default since reloading the
-#' reformatted form is much more efficient. Reading the original detected
-#' transcripts csv file can take up a lot of memory. Expect twice the size of 
-#' that csv file.
+#'   and add the transcript spots data to the SFE object, except that extent is
+#'   read from `manifest.json` and that `dest = "rowGeometry"` because the spot
+#'   coordinates are in micron space and are not discrete so converting the
+#'   transcript spots to raster won't work. A default is set for `file_out` to
+#'   save the reformatted transcript spots to disk by default since reloading
+#'   the reformatted form is much more efficient. Reading the original detected
+#'   transcripts csv file can take up a lot of memory. Expect at least twice the
+#'   size of that csv file. If using all z-planes, expect 3 times the size when
+#'   converting to MULTIPOINT geometry. So we STRONGLY recommend saving the
+#'   reformatted results to disk.
 #' @concept Read data into SFE
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
-#' @note
-#' Since the transcript spots file is often very large, we recommend only
+#' @note Since the transcript spots file is often very large, we recommend only
 #' using \code{add_molecules = TRUE} on servers with a lot of memory.
 #' @importFrom sf st_area st_geometry<- st_as_sf
 #' @importFrom terra rast ext vect
@@ -816,6 +816,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
                       digits, extent, BPPARAM, not_in_cell_id)
   }
   if (!is.null(file_out)) {
+      message(">>> Writing reformatted transcript spots to disk")
     if (dest == "imgData") {
       if (nlyr(mols) == 1L) {
         file_out <- paste0(file_dir, ".geotiff")

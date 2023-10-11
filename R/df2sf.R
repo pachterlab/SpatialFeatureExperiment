@@ -95,11 +95,11 @@
                      group_col = "group", id_col = "ID", subid_col = "subID") {
     # The other attributes, only keep those with one value per geometry
     cols_use <- setdiff(names(df), c(group_col, id_col, subid_col,
-                                     "sample_id", spatialCoordsNames))
+                                     spatialCoordsNames))
     col_merge <- if (group_col %in% names(df)) group_col else id_col
     cols_use <- c(cols_use, col_merge)
     if (!is.data.table(df)) ..cols_use <- cols_use
-    df_attrs <- unique(df[,..cols_use])
+    df_attrs <- unique(df[,..cols_use, drop = FALSE])
     geometry_use <- st_sf(ID = names(geometry_use), geometry = geometry_use)
     out <- merge(geometry_use, df_attrs, by.x = "ID", by.y = col_merge,
                  all.x = TRUE)
@@ -172,7 +172,7 @@
     }
     geometry_use <- st_sfc(geometry_use)
     .df_attr(df, geometry_use, spatialCoordsNames, group_col,
-             id_col = id_col, subid_col = subid_col)
+             id_col = id_col)
 }
 
 .is_de_facto_point <- function(df, group_col, id_col) {
