@@ -448,7 +448,7 @@ readVizgen <- function(data_dir,
       # `cellpose_micron_space.parquet`
       # `cellpose_mosaic_space.parquet`
       # use µm units
-      parq  <- grep("micron", parq, value = TRUE)
+      parq  <- grep("cellpose_micron", parq, value = TRUE)
     }
     fn <- parq
     # read file and filter to keep selected single z section as they're the same anyway
@@ -479,7 +479,7 @@ readVizgen <- function(data_dir,
                         MoreArgs = list(z = ifelse(z == "all", 3L, z)))
       polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
       polys$Type <- "cell"
-      parq_file <- file.path(data_dir, "cellpose_micron_space.parquet")
+      parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
       if (!file.exists(parq_file)) {
           suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
       }

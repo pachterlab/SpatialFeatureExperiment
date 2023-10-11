@@ -133,12 +133,9 @@ test_that("Micron spot spacing works when there're singletons", {
 
 dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 
-if (!dir.exists("vizgen")) {
-    file.copy(dir_use, ".", recursive = TRUE)
-}
-dir_use <- "vizgen"
 test_that("readVizgen flip geometry, use cellpose", {
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+    file.copy(dir_use, ".", recursive = TRUE)
+    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = TRUE, image = "PolyT",
                       flip = "geometry", min_area = 15)
     expect_equal(unit(sfe), "micron")
     expect_equal(imgData(sfe)$image_id, "PolyT_z0")
@@ -156,10 +153,19 @@ test_that("readVizgen flip geometry, use cellpose", {
     cg <- cellSeg(sfe)
     areas <- st_area(cg)
     expect_true(all(areas > 15))
+    unlink("vizgen", recursive = TRUE)
+})
+
+test_that("readVizgen write parquet file after reading hdf5", {
+    file.copy(dir_use, ".", recursive = TRUE)
+    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT")
+    expect_true(file.exists(file.path("vizgen","hdf5s_micron_space.parquet")))
+    unlink("vizgen", recursive = TRUE)
 })
 
 test_that("readVizgen flip geometry, don't use cellpose", {
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
+    file.copy(dir_use, ".", recursive = TRUE)
+    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "geometry")
     expect_equal(unit(sfe), "micron")
     img <- imgRaster(getImg(sfe))
@@ -171,10 +177,12 @@ test_that("readVizgen flip geometry, don't use cellpose", {
     expect_true(all(vapply(seq_len(nrow(cg)), function(i) {
         st_covered_by(cg[i,], hulls[i,], sparse = FALSE)[1,1]
     }, FUN.VALUE = logical(1))))
+    unlink("vizgen", recursive = TRUE)
 })
 
 test_that("readVizgen flip image", {
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
+    file.copy(dir_use, ".", recursive = TRUE)
+    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     expect_equal(unit(sfe), "micron")
     img <- imgRaster(getImg(sfe))
@@ -182,15 +190,17 @@ test_that("readVizgen flip image", {
     v <- terra::extract(img, cg)
     nCounts <- Matrix::colSums(counts(sfe))
     expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+    unlink("vizgen", recursive = TRUE)
 })
 
 test_that("readVizgen don't flip image when image is too large", {
-    expect_error(readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
+    file.copy(dir_use, ".", recursive = TRUE)
+    expect_error(readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT",
                             flip = "image", max_flip = "0.02 TB"),
                  "max_flip must be in either MB or GB")
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
+    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image", max_flip = "0.02 MB")
-    suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z0.tif")))
+    suppressWarnings(img_orig <- rast(file.path("vizgen", "images", "mosaic_PolyT_z0.tif")))
     img <- imgRaster(getImg(sfe))
     # Make sure image was not flipped
     expect_equal(terra::values(img), terra::values(img_orig))
@@ -198,29 +208,35 @@ test_that("readVizgen don't flip image when image is too large", {
     v <- terra::extract(img, cg)
     nCounts <- Matrix::colSums(counts(sfe))
     expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+    unlink("vizgen", recursive = TRUE)
 })
 
 test_that("Don't flip image if it's GeoTIFF", {
-    sfe <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "PolyT",
+    file.copy(dir_use, ".", recursive = TRUE)
+    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     terra::writeRaster(imgRaster(getImg(sfe)),
                        filename = file.path("vizgen", "images", "mosaic_DAPI_z0.tif"),
                        overwrite = TRUE)
-    sfe2 <- readVizgen(dir_use, z = 0L, use_cellpose = FALSE, image = "DAPI",
+    sfe2 <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "DAPI",
                        flip = "image")
     expect_equal(terra::values(imgRaster(getImg(sfe))), terra::values(imgRaster(getImg(sfe2))))
     file.remove(file.path("vizgen", "images", "mosaic_DAPI_z0.tif"))
+    unlink("vizgen", recursive = TRUE)
 })
 
 test_that("Errors and warnings", {
-    expect_warning(sfe <- readVizgen(dir_use, z = 0L, image = "DAPI", use_cellpose = FALSE),
+    file.copy(dir_use, ".", recursive = TRUE)
+    expect_warning(sfe <- readVizgen("vizgen", z = 0L, image = "DAPI", use_cellpose = FALSE),
                    "don't exist")
     expect_equal(nrow(imgData(sfe)), 0L)
-    expect_error(readVizgen(dir_use, z = 7L, image = "PolyT", use_cellpose = FALSE),
+    expect_error(readVizgen("vizgen", z = 7L, image = "PolyT", use_cellpose = FALSE),
                  "z must be beween 0 and 6")
+    unlink("vizgen", recursive = TRUE)
 })
 
 # Make toy examples of multiple pieces
+dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 parq <- sfarrow::st_read_parquet(file.path(dir_use, "cellpose_micron_space.parquet"))
 # One large piece and one small piece
 large <- list(matrix(c(2500, 0,
@@ -244,7 +260,8 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
     new_geo <- st_sfc(large_g, large_small, small_small, large_large)
     parq2$Geometry <- new_geo
     dir.create("multi")
-    file.copy("vizgen", "multi", recursive = TRUE)
+    dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+    file.copy(dir_use, "multi", recursive = TRUE)
 
     dir_use <- file.path("multi", "vizgen")
     file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
@@ -270,7 +287,8 @@ test_that("No polygons left", {
     new_geo <- st_sfc(small, small)
     parq2$Geometry <- new_geo
     dir.create("small")
-    file.copy("vizgen", "small", recursive = TRUE)
+    dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+    file.copy(dir_use, "small", recursive = TRUE)
 
     dir_use <- file.path("small", "vizgen")
     file.remove(file.path(dir_use, "cellpose_micron_space.parquet"))
@@ -283,7 +301,8 @@ test_that("No polygons left", {
 
 test_that("Image can be named polyT in older version", {
     dir.create("polyT")
-    file.copy("vizgen", "polyT", recursive = TRUE)
+    dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+    file.copy(dir_use, "polyT", recursive = TRUE)
 
     dir_use <- file.path("polyT", "vizgen")
     file.rename(file.path(dir_use, "images", "mosaic_PolyT_z0.tif"),
@@ -305,7 +324,8 @@ test_that("Read different versions of Vizgen data", {
 })
 # Error messages when coordinate columns are not found
 test_that("Read MERFISH transcript spots into rowGeometries", {
-    sfe <- readVizgen("vizgen", z = 0L, image = "PolyT", add_molecules = TRUE)
+    dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+    sfe <- readVizgen(dir_use, z = 0L, image = "PolyT", add_molecules = TRUE)
     expect_equal(rowGeometryNames(sfe), "txSpots")
     rg <- txSpots(sfe)
     expect_equal(as.character(st_geometry_type(rg, FALSE)), "MULTIPOINT")
@@ -313,18 +333,19 @@ test_that("Read MERFISH transcript spots into rowGeometries", {
 
 test_that("Format MERFISH transcript spots for colGeometries", {
     # Error when column in cell_col is absent
-    expect_error(formatTxSpots(file.path("vizgen", "detected_transcripts.csv"),
+    dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+    expect_error(formatTxSpots(file.path(dir_use, "detected_transcripts.csv"),
                                dest = "colGeometry"),
                  "file_out must be specified")
-    expect_error(formatTxSpots(file.path("vizgen", "detected_transcripts.csv"),
+    expect_error(formatTxSpots(file.path(dir_use, "detected_transcripts.csv"),
                                dest = "colGeometry", file_out = "vizgen/tx_in_cells"),
                  "Column indicating cell ID not found.")
 
     dir.create("cg_vizgen")
-    file.copy(list.files("vizgen", full.names = TRUE), "cg_vizgen", recursive = TRUE)
+    file.copy(list.files(dir_use, full.names = TRUE), "cg_vizgen", recursive = TRUE)
     df <- read.csv(file.path("cg_vizgen", "detected_transcripts.csv"),
                    header = TRUE)
-    sfe <- readVizgen("vizgen", z = 0L, image = "PolyT")
+    sfe <- readVizgen(dir_use, z = 0L, image = "PolyT")
     df$cell_id <- sample(colnames(sfe), nrow(df), replace = TRUE)
     rownames(df) <- df$X
     df$X <- NULL
@@ -367,5 +388,3 @@ test_that("Read MERFISH transcript spots into imgData", {
 # formatTxSpots, rowGeometries, write to disk, not splitting by cell compartments
 # formatTxSpots, imgData, write to disk
 # Same above, but do split, coming naturally when I get to CosMX.
-
-unlink("vizgen", recursive = TRUE)
