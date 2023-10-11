@@ -17,6 +17,7 @@ readVizgen(
   use_bboxes = FALSE,
   use_cellpose = TRUE,
   BPPARAM = SerialParam(),
+  file_out = file.path(data_dir, "detected_transcripts.parquet"),
   ...
 )
 }
@@ -61,7 +62,7 @@ object.}
 
 \item{use_cellpose}{Whether to read the parquet files from CellPose cell
 segmentation. If \code{FALSE}, cell segmentation will be read from the HDF5
-files.}
+files. Note that reading HDF5 files for numerous FOVs is very slow.}
 
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
@@ -87,7 +88,11 @@ files.}
 and add the transcript spots data to the SFE object, except that extent
 is read from `manifest.json` and that `dest = "rowGeometry"` because the
 spot coordinates are in micron space and are not discrete so converting the
-transcript spots to raster won't work.}
+transcript spots to raster won't work. A default is set for `file_out` to
+save the reformatted transcript spots to disk by default since reloading the
+reformatted form is much more efficient. Reading the original detected
+transcripts csv file can take up a lot of memory. Expect twice the size of 
+that csv file.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.

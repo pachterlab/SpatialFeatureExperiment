@@ -94,7 +94,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
             return(gs[[s]])
         }
     })
-    gs_sub <- do.call(rbind, gs_sub)
+    gs_sub <- rbindlist(gs_sub)
     # Convert st_GEOMETRY to a more specific type
     if (st_geometry_type(gs_sub, by_geometry = FALSE) == "GEOMETRY") {
         gs_sub <- st_cast(gs_sub)

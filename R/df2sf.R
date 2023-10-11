@@ -40,11 +40,13 @@
                                        "sample_id", spatialCoordsNames))
 
     n_geos <- length(unique(if (group_col %in% names(df)) df[[group_col]] else df[[id_col]]))
-    if_keep <- vapply(df[cols_check], function(x) length(unique(x)) == n_geos,
+    if_keep <- vapply(as.data.frame(df)[cols_check], function(x) length(unique(x)) == n_geos,
                       FUN.VALUE = logical(1))
     cols_use <- c(cols_check[if_keep], intersect(names(df), cols_keep))
-    df <- df[,cols_use]
-    df
+    # To work around data.table's nicer column subsetting with symbols
+    # and to remain compatible with base data frames
+    if (!is.data.table(df)) ..cols_use <- cols_use
+    df[,..cols_use]
 }
 
 .df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi,
@@ -58,12 +60,17 @@
     if (multi) {
         df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
                            group_col = group_col)
-        df_split <- split(df[,c(spatialCoordNames, group_col)], df[[group_col]])
+        cns <- c(spatialCoordsNames, group_col)
+        if (!is.data.table(df)) {
+            ..cns <- cns
+            ..spatialCoordsNames <- spatialCoordsNames
+        } 
+        df_split <- split(df[,..cns], df[[group_col]])
         geometry_use <- bplapply(df_split, function(x) {
-            st_multipoint(as.matrix(x[, spatialCoordsNames]))
+            st_multipoint(as.matrix(x[, ..spatialCoordsNames]))
         }, BPPARAM = BPPARAM)
         geometry_use <- st_sfc(geometry_use)
-        out <- .df_attr(df, geometry_use, spatialCoordNames, group_col)
+        out <- .df_attr(df, geometry_use, spatialCoordsNames, group_col)
     } else {
         rns <- rownames(df)
         out <- sf::st_as_sf(df, coords = spatialCoordsNames, crs = NA,
@@ -76,7 +83,8 @@
 }
 
 .df2poly_mat <- function(x, spatialCoordsNames) {
-    m <- as.matrix(x[, spatialCoordsNames])
+    if (!is.data.table(x)) ..spatialCoordsNames <- spatialCoordsNames
+    m <- as.matrix(x[, ..spatialCoordsNames])
     if (!isTRUE(all.equal(m[1,], m[nrow(m)]))) {
         # Close the polygon
         rbind(m, m[1, ])
@@ -88,15 +96,15 @@
     # The other attributes, only keep those with one value per geometry
     cols_use <- setdiff(names(df), c(group_col, id_col, subid_col,
                                      "sample_id", spatialCoordsNames))
-
-    if (length(cols_use)) {
-        df_attrs <- unique(df[,cols_use])
-    }
-    col_merge <- if (group_col %in% names(df_attrs)) group_col else id_col
-    geometry_use <- st_as_sf(ID = names(geometry_use), geometry = geometry_use)
+    col_merge <- if (group_col %in% names(df)) group_col else id_col
+    cols_use <- c(cols_use, col_merge)
+    if (!is.data.table(df)) ..cols_use <- cols_use
+    df_attrs <- unique(df[,..cols_use])
+    geometry_use <- st_sf(ID = names(geometry_use), geometry = geometry_use)
     out <- merge(geometry_use, df_attrs, by.x = "ID", by.y = col_merge,
                  all.x = TRUE)
     names(out$geometry) <- NULL
+    rownames(out) <- out$ID
     return(out)
 }
 
@@ -109,7 +117,7 @@
     if (multi) {
         df_split <- split(df, df[[group_col]])
         geometry_use <- lapply(df_split, function(x) {
-            ms1 <- split(x, x$ID)
+            ms1 <- split(x, x[[id_col]])
             if ("subID" %in% names(df)) {
                 m <- bplapply(ms1, function(y) {
                     ms2 <- split(y, y[[subid_col]])
@@ -137,7 +145,7 @@
         }
     }
     geometry_use <- st_sfc(geometry_use)
-    .df_attr(df, geometry_use, spatialCoordNames, group_col,
+    .df_attr(df, geometry_use, spatialCoordsNames, group_col,
              id_col = id_col, subid_col = subid_col)
 }
 
@@ -147,22 +155,23 @@
     gt <- if (multi) "MULTILINESTRING" else "LINESTRING"
     df <- .df2sf_check(df, spatialCoordsNames, gt,
                        group_col, id_col)
+    if (!is.data.table(df)) ..spatialCoordsNames <- spatialCoordsNames
     if (multi) {
         df_split <- split(df, df[[group_col]])
         geometry_use <- lapply(df_split, function(x) {
-            ms <- split(x, x$ID)
-            m <- bplapply(ms, function(y) as.matrix(y[, spatialCoordsNames]),
+            ms <- split(x, x[[id_col]])
+            m <- bplapply(ms, function(y) as.matrix(y[, ..spatialCoordsNames]),
                           BPPARAM = BPPARAM)
             st_multilinestring(m)
         })
     } else {
         df_split <- split(df, df[[id_col]])
         geometry_use <- bplapply(df_split, function(x) {
-            st_linestring(as.matrix(x[, spatialCoordsNames]))
+            st_linestring(as.matrix(x[, ..spatialCoordsNames]))
         }, BPPARAM = BPPARAM)
     }
     geometry_use <- st_sfc(geometry_use)
-    .df_attr(df, geometry_use, spatialCoordNames, group_col,
+    .df_attr(df, geometry_use, spatialCoordsNames, group_col,
              id_col = id_col, subid_col = subid_col)
 }
 

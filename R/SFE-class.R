@@ -192,8 +192,7 @@ SpatialFeatureExperiment <- function(assays,
                         spotDiameter, unit, BPPARAM) {
     if (is.null(colGeometries)) {
       cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
-      colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter,
-                                         BPPARAM))
+      colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter, BPPARAM))
       names(colGeometries) <- cg_name
     }
     if (!is.null(rowGeometries)) {

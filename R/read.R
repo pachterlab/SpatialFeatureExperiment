@@ -326,7 +326,7 @@ read10xVisiumSFE <- function(samples = "",
 #'   \code{cell_metadata} to make bounding boxes instead.
 #' @param use_cellpose Whether to read the parquet files from CellPose cell
 #'   segmentation. If \code{FALSE}, cell segmentation will be read from the HDF5
-#'   files.
+#'   files. Note that reading HDF5 files for numerous FOVs is very slow.
 #' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
 #'   processing backend and number of threads to use for parallelizable tasks:
 #'   \enumerate{
@@ -350,19 +350,23 @@ read10xVisiumSFE <- function(samples = "",
 #' and add the transcript spots data to the SFE object, except that extent
 #' is read from `manifest.json` and that `dest = "rowGeometry"` because the
 #' spot coordinates are in micron space and are not discrete so converting the
-#' transcript spots to raster won't work.
+#' transcript spots to raster won't work. A default is set for `file_out` to
+#' save the reformatted transcript spots to disk by default since reloading the
+#' reformatted form is much more efficient. Reading the original detected
+#' transcripts csv file can take up a lot of memory. Expect twice the size of 
+#' that csv file.
 #' @concept Read data into SFE
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
 #' @note
 #' Since the transcript spots file is often very large, we recommend only
 #' using \code{add_molecules = TRUE} on servers with a lot of memory.
-#' @importFrom sf st_area st_geometry<-
+#' @importFrom sf st_area st_geometry<- st_as_sf
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#' @importFrom data.table fread merge.data.table rbindlist
+#' @importFrom data.table fread merge.data.table rbindlist is.data.table
 #' @examples
 #' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
 #' sfe <- readVizgen(dir_use, z = 0L, image = "PolyT",
@@ -382,7 +386,8 @@ readVizgen <- function(data_dir,
                        add_molecules = FALSE,
                        use_bboxes = FALSE,
                        use_cellpose = TRUE,
-                       BPPARAM = SerialParam(), ...) {
+                       BPPARAM = SerialParam(),
+                       file_out = file.path(data_dir, "detected_transcripts.parquet"), ...) {
   data_dir <- normalizePath(data_dir, mustWork = TRUE)
   flip <- match.arg(flip)
   image <- match.arg(image, several.ok = TRUE)
@@ -393,15 +398,16 @@ readVizgen <- function(data_dir,
   # Read images----------
   # sanity on image names
   # .."Cellbound" image usually has a digit, eg "Cellbound3"
+  image_regex <- image
   if (any("Cellbound" %in% image)) {
-    image[which(image %in% "Cellbound")] <-
-      paste0(grep("Cell", image, value = TRUE), "\\d") }
+    image_regex[which(image %in% "Cellbound")] <-
+      paste0(grep("Cell", image_regex, value = TRUE), "\\d") }
 
   if (z == "all") {
-    img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z\\d\\.tif$")
+    img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z\\d\\.tif$")
   } else {
     num_pattern <- paste(z, collapse = "|")
-    img_pattern <- paste0("mosaic_(", paste(image, collapse = "|"), ")_z",
+    img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z",
                           num_pattern, "\\.tif$")
   }
   img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern,
@@ -410,8 +416,7 @@ readVizgen <- function(data_dir,
                       FUN.VALUE = logical(1))
   if (!all(if_exists)) {
     warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
-            " don't exist, or have non-standard file name(s).")
-    img_fn <- img_fn[if_exists]
+            " in this z-plane don't exist, or have non-standard file name(s).")
   }
   do_flip <- .if_flip_img(img_fn, max_flip)
   if (!length(img_fn)) flip <- "none"
@@ -448,13 +453,19 @@ readVizgen <- function(data_dir,
     fn <- parq
     # read file and filter to keep selected single z section as they're the same anyway
     polys <- sfarrow::st_read_parquet(fn)
-    # use mid z section if z == "all"
-    polys <- polys[polys$ZIndex == polys$ZIndex[ifelse(z == "all", 3L, z)],]
+    # Can use any z-plane since they're all the same
+    # This way so this part still works when the parquet file is written after 
+    # reading in HDF5 the first time. Only writing one z-plane to save disk space.
+    polys <- polys[polys$ZIndex == polys$ZIndex[1],]
+    polys$ZIndex <- if (z == "all") 3L else z[1]
     # filtering cell polygons
     polys <- .filter_polygons(polys, min_area,
                               BPPARAM = BPPARAM)
     st_geometry(polys) <- "geometry"
-    polys$ID <- polys$EntityID
+    if ("EntityID" %in% names(polys))
+        polys$ID <- polys$EntityID
+    if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
+        polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
     polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
   } else {
     rlang::check_installed("rhdf5")
@@ -466,9 +477,12 @@ readVizgen <- function(data_dir,
                         BPPARAM = BPPARAM,
                         # use mid z section
                         MoreArgs = list(z = ifelse(z == "all", 3L, z)))
-      polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys)
+      polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
       polys$Type <- "cell"
-      suppressWarnings(sfarrow::st_write_parquet(polys))
+      parq_file <- file.path(data_dir, "cellpose_micron_space.parquet")
+      if (!file.exists(parq_file)) {
+          suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+      }
     } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
     }
@@ -489,32 +503,32 @@ readVizgen <- function(data_dir,
 
   # get spatial metadata file---------
   meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
-  metadata <- fread(mat_fn)
+  metadata <- fread(meta_fn)
   if (any(names(metadata) == "transcript_count") && filter_counts) {
     message(">>> ..filtering `cell_metadata` - keep cells with `transcript_count` > 0")
     metadata <- metadata[metadata$transcript_count > 0,]
   }
-  rns <- metadata[,1,drop = TRUE]
+  
   if (!is.null(polys)) {
     # remove NAs when matching
     metadata <-
-      metadata[match(polys$ID, rns) |> stats::na.omit(),]
+      metadata[match(polys$ID, metadata[[1]]) |> stats::na.omit(),]
   }
-  rownames(metadata) <- rns
+  rownames(metadata) <- metadata[[1]]
   metadata[,1] <- NULL
   if (flip == "geometry") {
     metadata$center_y <- -metadata$center_y
   }
 
   # convert counts df to sparse matrix------------
-  rns <- mat[,1,drop = TRUE]
-  mat <- mat[match(rownames(metadata), rns)] # polys already matched to metadata
-  rownames(mat) <- rns
+  mat <- mat[match(rownames(metadata), mat[[1]]),] # polys already matched to metadata
+  rns <- mat[[1]]
   mat[,1] <- NULL
   mat <- mat |>
     as.matrix() |>
     as("CsparseMatrix") |> # convert to sparse matrix
     Matrix::t() # transpose sparse matrix
+  colnames(mat) <- rns
   # If metadata isn't already filtered
   if (!"transcript_count" %in% names(metadata) && filter_counts) {
     inds <- colSums(mat) > 0
@@ -525,9 +539,9 @@ readVizgen <- function(data_dir,
 
   # check matching cell ids in polygon geometries, should match the count matrix cell ids
   if (!is.null(polys) &&
-      !identical(polys$ID, colnames(mat))) {
+      !identical(polys$ID, rns)) {
     # filter geometries
-    matched.cells <- match(colnames(mat), polys$ID) |> stats::na.omit()
+    matched.cells <- match(rns, polys$ID) |> stats::na.omit()
     message(">>> filtering geometries to match ", length(matched.cells),
             " cells with counts > 0")
     polys <- polys[matched.cells, , drop = FALSE]
@@ -547,7 +561,7 @@ readVizgen <- function(data_dir,
       .get_imgData(fn, sample_id = sample_id, image_id = id_use,
                    extent = extent, flip = (flip == "image"))
     })
-    img_df <- rbindlist(img_dfs)
+    img_df <- do.call(rbind, img_dfs)
   }
   sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
                                   colData = metadata,
@@ -582,9 +596,10 @@ readVizgen <- function(data_dir,
   if (add_molecules) {
     message(">>> Reading transcript coordinates")
     # get molecule coordiantes file
-    mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts")
+    mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts.csv")
     sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM,
-                      dest = "rowGeometry", extent = extent, z = z, ...)
+                      dest = "rowGeometry", extent = extent, z = z,
+                      file_out = file_out, ...)
   }
   sfe
 }
@@ -592,6 +607,7 @@ readVizgen <- function(data_dir,
 .mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, digits,
                       extent, BPPARAM, not_in_cell_id) {
   # For one part of the split, e.g. cell compartment
+    message(">>> Converting transcript spots to to geometry")
   if (dest == "rowGeometry") {
     # Should have genes as row names
     # RAM concerns for parallel processing, wish I can stream
@@ -611,7 +627,8 @@ readVizgen <- function(data_dir,
     names(mols) <- paste(names(mols), "spots", sep = "_")
   } else {
     colnames_use <- c(spatialCoordsNames[1:2], setdiff(names(mols), spatialCoordsNames[1:2]))
-    mols <- rast(mols[,colnames_use], type = "xyz", digits = digits,
+    # mols should always be data.table so use with = FALSE specific to data.table
+    mols <- rast(mols[,colnames_use, with = FALSE], type = "xyz", digits = digits,
                  extent = extent)
     # Don't need to split since cell compartment is a raster layer.
   }
@@ -752,7 +769,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
   }
   if (ext == "parquet") {
     check_installed("arrow")
-    mols <- arrow::read_parquet(file)
+    mols <- arrow::read_parquet(file) |> as.data.table()
   } else {
     mols <- fread(file)
   }
@@ -815,7 +832,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
         if (!return) return(file_dir)
       }
     } else if (is(mols, "sf")) {
-      sfarrow::st_write_parquet(mols, file_out)
+      suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
       if (!return) return(file_out)
     } else {
       if (!dir.exists(file_dir)) dir.create(file_dir)
