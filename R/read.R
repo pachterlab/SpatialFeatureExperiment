@@ -499,11 +499,11 @@ readVizgen <- function(data_dir,
   mat_fn <- .check_vizgen_fns(data_dir, "cell_by_gene")
 
   # Column without colname is read as V1
-  mat <- fread(mat_fn)
+  mat <- fread(mat_fn, colClasses = list(character = 1))
 
   # get spatial metadata file---------
   meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
-  metadata <- fread(meta_fn)
+  metadata <- fread(meta_fn, colClasses = list(character = 1))
   if (any(names(metadata) == "transcript_count") && filter_counts) {
     message(">>> ..filtering `cell_metadata` - keep cells with `transcript_count` > 0")
     metadata <- metadata[metadata$transcript_count > 0,]
