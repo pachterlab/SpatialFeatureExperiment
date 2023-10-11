@@ -437,19 +437,38 @@ readVizgen <- function(data_dir,
                        full.names = TRUE,
                        recursive = TRUE)
   }
-  # set to use .parquet" file if present
-  use.parquet <- any(length(parq)) & use_cellpose
-
-  rlang::check_installed("sfarrow")
-  if (use.parquet) {
-    message(">>> Cell segmentations are found in `.parquet` file")
+  
+  # make sure only single file is used
+  if (length(parq) > 1) {
+    # eg, if two files are present:
+    # `cellpose_micron_space.parquet`
+    # `cellpose_mosaic_space.parquet`
+    # or any other `parquet` files
+    # use µm units
+    parq_clean <- 
+      grep("cell_boundaries|micron_space", 
+           parq, value = TRUE)
+    warning(">>> ", length(parq), " `.parquet` files exists:", 
+            paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
+    parq <- parq_clean
+    if (any(grepl("cell_boundaries.parquet", parq))) {
+      # use default segmentaion file
+      parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
+    } else if (any(grepl("hdf5s_micron", parq))) {
+      # use previously processed/saved `hdf5` files  
+      parq <- grep("hdf5s_micron", parq, value = TRUE) }
+    # final sanity
     if (length(parq) > 1) {
-      # eg, if two files are present:
-      # `cellpose_micron_space.parquet`
-      # `cellpose_mosaic_space.parquet`
-      # use µm units
-      parq  <- grep("cellpose_micron", parq, value = TRUE)
+      stop("only 1 `.parquet` file can be used, check `data_dir` content") }
     }
+    
+    # set to use .parquet" file if present
+    use.parquet <- any(length(parq)) & use_cellpose
+    if (use.parquet) {
+      message(">>> Cell segmentations are found in `.parquet` file", 
+              if (any(grepl("hdf5s_micron", parq))) { 
+                paste0("\n", ">>> processed hdf5 files will be used") })
+    rlang::check_installed("sfarrow")
     fn <- parq
     # read file and filter to keep selected single z section as they're the same anyway
     polys <- sfarrow::st_read_parquet(fn)
@@ -463,11 +482,11 @@ readVizgen <- function(data_dir,
                               BPPARAM = BPPARAM)
     st_geometry(polys) <- "geometry"
     if ("EntityID" %in% names(polys))
-        polys$ID <- polys$EntityID
+      polys$ID <- polys$EntityID
     if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
-        polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
+      polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
     polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
-  } else {
+    } else {
     rlang::check_installed("rhdf5")
     fns <- list.files(file.path(data_dir, "cell_boundaries"),
                       "*.hdf5", full.names = TRUE)
@@ -481,7 +500,7 @@ readVizgen <- function(data_dir,
       polys$Type <- "cell"
       parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
       if (!file.exists(parq_file)) {
-          suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+        suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
       }
     } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
