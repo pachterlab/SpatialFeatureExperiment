@@ -424,21 +424,21 @@ readVizgen <- function(data_dir,
 
   # Read cell segmentation-------------
   # Use segmentation output from ".parquet" file
-  # # check if ".parquet" file is present
+  # check if ".parquet" file is present
   parq <-
     # look in the current directory
     list.files(data_dir,
                pattern = ".parquet$",
                full.names = TRUE)
-  if (length(parq) == 0) {
+  if (length(parq) == 0 || any(grepl("detected_transcripts", parq))) {
     # look in the sub directory (if nothing is found)
     parq <- list.files(data_dir,
                        pattern = ".parquet$",
                        full.names = TRUE,
                        recursive = TRUE)
-  }
+    }
   
-  # make sure only single file is used
+  # make sure only single file is read
   if (length(parq) > 1) {
     # eg, if two files are present:
     # `cellpose_micron_space.parquet`
@@ -459,7 +459,7 @@ readVizgen <- function(data_dir,
       parq <- grep("hdf5s_micron", parq, value = TRUE) }
     # final sanity
     if (length(parq) > 1) {
-      stop("only 1 `.parquet` file can be used, check `data_dir` content") }
+      stop("only 1 `.parquet` file can be read, check `data_dir` content") }
     }
     
     # set to use .parquet" file if present
