@@ -607,7 +607,7 @@ readVizgen <- function(data_dir,
 .mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, digits,
                       extent, BPPARAM, not_in_cell_id) {
   # For one part of the split, e.g. cell compartment
-    message(">>> Converting transcript spots to to geometry")
+    message(">>> Converting transcript spots to geometry")
   if (dest == "rowGeometry") {
     # Should have genes as row names
     # RAM concerns for parallel processing, wish I can stream
