@@ -158,8 +158,12 @@ test_that("readVizgen flip geometry, use cellpose", {
 
 test_that("readVizgen write parquet file after reading hdf5", {
     file.copy(dir_use, ".", recursive = TRUE)
+    file.remove(file.path("vizgen", "cellpose_micron_space.parquet"))
     sfe <- readVizgen("vizgen", z = 0L, use_cellpose = FALSE, image = "PolyT")
     expect_true(file.exists(file.path("vizgen","hdf5s_micron_space.parquet")))
+    # Second time reading
+    expect_message(readVizgen("vizgen", z = 0L, image = "PolyT"),
+                   "processed hdf5 files will be used")
     unlink("vizgen", recursive = TRUE)
 })
 
@@ -386,5 +390,7 @@ test_that("Read MERFISH transcript spots into imgData", {
 })
 
 # formatTxSpots, rowGeometries, write to disk, not splitting by cell compartments
-# formatTxSpots, imgData, write to disk
 # Same above, but do split, coming naturally when I get to CosMX.
+# Error message when multiple parquet files are found in readVizgen
+# Error message when xy coordinate column is not found in formatTxSpots
+# 

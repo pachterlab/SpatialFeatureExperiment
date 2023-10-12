@@ -291,13 +291,15 @@ read10xVisiumSFE <- function(samples = "",
 #' This function reads the standard Vizgen MERFISH output into an SFE object.
 #' The coordinates are in microns. Cell centroids are read into
 #' \code{\link{colGeometry}} "centroids", and cell segmentations are read into
-#' \code{colGeometry} "cellSeg". The image(s) (polyT and DAPI) are also read as
-#' \code{\link{SpatRaster}} objects so they are not loaded into memory unless
-#' necessary. Because the image's origin is the top left while the geometry's
-#' origin is bottom left, either the image or the geometry needs to be flipped.
-#' Because the image accompanying MERFISH datasets are usually very large, the
-#' coordinates will be flipped so the flipping operation won't load the entire
-#' image into memory.
+#' \code{colGeometry} "cellSeg". The image(s) (polyT, DAPI, and cell boundaries)
+#' are also read as \code{\link{SpatRaster}} objects so they are not loaded into
+#' memory unless necessary. Because the image's origin is the top left while the
+#' geometry's origin is bottom left, either the image or the geometry needs to
+#' be flipped. Because the image accompanying MERFISH datasets are usually very
+#' large, the coordinates will be flipped so the flipping operation won't load
+#' the entire image into memory. Large datasets with hundreds of thousands of
+#' cells can take a while to read if reading transcript spots as it takes a
+#' while to convert the spots to MULTIPOINT geometries.
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @param data_dir Top level directory of Vizgen output, which contains
@@ -329,8 +331,7 @@ read10xVisiumSFE <- function(samples = "",
 #'   files. Note that reading HDF5 files for numerous FOVs is very slow.
 #' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
 #'   processing backend and number of threads to use for parallelizable tasks:
-#'   \enumerate{ 
-#'   \item To load cell segmentation from HDF5 files from different
+#'   \enumerate{ \item To load cell segmentation from HDF5 files from different
 #'   fields of view (FOVs) with multiple cores. A progress bar can be configured
 #'   in the \code{\link{BiocParallelParam}} object. When there are numerous
 #'   FOVs, reading in the geometries can be time consuming, so we recommend
@@ -353,14 +354,13 @@ read10xVisiumSFE <- function(samples = "",
 #'   save the reformatted transcript spots to disk by default since reloading
 #'   the reformatted form is much more efficient. Reading the original detected
 #'   transcripts csv file can take up a lot of memory. Expect at least twice the
-#'   size of that csv file. If using all z-planes, expect 3 times the size when
-#'   converting to MULTIPOINT geometry. So we STRONGLY recommend saving the
-#'   reformatted results to disk.
+#'   size of that csv file, even more if using multiple threads. So we STRONGLY
+#'   recommend saving the reformatted results to disk.
 #' @concept Read data into SFE
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
 #' @note Since the transcript spots file is often very large, we recommend only
-#' using \code{add_molecules = TRUE} on servers with a lot of memory.
+#'   using \code{add_molecules = TRUE} on servers with a lot of memory.
 #' @importFrom sf st_area st_geometry<- st_as_sf
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply
@@ -468,44 +468,44 @@ readVizgen <- function(data_dir,
       message(">>> Cell segmentations are found in `.parquet` file", 
               if (any(grepl("hdf5s_micron", parq))) { 
                 paste0("\n", ">>> processed hdf5 files will be used") })
-    rlang::check_installed("sfarrow")
-    fn <- parq
-    # read file and filter to keep selected single z section as they're the same anyway
-    polys <- sfarrow::st_read_parquet(fn)
-    # Can use any z-plane since they're all the same
-    # This way so this part still works when the parquet file is written after 
-    # reading in HDF5 the first time. Only writing one z-plane to save disk space.
-    polys <- polys[polys$ZIndex == polys$ZIndex[1],]
-    polys$ZIndex <- if (z == "all") 3L else z[1]
-    # filtering cell polygons
-    polys <- .filter_polygons(polys, min_area,
-                              BPPARAM = BPPARAM)
-    st_geometry(polys) <- "geometry"
-    if ("EntityID" %in% names(polys))
-      polys$ID <- polys$EntityID
-    if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
-      polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
-    polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
+        rlang::check_installed("sfarrow")
+        fn <- parq
+        # read file and filter to keep selected single z section as they're the same anyway
+        polys <- sfarrow::st_read_parquet(fn)
+        # Can use any z-plane since they're all the same
+        # This way so this part still works when the parquet file is written after 
+        # reading in HDF5 the first time. Only writing one z-plane to save disk space.
+        polys <- polys[polys$ZIndex == polys$ZIndex[1],]
+        polys$ZIndex <- if (z == "all") 3L else z[1]
+        # filtering cell polygons
+        polys <- .filter_polygons(polys, min_area,
+                                  BPPARAM = BPPARAM)
+        st_geometry(polys) <- "geometry"
+        if ("EntityID" %in% names(polys))
+            polys$ID <- polys$EntityID
+        if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
+            polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
+        polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
     } else {
-    rlang::check_installed("rhdf5")
-    fns <- list.files(file.path(data_dir, "cell_boundaries"),
-                      "*.hdf5", full.names = TRUE)
-    if(length(fns)) {
-      message(">>> Reading '.hdf5' files..")
-      polys <- bpmapply(.h52poly_fov, fn = fns, SIMPLIFY = FALSE,
-                        BPPARAM = BPPARAM,
-                        # use mid z section
-                        MoreArgs = list(z = ifelse(z == "all", 3L, z)))
-      polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
-      polys$Type <- "cell"
-      parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
-      if (!file.exists(parq_file)) {
-        suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
-      }
-    } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
-      polys <- NULL
+        rlang::check_installed("rhdf5")
+        fns <- list.files(file.path(data_dir, "cell_boundaries"),
+                          "*.hdf5", full.names = TRUE)
+        if(length(fns)) {
+            message(">>> Reading '.hdf5' files..")
+            polys <- bpmapply(.h52poly_fov, fn = fns, SIMPLIFY = FALSE,
+                              BPPARAM = BPPARAM,
+                              # use mid z section
+                              MoreArgs = list(z = ifelse(z == "all", 3L, z)))
+            polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
+            polys$Type <- "cell"
+            parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
+            if (!file.exists(parq_file)) {
+                suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+            }
+        } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
+            polys <- NULL
+        }
     }
-  }
   if (!is.null(polys) && nrow(polys) == 0L)
       stop("No polygons left after filtering.")
   if (flip == "geometry" && !is.null(polys)) {
@@ -616,15 +616,13 @@ readVizgen <- function(data_dir,
     message(">>> Reading transcript coordinates")
     # get molecule coordiantes file
     mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts.csv")
-    sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM,
-                      dest = "rowGeometry", extent = extent, z = z,
+    sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM, z = z,
                       file_out = file_out, ...)
   }
   sfe
 }
 
-.mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, digits,
-                      extent, BPPARAM, not_in_cell_id) {
+.mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, BPPARAM, not_in_cell_id) {
   # For one part of the split, e.g. cell compartment
     message(">>> Converting transcript spots to geometry")
   if (dest == "rowGeometry") {
@@ -633,7 +631,7 @@ readVizgen <- function(data_dir,
     mols <- df2sf(mols, geometryType = "MULTIPOINT", BPPARAM = BPPARAM,
                   spatialCoordsNames = spatialCoordsNames,
                   group_col = gene_col)
-  } else if (dest == "colGeometry") {
+  } else {
     if (!length(cell_col) || !cell_col %in% names(mols))
       stop("Column indicating cell ID not found.")
     mols <- mols[mols[[cell_col]] != not_in_cell_id,]
@@ -644,14 +642,44 @@ readVizgen <- function(data_dir,
                      # Does it get passed to df2sf? I don't think so, so parallelizing over cells
                      BPPARAM = BPPARAM)
     names(mols) <- paste(names(mols), "spots", sep = "_")
-  } else {
-    colnames_use <- c(spatialCoordsNames[1:2], setdiff(names(mols), spatialCoordsNames[1:2]))
-    # mols should always be data.table so use with = FALSE specific to data.table
-    mols <- rast(mols[,colnames_use, with = FALSE], type = "xyz", digits = digits,
-                 extent = extent)
-    # Don't need to split since cell compartment is a raster layer.
   }
   mols
+}
+
+.mols2geo_split <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, 
+                            BPPARAM, not_in_cell_id, split_col) {
+    if (!is.null(split_col) && split_col %in% names(mols)) {
+        mols <- split(mols, mols[[split_col]])
+        mols <- lapply(mols, .mols2geo, dest = dest,
+                       spatialCoordsNames = spatialCoordsNames,
+                       gene_col = gene_col, cell_col = cell_col,
+                       not_in_cell_id = not_in_cell_id)
+        if (dest == "colGeometry") {
+            # Will be a nested list
+            mols <- unlist(mols, recursive = FALSE)
+            # names will be something like nucleus.Gapdh if split by compartment
+        }
+    } else {
+        mols <- .mols2geo(mols, dest, spatialCoordsNames, gene_col, cell_col,
+                          BPPARAM, not_in_cell_id)
+    }
+    mols
+}
+
+.mols2geo_out <- function(mols, file_out, file_dir, return) {
+    if (is(mols, "sf")) {
+        suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
+        if (!return) return(file_out)
+    } else {
+        if (!dir.exists(file_dir)) dir.create(file_dir)
+        suppressWarnings({
+            bplapply(names(mols), function(n) {
+                sfarrow::st_write_parquet(mols[[n]],
+                                          file.path(file_dir, paste0(n, ".parquet")))
+            }, BPPARAM = SerialParam(progressbar = TRUE))
+        })
+        if (!return) return(file_dir)
+    }
 }
 
 #' Read and process transcript spots geometry for SFE
@@ -668,24 +696,18 @@ readVizgen <- function(data_dir,
 #' functions.
 #'
 #' @inheritParams readVizgen
-#' @inheritParams terra::rast
 #' @param sfe A `SpatialFeatureExperiment` object.
 #' @param file File with the transcript spot coordinates. Should be one row per
 #'   spot when read into R and should have columns for coordinates on each axis,
 #'   gene the transcript is assigned to, and optionally cell the transcript is
 #'   assigned to. Must be csv, tsv, or parquet.
 #' @param dest Where in the SFE object to store the spot geometries. This
-#'   affects how the data is processed. Options:
-#'   \describe{
+#'   affects how the data is processed. Options: \describe{
 #'   \item{rowGeometry}{All spots for each gene will be a `MULTIPOINT` geometry,
-#'   regardless of whether they are in cells or which cells they are assigned to.}
-#'   \item{colGeometry}{The spots for each gene assigned to a cell of interest
-#'   will be a `MULTIPOINT` geometry; since the gene count matrix is sparse, the
-#'   geometries are NOT returned to memory.}
-#'   \item{imgData}{The spots will be written to a TIFF file as raster to be
-#'   read to `imgData(sfe)`. This will only work if the spot coordinates are in
-#'   pixel space and are discrete.}
-#'   }
+#'   regardless of whether they are in cells or which cells they are assigned
+#'   to.} \item{colGeometry}{The spots for each gene assigned to a cell of
+#'   interest will be a `MULTIPOINT` geometry; since the gene count matrix is
+#'   sparse, the geometries are NOT returned to memory.}}
 #' @param spatialCoordsNames Column names for the x, y, and optionally z
 #'   coordinates of the spots. The defaults are for Vizgen.
 #' @param gene_col Column name for genes.
@@ -708,6 +730,15 @@ readVizgen <- function(data_dir,
 #' @param return Logical, whether to return the geometries in memory. This does
 #'   not depend on whether the geometries are written to file. Always `FALSE`
 #'   when `dest = "colGeometry"`.
+#' @param z_option What to do with z coordinates. "3d" is to construct 3D
+#'   geometries. However, note that GEOS underpinning \code{sf} does not support
+#'   3D geometric operations. "split" is to create a separate 2D geometry for
+#'   each z-plane so geometric operations are fully supported but some data
+#'   wrangling is required to perform 3D analyses, and this is preferred when z
+#'   coordinates have arbitrary units different from those of x and y. When the
+#'   z coordinates are not integers, 3D geometries will always be constructed
+#'   since there are no z-planes to speak of. This argument does not apply when
+#'   `spatialCoordsNames` has length 2.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
@@ -718,28 +749,31 @@ readVizgen <- function(data_dir,
 #'   `terra::rast` is written for raster. When `return = FALSE`, the file name
 #'   or directory (when there're multiple files) is returned.
 #' @note When `dest = "colGeometry"`, the geometries are always written to disk
-#' and not returned in memory, because this is essentially the gene count
-#' matrix, which is sparse. This kind of reformatting is implemented so users
-#' can read in MULTIPOINT geometries with transcript spots for each gene
-#' assigned to each cell for spatial point process analyses, where not all genes
-#' are loaded at once.
+#'   and not returned in memory, because this is essentially the gene count
+#'   matrix, which is sparse. This kind of reformatting is implemented so users
+#'   can read in MULTIPOINT geometries with transcript spots for each gene
+#'   assigned to each cell for spatial point process analyses, where not all
+#'   genes are loaded at once.
 #' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom terra nlyr
 #' @export
-#' @return The `sf` data frame or the `SpatRaster` (for `dest = "imgData"`).
+#' @return The `sf` data frame, or path to file where geometries are written if
+#'   `return = FALSE`.
 #' @rdname addTxSpots
 #' @examples
 #' # example code
-#'
-formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"),
+#' 
+formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
                           gene_col = "gene", cell_col = "cell_id", z = 3L,
                           phred_col = "qv", min_phred = 20, split_col = NULL,
-                          not_in_cell_id = "-1", extent = NULL, digits = 6L,
+                          not_in_cell_id = "-1", 
+                          z_option = c("split", "3d"),
                           file_out = NULL, BPPARAM = SerialParam(),
                           return = TRUE) {
   file <- normalizePath(file, mustWork = TRUE)
   dest <- match.arg(dest)
+  z_option <- match.arg(z_option)
   ext <- file_ext(file)
   if (dest == "colGeometry") {
     return <- FALSE
@@ -756,29 +790,25 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
     file_dir <- file_path_sans_ext(file_out)
     # File already exists, skip processing
     if (file.exists(file_out) && !dir.exists(file_out)) {
-      if (!return) return(file_out)
-      if (file_ext(file_out) == "parquet") {
+        if (!return) return(file_out)
         out <- sfarrow::st_read_parquet(file_out)
         rownames(out) <- out$ID
-      } else {
-        out <- rast(file_out)
-      }
-      return(out)
+        return(out)
     } else if (dir.exists(file_dir)) {
       if (!return) return(file_dir)
       # Multiple files
-      pattern <- if (dest == "imgData") "\\.geotiff$" else "\\.parquet$"
+      pattern <- "\\.parquet$"
+      # Need to deal with z-planes
+      if (z != "all") {
+          pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
+      }
       fns <- list.files(file_dir, pattern, full.names = TRUE)
       if (length(fns)) {
-        if (dest == "imgData") {
-          out <- lapply(fns, rast)
-        } else {
           out <- lapply(fns, sfarrow::st_read_parquet)
           out <- lapply(out, function(x) {
-            # row names are dropped in st_read/write_parquet
-            rownames(x) <- x$ID
+              # row names are dropped in st_read/write_parquet
+              rownames(x) <- x$ID
           })
-        }
         return(out)
       }
     }
@@ -801,69 +831,57 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
   }
   spatialCoordsNames <- intersect(spatialCoordsNames, names(mols))
   # Check z
-  if (length(spatialCoordsNames) == 3L) {
+  use_z <- length(spatialCoordsNames) == 3L
+  if (use_z) {
     zs <- mols[[spatialCoordsNames[3]]]
+    if (is.null(zs)) { # z column not found
+        spatialCoordsNames <- spatialCoordsNames[-3]
+        use_z <- FALSE
+    }
     if (all(floor(zs) == zs)) { # integer z values
-      if (z != "all") {
-        if (!z %in% unique(zs))
-          stop("z plane specified is not found.")
-        mols <- mols[mols[[spatialCoordsNames[3]]] %in% z,]
-        if (length(z) == 1L) {
-          mols[,spatialCoordsNames[3]] <- NULL
-          spatialCoordsNames <- spatialCoordsNames[-3]
+        if (z != "all") {
+            if (all(!z %in% unique(zs)))
+                stop("z plane(s) specified not found.")
+            mols <- mols[mols[[spatialCoordsNames[3]]] %in% z,]
+            if (length(z) == 1L) {
+                spatialCoordsNames <- spatialCoordsNames[-3]
+                use_z <- FALSE
+            }
         }
-      }
-    } else z <- "all"
+    } else {
+        z <- "all" # Non-integer z values
+        z_option <- "3d"
+    }
   }
   if (phred_col %in% names(mols)) {
     mols <- mols[mols[[phred_col]] >= min_phred,]
   }
-  if (!is.null(split_col) && split_col %in% names(mols)) {
-    mols <- split(mols, mols[[split_col]])
-    mols <- lapply(mols, .mols2geo, dest = dest,
-                   spatialCoordsNames = spatialCoordsNames,
-                   gene_col = gene_col, cell_col = cell_col,
-                   digits = digits, extent = extent,
-                   not_in_cell_id = not_in_cell_id)
-    if (dest == "colGeometry") {
-      # Will be a nested list
-      mols <- unlist(mols, recursive = FALSE)
-      # names will be something like nucleus.Gapdh if split by compartment
-    }
+  
+  if (z_option == "split" && use_z) {
+      mols <- split(mols, mols[[spatialCoordsNames[3]]])
+      mols <- lapply(mols, .mols2geo_split, dest = dest,
+                     spatialCoordsNames = spatialCoordsNames,
+                     gene_col = gene_col, cell_col = cell_col, BPPARAM = BPPARAM,
+                     not_in_cell_id = not_in_cell_id, split_col = split_col)
+      # If list of list, i.e. colGeometry, or do split
+      if (!is(mols[[1]], "sf")) {
+          names_use <- lapply(names(mols), function(n) {
+              names_int <- names(mols[[n]])
+              paste0(names_int, "_z", n)
+          }) |> unlist()
+          mols <- unlist(mols, recursive = FALSE)
+          names(mols) <- names_use
+      } else {
+          names(mols) <- paste0(base.name(file_dir), "_z", names(mols))
+      }
   } else {
-    mols <- .mols2geo(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                      digits, extent, BPPARAM, not_in_cell_id)
+      mols <- .mols2geo_split(mols, dest, spatialCoordsNames, gene_col, cell_col, 
+                              BPPARAM, not_in_cell_id, split_col)
   }
+  
   if (!is.null(file_out)) {
       message(">>> Writing reformatted transcript spots to disk")
-    if (dest == "imgData") {
-      if (nlyr(mols) == 1L) {
-        file_out <- paste0(file_dir, ".geotiff")
-        writeRaster(mols, file_out)
-        if (!return) return(file_out)
-      } else {
-        lyr_names <- names(mols)
-        mols <- split(mols, seq_len(nlyr(mols)))
-        if (!dir.exists(file_dir)) dir.create(file_dir)
-        fns <- file.path(file_dir, paste0(lyr_names, ".geotiff"))
-        for (i in seq_along(mols)) {
-          writeRaster(mols[[i]], fns[i])
-        }
-        if (!return) return(file_dir)
-      }
-    } else if (is(mols, "sf")) {
-      suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
-      if (!return) return(file_out)
-    } else {
-      if (!dir.exists(file_dir)) dir.create(file_dir)
-      suppressWarnings({
-        bplapply(names(mols), function(n) {
-          sfarrow::st_write_parquet(mols[[n]],
-                                    file.path(file_dir, paste0(n, ".parquet")))
-        }, BPPARAM = SerialParam(progressbar = TRUE))
-      })
-      if (!return) return(file_dir)
-    }
+      .mols2geo_out(mols, file_out, file_dir, return)
   }
   return(mols)
 }
@@ -871,38 +889,20 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry", "imgData"
 #' @rdname addTxSpots
 #' @export
 addTxSpots <- function(sfe, file, sample_id = NULL,
-                       dest = c("rowGeometry", "imgData"),
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
                        gene_col = "gene", cell_col = "cell_id", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,
-                       not_in_cell_id = "-1", extent = NULL, digits = 6L,
+                       not_in_cell_id = "-1", z_option = c("split", "3d"),
                        file_out = NULL, BPPARAM = SerialParam()) {
-  dest <- match.arg(dest)
   sample_id <- .check_sample_id(sfe, sample_id)
+  dest <- "rowGeometry"
   mols <- formatTxSpots(file, dest, spatialCoordsNames, gene_col, cell_col,
                         z, phred_col, min_phred, split_col, not_in_cell_id,
-                        extent, digits, file_out, BPPARAM)
-  if (dest == "rowGeometry") {
-    if (is(mols, "sf")) {
+                        z_option, file_out, BPPARAM)
+  if (is(mols, "sf")) {
       txSpots(sfe, withDimnames = TRUE) <- mols
-    } else if (is.list(mols)) {
+  } else if (is.list(mols)) {
       rowGeometries(sfe) <- c(rowGeometries(sfe), mols)
-    }
-  } else {
-    imgdata_old <- imgData(sfe)
-    if (is(mols, "SpatRaster")) {
-      mols <- list(SpatRasterImage(mols))
-      img_id <- "txSpots"
-    } else {
-      mols <- lapply(mols, SpatRasterImage)
-      img_id <- lapply(mols, names)
-    }
-    df <- DataFrame(sample_id = sample_id,
-                    image_id = img_id,
-                    data = I(mols),
-                    scaleFactor = 1) # Voyager doesn't use scaleFactor anyway
-    df <- rbind(imgdata_old, df)
-    imgData(sfe) <- df
   }
   sfe
 }
