@@ -437,34 +437,34 @@ readVizgen <- function(data_dir,
                        full.names = TRUE,
                        recursive = TRUE)
     }
-  
-  # make sure only single file is read
-  if (length(parq) > 1) {
-    # eg, if two files are present:
-    # `cellpose_micron_space.parquet`
-    # `cellpose_mosaic_space.parquet`
-    # or any other `parquet` files
-    # use µm units
-    parq_clean <- 
-      grep("cell_boundaries|micron_space", 
-           parq, value = TRUE)
-    warning(">>> ", length(parq), " `.parquet` files exists:", 
-            paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
-    parq <- parq_clean
-    if (any(grepl("cell_boundaries.parquet", parq))) {
-      # use default segmentaion file
-      parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
-    } else if (any(grepl("hdf5s_micron", parq))) {
-      # use previously processed/saved `hdf5` files  
-      parq <- grep("hdf5s_micron", parq, value = TRUE) }
-    # final sanity
-    if (length(parq) > 1) {
-      stop("only 1 `.parquet` file can be read, check `data_dir` content") }
-    }
     
     # set to use .parquet" file if present
     use.parquet <- any(length(parq)) & use_cellpose
     if (use.parquet) {
+        # make sure only single file is read
+        if (length(parq) > 1) {
+            # eg, if two files are present:
+            # `cellpose_micron_space.parquet`
+            # `cellpose_mosaic_space.parquet`
+            # or any other `parquet` files
+            # use µm units
+            parq_clean <- 
+                grep("cell_boundaries|micron_space", 
+                     parq, value = TRUE)
+            message(">>> ", length(parq), " `.parquet` files exists:", 
+                    paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
+            parq <- parq_clean
+            if (any(grepl("cell_boundaries.parquet", parq))) {
+                # use default segmentaion file
+                parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
+            } else if (any(grepl("hdf5s_micron", parq))) {
+                # use previously processed/saved `hdf5` files  
+                parq <- grep("hdf5s_micron", parq, value = TRUE) }
+            # final sanity
+            if (length(parq) > 1) {
+                stop("only 1 `.parquet` file can be read, check `data_dir` content") 
+            }
+        }
       message(">>> Cell segmentations are found in `.parquet` file", 
               if (any(grepl("hdf5s_micron", parq))) { 
                 paste0("\n", ">>> processed hdf5 files will be used") })
@@ -666,22 +666,6 @@ readVizgen <- function(data_dir,
     mols
 }
 
-.mols2geo_out <- function(mols, file_out, file_dir, return) {
-    if (is(mols, "sf")) {
-        suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
-        if (!return) return(file_out)
-    } else {
-        if (!dir.exists(file_dir)) dir.create(file_dir)
-        suppressWarnings({
-            bplapply(names(mols), function(n) {
-                sfarrow::st_write_parquet(mols[[n]],
-                                          file.path(file_dir, paste0(n, ".parquet")))
-            }, BPPARAM = SerialParam(progressbar = TRUE))
-        })
-        if (!return) return(file_dir)
-    }
-}
-
 #' Read and process transcript spots geometry for SFE
 #'
 #' The function `formatTxSpots` reads the transcript spot coordinates of
@@ -881,7 +865,19 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
   
   if (!is.null(file_out)) {
       message(">>> Writing reformatted transcript spots to disk")
-      .mols2geo_out(mols, file_out, file_dir, return)
+      if (is(mols, "sf")) {
+          suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
+          if (!return) return(file_out)
+      } else {
+          if (!dir.exists(file_dir)) dir.create(file_dir)
+          suppressWarnings({
+              bplapply(names(mols), function(n) {
+                  sfarrow::st_write_parquet(mols[[n]],
+                                            file.path(file_dir, paste0(n, ".parquet")))
+              }, BPPARAM = SerialParam(progressbar = TRUE))
+          })
+          if (!return) return(file_dir)
+      }
   }
   return(mols)
 }

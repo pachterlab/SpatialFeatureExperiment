@@ -329,10 +329,13 @@ test_that("Read different versions of Vizgen data", {
 # Error messages when coordinate columns are not found
 test_that("Read MERFISH transcript spots into rowGeometries", {
     dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
-    sfe <- readVizgen(dir_use, z = 0L, image = "PolyT", add_molecules = TRUE)
+    dir.create("test_spots")
+    file.copy(list.files(dir_use, full.names = TRUE), "test_spots", recursive = TRUE)
+    sfe <- readVizgen("test_spots", z = 0L, image = "PolyT", add_molecules = TRUE)
     expect_equal(rowGeometryNames(sfe), "txSpots")
     rg <- txSpots(sfe)
     expect_equal(as.character(st_geometry_type(rg, FALSE)), "MULTIPOINT")
+    unlink("test_spots", recursive = TRUE)
 })
 
 test_that("Format MERFISH transcript spots for colGeometries", {
@@ -360,11 +363,11 @@ test_that("Format MERFISH transcript spots for colGeometries", {
     cg <- formatTxSpots(file.path("cg_vizgen", "detected_transcripts.csv"),
                         dest = "colGeometry",
                         file_out = file.path("cg_vizgen", "tx_in_cells"),
-                        z = "all")
+                        z = 0L)
     dir_check <- file.path("cg_vizgen", "tx_in_cells")
     expect_equal(cg, dir_check)
     expect_true(dir.exists(dir_check))
-    fns_expect <- paste0(unique(df$gene), "_spots.parquet")
+    fns_expect <- paste0(unique(df$gene[df$global_z == 0L]), "_spots.parquet")
     fns <- list.files(dir_check)
     expect_setequal(fns, fns_expect)
 
