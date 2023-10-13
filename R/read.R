@@ -773,8 +773,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     file_dir <- file_path_sans_ext(file_out)
     # File already exists, skip processing
     # make sure if z = "all" transcripts are read from ./detected_transcripts dir
-    if (file.exists(file_out) && 
-        !dir.exists(file_out) && z != "all") {
+    if (file.exists(file_out) && !dir.exists(file_out) && 
+        !dir.exists(file_dir) && z != "all") {
         if (!return) return(file_out)
         out <- sfarrow::st_read_parquet(file_out)
         rownames(out) <- out$ID
