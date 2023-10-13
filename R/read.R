@@ -495,7 +495,7 @@ readVizgen <- function(data_dir,
     rlang::check_installed("rhdf5")
     fns <- list.files(file.path(data_dir, "cell_boundaries"),
                       "*.hdf5", full.names = TRUE)
-    if(length(fns)) {
+    if (length(fns)) {
       message(">>> Reading '.hdf5' files..")
       polys <- bpmapply(.h52poly_fov, fn = fns, SIMPLIFY = FALSE,
                         BPPARAM = BPPARAM,
@@ -507,7 +507,8 @@ readVizgen <- function(data_dir,
       if (!file.exists(parq_file)) {
         suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
       }
-    } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
+    } else if (length(fns) == 0) { 
+      warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
     }
   }
