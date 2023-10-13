@@ -490,7 +490,9 @@ readVizgen <- function(data_dir,
       if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
         polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
       polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
-      }
+      } else { 
+        warning("No '.parquet' files present, check input directory -> `data_dir`")
+        polys <- NULL }
     } else {
     rlang::check_installed("rhdf5")
     fns <- list.files(file.path(data_dir, "cell_boundaries"),
