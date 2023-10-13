@@ -856,7 +856,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
           mols <- unlist(mols, recursive = FALSE)
           names(mols) <- names_use
       } else {
-          names(mols) <- paste0(base.name(file_dir), "_z", names(mols))
+          names(mols) <- paste0(basename(file_dir), "_z", names(mols))
       }
   } else {
       mols <- .mols2geo_split(mols, dest, spatialCoordsNames, gene_col, cell_col, 
