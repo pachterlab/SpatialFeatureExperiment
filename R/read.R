@@ -441,71 +441,76 @@ readVizgen <- function(data_dir,
     # set to use .parquet" file if present
     use.parquet <- any(length(parq)) & use_cellpose
     if (use.parquet) {
-        # make sure only single file is read
-        if (length(parq) > 1) {
-            # eg, if two files are present:
-            # `cellpose_micron_space.parquet`
-            # `cellpose_mosaic_space.parquet`
-            # or any other `parquet` files
-            # use µm units
-            parq_clean <- 
-                grep("cell_boundaries|micron_space", 
-                     parq, value = TRUE)
-            message(">>> ", length(parq), " `.parquet` files exists:", 
-                    paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
-            parq <- parq_clean
-            if (any(grepl("cell_boundaries.parquet", parq))) {
-                # use default segmentaion file
-                parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
-            } else if (any(grepl("hdf5s_micron", parq))) {
-                # use previously processed/saved `hdf5` files  
-                parq <- grep("hdf5s_micron", parq, value = TRUE) }
-            # final sanity
-            if (length(parq) > 1) {
-                stop("only 1 `.parquet` file can be read, check `data_dir` content") 
-            }
-        }
+    # sanity check
+    parq_sanity <- 
+      grepl("cell_boundaries|micron_space", parq)
+    # make sure only single file is read
+    if (length(parq) >= 1 && any(parq_sanity)) {
+      # eg, if two files are present:
+      # `cellpose_micron_space.parquet`
+      # `cellpose_mosaic_space.parquet`
+      # or any other `parquet` files
+      # use µm units
+      parq_clean <- 
+        grep("cell_boundaries|micron_space", 
+             parq, value = TRUE)
+      message(">>> ", length(parq), " `.parquet` files exists:", 
+              paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
+      parq <- parq_clean
+      if (any(grepl("cell_boundaries.parquet", parq))) {
+        # use default segmentaion file
+        parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
+      } else if (any(grepl("hdf5s_micron", parq))) {
+        # use previously processed/saved `hdf5` files  
+        parq <- grep("hdf5s_micron", parq, value = TRUE) }
+      # final sanity
+      if (length(parq) > 1) {
+        stop("only 1 `.parquet` file can be read, check `data_dir` content") 
+      }
+    } else if (all(parq_sanity == FALSE)) { parq <- NULL }
+    if (!is.null(parq)) {
+      rlang::check_installed("sfarrow")
       message(">>> Cell segmentations are found in `.parquet` file", 
               if (any(grepl("hdf5s_micron", parq))) { 
                 paste0("\n", ">>> processed hdf5 files will be used") })
-        rlang::check_installed("sfarrow")
-        fn <- parq
-        # read file and filter to keep selected single z section as they're the same anyway
-        polys <- sfarrow::st_read_parquet(fn)
-        # Can use any z-plane since they're all the same
-        # This way so this part still works when the parquet file is written after 
-        # reading in HDF5 the first time. Only writing one z-plane to save disk space.
-        polys <- polys[polys$ZIndex == polys$ZIndex[1],]
-        polys$ZIndex <- if (z == "all") 3L else z[1]
-        # filtering cell polygons
-        polys <- .filter_polygons(polys, min_area,
-                                  BPPARAM = BPPARAM)
-        st_geometry(polys) <- "geometry"
-        if ("EntityID" %in% names(polys))
-            polys$ID <- polys$EntityID
-        if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
-            polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
-        polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
+      fn <- parq
+      # read file and filter to keep selected single z section as they're the same anyway
+      polys <- sfarrow::st_read_parquet(fn)
+      # Can use any z-plane since they're all the same
+      # This way so this part still works when the parquet file is written after 
+      # reading in HDF5 the first time. Only writing one z-plane to save disk space.
+      polys <- polys[polys$ZIndex == polys$ZIndex[1],]
+      polys$ZIndex <- if (z == "all") 3L else z[1]
+      # filtering cell polygons
+      polys <- .filter_polygons(polys, min_area,
+                                BPPARAM = BPPARAM)
+      st_geometry(polys) <- "geometry"
+      if ("EntityID" %in% names(polys))
+        polys$ID <- polys$EntityID
+      if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
+        polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
+      polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
+      }
     } else {
-        rlang::check_installed("rhdf5")
-        fns <- list.files(file.path(data_dir, "cell_boundaries"),
-                          "*.hdf5", full.names = TRUE)
-        if(length(fns)) {
-            message(">>> Reading '.hdf5' files..")
-            polys <- bpmapply(.h52poly_fov, fn = fns, SIMPLIFY = FALSE,
-                              BPPARAM = BPPARAM,
-                              # use mid z section
-                              MoreArgs = list(z = ifelse(z == "all", 3L, z)))
-            polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
-            polys$Type <- "cell"
-            parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
-            if (!file.exists(parq_file)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
-            }
-        } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
-            polys <- NULL
-        }
+    rlang::check_installed("rhdf5")
+    fns <- list.files(file.path(data_dir, "cell_boundaries"),
+                      "*.hdf5", full.names = TRUE)
+    if(length(fns)) {
+      message(">>> Reading '.hdf5' files..")
+      polys <- bpmapply(.h52poly_fov, fn = fns, SIMPLIFY = FALSE,
+                        BPPARAM = BPPARAM,
+                        # use mid z section
+                        MoreArgs = list(z = ifelse(z == "all", 3L, z)))
+      polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
+      polys$Type <- "cell"
+      parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
+      if (!file.exists(parq_file)) {
+        suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+      }
+    } else { warning("No '.hdf5' files present, check input directory -> `data_dir`")
+      polys <- NULL
     }
+  }
   if (!is.null(polys) && nrow(polys) == 0L)
       stop("No polygons left after filtering.")
   if (flip == "geometry" && !is.null(polys)) {
