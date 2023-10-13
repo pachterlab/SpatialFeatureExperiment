@@ -789,6 +789,9 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
       fns <- list.files(file_dir, pattern, full.names = TRUE)
       if (length(fns)) {
           out <- lapply(fns, sfarrow::st_read_parquet)
+          # add names to a list
+          names(out) <- gsub(".parquet", "", 
+                             x = list.files(file_dir, pattern))
           out <- lapply(out, function(x) {
               # row names are dropped in st_read/write_parquet
               rownames(x) <- x$ID
