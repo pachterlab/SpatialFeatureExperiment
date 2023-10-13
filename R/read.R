@@ -404,7 +404,7 @@ readVizgen <- function(data_dir,
       paste0(grep("Cell", image_regex, value = TRUE), "\\d") }
 
   if (z == "all") {
-    img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z\\d\\.tif$")
+    img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z-?\\d+\\.tif$")
   } else {
     num_pattern <- paste(z, collapse = "|")
     img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z",
@@ -624,7 +624,6 @@ readVizgen <- function(data_dir,
 
 .mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, BPPARAM, not_in_cell_id) {
   # For one part of the split, e.g. cell compartment
-    message(">>> Converting transcript spots to geometry")
   if (dest == "rowGeometry") {
     # Should have genes as row names
     # RAM concerns for parallel processing, wish I can stream
@@ -650,7 +649,7 @@ readVizgen <- function(data_dir,
                             BPPARAM, not_in_cell_id, split_col) {
     if (!is.null(split_col) && split_col %in% names(mols)) {
         mols <- split(mols, mols[[split_col]])
-        mols <- lapply(mols, .mols2geo, dest = dest,
+        mols <- lapply(mols, .mols2geo, dest = dest, BPPARAM = BPPARAM,
                        spatialCoordsNames = spatialCoordsNames,
                        gene_col = gene_col, cell_col = cell_col,
                        not_in_cell_id = not_in_cell_id)
@@ -826,7 +825,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         if (z != "all") {
             if (all(!z %in% unique(zs)))
                 stop("z plane(s) specified not found.")
-            mols <- mols[mols[[spatialCoordsNames[3]]] %in% z,]
+            inds <- mols[[spatialCoordsNames[3]]] %in% z
+            mols <- mols[inds,, drop = FALSE]
             if (length(z) == 1L) {
                 spatialCoordsNames <- spatialCoordsNames[-3]
                 use_z <- FALSE
@@ -840,7 +840,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
   if (phred_col %in% names(mols)) {
     mols <- mols[mols[[phred_col]] >= min_phred,]
   }
-  
+  message(">>> Converting transcript spots to geometry")
   if (z_option == "split" && use_z) {
       mols <- split(mols, mols[[spatialCoordsNames[3]]])
       mols <- lapply(mols, .mols2geo_split, dest = dest,
@@ -901,4 +901,65 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
       rowGeometries(sfe) <- c(rowGeometries(sfe), mols)
   }
   sfe
+}
+
+#' Read CosMX data into SFE
+#' 
+#' This function reads the standard CosMX output into an SFE object, as in 
+#' "Basic Data Files" on the Nanostring website.
+#' 
+#' @inheritParams readVizgen
+#' @param split_cell_comps Logical, whether to split transcript spot geometries
+#' by cell compartment. Only relevent when `add_molecules = TRUE`.
+#' @return An SFE object.
+#' @export
+#' @examples
+#' # Example code
+#' 
+readCosMX <- function(data_dir,
+                      z = 3L,
+                      sample_id = "sample01", # How often do people read in multiple samples?
+                      add_molecules = FALSE,
+                      split_cell_comps = FALSE,
+                      BPPARAM = SerialParam(),
+                      file_out = file.path(data_dir, "tx_spots.parquet"), ...) {
+    data_dir <- normalizePath(data_dir, mustWork = TRUE)
+    fns <- list.files(data_dir, pattern = "\\.csv$", full.names = TRUE)
+    fn_metadata <- grep("metadata", fns, value = TRUE)
+    fn_mat <- grep("exprMat", fns, value = TRUE)
+    fn_polys <- grep("polygons", fns, value = TRUE)
+    
+    meta <- fread(fn_metadata)
+    mat <- fread(fn_mat)
+    polys <- fread(fn_polys)
+    
+    meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")
+    mat$cell_ID <- paste(mat$cell_ID, mat$fov, sep = "_")
+    polys$cellID <- paste(polys$cellID, polys$fov, sep = "_")
+    
+    mat <- mat[match(meta$cell_ID, mat$cell_ID),]
+    cell_ids <- mat$cell_ID
+    mat <- mat[,3:ncol(mat)] |> 
+        as.matrix() |> 
+        as("CsparseMatrix") |> Matrix::t()
+    colnames(mat) <- cell_ids
+    message(">>> Constructing cell polygons")
+    polys <- df2sf(polys, spatialCoordsNames = c("x_global_px", "y_global_px"),
+                   geometryType = "POLYGON",
+                   id_col = "cellID", BPPARAM = BPPARAM)
+    polys <- polys[match(meta$cell_ID, polys$ID),]
+    sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
+                                    spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"))
+    cellSeg(sfe) <- polys
+    
+    if (add_molecules) {
+        message(">>> Reading transcript coordinates")
+        fn <- grep("tx_file.csv", fns, value = TRUE)
+        split_col <- if (split_cell_comps) "CellComp" else NULL
+        sfe <- addTxSpots(sfe, fn, spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
+                          gene_col = "target", split_col = split_col,
+                          file_out = file_out, z = z, 
+                          BPPARAM = BPPARAM, ...)
+    }
+    sfe
 }
