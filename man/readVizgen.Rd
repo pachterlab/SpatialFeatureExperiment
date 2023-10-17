@@ -66,12 +66,11 @@ files. Note that reading HDF5 files for numerous FOVs is very slow.}
 
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
-  \enumerate{
-  \item To load cell segmentation from HDF5 files from different fields of view
-  (FOVs) with multiple cores. A progress bar can be configured in the
-  \code{\link{BiocParallelParam}} object. When there are numerous FOVs,
-  reading in the geometries can be time consuming, so we recommend using a
-  server and larger number of threads. This argument is not used if
+  \enumerate{ \item To load cell segmentation from HDF5 files from different
+  fields of view (FOVs) with multiple cores. A progress bar can be configured
+  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  FOVs, reading in the geometries can be time consuming, so we recommend
+  using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.
 
   \item To filter cell segmentation polygons based on size.
@@ -81,18 +80,18 @@ files. Note that reading HDF5 files for numerous FOVs is very slow.}
   \item When the cell segmentation is unavailable, to convert cell bounding
   boxes to POLYGON geometries.
 
-  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry.
-  }}
+  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }}
 
 \item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
-and add the transcript spots data to the SFE object, except that extent
-is read from `manifest.json` and that `dest = "rowGeometry"` because the
-spot coordinates are in micron space and are not discrete so converting the
+and add the transcript spots data to the SFE object, except that extent is
+read from `manifest.json` and that `dest = "rowGeometry"` because the spot
+coordinates are in micron space and are not discrete so converting the
 transcript spots to raster won't work. A default is set for `file_out` to
-save the reformatted transcript spots to disk by default since reloading the
-reformatted form is much more efficient. Reading the original detected
-transcripts csv file can take up a lot of memory. Expect twice the size of 
-that csv file.}
+save the reformatted transcript spots to disk by default since reloading
+the reformatted form is much more efficient. Reading the original detected
+transcripts csv file can take up a lot of memory. Expect at least twice the
+size of that csv file, even more if using multiple threads. So we STRONGLY
+recommend saving the reformatted results to disk.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.
@@ -101,17 +100,19 @@ A \code{SpatialFeatureExperiment} object.
 This function reads the standard Vizgen MERFISH output into an SFE object.
 The coordinates are in microns. Cell centroids are read into
 \code{\link{colGeometry}} "centroids", and cell segmentations are read into
-\code{colGeometry} "cellSeg". The image(s) (polyT and DAPI) are also read as
-\code{\link{SpatRaster}} objects so they are not loaded into memory unless
-necessary. Because the image's origin is the top left while the geometry's
-origin is bottom left, either the image or the geometry needs to be flipped.
-Because the image accompanying MERFISH datasets are usually very large, the
-coordinates will be flipped so the flipping operation won't load the entire
-image into memory.
+\code{colGeometry} "cellSeg". The image(s) (polyT, DAPI, and cell boundaries)
+are also read as \code{\link{SpatRaster}} objects so they are not loaded into
+memory unless necessary. Because the image's origin is the top left while the
+geometry's origin is bottom left, either the image or the geometry needs to
+be flipped. Because the image accompanying MERFISH datasets are usually very
+large, the coordinates will be flipped so the flipping operation won't load
+the entire image into memory. Large datasets with hundreds of thousands of
+cells can take a while to read if reading transcript spots as it takes a
+while to convert the spots to MULTIPOINT geometries.
 }
 \note{
 Since the transcript spots file is often very large, we recommend only
-using \code{add_molecules = TRUE} on servers with a lot of memory.
+  using \code{add_molecules = TRUE} on servers with a lot of memory.
 }
 \examples{
 dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")

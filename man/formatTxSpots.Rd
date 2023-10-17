@@ -7,7 +7,7 @@
 \usage{
 formatTxSpots(
   file,
-  dest = c("rowGeometry", "colGeometry", "imgData"),
+  dest = c("rowGeometry", "colGeometry"),
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
   cell_col = "cell_id",
@@ -16,8 +16,7 @@ formatTxSpots(
   min_phred = 20,
   split_col = NULL,
   not_in_cell_id = "-1",
-  extent = NULL,
-  digits = 6L,
+  z_option = c("split", "3d"),
   file_out = NULL,
   BPPARAM = SerialParam(),
   return = TRUE
@@ -27,17 +26,13 @@ addTxSpots(
   sfe,
   file,
   sample_id = NULL,
-  dest = c("rowGeometry", "imgData"),
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
-  cell_col = "cell_id",
   z = 3L,
   phred_col = "qv",
   min_phred = 20,
   split_col = NULL,
-  not_in_cell_id = "-1",
-  extent = NULL,
-  digits = 6L,
+  z_option = c("split", "3d"),
   file_out = NULL,
   BPPARAM = SerialParam()
 )
@@ -49,24 +44,23 @@ gene the transcript is assigned to, and optionally cell the transcript is
 assigned to. Must be csv, tsv, or parquet.}
 
 \item{dest}{Where in the SFE object to store the spot geometries. This
-affects how the data is processed. Options:
-\describe{
+affects how the data is processed. Options: \describe{
 \item{rowGeometry}{All spots for each gene will be a `MULTIPOINT` geometry,
-regardless of whether they are in cells or which cells they are assigned to.}
-\item{colGeometry}{The spots for each gene assigned to a cell of interest
-will be a `MULTIPOINT` geometry; since the gene count matrix is sparse, the
-geometries are NOT returned to memory.}
-\item{imgData}{The spots will be written to a TIFF file as raster to be
-read to `imgData(sfe)`. This will only work if the spot coordinates are in
-pixel space and are discrete.}
-}}
+regardless of whether they are in cells or which cells they are assigned
+to.} \item{colGeometry}{The spots for each gene assigned to a cell of
+interest will be a `MULTIPOINT` geometry; since the gene count matrix is
+sparse, the geometries are NOT returned to memory.}}}
 
 \item{spatialCoordsNames}{Column names for the x, y, and optionally z
 coordinates of the spots. The defaults are for Vizgen.}
 
 \item{gene_col}{Column name for genes.}
 
-\item{cell_col}{Column name for cell IDs, ignored if `dest = "rowGeometry"`.}
+\item{cell_col}{Column name for cell IDs, ignored if `dest = "rowGeometry"`.
+Can have length > 1 when multiple columns are needed to uniquely identify
+cells, in which case the contents of the columns will be concatenated, such
+as in CosMX data where cell ID is only unique within the same FOV. Default
+"cell_id" is for Vizgen MERFISH. Should be `c("cell_ID", "fov")` for CosMX.}
 
 \item{z}{Index of z plane to read. Can be "all" to read all z-planes into
 MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
@@ -83,11 +77,19 @@ compartment the spots are assigned to as in the "CellComp" column in CosMX
 output.}
 
 \item{not_in_cell_id}{Value of cell ID indicating that the spot is not
-assigned to any cell, such as "-1" in Vizgen MERFISH.}
+assigned to any cell, such as "-1" in Vizgen MERFISH and "0" in CosMX. When
+there're multiple columns for `cell_col`, the first column is used to
+identify spots that are not in cells.}
 
-\item{extent}{object of class SpatExtent. If present, the arguments xmin, xmax, ymin and ymax are ignored}
-
-\item{digits}{integer to set the precision for detecting whether points are on a regular grid (a low number of digits is a low precision). Only used when \code{type="xyz"}}
+\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
+geometries. However, note that GEOS underpinning \code{sf} does not support
+3D geometric operations. "split" is to create a separate 2D geometry for
+each z-plane so geometric operations are fully supported but some data
+wrangling is required to perform 3D analyses, and this is preferred when z
+coordinates have arbitrary units different from those of x and y. When the
+z coordinates are not integers, 3D geometries will always be constructed
+since there are no z-planes to speak of. This argument does not apply when
+`spatialCoordsNames` has length 2.}
 
 \item{file_out}{Name of file to save the geometry or raster to disk.
 Especially when the geometries are so large that it's unwieldy to load
@@ -98,12 +100,11 @@ extensions are determined based on `dest`.}
 
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
-  \enumerate{
-  \item To load cell segmentation from HDF5 files from different fields of view
-  (FOVs) with multiple cores. A progress bar can be configured in the
-  \code{\link{BiocParallelParam}} object. When there are numerous FOVs,
-  reading in the geometries can be time consuming, so we recommend using a
-  server and larger number of threads. This argument is not used if
+  \enumerate{ \item To load cell segmentation from HDF5 files from different
+  fields of view (FOVs) with multiple cores. A progress bar can be configured
+  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  FOVs, reading in the geometries can be time consuming, so we recommend
+  using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.
 
   \item To filter cell segmentation polygons based on size.
@@ -113,8 +114,7 @@ extensions are determined based on `dest`.}
   \item When the cell segmentation is unavailable, to convert cell bounding
   boxes to POLYGON geometries.
 
-  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry.
-  }}
+  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }}
 
 \item{return}{Logical, whether to return the geometries in memory. This does
 not depend on whether the geometries are written to file. Always `FALSE`
@@ -138,7 +138,8 @@ A sf data frame for vector geometries if `file_out` is not set.
   `terra::rast` is written for raster. When `return = FALSE`, the file name
   or directory (when there're multiple files) is returned.
 
-The `sf` data frame or the `SpatRaster` (for `dest = "imgData"`).
+The `sf` data frame, or path to file where geometries are written if
+  `return = FALSE`.
 }
 \description{
 The function `formatTxSpots` reads the transcript spot coordinates of
@@ -154,13 +155,24 @@ functions.
 }
 \note{
 When `dest = "colGeometry"`, the geometries are always written to disk
-and not returned in memory, because this is essentially the gene count
-matrix, which is sparse. This kind of reformatting is implemented so users
-can read in MULTIPOINT geometries with transcript spots for each gene
-assigned to each cell for spatial point process analyses, where not all genes
-are loaded at once.
+  and not returned in memory, because this is essentially the gene count
+  matrix, which is sparse. This kind of reformatting is implemented so users
+  can read in MULTIPOINT geometries with transcript spots for each gene
+  assigned to each cell for spatial point process analyses, where not all
+  genes are loaded at once.
 }
 \examples{
-# example code
+# Default arguments are for MERFISH
+dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 
+# For CosMX, note the colnames, also dest = "colGeometry"
+# Results are written to the tx_spots directory
+dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
+dest = "colGeometry", z = "all",
+cell_col = c("cell_ID", "fov"),
+gene_col = "target", not_in_cell_id = "0",
+spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
+file_out = "tx_spots")
 }

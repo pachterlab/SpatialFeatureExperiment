@@ -437,12 +437,12 @@ readVizgen <- function(data_dir,
                        full.names = TRUE,
                        recursive = TRUE)
     }
-    
+
     # set to use .parquet" file if present
     use.parquet <- any(length(parq)) & use_cellpose
     if (use.parquet) {
     # sanity check
-    parq_sanity <- 
+    parq_sanity <-
       grepl("cell_boundaries|micron_space", parq)
     # make sure only single file is read
     if (length(parq) >= 1 && any(parq_sanity)) {
@@ -451,33 +451,33 @@ readVizgen <- function(data_dir,
       # `cellpose_mosaic_space.parquet`
       # or any other `parquet` files
       # use µm units
-      parq_clean <- 
-        grep("cell_boundaries|micron_space", 
+      parq_clean <-
+        grep("cell_boundaries|micron_space",
              parq, value = TRUE)
-      message(">>> ", length(parq), " `.parquet` files exists:", 
+      message(">>> ", length(parq), " `.parquet` files exists:",
               paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
       parq <- parq_clean
       if (any(grepl("cell_boundaries.parquet", parq))) {
         # use default segmentaion file
         parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
       } else if (any(grepl("hdf5s_micron", parq))) {
-        # use previously processed/saved `hdf5` files  
+        # use previously processed/saved `hdf5` files
         parq <- grep("hdf5s_micron", parq, value = TRUE) }
       # final sanity
       if (length(parq) > 1) {
-        stop("only 1 `.parquet` file can be read, check `data_dir` content") 
+        stop("only 1 `.parquet` file can be read, check `data_dir` content")
       }
     } else if (all(parq_sanity == FALSE)) { parq <- NULL }
     if (!is.null(parq)) {
       rlang::check_installed("sfarrow")
-      message(">>> Cell segmentations are found in `.parquet` file", 
-              if (any(grepl("hdf5s_micron", parq))) { 
+      message(">>> Cell segmentations are found in `.parquet` file",
+              if (any(grepl("hdf5s_micron", parq))) {
                 paste0("\n", ">>> processed hdf5 files will be used") })
       fn <- parq
       # read file and filter to keep selected single z section as they're the same anyway
       polys <- sfarrow::st_read_parquet(fn)
       # Can use any z-plane since they're all the same
-      # This way so this part still works when the parquet file is written after 
+      # This way so this part still works when the parquet file is written after
       # reading in HDF5 the first time. Only writing one z-plane to save disk space.
       polys <- polys[polys$ZIndex == polys$ZIndex[1],]
       polys$ZIndex <- if (z == "all") 3L else z[1]
@@ -490,7 +490,7 @@ readVizgen <- function(data_dir,
       if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
         polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
       polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
-      } else { 
+      } else {
         warning("No '.parquet' files present, check input directory -> `data_dir`")
         polys <- NULL }
     } else {
@@ -509,7 +509,7 @@ readVizgen <- function(data_dir,
       if (!file.exists(parq_file)) {
         suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
       }
-    } else if (length(fns) == 0) { 
+    } else if (length(fns) == 0) {
       warning("No '.hdf5' files present, check input directory -> `data_dir`")
       polys <- NULL
     }
@@ -535,7 +535,7 @@ readVizgen <- function(data_dir,
     message(">>> ..filtering `cell_metadata` - keep cells with `transcript_count` > 0")
     metadata <- metadata[metadata$transcript_count > 0,]
   }
-  
+
   if (!is.null(polys)) {
     # remove NAs when matching
     metadata <-
@@ -639,9 +639,6 @@ readVizgen <- function(data_dir,
                   spatialCoordsNames = spatialCoordsNames,
                   group_col = gene_col)
   } else {
-    if (!length(cell_col) || !cell_col %in% names(mols))
-      stop("Column indicating cell ID not found.")
-    mols <- mols[mols[[cell_col]] != not_in_cell_id,]
     mols <- split(mols, mols[[gene_col]])
     mols <- bplapply(mols, df2sf, geometryType = "MULTIPOINT",
                      spatialCoordsNames = spatialCoordsNames,
@@ -653,7 +650,7 @@ readVizgen <- function(data_dir,
   mols
 }
 
-.mols2geo_split <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, 
+.mols2geo_split <- function(mols, dest, spatialCoordsNames, gene_col, cell_col,
                             BPPARAM, not_in_cell_id, split_col) {
     if (!is.null(split_col) && split_col %in% names(mols)) {
         mols <- split(mols, mols[[split_col]])
@@ -703,8 +700,14 @@ readVizgen <- function(data_dir,
 #'   coordinates of the spots. The defaults are for Vizgen.
 #' @param gene_col Column name for genes.
 #' @param cell_col Column name for cell IDs, ignored if `dest = "rowGeometry"`.
+#'   Can have length > 1 when multiple columns are needed to uniquely identify
+#'   cells, in which case the contents of the columns will be concatenated, such
+#'   as in CosMX data where cell ID is only unique within the same FOV. Default
+#'   "cell_id" is for Vizgen MERFISH. Should be `c("cell_ID", "fov")` for CosMX.
 #' @param not_in_cell_id Value of cell ID indicating that the spot is not
-#'   assigned to any cell, such as "-1" in Vizgen MERFISH.
+#'   assigned to any cell, such as "-1" in Vizgen MERFISH and "0" in CosMX. When
+#'   there're multiple columns for `cell_col`, the first column is used to
+#'   identify spots that are not in cells.
 #' @param phred_col Column name for Phred scores of the spots.
 #' @param min_phred Minimum Phred score to keep spot. By default 20, the
 #'   conventional threshold indicating "acceptable", meaning that there's 1%
@@ -750,15 +753,26 @@ readVizgen <- function(data_dir,
 #' @export
 #' @return The `sf` data frame, or path to file where geometries are written if
 #'   `return = FALSE`.
-#' @rdname addTxSpots
+#' @rdname formatTxSpots
 #' @examples
-#' # example code
-#' 
+#' # Default arguments are for MERFISH
+#' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+#' g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
+#'
+#' # For CosMX, note the colnames, also dest = "colGeometry"
+#' # Results are written to the tx_spots directory
+#' dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+#' cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
+#' dest = "colGeometry", z = "all",
+#' cell_col = c("cell_ID", "fov"),
+#' gene_col = "target", not_in_cell_id = "0",
+#' spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
+#' file_out = "tx_spots")
 formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
                           gene_col = "gene", cell_col = "cell_id", z = 3L,
                           phred_col = "qv", min_phred = 20, split_col = NULL,
-                          not_in_cell_id = "-1", 
+                          not_in_cell_id = "-1",
                           z_option = c("split", "3d"),
                           file_out = NULL, BPPARAM = SerialParam(),
                           return = TRUE) {
@@ -787,7 +801,6 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         rownames(out) <- out$ID
         return(out)
     } else if (dir.exists(file_dir)) {
-      if (!return) return(file_dir)
       # Multiple files
       pattern <- "\\.parquet$"
       # Need to deal with z-planes
@@ -795,10 +808,15 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
           pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
       }
       fns <- list.files(file_dir, pattern, full.names = TRUE)
+      if (!length(fns) && length(z) == 1L) {
+          pattern <- "\\.parquet$"
+          fns <- list.files(file_dir, pattern, full.names = TRUE)
+      }
       if (length(fns)) {
+          if (!return) return(file_dir)
           out <- lapply(fns, sfarrow::st_read_parquet)
           # add names to a list
-          names(out) <- gsub(".parquet", "", 
+          names(out) <- gsub(".parquet", "",
                              x = list.files(file_dir, pattern))
           out <- lapply(out, function(x) {
               # row names are dropped in st_read/write_parquet
@@ -820,7 +838,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
   }
   ind <- !spatialCoordsNames[1:2] %in% names(mols)
   if (any(ind)) {
-    col_offending <- setdiff(spatialCoordsNames[1:2], names(mcols))
+    col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
     ax <- c("x", "y")
     stop(paste(ax[ind], collapse = ", "), " coordinate column(s) ",
          paste(col_offending, collapse = ", "), " not found.")
@@ -854,10 +872,22 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     mols <- mols[mols[[phred_col]] >= min_phred,]
   }
   message(">>> Converting transcript spots to geometry")
+  if (dest == "colGeometry") {
+      if (!length(cell_col) || any(!cell_col %in% names(mols)))
+          stop("Column indicating cell ID not found.")
+      mols <- mols[mols[[cell_col[1]]] != not_in_cell_id,]
+      if (length(cell_col) > 1L) {
+          if (!is.data.table(mols)) ..cell_col <- cell_col
+          cell_col_use <- do.call(paste, c(mols[,..cell_col], sep = "_"))
+          mols$cell_id_ <- cell_col_use
+          mols[,cell_col] <- NULL
+          cell_col <- "cell_id_"
+      }
+  }
   if (z_option == "split" && use_z) {
       mols <- split(mols, mols[[spatialCoordsNames[3]]])
       mols <- lapply(mols, .mols2geo_split, dest = dest,
-                     spatialCoordsNames = spatialCoordsNames,
+                     spatialCoordsNames = spatialCoordsNames[1:2],
                      gene_col = gene_col, cell_col = cell_col, BPPARAM = BPPARAM,
                      not_in_cell_id = not_in_cell_id, split_col = split_col)
       # If list of list, i.e. colGeometry, or do split
@@ -872,10 +902,10 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
           names(mols) <- paste0(basename(file_dir), "_z", names(mols))
       }
   } else {
-      mols <- .mols2geo_split(mols, dest, spatialCoordsNames, gene_col, cell_col, 
+      mols <- .mols2geo_split(mols, dest, spatialCoordsNames, gene_col, cell_col,
                               BPPARAM, not_in_cell_id, split_col)
   }
-  
+
   if (!is.null(file_out)) {
       message(">>> Writing reformatted transcript spots to disk")
       if (is(mols, "sf")) {
@@ -885,8 +915,10 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
           if (!dir.exists(file_dir)) dir.create(file_dir)
           suppressWarnings({
               bplapply(names(mols), function(n) {
+                  name_use <- gsub("/", ".", n)
                   sfarrow::st_write_parquet(mols[[n]],
-                                            file.path(file_dir, paste0(n, ".parquet")))
+                                            file.path(file_dir,
+                                                      paste0(name_use, ".parquet")))
               }, BPPARAM = SerialParam(progressbar = TRUE))
           })
           if (!return) return(file_dir)
@@ -895,19 +927,21 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
   return(mols)
 }
 
-#' @rdname addTxSpots
+#' @rdname formatTxSpots
 #' @export
 addTxSpots <- function(sfe, file, sample_id = NULL,
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                       gene_col = "gene", cell_col = "cell_id", z = 3L,
+                       gene_col = "gene", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,
-                       not_in_cell_id = "-1", z_option = c("split", "3d"),
+                       z_option = c("split", "3d"),
                        file_out = NULL, BPPARAM = SerialParam()) {
   sample_id <- .check_sample_id(sfe, sample_id)
   dest <- "rowGeometry"
-  mols <- formatTxSpots(file, dest, spatialCoordsNames, gene_col, cell_col,
-                        z, phred_col, min_phred, split_col, not_in_cell_id,
-                        z_option, file_out, BPPARAM)
+  mols <- formatTxSpots(file, dest = dest, spatialCoordsNames = spatialCoordsNames,
+                        gene_col = gene_col, z = z, phred_col = phred_col,
+                        min_phred = min_phred, split_col = split_col,
+                        z_option = z_option, file_out = file_out,
+                        BPPARAM = BPPARAM)
   if (is(mols, "sf")) {
       txSpots(sfe, withDimnames = TRUE) <- mols
   } else if (is.list(mols)) {
@@ -917,18 +951,24 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
 }
 
 #' Read CosMX data into SFE
-#' 
-#' This function reads the standard CosMX output into an SFE object, as in 
+#'
+#' This function reads the standard CosMX output into an SFE object, as in
 #' "Basic Data Files" on the Nanostring website.
-#' 
+#'
 #' @inheritParams readVizgen
 #' @param split_cell_comps Logical, whether to split transcript spot geometries
-#' by cell compartment. Only relevent when `add_molecules = TRUE`.
-#' @return An SFE object.
+#' by cell compartment. Only relevant when `add_molecules = TRUE`.
+#' @return An SFE object. If reading transcript spots (`add_molecules = TRUE`),
+#' then the reformatted transcript spots are saved to file specified in the
+#' `file_out` argument, which is by default `tx_spots.parquet` in the same
+#' directory as the rest of the data.
 #' @export
 #' @examples
-#' # Example code
-#' 
+#' dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+#' file.copy(dir_use, ".", recursive = TRUE)
+#' sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
+#' # Clean up
+#' unlink("cosmx", recursive = TRUE)
 readCosMX <- function(data_dir,
                       z = 3L,
                       sample_id = "sample01", # How often do people read in multiple samples?
@@ -941,19 +981,19 @@ readCosMX <- function(data_dir,
     fn_metadata <- grep("metadata", fns, value = TRUE)
     fn_mat <- grep("exprMat", fns, value = TRUE)
     fn_polys <- grep("polygons", fns, value = TRUE)
-    
+
     meta <- fread(fn_metadata)
     mat <- fread(fn_mat)
     polys <- fread(fn_polys)
-    
+
     meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")
     mat$cell_ID <- paste(mat$cell_ID, mat$fov, sep = "_")
     polys$cellID <- paste(polys$cellID, polys$fov, sep = "_")
-    
+
     mat <- mat[match(meta$cell_ID, mat$cell_ID),]
     cell_ids <- mat$cell_ID
-    mat <- mat[,3:ncol(mat)] |> 
-        as.matrix() |> 
+    mat <- mat[,3:ncol(mat)] |>
+        as.matrix() |>
         as("CsparseMatrix") |> Matrix::t()
     colnames(mat) <- cell_ids
     message(">>> Constructing cell polygons")
@@ -962,16 +1002,17 @@ readCosMX <- function(data_dir,
                    id_col = "cellID", BPPARAM = BPPARAM)
     polys <- polys[match(meta$cell_ID, polys$ID),]
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
-                                    spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"))
+                                    spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
+                                    unit = "full_res_image_pixel")
     cellSeg(sfe) <- polys
-    
+
     if (add_molecules) {
         message(">>> Reading transcript coordinates")
         fn <- grep("tx_file.csv", fns, value = TRUE)
         split_col <- if (split_cell_comps) "CellComp" else NULL
         sfe <- addTxSpots(sfe, fn, spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
                           gene_col = "target", split_col = split_col,
-                          file_out = file_out, z = z, 
+                          file_out = file_out, z = z,
                           BPPARAM = BPPARAM, ...)
     }
     sfe

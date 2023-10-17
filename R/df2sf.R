@@ -38,10 +38,15 @@
                    "sample_id", spatialCoordsNames)
     cols_check <- setdiff(names(df), c(group_col, id_col, subid_col,
                                        "sample_id", spatialCoordsNames))
-
-    n_geos <- length(unique(if (group_col %in% names(df)) df[[group_col]] else df[[id_col]]))
-    if_keep <- vapply(as.data.frame(df)[cols_check], function(x) length(unique(x)) == n_geos,
-                      FUN.VALUE = logical(1))
+    col_geo <- if (group_col %in% names(df)) group_col else id_col
+    n_geos <- length(unique(df[[col_geo]]))
+    if_keep <- vapply(cols_check,
+                      function(x) {
+                          if (is.data.table(df))
+                              df_check <- df[,c(x, col_geo), with=FALSE]
+                          else df_check <- df[,c(x, col_geo)]
+                          nrow(unique(df_check)) == n_geos
+                      }, FUN.VALUE = logical(1))
     cols_use <- c(cols_check[if_keep], intersect(names(df), cols_keep))
     # To work around data.table's nicer column subsetting with symbols
     # and to remain compatible with base data frames
@@ -64,7 +69,7 @@
         if (!is.data.table(df)) {
             ..cns <- cns
             ..spatialCoordsNames <- spatialCoordsNames
-        } 
+        }
         df_split <- split(df[,..cns], df[[group_col]])
         geometry_use <- bplapply(df_split, function(x) {
             st_multipoint(as.matrix(x[, ..spatialCoordsNames]))

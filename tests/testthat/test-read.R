@@ -229,7 +229,7 @@ test_that("Don't flip image if it's GeoTIFF", {
     unlink("vizgen", recursive = TRUE)
 })
 
-test_that("Errors and warnings", {
+test_that("Errors and warnings in readVizgen", {
     file.copy(dir_use, ".", recursive = TRUE)
     expect_warning(sfe <- readVizgen("vizgen", z = 0L, image = "DAPI", use_cellpose = FALSE),
                    "don't exist")
@@ -388,12 +388,170 @@ test_that("Format MERFISH transcript spots for colGeometries", {
     unlink("cg_vizgen", recursive = TRUE)
 })
 
-test_that("Read MERFISH transcript spots into imgData", {
+# Error message when multiple parquet files are found in readVizgen
 
+test_that("Error messages in formatTxSpots", {
+    dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+    file <- file.path(dir_use, "detected_transcripts.csv")
+    expect_error(formatTxSpots(file, dest = "colGeometry", file_out = NULL),
+                 "file_out must be specified")
+    file2 <- system.file("extdata/sfe_visium.rds", package = "SpatialFeatureExperiment")
+    expect_error(formatTxSpots(file2),
+                 "The file must be one of csv, tsv, txt, or parquet")
+    expect_error(formatTxSpots(file, z = "foo"),
+                 "z must either be numeric")
+    expect_error(formatTxSpots(file, spatialCoordsNames = c("foo", "bar")),
+                 "foo, bar not found")
+    expect_error(formatTxSpots(file, z = 8L),
+                 "z plane\\(s\\) specified not found")
+    expect_error(formatTxSpots(file, dest = "colGeometry", cell_col = "foo",
+                               file_out = "bar"),
+                 "Column indicating cell ID not found")
 })
 
-# formatTxSpots, rowGeometries, write to disk, not splitting by cell compartments
-# Same above, but do split, coming naturally when I get to CosMX.
-# Error message when multiple parquet files are found in readVizgen
-# Error message when xy coordinate column is not found in formatTxSpots
-# 
+test_that("readCosMX, not reading transcript spots", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    sfe <- readCosMX(dir_use, z = 1L)
+    expect_s4_class(sfe, "SpatialFeatureExperiment")
+    expect_equal(colGeometryNames(sfe), c("centroids", "cellSeg"))
+    expect_equal(st_geometry_type(cellSeg(sfe), by_geometry = FALSE) |> as.character(),
+                 "POLYGON")
+    expect_equal(dim(sfe), c(960, 27))
+})
+
+test_that("readCosMX, reading spots, 1 z-plane", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    sfe <- readCosMX("cosmx", z = 1L, add_molecules = TRUE)
+    fn <- file.path("cosmx", "tx_spots.parquet")
+    expect_true(file.exists(fn))
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    expect_equal(st_geometry_type(txSpots(sfe), FALSE) |> as.character(),
+                 "MULTIPOINT")
+    expect_null(st_z_range(txSpots(sfe)))
+
+    # Reloading the second time reading
+    time_note <- Sys.time() # Check the files weren't written again
+    sfe <- readCosMX("cosmx", z = 1L, add_molecules = TRUE)
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    expect_equal(st_geometry_type(txSpots(sfe), FALSE) |> as.character(),
+                 "MULTIPOINT")
+    time_check <- file.info(fn)$mtime
+    expect_true(time_note > time_check)
+
+    unlink("cosmx", recursive = TRUE)
+})
+
+test_that("readCosMX, 2 z-planes, split z, not splitting by cell compartments", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE) # default split z
+    d <- file.path("cosmx", "tx_spots")
+    expect_true(dir.exists(d))
+    fns_expect <- paste0("tx_spots_z", 0:1, ".parquet")
+    expect_equal(list.files(d), fns_expect)
+    expect_equal(rowGeometryNames(sfe), paste0("tx_spots_z", 0:1))
+    expect_null(st_z_range(rowGeometry(sfe, "tx_spots_z0")))
+
+    # Reloading the second time reading
+    # Both z-planes
+    time_note <- Sys.time()
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
+    expect_null(st_z_range(rowGeometry(sfe, "tx_spots_z0")))
+    fn <- file.path(d, "tx_spots_z0.parquet")
+    time_check <- file.info(fn)$mtime
+    expect_true(time_note > time_check)
+
+    # Only read one of the z-planes
+    sfe <- readCosMX("cosmx", z = 0L, add_molecules = TRUE)
+    time_check <- file.info(fn)$mtime
+    expect_true(time_note > time_check)
+
+    unlink("cosmx", recursive = TRUE)
+})
+
+test_that("readCosMX, don't split z, don't split cell compartments", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     z_option = "3d")
+    fn <- file.path("cosmx", "tx_spots.parquet")
+    expect_true(file.exists(fn))
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    expect_equal(unclass(st_z_range(txSpots(sfe))), c(zmin = 0, zmax = 1),
+                 ignore_attr = "crs")
+
+    unlink("cosmx", recursive = TRUE)
+})
+
+
+test_that("readCosMX, split z, split cell compartments", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     split_cell_comps = TRUE)
+    d <- file.path("cosmx", "tx_spots")
+    expect_true(dir.exists(d))
+    comps <- c("Nuclear", "None", "Membrane", "Cytoplasm")
+    combs <- expand.grid(compartment = comps, z = 0:1, stringsAsFactors = FALSE)
+    rgns <- paste0(combs$compartment, "_z", combs$z)
+    fns <- paste0(rgns, ".parquet")
+
+    expect_setequal(rowGeometryNames(sfe), rgns)
+    expect_setequal(list.files(d), fns)
+
+    # Reloading the second time reading
+    time_note <- Sys.time()
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     split_cell_comps = TRUE)
+    time_check <- file.info(file.path(d, fns[1]))$mtime
+    expect_true(time_note > time_check)
+    expect_setequal(rowGeometryNames(sfe), rgns)
+
+    # Only read one of the z-planes
+    sfe <- readCosMX("cosmx", z = 0L, add_molecules = TRUE,
+                     split_cell_comps = TRUE)
+    time_check <- file.info(file.path(d, fns[1]))$mtime
+    expect_true(time_note > time_check)
+    expect_setequal(rowGeometryNames(sfe), rgns[1:4])
+
+    unlink("cosmx", recursive = TRUE)
+})
+
+test_that("Format CosMX spots for colGeometry, multiple z-planes", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    cg <- formatTxSpots(file.path("cosmx", "Run5642_S3_Quarter_tx_file.csv"),
+                        dest = "colGeometry", z = "all",
+                        cell_col = c("cell_ID", "fov"),
+                        gene_col = "target", not_in_cell_id = "0",
+                        spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
+                        file_out = file.path("cosmx", "tx_spots"))
+    expect_equal(cg, file.path("cosmx", "tx_spots"))
+    # Oh, great, there's Bex1/2, illegal file name. No wonder people don't like CosMX
+    df <- data.table::fread(file.path("cosmx", "Run5642_S3_Quarter_exprMat_file.csv"))
+    genes <- names(df)[-c(1:2)]
+    combs <- expand.grid(gene = genes, z = 0:1, stringsAsFactors = FALSE)
+    fns_expect <- paste0(gsub("/", ".", combs$gene), "_spots_z", combs$z, ".parquet")
+    fns <- list.files(file.path("cosmx", "tx_spots"))
+    # Not all genes have spots in this downsampled toy dataset
+    expect_true(all(fns %in% fns_expect))
+
+    fn <- file.path("cosmx", "tx_spots", fns[1])
+    g <- sfarrow::st_read_parquet(fn)
+    expect_equal(st_geometry_type(g, FALSE) |> as.character(), "MULTIPOINT")
+    unlink("cosmx", recursive = TRUE)
+})
+
+unlink("cosmx", recursive = TRUE)
+unlink("vizgen", recursive = TRUE)
