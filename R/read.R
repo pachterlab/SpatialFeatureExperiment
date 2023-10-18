@@ -898,7 +898,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
           }) |> unlist()
           mols <- unlist(mols, recursive = FALSE)
           names(mols) <- names_use
-      } else {
+      } else if (!is.null(file_out)) {
           names(mols) <- paste0(basename(file_dir), "_z", names(mols))
       }
   } else {
