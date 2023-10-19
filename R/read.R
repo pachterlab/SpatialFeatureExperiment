@@ -377,6 +377,7 @@ read10xVisiumSFE <- function(samples = "",
 #' add_molecules = TRUE, flip = "geometry")
 readVizgen <- function(data_dir,
                        z = 3L,
+                       z_option = c("split", "3d"),
                        sample_id = "sample01", # How often do people read in multiple samples?
                        min_area = 15,
                        image = c("DAPI", "PolyT", "Cellbound"),
