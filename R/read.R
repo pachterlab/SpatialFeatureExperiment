@@ -832,7 +832,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
   }
   if (ext == "parquet") {
     check_installed("arrow")
-    mols <- arrow::read_parquet(file) |> as.data.table()
+    mols <- arrow::read_parquet(file) |> data.table::as.data.table()
   } else {
     mols <- fread(file)
   }
