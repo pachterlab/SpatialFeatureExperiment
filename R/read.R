@@ -377,7 +377,6 @@ read10xVisiumSFE <- function(samples = "",
 #' add_molecules = TRUE, flip = "geometry")
 readVizgen <- function(data_dir,
                        z = 3L,
-                       z_option = c("split", "3d"),
                        sample_id = "sample01", # How often do people read in multiple samples?
                        min_area = 15,
                        image = c("DAPI", "PolyT", "Cellbound"),
@@ -626,7 +625,7 @@ readVizgen <- function(data_dir,
     # get molecule coordiantes file
     mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts.csv")
     sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM, z = z,
-                      file_out = file_out, z_option = z_option, ...)
+                      file_out = file_out, ...)
   }
   sfe
 }
