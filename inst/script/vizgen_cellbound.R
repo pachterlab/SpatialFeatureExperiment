@@ -324,6 +324,12 @@ mols_filt %>% str
 mols_joined <-
   dplyr::inner_join(mols, mols_filt)
 mols_joined %>% str
+
+# downsample mols a bit more
+set.seed(567)
+mols_joined %<>% 
+  dplyr::sample_frac(size = 0.1)
+
 # check range
 mols_joined %>% 
   select(contains("global")) %>%
