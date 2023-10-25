@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.2.3
+Version: 1.4.0
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -19,6 +19,7 @@ Imports:
     BiocGenerics,
     BiocNeighbors,
     BiocParallel,
+    DropletUtils,
     grDevices,
     Matrix,
     methods,
@@ -62,7 +63,6 @@ Collate:
 Suggests: 
     BiocStyle,
     dplyr,
-    DropletUtils,
     knitr,
     rhdf5,
     rmarkdown,

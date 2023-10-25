@@ -31,6 +31,7 @@
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
+#' @importFrom DropletUtils read10xCounts
 #' @note It is assumed that the images have not been cropped. Otherwise the
 #' images might not align with the spots.
 #' @return A SpatialFeatureExperiment object. The images might need to be
