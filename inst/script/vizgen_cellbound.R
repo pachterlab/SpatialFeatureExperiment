@@ -400,3 +400,141 @@ pl1 <-
                      image_id = "Cellbound2_z3", #"DAPI_z3",
   ) & Seurat::DarkTheme()
 pl1
+
+# convert txSpots to hdf5 files ----
+library(rhdf5)
+dir_use <- "./vizgen_test_repo/vizgen_hdf5/"
+# load another dataset file to use an example (local data)
+fn <- file.path(dir_use, "cell_boundaries", "feature_data_119.hdf5")
+hdf5_eg <- rhdf5::h5dump(fn)[[1]]
+
+# coords of 1 cell for each z plane
+hdf5_eg[[1]] %>% str
+# z-plane 0
+hdf5_eg[[1]]$zIndex_0$p_0$coordinates %>% str
+
+# make a list of z planes and coords per cell
+# clone example for one cell
+cellsegs <- hdf5_eg[[2]]
+cellsegs_out <-
+  bplapply(cellSeg(sfe_sub) %>% 
+             nrow() %>% seq(), function(i) {
+               # get coords per cell
+               coordinates <-
+                 cellSeg(sfe_sub) %>%
+                 dplyr::slice(i) %>%
+                 st_geometry() %>%
+                 st_coordinates() %>% 
+                 as.data.frame() %>% 
+                 # change sign to positive for y coord
+                 dplyr::transmute(X = X, Y = -Y) %>% t()
+               
+               # convert to an array
+               dim(coordinates) <- c(2, ncol(coordinates), 1)
+               
+               # replace coords
+               cellseg <- 
+                 lapply(cellsegs[-which(names(cellsegs) == "z_coordinates")], 
+                        function(x) {
+                          x$p_0$coordinates <- coordinates
+                          return(x)}
+                 )
+               cellseg[["z_coordinates"]] <- cellsegs[["z_coordinates"]]
+               return(cellseg)  
+             }, BPPARAM = BiocParallel::MulticoreParam(10, 
+                                                       tasks = 50L,
+                                                       force.GC = FALSE, 
+                                                       progressbar = TRUE))
+names(cellsegs_out) <- cellSeg(sfe_sub) %>% rownames()
+cellsegs_out[[1]] %>% str
+cellsegs_out %>% length
+
+dir_github <- "./vizgen_test_repo/vizgen_hdf5_github/"
+# prepare as hdf5
+dir.create(file.path(dir_github, "cell_boundaries"))
+# z-planes, only 2nd and 3rd to make less larger files
+z_names <- paste0("zIndex_", seq(2,3))
+# in total 4 hdf5 files
+new_fns <- file.path(dir_github, "cell_boundaries", 
+                     paste0("feature_data_z2_z3_", seq(4), ".hdf5"))
+new_fns
+# use 80 cells in total, 20 per file
+cell_ids <- 
+  names(cellsegs_out)[seq(1, length(cellsegs_out), length.out = 80)]
+cell_ids %>% str
+
+# split into 4 hdf5 files
+bplapply(seq(new_fns), function(x) {
+  # make files
+  h5createFile(new_fns[x])
+  h5createGroup(new_fns[x], "featuredata")
+  # use per cell and per zIndex
+  bplapply(seq(z_names), function(z) {
+    bplapply(split(seq(80), rep(seq(4), 20))[[x]], function(i) {
+      gn <<- file.path("featuredata", cell_ids[i], z_names[z], "p_0/coordinates")
+      h5createGroup(new_fns[x], file.path("featuredata", cell_ids[i]))
+      h5createGroup(new_fns[x], file.path("featuredata", cell_ids[i], z_names[z]))
+      h5createGroup(new_fns[x], file.path("featuredata", cell_ids[i], z_names[z], "p_0"))
+      coords <<- cellsegs_out[[cell_ids[i]]][[z_names[z]]]$p_0$coordinates
+      h5write(coords, new_fns[x], gn)
+    }, BPPARAM = BiocParallel::SerialParam()) %>% invisible()
+    
+  }, BPPARAM = BiocParallel::SerialParam(force.GC = FALSE, 
+                                         progressbar = TRUE)) %>% 
+    suppressWarnings() %>% suppressMessages() %>% invisible()	
+}, BPPARAM = BiocParallel::SerialParam()) %>% invisible()
+
+
+# check the structure
+h5ls(new_fns[1]) %>% str
+test1 <- rhdf5::h5dump(new_fns[1])[[1]]
+test1[[1]] %>% str
+test1 %>% length
+
+# test
+polys <- SpatialFeatureExperiment:::.h52poly_fov(new_fns[1], z = 2)
+polys %>% str
+
+# OK -> test loading hdf5 files dir
+dir_github <- "./vizgen_test_repo/vizgen_hdf5_github/"
+# load SFE object
+sfe <-
+  readVizgen(data_dir = dir_github,
+             z = "all",
+             z_option = "3d", # this will return XYZ MULTIPOINT for rowGeometiries
+             sample_id = "vizgen_toy",
+             min_area = 15,
+             image = c("DAPI", "PolyT", "Cellbound"),
+             flip = "geometry", # "image" & "none", "geometry"
+             max_flip = "50 MB",
+             filter_counts = TRUE, # keep cells with counts > 0 or not    
+             add_molecules = TRUE,
+             use_bboxes = FALSE,
+             #file_out = file.path(dir_use, "detected_transcripts.parquet"),
+             BPPARAM = BiocParallel::MulticoreParam(10, 
+                                                    tasks = 50L,
+                                                    force.GC = FALSE, 
+                                                    progressbar = TRUE)
+  )
+
+# obj has 77 cells if `filter_counts = TRUE`, else 80 cells.
+sfe
+# normalize raw counts
+sfe %<>% logNormCounts()
+sfe
+imgData(sfe)
+rowGeometry(sfe) %>% str # XYZ coords
+
+# plot gene expression
+# Segs
+options(repr.plot.height = 5, repr.plot.width = 10)
+pl1 <- 
+  plotSpatialFeature(sfe, features = "COL1A2", 
+                     size = 4,
+                     #colGeometryName = "centroids", 
+                     colGeometryName = "cellSeg",
+                     dark = TRUE,
+                     #scattermore = TRUE, # will plot only centroids!
+                     image_id = "Cellbound2_z3", #"DAPI_z3",
+  ) & Seurat::DarkTheme()
+pl1
