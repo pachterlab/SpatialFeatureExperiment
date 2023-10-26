@@ -22,7 +22,7 @@ Imports:
     BiocNeighbors,
     BiocParallel,
     data.table,
-    DropletUtils
+    DropletUtils,
     grDevices,
     Matrix,
     methods,
