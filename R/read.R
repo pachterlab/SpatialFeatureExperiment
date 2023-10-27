@@ -455,7 +455,7 @@ readVizgen <- function(data_dir,
       parq_clean <-
         grep("cell_boundaries|micron_space",
              parq, value = TRUE)
-      message(">>> ", length(parq), " `.parquet` files exists:",
+      message(">>> ", length(parq), " `.parquet` file(s) exists:",
               paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
       parq <- parq_clean
       if (any(grepl("cell_boundaries.parquet", parq))) {
@@ -492,7 +492,7 @@ readVizgen <- function(data_dir,
         polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
       polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
       } else {
-        warning("No '.parquet' files present, check input directory -> `data_dir`")
+        warning("No '.parquet' or `hdf5` files present, check input directory -> `data_dir`")
         polys <- NULL }
     } else {
     rlang::check_installed("rhdf5")
@@ -794,40 +794,41 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     if (!dir.exists(dirname(file_out)))
       dir.create(dirname(file_out))
     file_dir <- file_path_sans_ext(file_out)
-    # File already exists, skip processing
-    # make sure if z = "all" transcripts are read from ./detected_transcripts dir
-    if (file.exists(file_out) && !dir.exists(file_out) && z != "all") {
-        if (!return) return(file_out)
-        out <- sfarrow::st_read_parquet(file_out)
-        rownames(out) <- out$ID
-        return(out)
-    } else if (dir.exists(file_dir)) {
+    # File or dir already exists, skip processing
+    # read transcripts from ./detected_transcripts
+    if (dir.exists(file_dir) && z == "all" && z_option != "3d") {
       # Multiple files
       pattern <- "\\.parquet$"
       # Need to deal with z-planes
       if (z != "all") {
-          pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
+        pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
       }
       fns <- list.files(file_dir, pattern, full.names = TRUE)
       if (!length(fns) && length(z) == 1L) {
-          pattern <- "\\.parquet$"
-          fns <- list.files(file_dir, pattern, full.names = TRUE)
+        pattern <- "\\.parquet$"
+        fns <- list.files(file_dir, pattern, full.names = TRUE)
       }
       if (length(fns)) {
-          if (!return) return(file_dir)
-          out <- lapply(fns, sfarrow::st_read_parquet)
-          # add names to a list
-          names(out) <- gsub(".parquet", "",
-                             x = list.files(file_dir, pattern))
-          out <- lapply(out, function(x) {
-              # row names are dropped in st_read/write_parquet
-              rownames(x) <- x$ID
-              return(x)
-          })
+        if (!return) return(file_dir)
+        out <- lapply(fns, sfarrow::st_read_parquet)
+        # add names to a list
+        names(out) <- gsub(".parquet", "",
+                           x = list.files(file_dir, pattern))
+        out <- lapply(out, function(x) {
+          # row names are dropped in st_read/write_parquet
+          rownames(x) <- x$ID
+          return(x)
+        })
         return(out)
+        }
+      # read transcripts from detected_transcripts.parquet
+      } else if (file.exists(file_out) && !dir.exists(file_dir) && z_option != "3d") {
+          if (!return) return(file_out)
+          out <- sfarrow::st_read_parquet(file_out)
+          rownames(out) <- out$ID
+          return(out)
       }
     }
-  }
   if (!is.numeric(z) && z != "all") {
     stop("z must either be numeric or be 'all' indicating all z-planes.")
   }
