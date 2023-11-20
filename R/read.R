@@ -1209,7 +1209,7 @@ readXenium <- function(data_dir,
               paste0("\n", img_fn))
       # export as .tif
       for (x in seq(imgs)) {
-        write.image(imgs[[x]], file = img_fn[x], force = TRUE)}
+        RBioFormats::write.image(imgs[[x]], file = img_fn[x], force = TRUE)}
       # combine image files
       # if only 1 image was converted and another one was already present
       if (!length(img_tif) == 0) {
