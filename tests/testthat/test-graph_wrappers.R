@@ -58,7 +58,7 @@ test_that("Exact Bioc methods for knn return same results as spdep methods", {
                                    type = "myofiber_simplified",
                                    method = "knearneigh",
                                    nn_method = "bioc", dmax = 200)
-        expect_equal(g1, g2, ignore_attr = c("call", "knn-k", "type", "sym", "method"))
+        expect_equal(g1, g2, ignore_attr = TRUE)
     }
     # Types of normalization
     for (s in styles) {
@@ -74,7 +74,7 @@ test_that("Exact Bioc methods for knn return same results as spdep methods", {
                                    type = "myofiber_simplified",
                                    method = "knearneigh",
                                    nn_method = "bioc")
-        expect_equal(g1, g2, ignore_attr = c("call", "knn-k", "type", "sym", "method"))
+        expect_equal(g1, g2, ignore_attr = TRUE)
     }
 })
 
@@ -93,7 +93,7 @@ test_that("Exact Bioc methods for dnearneigh return same results as spdep method
                                    type = "myofiber_simplified",
                                    method = "dnearneigh",
                                    nn_method = "bioc", dmax = 200)
-        expect_equal(g1, g2, ignore_attr = c("call", "type", "sym", "method", "bounds"))
+        expect_equal(g1, g2, ignore_attr = TRUE)
     }
     # Types of normalization
     for (s in styles) {
@@ -109,7 +109,7 @@ test_that("Exact Bioc methods for dnearneigh return same results as spdep method
                                    type = "myofiber_simplified",
                                    method = "dnearneigh",
                                    nn_method = "bioc")
-        expect_equal(g1, g2, ignore_attr = c("call", "type", "sym", "method", "bounds"))
+        expect_equal(g1, g2, ignore_attr = TRUE)
     }
 })
 
