@@ -131,19 +131,22 @@ test_that("Micron spot spacing works when there're singletons", {
     expect_equal(unit(sfe), "micron")
 })
 
-dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
 
 test_that("readVizgen flip geometry, use cellpose", {
     file.copy(dir_use, ".", recursive = TRUE)
-    sfe <- readVizgen("vizgen", z = 0L, use_cellpose = TRUE, image = "PolyT",
+    sfe <- readVizgen("vizgen_cellbound", z = 3L, use_cellpose = TRUE,
                       flip = "geometry", min_area = 15)
     expect_equal(unit(sfe), "micron")
-    expect_equal(imgData(sfe)$image_id, "PolyT_z0")
-    img <- imgRaster(getImg(sfe))
+    expect_equal(imgData(sfe)$image_id,
+                 paste0(c(paste0("Cellbound", 1:3), "DAPI", "PolyT"),
+                       "_z3"))
+    img <- imgRaster(getImg(sfe, image_id = "PolyT_z3"))
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
+    v <- aggregate(v$mosaic_PolyT_z3, by = list(v$ID), FUN = sum)
     nCounts <- Matrix::colSums(counts(sfe))
-    expect_true(cor(nCounts, v$mosaic_PolyT_z0) > 0.4)
+    expect_true(cor(nCounts, v$x, use = "complete.obs") > 0.4)
     # Make sure both segmentations and centroids are flipped
     hulls <- st_convex_hull(cellSeg(sfe))
     expect_true(all(vapply(seq_len(nrow(cg)), function(i) {
