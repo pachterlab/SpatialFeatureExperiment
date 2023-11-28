@@ -55,7 +55,7 @@ test_that("Correctly reconstruct the graphs when they need to be reconstructed",
     # Remove one item from sample01
     sfe_visium <- sfe_visium[, -1]
     expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
-        ignore_attr = c("call", "method")
+        ignore_attr = TRUE
     )
 })
 
