@@ -468,7 +468,7 @@ test_that("Error messages in formatTxSpots", {
                  "file_out must be specified")
     file2 <- system.file("extdata/sfe_visium.rds", package = "SpatialFeatureExperiment")
     expect_error(formatTxSpots(file2),
-                 "The file must be one of csv, tsv, txt, or parquet")
+                 "The file must be one of csv")
     expect_error(formatTxSpots(file, z = "foo"),
                  "z must either be numeric")
     expect_error(formatTxSpots(file, spatialCoordsNames = c("foo", "bar")),

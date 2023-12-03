@@ -828,7 +828,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     file_dir <- file_path_sans_ext(file_out)
     # File or dir already exists, skip processing
     # read transcripts from ./detected_transcripts
-    if (dir.exists(file_dir) && z == "all" && z_option != "3d") {
+    if (dir.exists(file_dir)) {
       # Multiple files
       pattern <- "\\.parquet$"
       # Need to deal with z-planes
@@ -836,7 +836,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
       }
       fns <- list.files(file_dir, pattern, full.names = TRUE)
-      if (!length(fns) && length(z) == 1L) {
+      if (!length(fns) && (length(z) == 1L || z_option == "3d")) {
         pattern <- "\\.parquet$"
         fns <- list.files(file_dir, pattern, full.names = TRUE)
       }
@@ -854,7 +854,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         return(out)
       }
       # read transcripts from detected_transcripts.parquet
-    } else if (file.exists(file_out) && !dir.exists(file_dir) && z_option != "3d") {
+    } else if (file.exists(file_out) && !dir.exists(file_dir)) {
       if (!return) return(file_out)
       out <- sfarrow::st_read_parquet(file_out)
       rownames(out) <- out$ID
@@ -916,7 +916,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
   if (dest == "colGeometry") {
     if (!length(cell_col) || any(!cell_col %in% names(mols)))
       stop("Column indicating cell ID not found.")
-    mols <- mols[mols[[cell_col[1]]] != not_in_cell_id,]
+    mols <- mols[!mols[[cell_col[1]]] %in% not_in_cell_id,]
     if (length(cell_col) > 1L) {
       if (!is.data.table(mols)) ..cell_col <- cell_col
       cell_col_use <- do.call(paste, c(mols[,..cell_col], sep = "_"))
@@ -1085,13 +1085,14 @@ readCosMX <- function(data_dir,
 #'
 #' This function reads the standard 10X Xenium output into an SFE object.
 #' @inheritParams readVizgen
-#' @param image Which image(s) to load, can be "morphology_mip" and/or "morphology_focus" or
-#'  any combination of them.
-#' @param segmentations Which segmentation outputs to read, can be "cell" and/or "nucleus", or
-#'  any combination of them.
-#' @param read.image_args list of arguments to be passed to (`RBioFormats::read.image`)
-#' @param image_threshold Integer value, below which threshold is to set values to `NA`,
-#'  default is to `30L`, this removes some background artifacts.
+#' @param image Which image(s) to load, can be "morphology_mip",
+#'   "morphology_focus" or both
+#' @param segmentations Which segmentation outputs to read, can be "cell",
+#'   "nucleus", or both.
+#' @param read.image_args list of arguments to be passed to
+#'   (`RBioFormats::read.image`)
+#' @param image_threshold Integer value, below which threshold is to set values
+#'   to `NA`, default is to `30L`, this removes some background artifacts.
 #'
 #' @return An SFE object.
 #' @export
