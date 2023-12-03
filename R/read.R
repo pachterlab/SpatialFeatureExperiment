@@ -209,7 +209,7 @@ read10xVisiumSFE <- function(samples = "",
   polys.orig <- polys
   polys <- polys[!st_is_empty(polys),]
   empty.inds <- which(!polys.orig$ID %in% polys$ID)
-  if (length(empty.inds)) { warning(">>> ..removing ",
+  if (length(empty.inds)) { message(">>> ..removing ",
                                     length(empty.inds), " empty polygons") }
   if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON") {
     polys_sep <- lapply(st_geometry(polys), function(x) {
@@ -248,6 +248,9 @@ read10xVisiumSFE <- function(samples = "",
     st_geometry(polys) <- new_geo
   } else {
     inds <- st_area(st_geometry(polys)) > min_area
+    if (any(inds)) {
+        message("Removing ", sum(!inds), " cells with area less than ", min_area)
+    }
     polys <- polys[inds,]
   }
   polys
@@ -307,9 +310,9 @@ read10xVisiumSFE <- function(samples = "",
 #'   directories \code{cell_boundaries} and \code{images}, and files
 #'   \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 #'   \code{detected_transcripts.csv}.
-#' @param z Index of z plane to read. Can be "all" to read all z-planes into
-#'   MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
-#'   then spots with all z values will be read.
+#' @param z Integer, z index to read, only affecting images read since cell
+#' segmentation for all z-planes are the same and cell centroids are only provided
+#' in 2 dimensions.
 #' @param max_flip Maximum size of the image allowed to flip the image. Because
 #'   the image will be loaded into memory to be flipped. If the image is larger
 #'   than this size then the coordinates will be flipped instead.
@@ -455,8 +458,8 @@ readVizgen <- function(data_dir,
       parq_clean <-
         grep("cell_boundaries|micron_space",
              parq, value = TRUE)
-      message(">>> ", length(parq), " `.parquet` files exists:",
-              paste0("\n", parq), "\n", ">>> using -> " , parq_clean)
+      message(">>> ", length(parq), " `.parquet` files exist:",
+              paste0("\n", parq))
       parq <- parq_clean
       if (any(grepl("cell_boundaries.parquet", parq))) {
         # use default segmentaion file
@@ -468,6 +471,7 @@ readVizgen <- function(data_dir,
       if (length(parq) > 1) {
         stop("only 1 `.parquet` file can be read, check `data_dir` content")
       }
+      message(">>> using -> " , parq)
     } else if (all(parq_sanity == FALSE)) { parq <- NULL }
     if (!is.null(parq)) {
       rlang::check_installed("sfarrow")
@@ -699,6 +703,9 @@ readVizgen <- function(data_dir,
 #'   sparse, the geometries are NOT returned to memory.}}
 #' @param spatialCoordsNames Column names for the x, y, and optionally z
 #'   coordinates of the spots. The defaults are for Vizgen.
+#' @param z Index of z plane to read. Can be "all" to read all z-planes into
+#'   MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
+#'   then spots with all z values will be read.
 #' @param gene_col Column name for genes.
 #' @param cell_col Column name for cell IDs, ignored if `dest = "rowGeometry"`.
 #'   Can have length > 1 when multiple columns are needed to uniquely identify
@@ -902,8 +909,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
       } else if (!is.null(file_out)) {
           names(mols) <- paste0(basename(file_dir), "_z", names(mols))
       } else {
-      names(mols) <- 
-          file_path_sans_ext(file) |> 
+      names(mols) <-
+          file_path_sans_ext(file) |>
           basename() |>
           paste0("_z", names(mols))
       }
