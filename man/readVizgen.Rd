@@ -27,9 +27,9 @@ directories \code{cell_boundaries} and \code{images}, and files
 \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 \code{detected_transcripts.csv}.}
 
-\item{z}{Index of z plane to read. Can be "all" to read all z-planes into
-MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
-then spots with all z values will be read.}
+\item{z}{Integer, z index to read, only affecting images read since cell
+segmentation for all z-planes are the same and cell centroids are only provided
+in 2 dimensions.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -115,12 +115,12 @@ Since the transcript spots file is often very large, we recommend only
   using \code{add_molecules = TRUE} on servers with a lot of memory.
 }
 \examples{
-dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
-sfe <- readVizgen(dir_use, z = 0L, image = "PolyT",
+dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 flip = "geometry")
 
 ## Filtering of counts, and addition of molecule coordinates..
-sfe <- readVizgen(dir_use, z = 0L, image = "PolyT", filter_counts = TRUE,
+sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
 add_molecules = TRUE, flip = "geometry")
 }
 \concept{Read data into SFE}

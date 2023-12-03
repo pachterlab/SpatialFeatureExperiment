@@ -21,9 +21,9 @@ directories \code{cell_boundaries} and \code{images}, and files
 \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 \code{detected_transcripts.csv}.}
 
-\item{z}{Index of z plane to read. Can be "all" to read all z-planes into
-MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
-then spots with all z values will be read.}
+\item{z}{Integer, z index to read, only affecting images read since cell
+segmentation for all z-planes are the same and cell centroids are only provided
+in 2 dimensions.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also

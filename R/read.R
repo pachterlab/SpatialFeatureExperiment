@@ -372,12 +372,12 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom SpatialExperiment imgData<-
 #' @importFrom data.table fread merge.data.table rbindlist is.data.table
 #' @examples
-#' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
-#' sfe <- readVizgen(dir_use, z = 0L, image = "PolyT",
+#' dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+#' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 #' flip = "geometry")
 #'
 #' ## Filtering of counts, and addition of molecule coordinates..
-#' sfe <- readVizgen(dir_use, z = 0L, image = "PolyT", filter_counts = TRUE,
+#' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
 #' add_molecules = TRUE, flip = "geometry")
 readVizgen <- function(data_dir,
                        z = 3L,
