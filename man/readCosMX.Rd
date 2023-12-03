@@ -54,6 +54,13 @@ by cell compartment. Only relevant when `add_molecules = TRUE`.}
 
   \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }}
 
+\item{file_out}{Name of file to save the geometry or raster to disk.
+Especially when the geometries are so large that it's unwieldy to load
+everything into memory. If this file (or directory for multiple files)
+already exists, then the existing file(s) will be read, skipping the
+processing. When writing the file, extensions supplied are ignored and
+extensions are determined based on `dest`.}
+
 \item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
 and add the transcript spots data to the SFE object, except that extent is
 read from `manifest.json` and that `dest = "rowGeometry"` because the spot

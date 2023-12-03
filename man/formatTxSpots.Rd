@@ -121,11 +121,6 @@ not depend on whether the geometries are written to file. Always `FALSE`
 when `dest = "colGeometry"`.}
 
 \item{sfe}{A `SpatialFeatureExperiment` object.}
-
-\item{sample_id}{A \code{character} sample identifier, which matches the
-\code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
-be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
-Default = \code{sample01}.}
 }
 \value{
 A sf data frame for vector geometries if `file_out` is not set.
@@ -163,7 +158,7 @@ When `dest = "colGeometry"`, the geometries are always written to disk
 }
 \examples{
 # Default arguments are for MERFISH
-dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
 g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 
 # For CosMX, note the colnames, also dest = "colGeometry"

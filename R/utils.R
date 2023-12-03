@@ -93,9 +93,8 @@ changeSampleIDs <- function(sfe, replacement) {
 #' @importFrom SummarizedExperiment colData colData<- rowData
 #' @examples
 #' library(SFEData)
-#' library(magrittr)
 #' sfe <- McKellarMuscleData(dataset = "small")
-#' sfe %>% callMeta() %>% str
+#' sfe |> callMeta() |> str
 callMeta <- function(object = NULL) {
-    return(colData(object)@listData %>% as.data.frame.list())
+    return(colData(object)@listData |> as.data.frame.list())
 }

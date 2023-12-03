@@ -7,7 +7,8 @@ Authors@R:
     role = c("aut", "cre"),
     comment = c(ORCID = "0000-0002-7092-9427")),
     person("Alik", "Huseynov",
-    comment = c(ORCID = "0000-0002-1438-4389")),
+    comment = c(ORCID = "0000-0002-1438-4389"),
+    role = "aut"),
     person("Lior", "Pachter", email = "lpachter@caltech.edu",
     role = c("aut", "ths"),
     comment = c(ORCID = "0000-0002-9164-6231")))
@@ -24,6 +25,7 @@ Imports:
     data.table,
     DropletUtils,
     grDevices,
+    lifecycle,
     Matrix,
     methods,
     rjson,

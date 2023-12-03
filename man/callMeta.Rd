@@ -17,7 +17,6 @@ Call metadata of an object
 }
 \examples{
 library(SFEData)
-library(magrittr)
 sfe <- McKellarMuscleData(dataset = "small")
-sfe \%>\% callMeta() \%>\% str
+sfe |> callMeta() |> str
 }

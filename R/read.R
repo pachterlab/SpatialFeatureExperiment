@@ -195,6 +195,7 @@ read10xVisiumSFE <- function(samples = "",
 
 #' @importFrom sf st_is_empty
 #' @importFrom BiocParallel bplapply
+#' @importFrom utils head
 .filter_polygons <- function(polys, min_area, BPPARAM = SerialParam()) {
   # Sanity check on nested polygon lists
   test.segs <- vapply(st_geometry(polys), length, FUN.VALUE = integer(1))
@@ -306,6 +307,7 @@ read10xVisiumSFE <- function(samples = "",
 #' while to convert the spots to MULTIPOINT geometries.
 #'
 #' @inheritParams SpatialFeatureExperiment
+#' @inheritParams formatTxSpots
 #' @param data_dir Top level directory of Vizgen output, which contains
 #'   directories \code{cell_boundaries} and \code{images}, and files
 #'   \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
@@ -764,7 +766,7 @@ readVizgen <- function(data_dir,
 #' @rdname formatTxSpots
 #' @examples
 #' # Default arguments are for MERFISH
-#' dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
+#' dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
 #' g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 #'
 #' # For CosMX, note the colnames, also dest = "colGeometry"
