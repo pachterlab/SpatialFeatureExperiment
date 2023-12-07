@@ -73,10 +73,11 @@ size of that csv file, even more if using multiple threads. So we STRONGLY
 recommend saving the reformatted results to disk.}
 }
 \value{
-An SFE object. If reading transcript spots (`add_molecules = TRUE`),
-then the reformatted transcript spots are saved to file specified in the
-`file_out` argument, which is by default `tx_spots.parquet` in the same
-directory as the rest of the data.
+An SFE object. Cell polygons are written to
+  `cell_boundaries_sf.parquet` in `data_dir`. If reading transcript spots
+  (`add_molecules = TRUE`), then the reformatted transcript spots are saved
+  to file specified in the `file_out` argument, which is by default
+  `tx_spots.parquet` in the same directory as the rest of the data.
 }
 \description{
 This function reads the standard CosMX output into an SFE object, as in

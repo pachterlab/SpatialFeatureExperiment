@@ -1003,11 +1003,12 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
 #'
 #' @inheritParams readVizgen
 #' @param split_cell_comps Logical, whether to split transcript spot geometries
-#' by cell compartment. Only relevant when `add_molecules = TRUE`.
-#' @return An SFE object. If reading transcript spots (`add_molecules = TRUE`),
-#' then the reformatted transcript spots are saved to file specified in the
-#' `file_out` argument, which is by default `tx_spots.parquet` in the same
-#' directory as the rest of the data.
+#'   by cell compartment. Only relevant when `add_molecules = TRUE`.
+#' @return An SFE object. Cell polygons are written to
+#'   `cell_boundaries_sf.parquet` in `data_dir`. If reading transcript spots
+#'   (`add_molecules = TRUE`), then the reformatted transcript spots are saved
+#'   to file specified in the `file_out` argument, which is by default
+#'   `tx_spots.parquet` in the same directory as the rest of the data.
 #' @export
 #' @examples
 #' dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
@@ -1042,11 +1043,21 @@ readCosMX <- function(data_dir,
     as.matrix() |>
     as("CsparseMatrix") |> Matrix::t()
   colnames(mat) <- cell_ids
-  message(">>> Constructing cell polygons")
-  polys <- df2sf(polys, spatialCoordsNames = c("x_global_px", "y_global_px"),
-                 geometryType = "POLYGON",
-                 id_col = "cellID", BPPARAM = BPPARAM)
-  polys <- polys[match(meta$cell_ID, polys$ID),]
+
+  poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
+  if (file.exists(poly_sf_fn)) {
+      message(">>> File cell_boundaries_sf.parquet found")
+      polys <- sfarrow::st_read_parquet(poly_sf_fn)
+      rownames(polys) <- polys$ID
+  } else {
+      message(">>> Constructing cell polygons")
+      polys <- df2sf(polys, spatialCoordsNames = c("x_global_px", "y_global_px"),
+                     geometryType = "POLYGON",
+                     id_col = "cellID", BPPARAM = BPPARAM)
+      polys <- polys[match(meta$cell_ID, polys$ID),]
+      suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
+  }
+
   sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
                                   spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
                                   unit = "full_res_image_pixel")
