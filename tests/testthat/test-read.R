@@ -482,12 +482,20 @@ test_that("Error messages in formatTxSpots", {
 
 test_that("readCosMX, not reading transcript spots", {
     dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
-    sfe <- readCosMX(dir_use, z = 1L)
+    file.copy(dir_use, ".", recursive = TRUE)
+    sfe <- readCosMX("cosmx", z = 1L)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(colGeometryNames(sfe), c("centroids", "cellSeg"))
     expect_equal(st_geometry_type(cellSeg(sfe), by_geometry = FALSE) |> as.character(),
                  "POLYGON")
     expect_equal(dim(sfe), c(960, 27))
+    # parquet file for cell polygons written
+    expect_true(file.exists(file.path("cosmx", "cell_boundaries_sf.parquet")))
+    time_note <- Sys.time()
+    # Second time reading
+    sfe <- readCosMX("cosmx", z = 1L)
+    time_file <- file.info(file.path("cosmx", "cell_boundaries_sf.parquet"))$ctime
+    expect_true(time_file < time_note)
 })
 
 test_that("readCosMX, reading spots, 1 z-plane", {
