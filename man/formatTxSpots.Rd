@@ -15,7 +15,7 @@ formatTxSpots(
   phred_col = "qv",
   min_phred = 20,
   split_col = NULL,
-  not_in_cell_id = "-1",
+  not_in_cell_id = c("-1", "UNASSIGNED"),
   z_option = c("split", "3d"),
   file_out = NULL,
   BPPARAM = SerialParam(),
