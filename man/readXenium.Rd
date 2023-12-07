@@ -9,6 +9,7 @@ readXenium(
   sample_id = "sample01",
   image = c("morphology_focus", "morphology_mip"),
   segmentations = c("cell", "nucleus"),
+  row.names = c("id", "symbol"),
   read.image_args = list(resolution = 4L, filter.metadata = TRUE, read.metadata = FALSE,
     normalize = FALSE),
   image_threshold = NULL,
@@ -37,6 +38,11 @@ Default = \code{sample01}.}
 
 \item{segmentations}{Which segmentation outputs to read, can be "cell",
 "nucleus", or both.}
+
+\item{row.names}{String specifying whether to use Ensembl IDs ("id") or gene
+symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
+appended to disambiguate in case the same symbol corresponds to multiple
+Ensembl IDs.}
 
 \item{read.image_args}{list of arguments to be passed to
 (`RBioFormats::read.image`)}

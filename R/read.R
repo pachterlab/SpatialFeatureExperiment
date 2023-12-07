@@ -1104,7 +1104,10 @@ readCosMX <- function(data_dir,
 #'   (`RBioFormats::read.image`)
 #' @param image_threshold Integer value, below which threshold is to set values
 #'   to `NA`, default is to `30L`, this removes some background artifacts.
-#'
+#' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
+#'   symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
+#'   appended to disambiguate in case the same symbol corresponds to multiple
+#'   Ensembl IDs.
 #' @return An SFE object. If reading segmentations, the cell or nuclei
 #'   segmentation will be saved to `cell_boundaries_sf.parquet` and
 #'   `nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time the
@@ -1119,7 +1122,7 @@ readCosMX <- function(data_dir,
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
-#' @importFrom SummarizedExperiment assay
+#' @importFrom SingleCellExperiment counts
 #' @importFrom data.table fread merge.data.table rbindlist is.data.table
 #' @importFrom DropletUtils read10xCounts
 #' @examples
@@ -1147,6 +1150,7 @@ readXenium <- function(data_dir,
                        sample_id = "sample01",
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
+                       row.names = c("id", "symbol"),
                        read.image_args = # list of arguments for RBioFormats::read.image
                          list("resolution" = 4L,
                               "filter.metadata" = TRUE,
@@ -1337,28 +1341,27 @@ readXenium <- function(data_dir,
   }
 
   # Read count matrix or SCE ----
-  # all feature types are read in single count matrix and stored in rowData(mat)$Type
+  # all feature types are read in single count matrix and stored in rowData(sce)$Type
   #..ie -> 'Negative Control Probe, 'Negative Control Codeword', 'Unassigned Codeword'
   if (file.exists(file.path(data_dir, "cell_feature_matrix.h5"))) {
-    sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix.h5"))
+    sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix.h5"),
+                         col.names = TRUE, row.names = row.names)
   } else if (dir.exists(file.path(data_dir, "cell_feature_matrix"))) {
-    sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix"))
+    sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix"),
+                         col.names = TRUE, row.names = row.names)
   } else { stop("No `cell_feature_matrix` files are found, check input directory -> `data_dir`") }
-  mat <- assay(sce, "counts", withDimnames = TRUE)
-  mat <- as(mat, "CsparseMatrix")
-  colnames(mat) <- sce$Barcode
 
   # Filtering count matrix, metadata and segmentations ----
   # filtering metadata and count matrix
   if (any(names(metadata) == "transcript_counts") && filter_counts) {
     message(">>> ..filtering cell metadata - keep cells with `transcript_counts` > 0")
     metadata <- metadata[metadata$transcript_count > 0,]
-    mat <- mat[,match(metadata$cell_id, colnames(mat)) |> stats::na.omit()]
+    sce <- sce[,match(metadata$cell_id, colnames(sce)) |> stats::na.omit()]
   } else {
     # if metadata isn't already filtered
     if (!"transcript_counts" %in% names(metadata) && filter_counts) {
-      inds <- colSums(mat) > 0
-      mat <- mat[,inds]
+      inds <- colSums(counts(sce)) > 0
+      sce <- sce[,inds]
       metadata <- metadata[inds,]
     }}
   # filtering segmentations
@@ -1366,18 +1369,19 @@ readXenium <- function(data_dir,
     if (is.list(polys)) {
       for (i in seq(polys)) {
         # filter geometries
-        matched.cells <- match(colnames(mat), polys[[i]]$ID) |> stats::na.omit()
+        matched.cells <- match(colnames(sce), polys[[i]]$ID) |> stats::na.omit()
         message(">>> filtering ", names(polys)[i],
                 " geometries to match ",
                 length(matched.cells), " cells with counts > 0")
         polys[[i]] <- polys[[i]][matched.cells, , drop = FALSE] }
     } else if (is(polys, "sf")) {
-      matched.cells <- match(colnames(mat), polys[[i]]$ID) |> stats::na.omit()
+      matched.cells <- match(colnames(sce), polys[[i]]$ID) |> stats::na.omit()
       message(">>> filtering ", if (!is.null(segmentations) || exists("segmentations")) segmentations,
               " geometries to match ", length(matched.cells), " cells with counts > 0")
       polys <- polys[matched.cells, , drop = FALSE]
     }
   }
+  metadata <- as.data.frame(metadata) |> as("DataFrame")
   rownames(metadata) <- metadata$cell_id
   metadata[,1] <- NULL
   if (flip == "geometry") {
@@ -1385,20 +1389,10 @@ readXenium <- function(data_dir,
   }
 
   # Make SFE object ----
-  sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
-                                  colData = metadata,
-                                  sample_id = sample_id,
-                                  spatialCoordsNames = c("x_centroid", "y_centroid"),
-                                  unit = "micron", BPPARAM = BPPARAM)
-  # add rowData from sce
-  rowData(sfe) <- rowData(sce)
-  # replace gene IDs with with gene Symbols
-  if (any(grep("ENSG", rownames(sfe)))) {
-    if (any(rowData(sce) |> names() == "Symbol"))
-      message(">>> Replacing gene IDs with Symbols")
-    rownames(sfe) <- rowData(sce)$Symbol
-  }
-
+  colData(sce) <- metadata
+  sfe <- toSpatialFeatureExperiment(sce, sample_id = sample_id,
+                                    spatialCoordsNames = c("x_centroid", "y_centroid"),
+                                    unit = "micron", BPPARAM = BPPARAM)
   # add segmentation geometries
   if (!is.null(polys)) {
     if (is.list(polys)) {
