@@ -42,7 +42,8 @@ Default = \code{sample01}.}
 \item{row.names}{String specifying whether to use Ensembl IDs ("id") or gene
 symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 appended to disambiguate in case the same symbol corresponds to multiple
-Ensembl IDs.}
+Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
+symbols are used in the transcript spot files.}
 
 \item{read.image_args}{list of arguments to be passed to
 (`RBioFormats::read.image`)}

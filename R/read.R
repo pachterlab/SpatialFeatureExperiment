@@ -1107,7 +1107,8 @@ readCosMX <- function(data_dir,
 #' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
 #'   symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 #'   appended to disambiguate in case the same symbol corresponds to multiple
-#'   Ensembl IDs.
+#'   Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
+#'   symbols are used in the transcript spot files.
 #' @return An SFE object. If reading segmentations, the cell or nuclei
 #'   segmentation will be saved to `cell_boundaries_sf.parquet` and
 #'   `nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time the
@@ -1166,6 +1167,11 @@ readXenium <- function(data_dir,
   data_dir <- normalizePath(data_dir, mustWork = TRUE)
   flip <- match.arg(flip)
   image <- match.arg(image, several.ok = TRUE)
+  row.names <- match.arg(row.names)
+  if (add_molecules) {
+      message("Must use gene symbols as row names when adding transcript spots.")
+      row.names <- "symbol"
+  }
 
   # Read images ----
   # supports 2 images
