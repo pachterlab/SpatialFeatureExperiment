@@ -1076,16 +1076,16 @@ readCosMX <- function(data_dir,
 }
 
 .check_xenium_fns <- function(data_dir, keyword) {
-  fn <-
+  fn_all <-
     list.files(data_dir,
                pattern = keyword,
                full.names = TRUE)
-  if (any(grep(keyword, fn))) {
-    # prioritize reading .csv data
+  if (any(grep(keyword, fn_all))) {
+    # Priorities: 1. _sf.parquet, 2. csv, 3. parquet
     #..since .parquet has cols with raw bytes format
-    fn <- grep(".csv", fn, value = TRUE)
-  } else if (any(grep(keyword, fn))) {
-    fn <- grep(".parquet", fn, value = TRUE)
+      fn <- grep("_sf.parquet", fn_all, value = TRUE)
+      if (!length(fn)) fn <- grep(".csv", fn_all, value = TRUE)
+      if (!length(fn)) fn <- grep(".parquet", fn_all, value = TRUE)
   }
   if (!length(fn)) {
     stop("No `", keyword, "` file is available")
@@ -1105,7 +1105,13 @@ readCosMX <- function(data_dir,
 #' @param image_threshold Integer value, below which threshold is to set values
 #'   to `NA`, default is to `30L`, this removes some background artifacts.
 #'
-#' @return An SFE object.
+#' @return An SFE object. If reading segmentations, the cell or nuclei
+#'   segmentation will be saved to `cell_boundaries_sf.parquet` and
+#'   `nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time the
+#'   boundaries can be read much more quickly. If reading transcript spots
+#'   (`add_molecules = TRUE`), then the reformatted transcript spots are saved
+#'   to file specified in the `file_out` argument, which is by default
+#'   `tx_spots.parquet` in the same directory as the rest of the data.
 #' @export
 #'
 #' @importFrom sf st_area st_geometry<- st_as_sf
@@ -1152,7 +1158,7 @@ readXenium <- function(data_dir,
                        filter_counts = FALSE,
                        add_molecules = FALSE,
                        BPPARAM = SerialParam(),
-                       file_out = file.path(data_dir, "transcripts_sf.parquet"), ...) {
+                       file_out = file.path(data_dir, "tx_spots.parquet"), ...) {
   data_dir <- normalizePath(data_dir, mustWork = TRUE)
   flip <- match.arg(flip)
   image <- match.arg(image, several.ok = TRUE)
@@ -1252,46 +1258,61 @@ readXenium <- function(data_dir,
 
   # Read cell/nucleus segmentation ----
   if (!is.null(segmentations)) {
-    segmentations <- sort(segmentations)
+      check_installed("sfarrow")
     # get files .parquet or .csv
-    segs <- paste0(sort(segmentations), "_boundaries", collapse = "|")
-    fn_segs <- .check_xenium_fns(data_dir, segs)
+    # What if only cell or only nucleus is available
+    fn_segs <- c(cell = .check_xenium_fns(data_dir, "cell_boundaries"),
+                 nucleus = .check_xenium_fns(data_dir, "nucleus_boundaries"))
+    fn_segs <- fn_segs[segmentations]
     if (length(fn_segs) == 0) {
       warning("No segmentation files are found, check input directory -> `data_dir`")
       polys <- NULL
     }
-    if (any(grep(".csv", fn_segs))) {
-      message(">>> Cell segmentations are found in `.csv` file(s)", "\n",
-              ">>> Reading ",
-              if (length(fn_segs) > 1) { paste0(segmentations, collapse = " and ")
-              } else { segmentations }, " segmentations")
-      # read .csv data
-      polys <- lapply(fn_segs, fread)
-    } else if (any(grep("..parquet", fn_segs))) {
-      check_installed("arrow")
-      message(">>> Cell segmentations are found in `.parquet` file(s)", "\n",
-              ">>> Reading ",
-              if (length(fn_segs) > 1) { paste0(segmentations, collapse = " and ")
-              } else { segmentations }, " segmentations")
-      polys <- lapply(fn_segs, arrow::read_parquet)
-      # convert cell ids, from raw bytes to character
-      polys <- lapply(polys, function(x)
-        .rawToChar_df(x, BPPARAM = BPPARAM))
+    if (any(grep("_sf.parquet", fn_segs))) {
+        message(">>> Preprocessed sf segmentations found\n",
+                ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                " segmentations")
+        polys <- lapply(fn_segs, sfarrow::st_read_parquet)
+    } else {
+        if (any(grep(".csv", fn_segs))) {
+            message(">>> Cell segmentations are found in `.csv` file(s)", "\n",
+                    ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                    " segmentations")
+            # read .csv data
+            polys <- lapply(fn_segs, fread)
+        } else if (any(grep("..parquet", fn_segs))) {
+            check_installed("arrow")
+            message(">>> Cell segmentations are found in `.parquet` file(s)", "\n",
+                    ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                    " segmentations")
+            polys <- lapply(fn_segs, arrow::read_parquet)
+            # convert cell ids, from raw bytes to character
+            polys <- lapply(polys, function(x)
+                .rawToChar_df(x, BPPARAM = BPPARAM))
+        }
+        # generate sf dataframe with geometries
+        message(">>> Making POLYGON geometries")
+        polys <-
+            lapply(polys, function(x) {
+                df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
+                      geometryType = "POLYGON", BPPARAM = BPPARAM) })
+        fn_out <- c(cell = "cell_boundaries_sf.parquet",
+                    nucleus = "nucleus_boundaries_sf.parquet")
+        fn_out <- fn_out[names(fn_segs)]
+        fn_out <- file.path(data_dir, fn_out)
+        message(">>> Saving geometries to parquet files")
+        for (i in seq_along(polys)) {
+            suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+        }
     }
-    # generate sf dataframe with geometries
-    message(">>> Making POLYGON geometries")
-    polys <-
-      lapply(polys, function(x) {
-        df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
-              geometryType = "POLYGON", BPPARAM = BPPARAM) })
     # add names to polys list
-    names(polys) <- segmentations
-    for (i in seq(polys)) {
-      if (flip == "geometry" && !is.null(polys[[i]])) {
-        # Flip the coordinates
+    names(polys) <- c(cell = "cellSeg", nucleus = "nucSeg")[names(fn_segs)]
+    # Flip the coordinates
+    if (flip == "geometry" && !is.null(polys)) {
         mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
-        st_geometry(polys[[i]]) <- st_geometry(polys[[i]]) * mat_flip
-      }
+        for (i in seq_along(polys)) {
+            st_geometry(polys[[i]]) <- st_geometry(polys[[i]]) * mat_flip
+        }
     }
     # keep only single segmentation file
     if (length(polys) == 1) { polys <- polys[[1]] }
