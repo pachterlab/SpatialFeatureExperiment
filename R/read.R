@@ -1212,7 +1212,7 @@ readXenium <- function(data_dir,
             return(read.image_args) })
         message(">>> Reading images with RBioFormats, resolution = ", read.image_args[[1]]$resolution)
         imgs <-
-          lapply(read.image_args, function(i) do.call(RBioFormats::read.image, i) )
+          lapply(read.image_args, function(i) do.call(RBioFormats::read.image, i))
       } else {
         message(">>> Reading images with RBioFormats, resolution = ", 4)
         imgs <-
@@ -1233,15 +1233,15 @@ readXenium <- function(data_dir,
         } else {
           # set some default value
           image_threshold <- 30L
-          message(">>> Filtering image values with `image_threshold` = ", image_threshold)
         }
+        message(">>> Filtering image values with `image_threshold` = ", image_threshold)
         imgs <-
           lapply(imgs, function(x) {
             x@.Data[x@.Data < image_threshold] <- NA
             return(x)})
       }
       # new files
-      img_fn <- gsub("ome.", "", img_fn)
+      img_fn <- gsub(".ome.tif", ".tif", img_fn)
       message(">>> Saving lower resolution images with `.tif` (non OME-TIFF) format:",
               paste0("\n", img_fn))
       # export as .tif
@@ -1264,8 +1264,6 @@ readXenium <- function(data_dir,
     flip <- "none"
   } else if (!any(do_flip) && flip == "image") { flip <- "geometry" }
 
-  # ----
-
   # Read cell/nucleus segmentation ----
   if (!is.null(segmentations)) {
       check_installed("sfarrow")
@@ -1282,7 +1280,12 @@ readXenium <- function(data_dir,
         message(">>> Preprocessed sf segmentations found\n",
                 ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
                 " segmentations")
-        polys <- lapply(fn_segs, sfarrow::st_read_parquet)
+      # add cell id to rownames
+      polys <- lapply(fn_segs, function(i) {
+        polys <- sfarrow::st_read_parquet(i)
+        rownames(polys) <- polys$ID
+        return(polys)
+        })
     } else {
         if (any(grep(".csv", fn_segs))) {
             message(">>> Cell segmentations are found in `.csv` file(s)", "\n",
