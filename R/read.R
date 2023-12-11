@@ -290,7 +290,27 @@ read10xVisiumSFE <- function(samples = "",
   }
   fn
 }
-
+                           
+#' sanity on geometries to remove any self-intersection
+#' @importFrom sf st_buffer st_is_valid
+.check_st_valid <- function(sf_df = NULL, dist = 0) {
+  if (!is(sf_df, "list")) { sf_df <- list(sf_df) } 
+  test_st_valid <-
+    lapply(sf_df, function(i) {
+      i <- st_geometry(i) |> st_is_valid()
+      i <- any(x = !(i)) }) |> unlist()
+  if (any(test_st_valid)) {
+    seg <- which(test_st_valid)
+    for (i in seq(seg)) {
+      geoms <-
+        st_buffer(sf_df[[i]] |> st_geometry(), dist = 0)
+      st_geometry(sf_df[[i]] ) <- geoms
+    }
+  }
+  if (length(sf_df) == 1) { sf_df <- sf_df[[1]] }
+  return(sf_df)
+}
+                           
 #' Read Vizgen MERFISH output as SpatialFeatureExperiment
 #'
 #' This function reads the standard Vizgen MERFISH output into an SFE object.
@@ -619,6 +639,8 @@ readVizgen <- function(data_dir,
     cellSeg(sfe) <- bboxes
   }
 
+  # sanity on geometries
+  polys <- .check_st_valid(polys)
   if (!is.null(polys)) {
     rownames(polys) <- polys$ID
     polys$ID <- NULL
@@ -990,7 +1012,7 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
                         BPPARAM = BPPARAM)
   if (is(mols, "sf")) {
     txSpots(sfe, withDimnames = TRUE) <- mols
-  } else if (is.list(mols)) {
+  } else if (is(mols, "list")) {
     rowGeometries(sfe) <- c(rowGeometries(sfe), mols)
   }
   sfe
@@ -1061,6 +1083,8 @@ readCosMX <- function(data_dir,
   sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
                                   spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
                                   unit = "full_res_image_pixel")
+  # sanity on geometries
+  polys <- .check_st_valid(polys)
   cellSeg(sfe) <- polys
 
   if (add_molecules) {
@@ -1204,7 +1228,7 @@ readXenium <- function(data_dir,
     } else { img_fn_add <- NULL }
     if (is.null(img_fn_add)) {
       message(">>> Images with OME-TIFF format are found:", paste0("\n", basename(img_fn)))
-      if (is.list(read.image_args) && !is.null(read.image_args)) {
+      if (is(read.image_args, "list") && !is.null(read.image_args)) {
         # add file name args
         read.image_args <-
           lapply(seq(img_fn), function(x) {
@@ -1375,7 +1399,7 @@ readXenium <- function(data_dir,
     }}
   # filtering segmentations
   if (!is.null(polys)) {
-    if (is.list(polys)) {
+    if (is(polys, "list")) {
       for (i in seq(polys)) {
         # filter geometries
         matched.cells <- match(colnames(sce), polys[[i]]$ID) |> stats::na.omit()
@@ -1403,8 +1427,10 @@ readXenium <- function(data_dir,
                                     spatialCoordsNames = c("x_centroid", "y_centroid"),
                                     unit = "micron", BPPARAM = BPPARAM)
   # add segmentation geometries
+  # sanity on geometries
+  polys <- .check_st_valid(polys)                          
   if (!is.null(polys)) {
-    if (is.list(polys)) {
+    if (is(polys, "list")) {
       colGeometries(sfe) <- c(colGeometries(sfe), polys)
     } else if (is(polys, "sf")) {
       rownames(polys) <- polys$ID
