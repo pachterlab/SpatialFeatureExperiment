@@ -90,7 +90,7 @@ pl1 <-
 pl1
 
 
-# OK -> get images ----
+# get images ----
 # read the actual image 
 img_fns <- list.files(data_dir, 
                       full.names = TRUE,
@@ -172,24 +172,105 @@ img_test <- read.image(paste0(dir_github, basename(img_fns[1])),
 img_test %>% plot
 
 
-# OK -> get count matrix ----
+# get mols coords ----
+# read original transcripts 
+fn_mols <- SpatialFeatureExperiment:::.check_xenium_fns(data_dir, "transcripts")
+mols_parq <- arrow::read_parquet(gsub(".csv.gz", ".parquet", fn_mols))
+mols_parq %>% head
+mols_orig <- fread(fn_mols)
+mols_orig %>% head		 
+
+# transcrip coords from cropped obj
+# NOTE - molecules are not cropped (as in full obj)
+rowGeometry(sfe_sub) %>% str
+rowGeometry(sfe_sub) %>% st_geometry() %>% str
+# chack xy range
+mols_orig %>% 
+  select(starts_with(c("x_loc", "y_loc"))) %>% 
+  apply(., 2, range)
+# flip mols coords to match cell segs
+rowGeometry(sfe_sub, 1) %>% st_geometry() %>% st_bbox()
+mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
+(st_geometry(rowGeometry(sfe_sub, 1)) * mat_flip) %>% st_bbox
+mols <- rowGeometry(sfe_sub, 1)
+st_geometry(mols) <- (st_geometry(mols) * mat_flip)
+mols %>% str	
+# remove any NAs
+mols %<>% na.omit		 
+
+# plot 1 molecule
+mols_orig %>%
+  filter(feature_name == "CD3D") %>%
+  ggplot(aes(x_location, y_location)) &
+  geom_hex(bins = 50)
+
+# filter orginal mols given cell segs bbox	 
+bbox_mols <- 
+  cellSeg(sfe_sub) %>% 
+  st_geometry() %>%
+  st_bbox()
+# filter molecules
+mols_filt <-
+  filter(mols_orig %>% mutate(y_location = -y_location),
+         between(x_location, bbox_mols[1], bbox_mols[3]) & 
+           between(y_location, bbox_mols[2], bbox_mols[4]) &
+           # qv/min_phred >= 20
+           qv >= 20)
+mols_filt %>% str
+mols_filt$qv %>% range
+
+# downsample mols a bit more
+set.seed(567)
+mols_filt %<>% 
+  dplyr::sample_frac(size = 0.12) %>%
+  filter(# keep genes that are present in rowGeometry
+    feature_name %in% mols$ID)		 
+# check range
+mols_filt %>% 
+  select(contains("location")) %>%
+  apply(., 2, range)
+mols_filt %>% str
+
+# plot 1 molecule for all z-planes
+mols_filt %>%
+  filter(feature_name == "CD3D") %>%
+  ggplot(aes(x_location, y_location, color = z_location)) &
+  geom_point(shape = 19) &
+  # add previous plot
+  pl1
+# things seem to correspond, woooh!
+
+# export transcripts coords
+mols_filt %<>%
+  # flip y coord back
+  mutate(y_location = -y_location) 
+fwrite(mols_filt, file.path(dir_github, "transcripts.csv.gz"))
+arrow::write_parquet(mols_filt, file.path(dir_github, "transcripts.parquet"))
+
+
+# get count matrix ----
 mat_sub <- assay(sfe_sub, "counts")
+# filter count matrix to keep genes present in mols coords
+gene_indx <- which(rownames(mat_sub) %in% unique(mols_filt$feature_name))
+mat_sub <- mat_sub[gene_indx,]
+
 # export it
 DropletUtils::write10xCounts(path = file.path(dir_github, "cell_feature_matrix.h5"), 
                              mat_sub, 
-                             gene.id = rowData(sfe_sub)$ID, 
-                             gene.symbol = rowData(sfe_sub)$Symbol, 
-                             gene.type = rowData(sfe_sub)$Type,
+                             gene.id = rowData(sfe_sub)$ID[gene_indx], 
+                             gene.symbol = rowData(sfe_sub)$Symbol[gene_indx], 
+                             gene.type = rowData(sfe_sub)$Type[gene_indx],
                              overwrite = TRUE, 
                              version = "3"
 )
 # check it
 sce <- read10xCounts(file.path(dir_github, "cell_feature_matrix.h5"),
                      col.names = TRUE, row.names = c("symbol"))
-identical(rowData(sce), rowData(sfe_sub)) # TRUE		   
+identical(mat_sub %>% rownames, 
+          assay(sce, "counts") %>% rownames) # TRUE
 
 
-# OK -> get metadata ----
+# get metadata ----
 meta_orig <- fread(file.path(data_dir, "cells.csv.gz"))
 meta_orig %>% str
 # get metadata df from sce, sfe or miloR obj
@@ -216,7 +297,7 @@ arrow::write_parquet(meta_sub, file.path(dir_github, "cells.parquet"))
 system(paste0("ls -lth ", dir_github), intern = TRUE)
 
 
-# OK -> get cell segmentations ----
+# get cell segmentations ----
 fn_segs <- list.files(data_dir, pattern = "boundaries.", full.names = TRUE)
 fn_segs
 polys_orig <- lapply(grep("boundaries.csv.gz", fn_segs, value = TRUE), fread)
@@ -254,72 +335,6 @@ for (i in seq(polys_sub)) {
                                  grep("boundaries.parquet", basename(fn_segs), value = TRUE))[i])
   }
 
-# OK -> get mols coords ----
-# read original transcripts 
-fn_mols <- SpatialFeatureExperiment:::.check_xenium_fns(data_dir, "transcripts")
-mols_parq <- arrow::read_parquet(gsub(".csv.gz", ".parquet", fn_mols))
-mols_parq %>% head
-mols_orig <- fread(fn_mols)
-mols_orig %>% head		 
-
-# transcrip coords from cropped obj
-# NOTE - molecules are not cropped (as in full obj)
-rowGeometry(sfe_sub) %>% str
-rowGeometry(sfe_sub) %>% st_geometry() %>% str
-# chack xy range
-mols_orig %>% 
-  select(starts_with(c("x_loc", "y_loc"))) %>% 
-  apply(., 2, range)
-# flip mols coords to match cell segs
-rowGeometry(sfe_sub, 1) %>% st_geometry() %>% st_bbox()
-mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
-(st_geometry(rowGeometry(sfe_sub, 1)) * mat_flip) %>% st_bbox
-mols <- rowGeometry(sfe_sub, 1)
-st_geometry(mols) <- (st_geometry(mols) * mat_flip)
-mols %>% str	
-
-# plot 1 molecule
-mols_orig %>%
-  filter(feature_name == "CD3D") %>%
-  ggplot(aes(x_location, y_location)) &
-  geom_hex(bins = 50)
-
-# filter orginal mols given cell segs bbox	 
-bbox_mols <- 
-  cellSeg(sfe_sub) %>% 
-  st_geometry() %>%
-  st_bbox()
-# filter molecules
-mols_filt <-
-  filter(mols_orig %>% mutate(y_location = -y_location),
-         between(x_location, bbox_mols[1], bbox_mols[3]) & 
-           between(y_location, bbox_mols[2], bbox_mols[4]))
-mols_filt %>% str
-# downsample mols a bit more
-set.seed(567)
-mols_filt %<>% 
-  dplyr::sample_frac(size = 0.12)
-# check range
-mols_filt %>% 
-  select(contains("location")) %>%
-  apply(., 2, range)
-mols_filt %>% str
-
-# plot 1 molecule for all z-planes
-mols_filt %>%
-  filter(feature_name == "CD3D") %>%
-  ggplot(aes(x_location, y_location, color = z_location)) &
-  geom_point(shape = 19) &
-  # add previous plot
-  pl1
-# things seem to correspond, woooh!
-
-# export transcripts coords ----
-mols_filt %<>%
-  # flip y coord back
-  mutate(y_location = -y_location) 
-fwrite(mols_filt, file.path(dir_github, "transcripts.csv.gz"))
-arrow::write_parquet(mols_filt, file.path(dir_github, "transcripts.parquet"))
 
 # Test loading the toy dataset ----
 dir_github <- "./test/xenium_github/"
@@ -381,3 +396,4 @@ plotSpatialFeature(sfe_sub,
                    dark = TRUE,
                    image_id = imgData(sfe_sub)$image_id[2],
 ) & Seurat::DarkTheme()
+         
