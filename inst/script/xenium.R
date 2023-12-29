@@ -51,6 +51,7 @@ sfe <-
              add_molecules = TRUE,
              BPPARAM = BPPARAM,
              file_out = NULL
+             #file_out = file.path(data_dir, "tx_spots.parquet")
   )
 # normalize raw counts
 sfe %<>% logNormCounts()
@@ -62,51 +63,58 @@ rowGeometry(sfe) %>% str
 bbox_use <- c(xmin = 1000, ymin = -1400, xmax = 1500, ymax = -1000)
 plotSpatialFeature(sfe, 
                    features = rownames(sfe)[1], 
+                   #features = "NegControlCodeword_0500",
                    bbox = bbox_use,
                    size = 4,
+                   #colGeometryName = "centroids",
                    colGeometryName = "nucSeg",
                    dark = TRUE,
                    #scattermore = TRUE, # will plot only centroids!
-                   image_id = imgData(sfe)$image_id[2],
+                   image_id = imgData(sfe)$image_id[1],
 ) & Seurat::DarkTheme()
 
 # make a small cropped object ----
 bbox_use <- c(xmin = 1000, ymin = -1400, xmax = 1400, ymax = -1000)
 sfe_sub <- 
   SpatialFeatureExperiment::crop(sfe, 
-                                 colGeometryName = "cellSeg",
+                                 colGeometryName = "nucSeg",
                                  sample_id = "test_xenium",
                                  y = bbox_use)
 sfe_sub
 pl1 <-
   plotSpatialFeature(sfe_sub, 
                      features = rownames(sfe_sub)[1], 
+                     #features = "NegControlCodeword_0500",
+                     #bbox = bbox_use,
                      size = 4,
                      #colGeometryName = "centroids",
                      colGeometryName = "nucSeg",
                      dark = TRUE,
-                     image_id = imgData(sfe_sub)$image_id[2],
+                     #scattermore = TRUE, # will plot only centroids!
+                     image_id = imgData(sfe_sub)$image_id[1],
   ) & Seurat::DarkTheme()
 pl1
 
 
 # get images ----
-# read the actual image 
+# read image metadata
 img_fns <- list.files(data_dir, 
                       full.names = TRUE,
                       pattern = "ome.tif") %>% 
   grep("morphology_", ., value = TRUE)
 img_fns
-# read image metadata
 meta_im <- 
   lapply(seq(img_fns), function(i) {
     read.omexml(img_fns[i]) %>% 
       XML::xmlInternalTreeParse() %>% 
       XML::xmlToList()
+    #strsplit(., split = " ") %>% unlist %>%
+    #grep("PhysicalSize|Size[XY]", ., value = TRUE)
   })
+# image metadata
 meta_im %>% str
 
-# read the actual image 
+# read the actual image with low resolution
 img_fns <- list.files(data_dir, 
                       full.names = TRUE,
                       pattern = "ome.tif") %>% 
@@ -115,6 +123,7 @@ img_fns
 imgs <- 
   lapply(seq(img_fns), function(i) 
     read.image(img_fns[i], 
+               #subset = list(x = 1200:1300, y = 1200:1300),
                resolution = 4L,
                #proprietary.metadata = TRUE,
                filter.metadata = TRUE,
@@ -122,7 +131,7 @@ imgs <-
                normalize = FALSE))
 imgs %>% str
 # plot one image
-imgs[[1]]@.Data %>% t %>% rast %>% plot   
+imgs[[1]]@.Data %>% t %>% rast %>% plot
 
 # from object, get images in a list
 imgData(sfe_sub)
@@ -145,7 +154,35 @@ img <-
   })
 img[[1]] %>% plot
 
-# adjust image given the cropped object bbox
+# Add bbox-adjested full image dims!
+# full image extent
+#c(0, full_res_img_width * px_size_micron, 
+#  0, full_res_img_heigth * px_size_micron)
+# $ PhysicalSizeY    : chr "0.2125"
+# $ PhysicalSizeX    : chr "0.2125"
+# $ SizeY            : chr "10307"
+# $ SizeX            : chr "11454"
+extent <- 
+  setNames(c(0, 11454 * 0.2125,  
+             0, 10307 * 0.2125), 
+           c("xmin", "xmax", "ymin", "ymax"))
+img_test <- imgs[[1]]@.Data %>% t %>% rast 
+ext(img_test) <- extent	 
+# crop using bbox
+img_crop <-
+  terra::crop(terra::flip(img_test), 
+              c("xmin" = 1000, "xmax" = 1400, "ymin" = 1000, "ymax" = 1400))
+img_crop <- terra::flip(img_crop)
+img_crop %>% plot
+img_crop
+extent <- ext(img_crop) %>% as.vector
+# flip it 
+extent[c("ymin", "ymax")] <- -extent[c("ymax", "ymin")]
+ext(img_crop) <- extent
+c(extent / 0.2125) # cropped pixel image dim
+#xmin: 4706.46540880503 xmax: 6587.45073375262 ymin: -6585.91692546584 ymax: -4705.36956521739
+
+# adjust image given the cropped object bbox		 
 imgs %>% str
 for (i in seq(imgs)) {
   imgs[[i]]@.Data <- 
@@ -155,7 +192,10 @@ for (i in seq(imgs)) {
   coreMetadata(imgs[[i]])$sizeX <- ncol(img[[i]])
   coreMetadata(imgs[[i]])$sizeY <- nrow(img[[i]])
   # add part of original metadata
-  globalMetadata(imgs[[i]]) <- meta_im[[i]]$Image$Pixels$.attrs	
+  globalMetadata(imgs[[i]]) <- meta_im[[i]]$Image$Pixels$.attrs
+  # change full image dim to low res cropped image	
+  globalMetadata(imgs[[i]])[c("SizeX", "SizeY")] <- 
+    sqrt(c(extent / 0.2125)[c("xmax", "ymax")] ^ 2)	
 }
 
 # exporting as `.ome.tif` with single res. ----
@@ -263,9 +303,10 @@ DropletUtils::write10xCounts(path = file.path(dir_github, "cell_feature_matrix.h
                              overwrite = TRUE, 
                              version = "3"
 )
+
 # check it
 sce <- read10xCounts(file.path(dir_github, "cell_feature_matrix.h5"),
-                     col.names = TRUE, row.names = c("symbol"))
+  col.names = TRUE, row.names = c("symbol"))
 identical(mat_sub %>% rownames, 
           assay(sce, "counts") %>% rownames) # TRUE
 
@@ -327,14 +368,12 @@ parq_sub %>% str
 
 # export .csv.gz & .parquet
 for (i in seq(polys_sub)) {
-  fwrite(polys_sub[[i]], 
-         file = file.path(dir_github,
-                          grep("boundaries.csv.gz", basename(fn_segs), value = TRUE))[i])
+  fwrite(polys_sub[[i]], file = file.path(dir_github,
+                                          grep("boundaries.csv.gz", basename(fn_segs), value = TRUE))[i])
   arrow::write_parquet(parq_sub[[i]], 
                        file.path(dir_github,
                                  grep("boundaries.parquet", basename(fn_segs), value = TRUE))[i])
-  }
-
+}
 
 # Test loading the toy dataset ----
 dir_github <- "./test/xenium_github/"
@@ -380,20 +419,25 @@ txSpots(sfe) %>% st_geometry() %>% st_bbox
 options(repr.plot.height = 5, repr.plot.width = 10)
 plotSpatialFeature(sfe, 
                    features = rownames(sfe)[1], 
+                   #features = "NegControlCodeword_0500",
+                   #bbox = bbox_use,
                    size = 4,
                    #colGeometryName = "centroids",
                    colGeometryName = "nucSeg",
                    dark = TRUE,
-                   image_id = imgData(sfe)$image_id[2],
+                   #scattermore = TRUE, # will plot only centroids!
+                   image_id = imgData(sfe)$image_id[1],
 ) & Seurat::DarkTheme()
 
 # downsampled obj		 
 plotSpatialFeature(sfe_sub, 
                    features = rownames(sfe_sub)[1], 
+                   #features = "NegControlCodeword_0500",
+                   #bbox = bbox_use,
                    size = 4,
                    #colGeometryName = "centroids",
                    colGeometryName = "nucSeg",
                    dark = TRUE,
-                   image_id = imgData(sfe_sub)$image_id[2],
+                   #scattermore = TRUE, # will plot only centroids!
+                   image_id = imgData(sfe_sub)$image_id[1],
 ) & Seurat::DarkTheme()
-         
