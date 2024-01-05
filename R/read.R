@@ -1031,24 +1031,26 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
     }
   
   # make sure that sfe and rowGeometries have the same features
-  if (length(rowGeometries(sfe)) > 1) {
-    # check if all features match between rowGeometries and SFE object
-    gene_names <- 
-      lapply(rowGeometries(sfe), function(i) {
+  # NOTE, if `min_phred = NUL`L, no filtering of features occur
+  if (!is.null(min_phred)) {
+    if (length(rowGeometries(sfe)) > 1) {
+      # check if all features match between rowGeometries and SFE object
+      gene_names <- 
+        lapply(rowGeometries(sfe), function(i) {
+          gene_indx <-
+            which(rownames(sfe) %in% stats::na.omit(i$ID))
+          gene_name <- rownames(sfe[gene_indx,])
+          return(gene_name)
+        }) |> unlist() |> unique()
+      if (!all(rownames(sfe) %in% gene_names)) {
         gene_indx <-
-          which(rownames(sfe) %in% stats::na.omit(i$ID))
-        gene_name <- rownames(sfe[gene_indx,])
-        return(gene_name)
-      }) |> unlist() |> unique()
-    if (!all(rownames(sfe) %in% gene_names)) {
-      gene_indx <-
-        which(rownames(sfe) %in% gene_names)
-      # genes/features that are removed
-      genes_rm <- rownames(sfe)[-gene_indx]
-      message(">>> Total of ", length(genes_rm),
-              " features/genes with `min_phred` >= ", min_phred, " are removed from SFE object", 
-              "\n", ">>> To keep all features -> set `min_phred = NULL`")
-      sfe <- sfe[gene_indx,]
+          which(rownames(sfe) %in% gene_names)
+        # genes/features that are removed
+        genes_rm <- rownames(sfe)[-gene_indx]
+        message(">>> Total of ", length(genes_rm),
+                " features/genes with `min_phred` >= ", min_phred, " are removed from SFE object", 
+                "\n", ">>> To keep all features -> set `min_phred = NULL`")
+        sfe <- sfe[gene_indx,]
       }
     } else if (length(rowGeometries(sfe)) == 1) {
       # NOTE, transcripts are filtered with default qv/min_phred >= 20
@@ -1065,6 +1067,7 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
         sfe <- sfe[gene_indx,]
       }
     }
+  }
   sfe
 }
 
