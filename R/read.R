@@ -642,9 +642,9 @@ readVizgen <- function(data_dir,
     cellSeg(sfe) <- bboxes
   }
   
-  # sanity on geometries
-  polys <- .check_st_valid(polys)
   if (!is.null(polys)) {
+    # sanity on geometries
+    polys <- .check_st_valid(polys)
     rownames(polys) <- polys$ID
     #polys$ID <- NULL
     # add sample_id
@@ -1489,9 +1489,10 @@ readXenium <- function(data_dir,
   colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
   
   # add segmentation geometries
-  # sanity on geometries
-  polys <- .check_st_valid(polys)     
+       
   if (!is.null(polys)) {
+    # sanity on geometries
+    polys <- .check_st_valid(polys)
     if (is(polys, "list")) {
       polys <- 
         lapply(polys, function(i) { 
