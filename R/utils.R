@@ -98,3 +98,7 @@ changeSampleIDs <- function(sfe, replacement) {
 callMeta <- function(object = NULL) {
     return(colData(object)@listData |> as.data.frame.list())
 }
+
+.path_valid2 <- function(x) {
+    all(c(length(x) == 1, is.character(x), file.exists(x)))
+}

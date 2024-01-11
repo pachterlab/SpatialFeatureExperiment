@@ -1197,6 +1197,7 @@ readXenium <- function(data_dir,
   } else { image_match <- NaN }
 
   if (!all(image == image_match)) {
+      check_installed("RBioFormats")
     # check which remaining image to convert
     if (any(image == image_match)) {
       img_fn_add <-
@@ -1237,7 +1238,7 @@ readXenium <- function(data_dir,
         }
         imgs <-
           lapply(imgs, function(x) {
-            x@.Data[x@.Data < image_threshold] <- NA
+            x[x < image_threshold] <- NA
             return(x)})
       }
       # new files

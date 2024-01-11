@@ -68,12 +68,15 @@ Collate:
 Suggests: 
     arrow,
     BiocStyle,
+    EBImage,
     knitr,
+    RBioFormats,
     rhdf5,
     rmarkdown,
     sfarrow,
     SFEData,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    xml2
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

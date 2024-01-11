@@ -226,4 +226,7 @@ setGeneric("unit", function(x) standardGeneric("unit"))
 #' @export
 setGeneric("transposeImg", function(x, ...) standardGeneric("transposeImg"))
 
+#' @export
+setGeneric("cropImg", function(x, bbox, ...) standardGeneric("cropImg"))
+
 if (!isGeneric("saveRDS")) {setGeneric("saveRDS", function (object, file="", ascii=FALSE, version=NULL, compress=TRUE, refhook=NULL) standardGeneric("saveRDS"))}
