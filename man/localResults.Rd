@@ -28,6 +28,7 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   withDimnames = TRUE,
+  swap_rownames = NULL,
   ...
 )
 
@@ -39,6 +40,7 @@
   colGeometryName = NULL,
   annotGeometryName = NULL,
   withDimnames = TRUE,
+  swap_rownames = NULL,
   ...
 ) <- value
 
@@ -104,17 +106,17 @@ results.}
 rownames) of the gene count matrix should correspond to row names of the
 \code{sf} data frames of interest.}
 
-\item{...}{Ignored}
-
-\item{value}{Values to set, should be either a matrix or a data frame.}
-
-\item{type}{Name or index of the spatial method used, such as "localmoran".}
-
 \item{swap_rownames}{Name of a column in \code{rowData} to identify features
 instead of the row names of the SFE object. For example, if the row names
 of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
 column in \code{rowData}, then putting "symbol" for this argument will use
 the gene symbols to identify which gene's local results to get or set.}
+
+\item{...}{Ignored}
+
+\item{value}{Values to set, should be either a matrix or a data frame.}
+
+\item{type}{Name or index of the spatial method used, such as "localmoran".}
 
 \item{feature}{Feature whose local results to get or set, for
 \code{localResult} getter and setter for one feature at a time.}

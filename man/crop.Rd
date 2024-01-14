@@ -8,7 +8,7 @@ crop(
   x,
   y = NULL,
   colGeometryName = 1L,
-  sample_id = NULL,
+  sample_id = "all",
   pred = st_intersects,
   op = st_intersection,
   xmin = deprecated(),
