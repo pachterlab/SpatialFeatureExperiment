@@ -474,9 +474,21 @@ setMethod("imgSource", "BioFormatsImage", function(x) x@path)
 
 # TODO: S4 crop methods for BioFormatsImage, EBImage, and LoadedSpatialImage
 # EBImage crops with matrix-like subsetting of pixels
-setMethod("crop", "BioFormatsImage", function(x, bbox) {
+# What about StoredSpatialImage and RemoteSpatialImage? Convert to Loaded first
+# since there's no slot to record extent.
+setMethod("cropImg", "BioFormatsImage", function(x, bbox) {
 
 })
+
+setMethod("cropImg", "EBImage", function(x, bbox) {
+
+})
+
+setMethod("cropImg", "LoadedSpatialImage", function(x, bbox) {
+    # Basically I need the same internal function already implemented in
+    # toEBImage to convert bbox to pixel range
+})
+
 .crop_imgs <- function(x, bboxes) {
     # Only works for SpatRaster
     if (nrow(imgData(x))) {
