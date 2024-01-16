@@ -96,5 +96,7 @@ changeSampleIDs <- function(sfe, replacement) {
 #' sfe <- McKellarMuscleData(dataset = "small")
 #' sfe |> callMeta() |> str
 callMeta <- function(object = NULL) {
-    return(colData(object)@listData |> as.data.frame.list())
+    return(colData(object) |> 
+         methods::slot(name = "listData") |> 
+         as.data.frame.list())
 }
