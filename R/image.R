@@ -107,7 +107,7 @@ setMethod("ext", "EBImage", function(x) x@ext)
 
 #' @rdname SFE-image
 #' @export
-setMethod("ext", "SpatRasterImage", function(x) ext(x@image))
+setMethod("ext", "SpatRasterImage", function(x) ext(x@image) |> as.vector())
 
 .set_ext <- function(x, value) {
     x@ext <- value
@@ -126,7 +126,7 @@ setReplaceMethod("ext", c("EBImage", "numeric"), .set_ext)
 #' @export
 setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
                  function(x, value) {
-                     ext(x@image) <- value
+                     ext(x@image) <- value[c("xmin", "xmax", "ymin", "ymax")]
                      x
                  })
 
@@ -143,27 +143,42 @@ setValidity("EBImage", function(x) {
     if (length(out)) return(out) else TRUE
 })
 
-# How useful is scaleFactor here?
-toEBImage <- function(bfi, resolution = 4L, scaleFactor = NULL) {
+#' Convert images to EBImage
+#'
+#' The \code{EBImage} class is a thin wrapper around the \code{Image} class in
+#' \code{EBImage} so it inherits from \code{VirtualSpatialImage} as required by
+#' \code{SpatialExperiment} and has extent as used in Voyager's plotting
+#' functions. This function converts \code{SpatRasterImage} (thin wrapper around
+#' the class in \code{terra}) and \code{BioFormatsImage} into \code{EBImage} for
+#' image operations as implemented in the \code{EBImage} package.
+#'
+#' @param x Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.
+#' @param resolution Integer, which resolution in the \code{BioFormatsImage} to
+#' read and convert. Defaults to 4, which is a lower resolution.
+#' @return A \code{EBImage} object. The image is loaded into memory.
+#' @name toEBImage
+#' @aliases toEBImage
+#' @export
+setMethod("toEBImage", "BioFormatsImage", .toEBImage)
+
+#' @rdname toEBImage
+#' @export
+setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
+
+.toEBImage <- function(x, resolution = 4L) {
     check_installed(c("xml2", "RBioFormats"))
     # PhysicalSizeX seems to be a standard field
     if (length(resolution) != 1L ||
         !isTRUE(all.equal(floor(resolution), resolution))) {
         stop("resolution must be integer of length 1.")
     }
-    if (!is.null(scaleFactor) &&
-        (length(scaleFactor) != 1L || !is.numeric(scaleFactor) ||
-         any(scaleFactor <= 0L))) {
-        stop("scaleFactor must be a positive number.")
-    }
-    file <- imgSource(bfi)
+    file <- imgSource(x)
     xml_meta <- RBioFormats::read.omexml(file) |>
         xml2::read_xml() |> xml2::as_list()
     psx <- attr(xml_meta$OME$Image$Pixels$TiffData, "PhysicalSizeX")
     psy <- attr(xml_meta$OME$Image$Pixels$TiffData, "PhysicalSizeY")
-    if (is.null(psx) && is.null(psy) && is.null(scaleFactor)) {
-        warning("Physical pixel size absent from image metadata. ",
-                "Unspecified scaleFactor assumed to be 1.")
+    if (is.null(psx) && is.null(psy)) {
+        stop("Physical pixel size absent from image metadata.")
     }
     if (!is.null(psx) && is.null(psy)) {
         message("Assuming equal physical pixel size on x and y.")
@@ -172,42 +187,50 @@ toEBImage <- function(bfi, resolution = 4L, scaleFactor = NULL) {
         message("Assuming equal physical pixel size on x and y.")
         psx <- psy
     }
-    if (!is.null(psx) && !is.null(psy) && !is.null(scaleFactor)) {
-        sfx <- 1/psx
-        sfy <- 1/psy # I think x and y sizes are usually the same but just in case
-        if (!isTRUE(all.equal(sfx, scaleFactor)))
-            message("Physical pixel size found in metadata. Ignoring scaleFactor.")
+    sfx <- 1/psx
+    sfy <- 1/psy
+    meta <- RBioFormats::read.metadata(file) |>
+        RBioFormats::coreMetadata()
+    # Only 1 resolution is present
+    one_res <- "sizeX" %in% names(meta)
+    if (one_res) {
+        resolution <- 1L
+        sizeX_full <- meta$sizeX
+        sizeY_full <- meta$sizeY
+    } else {
+        sizeX_full <- meta[[1]]$sizeX
+        sizeY_full <- meta[[1]]$sizeY
     }
-    if (is.null(psx) && is.null(psy) && !is.null(scaleFactor)) {
-        sfx <- sfy <- scaleFactor
-    }
-    if (!is.na(ext(bfi))) {
-        bbox_use <- ext(bfi)
-        x_nms <- c("xmin", "xmax")
-        y_nms <- c("ymin", "ymax")
+    min_nms <- c("xmin", "ymin")
+    max_nms <- c("xmax", "ymax")
+    x_nms <- c("xmin", "xmax")
+    y_nms <- c("ymin", "ymax")
+    if (!is.na(ext(x))) {
+        bbox_use <- ext(x)
         # Convert to full res pixel space
         bbox_use[x_nms] <- bbox_use[x_nms] * sfx
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
         # Convert to lower res pixel space
         if (resolution > 1L) {
-            meta <- RBioFormats::read.metadata(file) |>
-                RBioFormats::coreMetadata()
             sizeX <- meta[[resolution]]$sizeX
             sizeY <- meta[[resolution]]$sizeY
-            sizeX_full <- meta[[1]]$sizeX
-            sizeY_full <- meta[[1]]$sizeY
             sfx2 <- sizeX/sizeX_full
             sfy2 <- sizeY/sizeY_full
             bbox_use[x_nms] <- bbox_use[x_nms] * sfx2
             bbox_use[y_nms] <- bbox_use[y_nms] * sfy2
-        }
-        min_nms <- c("xmin", "ymin")
-        max_nms <- c("xmax", "ymax")
+        } else sfx2 <- sfy2 <- 1
         bbox_use[min_nms] <- floor(bbox_use[min_nms])
         bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
         subset_use <- list(x = seq(bbox_use["xmin"], bbox_use["xmax"], by = 1L),
                            y = seq(bbox_use["ymin"], bbox_use["ymax"], by = 1L))
-    } else subset_use <- list()
+        # Extent should account for the pixels
+        ext_use <- bbox_use
+        ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
+        ext_use[y_nms] <- ext_use[y_nms]/(sfy*sfy2)
+    } else {
+        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
+        subset_use <- list()
+    }
 
     img <- RBioFormats::read.image(file = file,
                                    resolution = resolution,
@@ -215,14 +238,43 @@ toEBImage <- function(bfi, resolution = 4L, scaleFactor = NULL) {
                                    read.metadata = FALSE,
                                    normalize = FALSE,
                                    subset = subset_use)
-    EBImage(img, ext(bfi))
+    EBImage(img, ext_use)
 }
 
-toSpatRasterImage <- function(bfi, resolution = 4L, scaleFactor = NULL) {
+# SpatRasterImage method: allow downsampling first
+# From tidyterra and ggspavis::plotVisium
+.resample_spat <- function(r, maxcell = 50000) {
+    if (terra::ncell(r) > 1.1 * maxcell) {
+        r <- terra::spatSample(r, maxcell,
+                               as.raster = TRUE,
+                               method = "regular"
+        )
+    }
+    return(r)
+}
+
+# TODO: refactor functions related to geom_spi_rgb in Voyager since some of the code got moved here
+.toEBImage2 <- function(x, maxcell = 1e7) {
+    # 1e7 comes from the number of pixels in resolution = 4L in the ome.tiff
+    if (length(names(x)) == 3L) {
+        names(x) <- c("r", "g", "b")
+        # Remove RGB settings, better plot without it
+        terra::RGB(x) <- NULL
+    }
+    x <- .resample_spat(x, maxcell)
+    # Problem: in EBImage, the 1st dimension is x/column in the image
+    if (length(names(x)) == 3L)
+        out <- terra::as.array(x) |> aperm(c(2,1,3)) |> Image(colormode = "Color")
+    else
+        out <- terra::as.array(x)[,,1] |> t() |> Image(colormode = "Grayscale")
+    out
+}
+
+toSpatRasterImage <- function(x, resolution = 4L) {
     check_installed("RBioFormats")
     # Only for OME-TIFF, haven't tested on other BioFormats
-    img <- toEBImage(bfi, resolution, scaleFactor)
-    img_fn <- gsub("ome.", "", imgSource(bfi))
+    img <- toEBImage(x, resolution)
+    img_fn <- gsub("ome.", "", imgSource(x))
     message(">>> Saving lower resolution images with `.tif` (non OME-TIFF) format:",
             paste0("\n", img_fn))
     RBioFormats::write.image(img@image, file = img_fn, force = TRUE)
@@ -268,11 +320,11 @@ setMethod("addImg", "SpatialFeatureExperiment",
               return(x)
           })
 
-.get_imgData <- function(img, sample_id, image_id, extent = NULL,
+.get_imgData <- function(img, sample_id, image_id, extent = NA,
                          scale_fct = 1, flip = FALSE) {
     # EBImage
     if (is(img, "Image")) {
-        spi <- EBImage(img)
+        spi <- EBImage(img, extent)
     } else if (.path_valid2(img)) {
         e <- tryCatch(rast(img), error = function(e) e)
         if (is(e, "error")) {
@@ -284,7 +336,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
             if (is(w, "warning")) {
                 # No extent in tif file
                 suppressWarnings(img <- rast(img))
-                if (!is.null(extent)) ext(img) <- extent[c("xmin", "xmax", "ymin", "ymax")]
+                if (!is.na(extent)) ext(img) <- extent[c("xmin", "xmax", "ymin", "ymax")]
                 else {
                     ext(img) <- as.vector(ext(img)) / scale_fct
                 }
@@ -313,22 +365,31 @@ setMethod("addImg", "SpatialFeatureExperiment",
 setMethod("transposeImg", "SpatRasterImage",
           function(x, ...) {
               x@image <- terra::trans(imgRaster(x))
+              # What terra does to extent: swap xmin and xmax with ymin and ymax
               x
           })
 
 #' @rdname SFE-image
 #' @export
 setMethod("transposeImg", "BioFormatsImage",
-          function(x, resolution = 4L, scaleFactor = NULL) {
-              x <- toEBImage(x, resolution, scaleFactor)
+          function(x, resolution = 4L) {
+              x <- toEBImage(x, resolution)
               transposeImg(x)
           })
+
+.trans_extent <- function(e) {
+    ext_use <- e[c("xmin", "xmax", "ymin", "ymax")]
+    names(ext_use) <- c("ymin", "ymax", "xmin", "xmax")
+    ext_use
+}
 
 #' @rdname SFE-image
 #' @export
 setMethod("transposeImg", "EBImage",
           function(x, ...) {
               x@image <- EBImage::transpose(x@image)
+              # Extent
+              ext(x) <- .trans_extent(ext(x))
               x
           })
 
@@ -343,8 +404,7 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
                   sfct <- imgData(x)$scaleFactor[idx]
-                  new <- mapply(transposeImg, x = old, scaleFactor = sfct,
-                                MoreArgs = list(resolution = resolution))
+                  new <- lapply(old, transposeImg, resolution = resolution)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -363,9 +423,9 @@ setMethod("mirrorImg", "SpatRasterImage",
 #' @export
 setMethod("mirrorImg", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
-                   resolution = 4L, scaleFactor = NULL) {
+                   resolution = 4L) {
               direction <- match.arg(direction)
-              x <- toEBImage(x, resolution, scaleFactor)
+              x <- toEBImage(x, resolution)
               mirrorImg(x, direction)
           })
 
@@ -390,9 +450,8 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
                   sfct <- imgData(x)$scaleFactor[idx]
-                  new <- mapply(mirrorImg, x = old, scaleFactor = sfct,
-                                MoreArgs = list(resolution = resolution,
-                                                direction = direction))
+                  new <- lapply(old, mirrorImg, resolution = resolution,
+                                direction = direction)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -402,16 +461,26 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("rotateImg", "SpatRasterImage", # Deal with rotating SpatRaster?
-          function(x, degree, ...) {
+          function(x, degree, maxcell = 1e7, ...) {
               # Not sure what exactly to do. I think convert to EBImage as well.
-              # TODO: write function to convert SPI to EBI
+              stopifnot(
+                  length(degrees) == 1,
+                  is.numeric(degrees),
+                  degrees %% 90 == 0)
+              x <- toEBImage(x, maxcell)
+              rotateImg(x, degree)
           })
 
 #' @rdname SFE-image
 #' @export
 setMethod("rotateImg", "BioFormatsImage",
-          function(x, degree, resolution = 4L, scaleFactor = NULL) {
-              x <- toEBImage(x, resolution, scaleFactor)
+          function(x, degree, resolution = 4L, ...) {
+              # Only allow multiples of 90 degree, deal with extent
+              stopifnot(
+                  length(degrees) == 1,
+                  is.numeric(degrees),
+                  degrees %% 90 == 0)
+              x <- toEBImage(x, resolution)
               rotateImg(x, degree)
           })
 
@@ -419,7 +488,15 @@ setMethod("rotateImg", "BioFormatsImage",
 #' @export
 setMethod("rotateImg", "EBImage",
           function(x, degree, ...) {
+              stopifnot(
+                  length(degrees) == 1,
+                  is.numeric(degrees),
+                  degrees %% 90 == 0)
               x@image <- EBImage::rotate(x@image, degree)
+              # Deal with extent
+              if (degrees %% 180 > 0) {
+                  ext(x) <- .trans_extent(ext(x))
+              }
               x
           })
 
@@ -434,9 +511,9 @@ setMethod("rotateImg", "SpatialFeatureExperiment",
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
                   sfct <- imgData(x)$scaleFactor[idx]
-                  new <- mapply(rotateImg, x = old, scaleFactor = sfct,
-                                MoreArgs = list(resolution = resolution,
-                                                degree = degree))
+                  new <- lapply(old, rotateImg, resolution = resolution,
+                                maxcell = maxcell,
+                                degree = degree)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -459,6 +536,10 @@ setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
 #' @export
 setMethod("imgRaster", "EBImage", function(x) x@image)
 
+# TODO: imgRaster setter function since here I want to allow image processing
+# like adjusting brightness and contrast, blurring, sharpening, opening, closing, and so on
+# but what if it changes the extent?
+
 #' @rdname SFE-image
 #' @export
 #' @importFrom terra sources
@@ -472,21 +553,46 @@ setMethod("imgSource",
 #' @export
 setMethod("imgSource", "BioFormatsImage", function(x) x@path)
 
-# TODO: S4 crop methods for BioFormatsImage, EBImage, and LoadedSpatialImage
-# EBImage crops with matrix-like subsetting of pixels
-# What about StoredSpatialImage and RemoteSpatialImage? Convert to Loaded first
-# since there's no slot to record extent.
-setMethod("cropImg", "BioFormatsImage", function(x, bbox) {
 
+setMethod("cropImg", "SpatRasterImage", function(x, bbox) {
+    x@image <- terra::crop(x@image, bbox, snap = "out")
+    x
+})
+
+setMethod("cropImg", "BioFormatsImage", function(x, bbox) {
+    bbox_old <- ext(x)
+    bbox_use <- c(xmin = max(bbox_old["xmin"], bbox["xmin"]),
+                  xmax = min(bbox_old["xmax"], bbox["xmax"]),
+                  ymin = max(bbox_old["ymin"], bbox["ymin"]),
+                  ymax = min(bbox_old["ymax"], bbox["ymax"]))
+    ext(x) <- bbox_use
+    x
 })
 
 setMethod("cropImg", "EBImage", function(x, bbox) {
+    # Convert bbox to pixel range based on ext(x)
+    bbox_old <- ext(x)
+    dim_old <- dim(x@image)
+    sfx <- dim_old[1]/(bbox_old["xmax"] - bbox_old["xmin"])
+    sfy <- dim_old[2]/(bbox_old["ymax"] - bbox_old["ymin"])
+    bbox_use <- bbox
+    bbox_use[c("xmin", "xmax")] <- bbox_old[c("xmin", "xmax")] * sfx
+    bbox_use[c("ymin", "ymax")] <- bbox_old[c("ymin", "ymax")] * sfy
+    bbox_use[c("xmin", "ymin")] <- floor(bbox_use[c("xmin", "ymin")])
+    bbox_use[c("xmax", "ymax")] <- ceiling(bbox_use[c("xmax", "ymax")])
 
-})
+    if (length(dim_old) == 3L)
+        x@image <- x@image[seq(bbox_use["xmin"], bbox_use["xmax"]),
+                           seq(bbox_use["ymin"], bbox_use["ymax"]),]
+    else
+        x@image <- x@image[seq(bbox_use["xmin"], bbox_use["xmax"]),
+                           seq(bbox_use["ymin"], bbox_use["ymax"])]
 
-setMethod("cropImg", "LoadedSpatialImage", function(x, bbox) {
-    # Basically I need the same internal function already implemented in
-    # toEBImage to convert bbox to pixel range
+    bbox_new <- bbox_use
+    bbox_new[c("xmin", "xmax")] <- bbox_new[c("xmin", "xmax")] / sfx
+    bbox_new[c("ymin", "ymax")] <- bbox_new[c("ymin", "ymax")] / sfy
+    ext(x) <- bbox_new
+    x
 })
 
 .crop_imgs <- function(x, bboxes) {

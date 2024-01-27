@@ -297,12 +297,19 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
     )
 }
 
+.valid_bbox <- function(bbox) {
+    # Only for one vector
+    if (bbox["xmin"] > bbox["xmax"] || bbox["ymin"] > bbox["ymax"])
+        stop("Min limit is greater than max limit")
+}
+
 .check_bbox <- function(bbox) {
     if (!is.numeric(bbox))
         stop("bbox must be a numeric vector or matrix.")
     if (is.vector(bbox)) {
         if (!setequal(names(bbox), c("xmin", "xmax", "ymin", "ymax")))
             stop("Vector bbox must be a vector of length 4 with names xmin, xmax, ymin, ymax in any order.")
+        .valid_bbox(bbox)
     } else if (is.matrix(bbox)) {
         if (!setequal(rownames(bbox), c("xmin", "xmax", "ymin", "ymax"))) {
             stop("Matrix bbox must have rownames xmin, xmax, ymin, ymax, in any order.")
@@ -310,6 +317,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
         if (is.null(colnames(bbox))) {
             stop("Matrix bbox must have colnames to indicate sample ID.")
         }
+        apply(bbox, 2, .valid_bbox)
     }
 }
 
