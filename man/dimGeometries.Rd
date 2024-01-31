@@ -78,15 +78,9 @@ colGeometryNames(x)
 
 colGeometryNames(x) <- value
 
-rowGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE)
+rowGeometry(x, type = 1L, withDimnames = TRUE)
 
-rowGeometry(
-  x,
-  type = 1L,
-  sample_id = NULL,
-  withDimnames = TRUE,
-  translate = TRUE
-) <- value
+rowGeometry(x, type = 1L, withDimnames = TRUE, translate = TRUE) <- value
 
 rowGeometries(x, withDimnames = TRUE)
 

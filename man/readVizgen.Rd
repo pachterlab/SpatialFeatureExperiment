@@ -7,13 +7,18 @@
 readVizgen(
   data_dir,
   z = 3L,
-  use_cellpose = TRUE,
   sample_id = "sample01",
   min_area = 15,
-  image = c("DAPI", "PolyT"),
+  image = c("DAPI", "PolyT", "Cellbound"),
   flip = c("geometry", "image", "none"),
   max_flip = "50 MB",
-  BPPARAM = SerialParam()
+  filter_counts = FALSE,
+  add_molecules = FALSE,
+  use_bboxes = FALSE,
+  use_cellpose = TRUE,
+  BPPARAM = SerialParam(),
+  file_out = file.path(data_dir, "detected_transcripts.parquet"),
+  ...
 )
 }
 \arguments{
@@ -22,10 +27,9 @@ directories \code{cell_boundaries} and \code{images}, and files
 \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 \code{detected_transcripts.csv}.}
 
-\item{z}{Index of z plane to read.}
-
-\item{use_cellpose}{Logical, whether to use Cellpose parquet files if
-present.}
+\item{z}{Integer, z index to read, only affecting images read since cell
+segmentation for all z-planes are the same and cell centroids are only provided
+in 2 dimensions.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -35,7 +39,8 @@ Default = \code{sample01}.}
 \item{min_area}{Minimum cell area in square microns. Anything smaller will be
 considered artifact or debris and removed.}
 
-\item{image}{Which image(s) to load, can be "DAPI", "PolyT", or both.}
+\item{image}{Which image(s) to load, can be "DAPI", "PolyT", "Cellbound" or
+any combination of them.}
 
 \item{flip}{To flip the image, geometry coordinates, or none. Because the
 image has the origin at the top left while the geometry has origin at the
@@ -47,14 +52,53 @@ it's GeoTIFF.}
 the image will be loaded into memory to be flipped. If the image is larger
 than this size then the coordinates will be flipped instead.}
 
+\item{filter_counts}{Keep cells with counts \code{> 0}.}
+
+\item{add_molecules}{Logical, whether to add transcripts coordinates to an
+object.}
+
+\item{use_bboxes}{If no segmentation output is present, use
+\code{cell_metadata} to make bounding boxes instead.}
+
+\item{use_cellpose}{Whether to read the parquet files from CellPose cell
+segmentation. If \code{FALSE}, cell segmentation will be read from the HDF5
+files. Note that reading HDF5 files for numerous FOVs is very slow.}
+
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
-processing backend and number of threads to use to load cell segmentation
-from HDF5 files from different fields of view (FOVs) with multiple cores. A
-progress bar can be configured in the \code{\link{BiocParallelParam}}
-object. When there are numerous FOVs, reading in the geometries can be time
-consuming, so we recommend using a server and larger number of threads.
-This argument is not used if \code{use_cellpose = TRUE} and the parquet
-file is present.}
+  processing backend and number of threads to use for parallelizable tasks:
+  \enumerate{ \item To load cell segmentation from HDF5 files from different
+  fields of view (FOVs) with multiple cores. A progress bar can be configured
+  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  FOVs, reading in the geometries can be time consuming, so we recommend
+  using a server and larger number of threads. This argument is not used if
+  \code{use_cellpose = TRUE} and the parquet file is present.
+
+  \item To filter cell segmentation polygons based on size.
+
+  \item To convert centroid points to sf POINT geometry.
+
+  \item When the cell segmentation is unavailable, to convert cell bounding
+  boxes to POLYGON geometries.
+
+  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }}
+
+\item{file_out}{Name of file to save the geometry or raster to disk.
+Especially when the geometries are so large that it's unwieldy to load
+everything into memory. If this file (or directory for multiple files)
+already exists, then the existing file(s) will be read, skipping the
+processing. When writing the file, extensions supplied are ignored and
+extensions are determined based on `dest`.}
+
+\item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
+and add the transcript spots data to the SFE object, except that extent is
+read from `manifest.json` and that `dest = "rowGeometry"` because the spot
+coordinates are in micron space and are not discrete so converting the
+transcript spots to raster won't work. A default is set for `file_out` to
+save the reformatted transcript spots to disk by default since reloading
+the reformatted form is much more efficient. Reading the original detected
+transcripts csv file can take up a lot of memory. Expect at least twice the
+size of that csv file, even more if using multiple threads. So we STRONGLY
+recommend saving the reformatted results to disk.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.
@@ -63,17 +107,27 @@ A \code{SpatialFeatureExperiment} object.
 This function reads the standard Vizgen MERFISH output into an SFE object.
 The coordinates are in microns. Cell centroids are read into
 \code{\link{colGeometry}} "centroids", and cell segmentations are read into
-\code{colGeometry} "cellSeg". The image(s) (polyT and DAPI) are also read as
-\code{\link{SpatRaster}} objects so they are not loaded into memory unless
-necessary. Because the image's origin is the top left while the geometry's
-origin is bottom left, either the image or the geometry needs to be flipped.
-Because the image accompanying MERFISH datasets are usually very large, the
-coordinates will be flipped so the flipping operation won't load the entire
-image into memory.
+\code{colGeometry} "cellSeg". The image(s) (polyT, DAPI, and cell boundaries)
+are also read as \code{\link{SpatRaster}} objects so they are not loaded into
+memory unless necessary. Because the image's origin is the top left while the
+geometry's origin is bottom left, either the image or the geometry needs to
+be flipped. Because the image accompanying MERFISH datasets are usually very
+large, the coordinates will be flipped so the flipping operation won't load
+the entire image into memory. Large datasets with hundreds of thousands of
+cells can take a while to read if reading transcript spots as it takes a
+while to convert the spots to MULTIPOINT geometries.
+}
+\note{
+Since the transcript spots file is often very large, we recommend only
+  using \code{add_molecules = TRUE} on servers with a lot of memory.
 }
 \examples{
-dir_use <- system.file("extdata/vizgen", package = "SpatialFeatureExperiment")
-sfe <- readVizgen(dir_use, z = 0L, use_cellpose = TRUE, image = "PolyT",
+dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 flip = "geometry")
+
+## Filtering of counts, and addition of molecule coordinates..
+sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
+add_molecules = TRUE, flip = "geometry")
 }
 \concept{Read data into SFE}

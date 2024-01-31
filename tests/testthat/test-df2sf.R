@@ -3,7 +3,7 @@ pts_df <- readRDS(system.file("extdata/pts_df.rds",
     package = "SpatialFeatureExperiment"
 ))
 pts_sf <- readRDS(system.file("extdata/pts_sf.rds",
-    package = "SpatialFeatureExperiment"
+                              package = "SpatialFeatureExperiment"
 ))
 test_that("df2sf works properly for points", {
     sf_use <- df2sf(pts_df, geometryType = "POINT")
@@ -22,6 +22,7 @@ test_that("sample_id when I need to split the data frame", {
     multipts_df <- readRDS(system.file("extdata/multipts_df.rds",
         package = "SpatialFeatureExperiment"
     ))
+    multipts_df$ID <- NULL # shouldn't be required
     sf_use <- df2sf(multipts_df, geometryType = "MULTIPOINT")
     multipts_sf <- readRDS(system.file("extdata/multipts_sf.rds",
         package = "SpatialFeatureExperiment"
@@ -105,4 +106,30 @@ test_that("Multipolygons", {
     )
     sf_use <- sf_use[, names(mpol_sf)]
     expect_equal(sf_use, mpol_sf, ignore_attr = TRUE)
+})
+
+test_that("When there're other attributes", {
+    # One unique set per geometry
+    pol_df <- readRDS(system.file("extdata/pol_df.rds",
+                                  package = "SpatialFeatureExperiment"
+    ))
+    pol_df$foo <- rep("D", nrow(pol_df))
+    sf_use <- df2sf(pol_df,
+                    geometryType = "POLYGON",
+                    spatialCoordsNames = c("V1", "V2")
+    )
+    expect_true(setequal(names(sf_use), c("ID", "foo", "geometry")))
+    expect_equal(sf_use$foo, "D")
+})
+
+test_that("Drop columns with multiple combinations per geometry", {
+    pol_df <- readRDS(system.file("extdata/pol_df.rds",
+                                  package = "SpatialFeatureExperiment"
+    ))
+    pol_df$foo <- c(rep("C", 4), rep("D", 4))
+    sf_use <- df2sf(pol_df,
+                    geometryType = "POLYGON",
+                    spatialCoordsNames = c("V1", "V2")
+    )
+    expect_true(setequal(names(sf_use), c("ID", "geometry")))
 })

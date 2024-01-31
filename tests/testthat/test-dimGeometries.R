@@ -102,3 +102,58 @@ test_that("colGeometry getter for one of the two samples", {
     rownames(cg_expect) <- rownames(cg_toy)[4:5]
     expect_equal(coords_sample02, cg_expect)
 })
+
+test_that("When rownames of value don't match those of sfe", {
+    cg_sub <- cg_mut <- cg_toy[1:3,]
+    rownames(cg_sub) <- rownames(cg_toy)[1:3]
+    rownames(cg_mut) <- c(rownames(cg_toy)[1:2], "D")
+    # It's not a subset, get correct error message
+    expect_error(colGeometry(sfe, "foo") <- cg_mut,
+                 "should all be in")
+    # It's the same set, in different orders, do the reordering
+    rns <- sample(rownames(cg_toy), 5, replace = FALSE)
+    cg_perm <- cg_toy[rns,]
+    rownames(cg_perm) <- rns
+    colGeometry(sfe, "foo") <- cg_perm
+    expect_equal(colGeometry(sfe, "foo"), cg_toy)
+    # It's a subset, do the reordering
+    cg_sub_perm <- cg_sub[c(2,3,1),]
+    rownames(cg_sub_perm) <- rownames(cg_sub)[c(2,3,1)]
+    colGeometry(sfe, "bar") <- cg_sub_perm
+    expect_equal(colGeometry(sfe, "bar")[1:3,], cg_sub, ignore_attr = "row.names")
+})
+
+rg_toy <- cg_toy
+rownames(rg_toy) <- rownames(sfe)
+
+test_that("rowGeometries setter", {
+    rowGeometries(sfe) <- list(foo = rg_toy)
+    rg <- int_elementMetadata(sfe)$rowGeometries$foo
+    expect_equal(rg, rg_toy)
+})
+
+test_that("rowGeometries getter", {
+    internals <- int_elementMetadata(sfe)
+    internals[['rowGeometries']] <- make_zero_col_DFrame(nrow(sfe))
+    internals[["rowGeometries"]][["foo"]] <- rg_toy
+    int_elementMetadata(sfe) <- internals
+    rg <- rowGeometries(sfe)
+    expect_s4_class(rg, "List")
+    expect_equal(names(rg), "foo")
+    expect_equal(rg[["foo"]], rg_toy)
+})
+
+test_that("rowGeometry setter", {
+    rowGeometry(sfe, "foo") <- rg_toy
+    rg <- int_elementMetadata(sfe)$rowGeometries$foo
+    expect_equal(rg, rg_toy)
+})
+
+test_that("rowGeometry getter", {
+    internals <- int_elementMetadata(sfe)
+    internals[['rowGeometries']] <- make_zero_col_DFrame(nrow(sfe))
+    internals[["rowGeometries"]][["foo"]] <- rg_toy
+    int_elementMetadata(sfe) <- internals
+    rg <- rowGeometry(sfe, "foo")
+    expect_equal(rg, rg_toy)
+})

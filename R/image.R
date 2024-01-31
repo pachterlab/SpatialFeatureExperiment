@@ -71,6 +71,12 @@ setClass("SpatRasterImage", contains="VirtualSpatialImage",
 
 #' @rdname SFE-image
 #' @export
+SpatRasterImage <- function(img) {
+    new("SpatRasterImage", image = img)
+}
+
+#' @rdname SFE-image
+#' @export
 setMethod("addImg", "SpatialFeatureExperiment",
           function(x, file, sample_id, image_id, extent = NULL,
                    scale_fct = 1) {

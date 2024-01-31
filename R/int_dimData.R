@@ -53,17 +53,21 @@
             "colnames"
         )
         if (withDimnames && !is.null(rni)) {
-            if (!setequal(cnr, rni)) {
+            if (!all(rni %in% cnr)) {
                 msg <- paste0(
-                    "non-NULL 'rownames(", vname, ")' should be the same as '",
+                    "non-NULL 'rownames(", vname, ")' should all be in '",
                     fun_show, "(x)' for '", fun,
                     "<-'."
                 )
                 stop(strwrap(msg))
-            } else if (!identical(cnr, rni)) {
+            }
+            if (!identical(cnr, rni)) {
                 # Do the reordering if they have different orders
                 rni <- rni[match(cnr, rni)]
                 incoming <- incoming[rni, ]
+                if (anyNA(rownames(incoming))) {
+                    rownames(incoming) <- cnr
+                }
             }
         }
     }
@@ -110,7 +114,8 @@
         stop("'", substr, "' out of bounds in '", funstr, "(<", class(x), ">, type='numeric')")
     }
     internals[[key]][[type]] <- value
-    setfun(x, internals)
+    x <- setfun(x, internals)
+    x
 }
 
 .get_intdimdata_all <- function(x, MARGIN, withDimnames = TRUE, getfun, key) {
@@ -153,24 +158,23 @@
 }
 
 .out_intdimdata_id <- function(x, out, MARGIN, sample_id) {
+    if (MARGIN == 1L) {
+        return(out)
+    }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     samples <- sampleIDs(x)
     if (!is.null(sample_id)) {
-        if (MARGIN == 1L) {
-            # OK, maybe applicable, say to crop the rowGeometries by bbox of a sample
-            # I'll consider that later.
-            message("sample_id is not applicable to rowGeometries.")
-        } else if (MARGIN == 2L) {
+        if (MARGIN == 2L) {
             if (length(samples) > 1L) {
-              # Somehow I lose the rownames after row subsetting sf data frames
-              inds <- colData(x)$sample_id %in% sample_id
-              rns <- rownames(out)[inds]
-              out <- out[inds, , drop = FALSE]
-              rownames(out) <- rns
+                # Somehow I lose the rownames after row subsetting sf data frames
+                inds <- colData(x)$sample_id %in% sample_id
+                rns <- rownames(out)[inds]
+                out <- out[inds, , drop = FALSE]
+                rownames(out) <- rns
             }
-        } else {
+        } else { # annotGeometry
             if (length(samples) > 1L)
-              out <- out[out$sample_id %in% sample_id, , drop = FALSE]
+                out <- out[out$sample_id %in% sample_id, , drop = FALSE]
         }
     }
     out
@@ -260,20 +264,19 @@
 
 .set_intdimdata_id <- function(x, value, sample_id, type, MARGIN, sf = TRUE,
                                getfun, key) {
+    if (MARGIN == 1L) {
+        return(value)
+    }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
-        if (MARGIN == 1L) {
-            message("sample_id is not applicable to rowGeometries.")
-        } else {
-            # Assuming that the order in value is the same as the
-            # order of geometries for this sample in colGeometries
-            existing <- getfun(x)[[key]][[type]]
-            value <- .intdimdata_partial_replace(existing, value, ncol(x),
-                colnames(x), colData(x)$sample_id,
-                sample_id,
-                sf = sf
-            )
-        }
+        # Assuming that the order in value is the same as the
+        # order of geometries for this sample in colGeometries
+        existing <- getfun(x)[[key]][[type]]
+        value <- .intdimdata_partial_replace(existing, value, ncol(x),
+                                             colnames(x), colData(x)$sample_id,
+                                             sample_id,
+                                             sf = sf
+        )
     }
     value
 }
