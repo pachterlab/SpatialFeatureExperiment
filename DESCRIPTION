@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.5.0
+Version: 1.5.1
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -41,7 +41,7 @@ Imports:
     utils
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.0
 Collate: 
     'AllGenerics.R'
     'utils.R'

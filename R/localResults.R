@@ -113,7 +113,7 @@ setMethod("localResults", "SpatialFeatureExperiment",
                    colGeometryName = NULL,
                    annotGeometryName = NULL, withDimnames = TRUE,
                    swap_rownames = NULL, ...) {
-              if (sample_id == "all" && name == "all") {
+              if (isTRUE(all.equal(sample_id, "all")) && name == "all") {
                   .get_intdimdata_all(x,
                                       MARGIN = 2L, withDimnames = withDimnames,
                                       getfun = int_colData, key = "localResults"
@@ -135,7 +135,7 @@ setReplaceMethod("localResults", "SpatialFeatureExperiment",
                  function(x, sample_id = "all", name = "all", features = NULL,
                           colGeometryName = NULL, annotGeometryName = NULL,
                           withDimnames = TRUE, swap_rownames = NULL,..., value) {
-                     if (sample_id == "all" && name == "all") {
+                     if (isTRUE(all.equal(sample_id, "all")) && name == "all") {
                          .set_intdimdata_all(x,
                                              MARGIN = 2L,
                                              withDimnames = withDimnames,
