@@ -260,19 +260,66 @@ colGeometryNames <- function(x) {
     x
 }
 
+.check_rg_type <- function(type, x, sample_id) {
+    rg_names <- rowGeometryNames(x)
+    if (is.numeric(type)) type <- rg_names[1]
+    # Deal with: no sample_id in the name, meaning for all samples
+    # Have sample_id, but it's not the sample requested
+    # What if there's both name and name_sample?
+    # the name in type doesn't have to exist in the SFE object,
+    # totally fine for setter and is later checked for getter
+    if (!type %in% rg_names && !str_detect(type, paste0(sample_id, "$"))) {
+        type <- paste(type, sample_id, sep = "_")
+    }
+    other_samples <- setdiff(sampleIDs(sfe), sample_id)
+    if (length(other_samples)) {
+        patterns <- paste0(other_samples, "$")
+        has_other <- vapply(patterns, str_detect, string = type, FUN.VALUE = logical(1))
+        if (any(has_other)) {
+            stop("Type does not match sample_id")
+        }
+    }
+    type
+}
+
+.check_rg_sample_all <- function(type, x) {
+    # Make sure no sample_ids in the name if sample_id == "all"
+    rg_names <- rowGeometryNames(x)
+    if (is.numeric(type)) type <- rg_names[1]
+    patterns <- paste0(sampleIDs(x), "$")
+    has_other <- vapply(patterns, str_detect, string = type, FUN.VALUE = logical(1))
+    if (any(has_other)) {
+        stop("Name of rowGeometry for all samples should not include any sample ID.")
+    }
+}
+
+.check_rg <- function(type, x, sample_id) {
+    if (sample_id == "all") {
+        .check_rg_sample_all(type, x)
+    } else if (sample_id != "all") {
+        sample_id <- .check_sample_id(x, sample_id, TRUE)
+        # By convention, should be name_sample to distinguish between samples for
+        # rowGeometries of the same name
+        type <- .check_rg_type(type, x, sample_id)
+    }
+    type
+}
+
 #' @rdname dimGeometries
 #' @export
-rowGeometry <- function(x, type = 1L, withDimnames = TRUE) {
+rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
+    type <- .check_rg(type, x, sample_id)
     dimGeometry(x, type,
-        MARGIN = 1, sample_id = "all",
-        withDimnames = withDimnames
+                MARGIN = 1, sample_id = "all",
+                withDimnames = withDimnames
     )
 }
 
 #' @rdname dimGeometries
 #' @export
-`rowGeometry<-` <- function(x, type = 1L, withDimnames = TRUE,
+`rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
                             translate = TRUE, value) {
+    type <- .check_rg(type, x, sample_id)
     `dimGeometry<-`(x, type,
         MARGIN = 1, sample_id = "all",
         withDimnames = withDimnames, translate = translate,
@@ -437,13 +484,13 @@ nucSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname dimGeometries
 #' @export
-txSpots <- function(x, withDimnames = TRUE) {
-    rowGeometry(x, "txSpots", withDimnames)
+txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames)
 }
 
 #' @rdname dimGeometries
 #' @export
-`txSpots<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
-    rowGeometry(x, "txSpots", withDimnames, translate) <- value
+`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE, value) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames, translate) <- value
     x
 }

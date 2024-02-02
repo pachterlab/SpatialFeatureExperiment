@@ -109,6 +109,8 @@ NULL
         }
     } else if (identical(sample_id, "all")) {
         sample_id <- sampleIDs(x)
+    } else if (is.numeric(sample_id)) {
+        sample_id <- sampleIDs(x)[sample_id]
     } else if (!all(sample_id %in% sampleIDs(x))) {
         sample_use <- intersect(sample_id, sampleIDs(x))
         if (!length(sample_use)) {

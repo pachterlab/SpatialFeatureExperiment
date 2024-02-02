@@ -76,20 +76,14 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
             .g <- gs[[s]][, c("geometry", id_col)]
             st_agr(.g) <- "constant"
             o <- op(.g, y_use)
-            # If it's a predicate
-            if (is(o, "sgbp")) {
-                inds <- lengths(o) > 0L
-                return(gs[[s]][inds,])
-            } else {
-                # Aggregate in case cropping broke some items into multiple pieces
-                if (any(!rownames(o) %in% rownames(.g))) {
-                    o <- aggregate(o,
-                                   by = setNames(list(id = o[[id_col]]), id_col),
-                                   FUN = unique
-                    )
-                }
-                return(merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE))
+            # Aggregate in case cropping broke some items into multiple pieces
+            if (any(!rownames(o) %in% rownames(.g))) {
+                o <- aggregate(o,
+                               by = setNames(list(id = o[[id_col]]), id_col),
+                               FUN = unique
+                )
             }
+            return(merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE))
         } else {
             return(gs[[s]])
         }
@@ -366,10 +360,14 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   cells/spots to keep, defaults to \code{\link{st_intersects}}.
 #' @param op A geometric operation function to crop the geometries in the SFE
 #'   object. Defaults to \code{\link{st_intersection}}.
-#' @param xmin Deprecated. Supply the bounding box to argument \code{y} instead.
-#' @param xmax Deprecated.
-#' @param ymin Deprecated.
-#' @param ymax Deprecated.
+#' @param keep_whole_cg Logical, whether to keep the whole items in
+#'   \code{colGeometries} that fulfill the criteria in \code{pred}. If
+#'   \code{TRUE} the geometries that partially intersect (if the predicate is
+#'   \code{st_intersects}) are kept and the part not overlapping is not cropped
+#'   off. Then the \code{annotGeometries}, \code{rowGeometries}, and images are
+#'   cropped with the bounding box of the \code{colGeometries}. If \code{FALSE},
+#'   the geometries at the boundary are cropped, which may break some cells into
+#'   multiple pieces or convert polygons into points or lines.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
@@ -384,24 +382,10 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     colGeometryName = "spotPoly",
 #'     sample_id = "Vis5A"
 #' )
-#' # Subset sfe to only keep what's within a bounding box
-#' # All geometries will be cropped
-#' # sample_id is optional when only one sample is present
-#' sfe_cropped <- crop(sfe,
-#'     colGeometryName = "spotPoly",
-#'     xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500
-#' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
-                 pred = st_intersects, op = st_intersection, xmin = deprecated(),
-                 xmax = deprecated(), ymin = deprecated(), ymax = deprecated()) {
+                 pred = st_intersects, op = st_intersection,
+                 keep_whole_cg = FALSE) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-    if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
-                       is_present(ymin) || is_present(ymax))) {
-        deprecate_warn("1.4.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
-                       details = "Please use argument `y` to specify bounding box instead.")
-        y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
-                      sample_id)
-    }
     if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
         # y should be bbox, either named vector or matrix with samples in columns
         .check_bbox(y)
@@ -425,21 +409,43 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     preds <- c(preds, other_samples)
     preds <- preds[colnames(x)]
     out <- x[, preds]
-    # colGeometries should have already been subsetted here
-    # Also actually crop all geometries for the samples of interest.
-    # Leave rowGeometry alone for now.
-    colGeometries(out) <- lapply(colGeometries(out), .crop_geometry,
-        y = y,
-        samples_use = samples_use, op = op,
-        id_col = "barcode",
-        sample_col = colData(out)$sample_id
-    )
+    if (!keep_whole_cg) {
+        # colGeometries should have already been subsetted here
+        # Also actually crop all geometries for the samples of interest.
+        colGeometries(out) <- lapply(colGeometries(out), .crop_geometry,
+                                     y = y,
+                                     samples_use = samples_use, op = op,
+                                     id_col = "barcode",
+                                     sample_col = colData(out)$sample_id
+        )
+    } else {
+        # What about rowGeometries? Can't just use preds.
+        # I think use the actual bbox of colGeometries if not cropped
+        # What about annotGeometries? I think also use colGeometries bbox
+        cgs <- int_colData(sfe)[["colGeometries"]]
+        cgs$sample_id <- sfe$sample_id
+        cgs <- cgs[preds, ,drop = FALSE]
+        y <- lapply(samples_use, function(s) {
+            cgs_sub <- cgs[cgs$sample_id == s,, drop = FALSE]
+            cgs_sub$sample_id <- NULL
+            cgs_sub <- as.list(cgs_sub)
+            .bbox_sample_g(cgs_sub)
+        })
+        y <- do.call(cbind, y)
+        colnames(y) <- samples_use
+        y <- .bbox2sf(y, samples_use)
+    }
     annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
-        y = y,
-        samples_use = samples_use, op = op,
-        remove_empty = TRUE
+                                   y = y,
+                                   samples_use = samples_use, op = op,
+                                   remove_empty = TRUE
     )
     out <- .crop_imgs(out, bbox(out, sample_id = "all"))
+    rowGeometries(out) <- lapply(rowGeometries(out), .crop_geometry,
+                                 y = y,
+                                 samples_use = samples_use, op = op,
+                                 id_col = "barcode"
+    )
     samples_rmed <- setdiff(sample_id, sampleIDs(out))
     if (length(samples_rmed)) {
         warning(
@@ -450,7 +456,24 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     out
 }
 
-.bbox_sample <- function(sfe, sample_id) {
+.agg_bboxes <- function(bboxes) {
+    if (is.list(bboxes)) bboxes <- do.call(rbind, bboxes)
+    c(
+        xmin = min(bboxes[, "xmin"], na.rm = TRUE),
+        ymin = min(bboxes[, "ymin"], na.rm = TRUE),
+        xmax = max(bboxes[, "xmax"], na.rm = TRUE),
+        ymax = max(bboxes[, "ymax"], na.rm = TRUE)
+    )
+}
+
+.bbox_sample_g <- function(gs) {
+    # Assume that it's already properly subsetted for the sample
+    # For one sample_id, multiple geometries
+    bboxes <- lapply(gs, st_bbox)
+    .agg_bboxes(bboxes)
+}
+
+.bbox_sample <- function(sfe, sample_id) { # For one sample
     sample_index <- colData(sfe)$sample_id == sample_id
     cgs <- as.list(int_colData(sfe)[["colGeometries"]][sample_index, ,
         drop = FALSE
@@ -460,17 +483,26 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     if (length(ags)) {
         ags <- lapply(ags, function(g) g[g$sample_id == sample_id, ])
         ags_bboxes <- lapply(ags, st_bbox)
-        all_bboxes <- c(cgs_bboxes, ags_bboxes)
     } else {
-        all_bboxes <- cgs_bboxes
+        ags_bboxes <- NULL
     }
-    all_bboxes <- do.call(rbind, all_bboxes)
-    c(
-        xmin = min(all_bboxes[, "xmin"], na.rm = TRUE),
-        ymin = min(all_bboxes[, "ymin"], na.rm = TRUE),
-        xmax = max(all_bboxes[, "xmax"], na.rm = TRUE),
-        ymax = max(all_bboxes[, "ymax"], na.rm = TRUE)
-    )
+    # What to do with samples in rowGeometry?
+    # Append sample_id to the names if not already done so
+    # Remove all sample_ids where other samples are detected
+    rgs <- rowGeometries(sfe)
+    other_samples <- setdiff(sampleIDs(sfe), sample_id)
+    if (length(other_samples)) {
+        patterns <- paste0(other_samples, "$")
+        has_other <- vapply(patterns, str_detect, string = type, FUN.VALUE = logical(1))
+        rg_names <- rowGeometryNames(sfe)[!has_other]
+        rgs <- rgs[rg_names]
+    }
+    if (length(rgs)) {
+        rgs_bboxes <- lapply(rgs, st_bbox)
+    } else rgs_bboxes <- NULL
+
+    all_bboxes <- c(cgs_bboxes, ags_bboxes, rgs_bboxes)
+    .agg_bboxes(all_bboxes)
 }
 
 #' Find bounding box of SFE objects
@@ -529,6 +561,17 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
             ag <- annotGeometry(sfe, n, sample_id = sample_id)
             ag$geometry <- ag$geometry * mult + add
             annotGeometry(sfe, n, sample_id = sample_id) <- ag
+        }
+    }
+    # rowGeometries
+    if (!is.null(rowGeometries(sfe))) {
+        # OK, I will not allow rowGeometries shared between samples for now
+        # I need that tree where one can split beneath the samples, but
+        # for sample_id is a special lowest level for many operations
+        for (n in rowGeometryNames(sfe)) {
+            rg <- rowGeometry(sfe, n, sample_id = sample_id)
+            rg$geometry <- rg$geometry * mult + add
+            rowGeometry(sfe, n, sample_id = sample_id) <- rg
         }
     }
     # Images
@@ -649,10 +692,6 @@ mirror <- function(sfe, sample_id = "all",
     }
     sfe
 }
-
-# Burning question: What to do with rowGeometry? I suppose I can require that
-# the geometries are specified separately for each sample. I'll deal with that
-# later. Perhaps much later, as I don't see it relevant to Visium.
 
 #' Remove empty space
 #'

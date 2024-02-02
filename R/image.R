@@ -130,40 +130,18 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
                      x
                  })
 
-setValidity("BioFormatsImage", function(x) {
+setValidity("BioFormatsImage", function(object) {
     outs <- character(2)
-    if (!file.exists(x@path)) outs[1] <- paste0("File ", x@path, " does not exist.")
-    out[2] <- tryCatch(.check_bbox(x@ext), error = function(e) e$message)
+    if (!file.exists(object@path)) outs[1] <- paste0("File ", object@path, " does not exist.")
+    out[2] <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
     out <- out[out != ""]
     if (length(out)) return(out) else TRUE
 })
 
-setValidity("EBImage", function(x) {
-    out <- tryCatch(.check_bbox(x@ext), error = function(e) e$message)
+setValidity("EBImage", function(object) {
+    out <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
     if (length(out)) return(out) else TRUE
 })
-
-#' Convert images to EBImage
-#'
-#' The \code{EBImage} class is a thin wrapper around the \code{Image} class in
-#' \code{EBImage} so it inherits from \code{VirtualSpatialImage} as required by
-#' \code{SpatialExperiment} and has extent as used in Voyager's plotting
-#' functions. This function converts \code{SpatRasterImage} (thin wrapper around
-#' the class in \code{terra}) and \code{BioFormatsImage} into \code{EBImage} for
-#' image operations as implemented in the \code{EBImage} package.
-#'
-#' @param x Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.
-#' @param resolution Integer, which resolution in the \code{BioFormatsImage} to
-#' read and convert. Defaults to 4, which is a lower resolution.
-#' @return A \code{EBImage} object. The image is loaded into memory.
-#' @name toEBImage
-#' @aliases toEBImage
-#' @export
-setMethod("toEBImage", "BioFormatsImage", .toEBImage)
-
-#' @rdname toEBImage
-#' @export
-setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
 
 .toEBImage <- function(x, resolution = 4L) {
     check_installed(c("xml2", "RBioFormats"))
@@ -269,6 +247,28 @@ setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
         out <- terra::as.array(x)[,,1] |> t() |> Image(colormode = "Grayscale")
     out
 }
+
+#' Convert images to EBImage
+#'
+#' The \code{EBImage} class is a thin wrapper around the \code{Image} class in
+#' \code{EBImage} so it inherits from \code{VirtualSpatialImage} as required by
+#' \code{SpatialExperiment} and has extent as used in Voyager's plotting
+#' functions. This function converts \code{SpatRasterImage} (thin wrapper around
+#' the class in \code{terra}) and \code{BioFormatsImage} into \code{EBImage} for
+#' image operations as implemented in the \code{EBImage} package.
+#'
+#' @param x Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.
+#' @param resolution Integer, which resolution in the \code{BioFormatsImage} to
+#' read and convert. Defaults to 4, which is a lower resolution.
+#' @return A \code{EBImage} object. The image is loaded into memory.
+#' @name toEBImage
+#' @aliases toEBImage
+#' @export
+setMethod("toEBImage", "BioFormatsImage", .toEBImage)
+
+#' @rdname toEBImage
+#' @export
+setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
 
 toSpatRasterImage <- function(x, resolution = 4L) {
     check_installed("RBioFormats")

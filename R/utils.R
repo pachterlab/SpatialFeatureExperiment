@@ -45,6 +45,22 @@ changeSampleIDs <- function(sfe, replacement) {
                 int_metadata(sfe)$annotGeometries[[n]]$sample_id[ind] <- replacement[i]
             }
         }
+        # I won't change the spatial results since those depend on the sample definitions
+        if (length(rowGeometries(sfe))) {
+            nms <- rowGeometryNames(sfe)
+            nms <- str_replace(nms, paste0(names(replacement)[i], "$"), replacement[i])
+            rowGeometryNames(sfe) <- nms
+            # Edge case: what if one sample_id includes another one?
+            # e.g. sample01_x and x
+        }
+        if (nrow(imgData(sfe))) {
+            imgData(sfe)$sample_id[imgData(sfe)$sample_id == names(replacement)[i]] <-
+                replacement[i]
+        }
+        # TODO: change sample_ids with a list whose names are new sample_ids and values
+        # are vectors of cell IDs for each new sample. This is used when using
+        # geometry to split samples, say multiple pieces within the same Visium capture area.
+        # Need to generalize to that tree.
     }
     sfe
 }
@@ -102,3 +118,6 @@ callMeta <- function(object = NULL) {
 .path_valid2 <- function(x) {
     all(c(length(x) == 1, is.character(x), file.exists(x)))
 }
+
+# TODO: Use geometry to decide which cells should have sample_id changed
+# This will also split the rowGeometries.
