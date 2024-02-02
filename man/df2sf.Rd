@@ -10,7 +10,10 @@ df2sf(
   spotDiameter = NA,
   geometryType = c("POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING",
     "MULTIPOLYGON"),
-  BPPARAM = SerialParam()
+  BPPARAM = SerialParam(),
+  group_col = "group",
+  id_col = "ID",
+  subid_col = "subID"
 )
 }
 \arguments{
@@ -27,15 +30,20 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
 \item{geometryType}{Type of geometry to convert the ordinary data frame to.
 If the geometry in \code{df} is de facto points, then this argument will be
-ignored and the returned \code{sf} will have geometry type POINT. For any
-geometry type where one geometry is specified by multiple coordinates, the
-data frame \code{df} must have a column "ID" specifying which coordinate
-belongs to which geometry. For MULTI* geometries, there must be a "group"
-column specifying which coordinates for which MULTI geometry.}
+ignored and the returned \code{sf} will have geometry type POINT.}
 
 \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
 instance, passed to \code{\link{df2sf}} to parallelize the conversion of
 data frames with coordinates to \code{sf} geometries.}
+
+\item{group_col}{Column to indicate which coordinates for which MULTI geometry,
+such as to identify which MULTIPOLYGON or MULTIPOINT.}
+
+\item{id_col}{Column to indicate coordinates for which geometry, within a
+MULTI geometry if applicable, such as to identify which POLYGON or which
+polygon within a MULTIPOLYGON.}
+
+\item{subid_col}{Column to indicate coordinates for holes in polygons.}
 }
 \value{
 An \code{sf} object.
