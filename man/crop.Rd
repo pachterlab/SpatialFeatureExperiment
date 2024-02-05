@@ -9,12 +9,9 @@ crop(
   y = NULL,
   colGeometryName = 1L,
   sample_id = "all",
-  pred = st_intersects,
+  pred = deprecated(),
   op = st_intersection,
-  xmin = deprecated(),
-  xmax = deprecated(),
-  ymin = deprecated(),
-  ymax = deprecated()
+  keep_whole_cg = FALSE
 )
 }
 \arguments{
@@ -36,19 +33,22 @@ included in the indicated sample IDs are subsetted. If sample is not
 indicated in \code{y}, then the same geometry or bounding box is used to
 subset all samples specified in the \code{sample_id} argument.}
 
-\item{pred}{A geometric binary predicate function to indicate which
-cells/spots to keep, defaults to \code{\link{st_intersects}}.}
+\item{pred}{Deprecated. The binary predicate is now tied to the geometric
+operation specified in \code{op}.}
 
 \item{op}{A geometric operation function to crop the geometries in the SFE
-object. Defaults to \code{\link{st_intersection}}.}
+object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
+are allowed. If "intersection", then only things inside \code{y} is kept
+after cropping. If "difference", then only things outside \code{y} is kept.}
 
-\item{xmin}{Deprecated. Supply the bounding box to argument \code{y} instead.}
-
-\item{xmax}{Deprecated.}
-
-\item{ymin}{Deprecated.}
-
-\item{ymax}{Deprecated.}
+\item{keep_whole_cg}{Logical, whether to keep the whole items in
+\code{colGeometries} that fulfill the criteria in \code{pred}. If
+\code{TRUE} the geometries that partially intersect (if the predicate is
+\code{st_intersects}) are kept and the part not overlapping is not cropped
+off. Then the \code{annotGeometries}, \code{rowGeometries}, and images are
+cropped with the bounding box of the \code{colGeometries}. If \code{FALSE},
+the geometries at the boundary are cropped, which may break some cells into
+multiple pieces or convert polygons into points or lines.}
 }
 \value{
 An SFE object. There is no guarantee that the geometries after
@@ -62,6 +62,10 @@ boundary or histological region polygon, or crop away empty spaces. After
 cropping, not only will the cells/spots be subsetted, but also all geometries
 will be cropped.
 }
+\details{
+3D geometries are allowed, but geometric operations can only be performed in
+x and y but not z.
+}
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData("small")
@@ -69,13 +73,6 @@ sfe <- McKellarMuscleData("small")
 sfe_on_tissue <- crop(sfe, tissueBoundary(sfe),
     colGeometryName = "spotPoly",
     sample_id = "Vis5A"
-)
-# Subset sfe to only keep what's within a bounding box
-# All geometries will be cropped
-# sample_id is optional when only one sample is present
-sfe_cropped <- crop(sfe,
-    colGeometryName = "spotPoly",
-    xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500
 )
 }
 \concept{Geometric operations}

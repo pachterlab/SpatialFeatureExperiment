@@ -23,7 +23,7 @@
 #' @concept Geometric operations
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
-#'   st_is_empty st_disjoint
+#'   st_is_empty st_disjoint st_z_range st_zm
 #' @importFrom stats aggregate
 #' @examples
 #' library(sf)
@@ -52,6 +52,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 
 .crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
                            id_col = "id", remove_empty = FALSE) {
+    # Need pred for 3D
     # g has column sample_id as in colGeometry and annotGeometry
     # g should also have row names if it is colGeometry
     if (!id_col %in% names(g)) {
@@ -75,6 +76,8 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
             }
             .g <- gs[[s]][, c("geometry", id_col)]
             st_agr(.g) <- "constant"
+            if (!is.null(st_z_range(.g)))
+                y_use <- st_zm(y_use, drop = FALSE, what = "Z")
             o <- op(.g, y_use)
             # Aggregate in case cropping broke some items into multiple pieces
             if (any(!rownames(o) %in% rownames(.g))) {
@@ -342,6 +345,9 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' cropping, not only will the cells/spots be subsetted, but also all geometries
 #' will be cropped.
 #'
+#' 3D geometries are allowed, but geometric operations can only be performed in
+#' x and y but not z.
+#'
 #' @param x An SFE object.
 #' @param y An object of class \code{sf}, \code{sfg}, \code{sfc} with which to
 #'   crop the SFE object, or a bounding box with the format of the output of
@@ -356,10 +362,12 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   included in the indicated sample IDs are subsetted. If sample is not
 #'   indicated in \code{y}, then the same geometry or bounding box is used to
 #'   subset all samples specified in the \code{sample_id} argument.
-#' @param pred A geometric binary predicate function to indicate which
-#'   cells/spots to keep, defaults to \code{\link{st_intersects}}.
+#' @param pred Deprecated. The binary predicate is now tied to the geometric
+#'   operation specified in \code{op}.
 #' @param op A geometric operation function to crop the geometries in the SFE
-#'   object. Defaults to \code{\link{st_intersection}}.
+#'   object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
+#'   are allowed. If "intersection", then only things inside \code{y} is kept
+#'   after cropping. If "difference", then only things outside \code{y} is kept.
 #' @param keep_whole_cg Logical, whether to keep the whole items in
 #'   \code{colGeometries} that fulfill the criteria in \code{pred}. If
 #'   \code{TRUE} the geometries that partially intersect (if the predicate is
@@ -383,8 +391,16 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     sample_id = "Vis5A"
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
-                 pred = st_intersects, op = st_intersection,
+                 pred = deprecated(), op = st_intersection,
                  keep_whole_cg = FALSE) {
+    if (is_present(pred)) {
+        deprecate_warn("1.6.0", "SpatialFeatureExperiment::crop(pred = )")
+    }
+    if (!(identical(op, sf::st_intersection) || identical(op, sf::st_difference))) {
+        stop("op must be either st_intersection or st_difference.")
+    }
+    is_difference <- identical(op, sf::st_difference)
+    pred <- if (is_difference) function(x, y) !st_covered_by(x, y) else st_intersects
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
         # y should be bbox, either named vector or matrix with samples in columns
@@ -435,17 +451,17 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         colnames(y) <- samples_use
         y <- .bbox2sf(y, samples_use)
     }
+    rowGeometries(out) <- lapply(rowGeometries(out), .crop_geometry,
+                                 y = y,
+                                 samples_use = samples_use, op = op,
+                                 id_col = "barcode"
+    )
     annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
                                    y = y,
                                    samples_use = samples_use, op = op,
                                    remove_empty = TRUE
     )
     out <- .crop_imgs(out, bbox(out, sample_id = "all"))
-    rowGeometries(out) <- lapply(rowGeometries(out), .crop_geometry,
-                                 y = y,
-                                 samples_use = samples_use, op = op,
-                                 id_col = "barcode"
-    )
     samples_rmed <- setdiff(sample_id, sampleIDs(out))
     if (length(samples_rmed)) {
         warning(
