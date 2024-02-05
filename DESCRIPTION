@@ -32,6 +32,7 @@ Imports:
     rlang,
     S4Vectors,
     sf,
+    sfheaders,
     SingleCellExperiment,
     SpatialExperiment,
     spdep (>= 1.1-7),

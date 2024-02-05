@@ -28,11 +28,12 @@ test_that("Not supplying colGeometries, supplying coordinates in colData", {
 
 test_that("Not supplying colGeometries, supplying coordinates in spatialCoords", {
     sfe <- SpatialFeatureExperiment(list(counts = mat),
-        spatialCoords = as.matrix(coords1[, c(
-            "col",
-            "row"
-        )])
+        spatialCoords = as.matrix(coords1[, c("col", "row")])
     )
+    expect_warning(SpatialFeatureExperiment(list(counts = mat),
+                                            spatialCoords = as.matrix(coords1[, c("col", "row")]),
+                                            BPPARAM = BiocParallel::SerialParam()
+    ), "deprecated")
     expect_equal(colGeometryNames(sfe), "centroids")
     expect_equal(as.character(st_geometry_type(colGeometry(sfe),
         by_geometry = FALSE

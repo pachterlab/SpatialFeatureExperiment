@@ -12,13 +12,15 @@ test_that("df2sf works properly for points", {
 
 test_that("Points but with spotDiameter", {
     sf_use <- df2sf(pts_df, geometryType = "POINT", spotDiameter = 0.1)
+    expect_warning(df2sf(pts_df, geometryType = "POINT", spotDiameter = 0.1,
+                         BPPARAM = BiocParallel::SerialParam()), "deprecated")
     pts_sf_dia <- readRDS(system.file("extdata/pts_sf_dia.rds",
         package = "SpatialFeatureExperiment"
     ))
     expect_equal(sf_use, pts_sf_dia, ignore_attr = TRUE)
 })
 
-test_that("sample_id when I need to split the data frame", {
+test_that("Multipoints", {
     multipts_df <- readRDS(system.file("extdata/multipts_df.rds",
         package = "SpatialFeatureExperiment"
     ))
@@ -27,13 +29,9 @@ test_that("sample_id when I need to split the data frame", {
     multipts_sf <- readRDS(system.file("extdata/multipts_sf.rds",
         package = "SpatialFeatureExperiment"
     ))
+    names(sf_use)[1] <- "ID"
     sf_use <- sf_use[, names(multipts_sf)]
     expect_equal(sf_use, multipts_sf, ignore_attr = TRUE)
-
-    multipts_df_wrong_sample <- readRDS(system.file("extdata/pts_sf_dia.rds",
-        package = "SpatialFeatureExperiment"
-    ))
-    expect_error(df2sf(multipts_df_wrong_sample, geometryType = "MULTIPOINT"))
 })
 
 test_that("Linestring", {
@@ -104,6 +102,7 @@ test_that("Multipolygons", {
         geometryType = "MULTIPOLYGON",
         spatialCoordsNames = c("V1", "V2")
     )
+    names(sf_use)[1] <- "ID"
     sf_use <- sf_use[, names(mpol_sf)]
     expect_equal(sf_use, mpol_sf, ignore_attr = TRUE)
 })

@@ -669,16 +669,14 @@ readVizgen <- function(data_dir,
   if (dest == "rowGeometry") {
     # Should have genes as row names
     # RAM concerns for parallel processing, wish I can stream
-    mols <- df2sf(mols, geometryType = "MULTIPOINT", BPPARAM = BPPARAM,
+    mols <- df2sf(mols, geometryType = "MULTIPOINT",
                   spatialCoordsNames = spatialCoordsNames,
                   group_col = gene_col)
   } else {
     mols <- split(mols, mols[[gene_col]])
     mols <- bplapply(mols, df2sf, geometryType = "MULTIPOINT",
                      spatialCoordsNames = spatialCoordsNames,
-                     group_col = cell_col,
-                     # Does it get passed to df2sf? I don't think so, so parallelizing over cells
-                     BPPARAM = BPPARAM)
+                     group_col = cell_col)
     names(mols) <- paste(names(mols), "spots", sep = "_")
   }
   mols
@@ -1034,7 +1032,7 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
     }
 
   # make sure that sfe and rowGeometries have the same features
-  # NOTE, if `min_phred = NUL`L, no filtering of features occur
+  # NOTE, if `min_phred = NULL`, no filtering of features occur
   if (!is.null(min_phred)) {
     if (length(rowGeometries(sfe)) > 1) {
       # check if all features match between rowGeometries and SFE object
@@ -1132,7 +1130,7 @@ readCosMX <- function(data_dir,
     message(">>> Constructing cell polygons")
     polys <- df2sf(polys, spatialCoordsNames = c("x_global_px", "y_global_px"),
                    geometryType = "POLYGON",
-                   id_col = "cellID", BPPARAM = BPPARAM)
+                   id_col = "cellID")
     polys <- polys[match(meta$cell_ID, polys$ID),]
     suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
   }
@@ -1400,7 +1398,7 @@ readXenium <- function(data_dir,
       polys <-
         lapply(polys, function(x) {
           df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
-                geometryType = "POLYGON", BPPARAM = BPPARAM) })
+                geometryType = "POLYGON") })
       fn_out <- c(cell = "cell_boundaries_sf.parquet",
                   nucleus = "nucleus_boundaries_sf.parquet")
       fn_out <- fn_out[names(fn_segs)]

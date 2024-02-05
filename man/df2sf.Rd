@@ -10,7 +10,7 @@ df2sf(
   spotDiameter = NA,
   geometryType = c("POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING",
     "MULTIPOLYGON"),
-  BPPARAM = SerialParam(),
+  BPPARAM = deprecated(),
   group_col = "group",
   id_col = "ID",
   subid_col = "subID"

@@ -35,11 +35,11 @@
 #' sfe <- toSpatialFeatureExperiment(spe)
 NULL
 
-.sc2cg <- function(coords_use, spotDiameter = NA, BPPARAM = SerialParam()) {
-    if (is.null(colnames(coords_use))) 
+.sc2cg <- function(coords_use, spotDiameter = NA) {
+    if (is.null(colnames(coords_use)))
         colnames(coords_use) <- paste0("V", seq_len(ncol(coords_use)))
     cg_sfc <- df2sf(coords_use, spatialCoordsNames = colnames(coords_use),
-                    spotDiameter = spotDiameter, BPPARAM = BPPARAM,
+                    spotDiameter = spotDiameter,
                     geometryType = "POINT")
     rownames(cg_sfc) <- rownames(coords_use)
     cg_sfc

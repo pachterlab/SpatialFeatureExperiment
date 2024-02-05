@@ -54,8 +54,16 @@
     df[,..cols_use]
 }
 
+.use_z <- function(spatialCoordsNames) {
+    if (length(spatialCoordsNames) > 2L) spatialCoordsNames[3] else NULL
+}
+
+.use_subid <- function(df, subid_col) {
+    if (subid_col %in% names(df)) subid_col else NULL
+}
+
 .df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi,
-                         BPPARAM, group_col = "group") {
+                         group_col = "group") {
     # Case 1: centroids, use POINT
     if (!is.na(spotDiameter)) {
         if (spotDiameter <= 0) {
@@ -65,21 +73,15 @@
     if (multi) {
         df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
                            group_col = group_col)
-        cns <- c(spatialCoordsNames, group_col)
-        if (!is.data.table(df)) {
-            ..cns <- cns
-            ..spatialCoordsNames <- spatialCoordsNames
-        }
-        df_split <- split(df[,..cns], df[[group_col]])
-        geometry_use <- bplapply(df_split, function(x) {
-            st_multipoint(as.matrix(x[, ..spatialCoordsNames]))
-        }, BPPARAM = BPPARAM)
-        geometry_use <- st_sfc(geometry_use)
-        out <- .df_attr(df, geometry_use, spatialCoordsNames, group_col)
+        out <- sf_multipoint(df, x = spatialCoordsNames[1],
+                             y = spatialCoordsNames[2],
+                             z = .use_z(spatialCoordsNames),
+                             multipoint_id = group_col,
+                             keep = TRUE)
     } else {
         rns <- rownames(df)
         out <- sf::st_as_sf(df, coords = spatialCoordsNames, crs = NA,
-                            row.names = rns)
+                            row.names = rns) # in this case faster than sf_point
     }
     if (!is.na(spotDiameter)) {
         out$geometry <- st_buffer(out$geometry, spotDiameter / 2)
@@ -87,97 +89,52 @@
     out
 }
 
-.df2poly_mat <- function(x, spatialCoordsNames) {
-    if (!is.data.table(x)) ..spatialCoordsNames <- spatialCoordsNames
-    m <- as.matrix(x[, ..spatialCoordsNames])
-    if (!isTRUE(all.equal(m[1,], m[nrow(m)]))) {
-        # Close the polygon
-        rbind(m, m[1, ])
-    } else m
-}
-
-.df_attr <- function(df, geometry_use, spatialCoordsNames,
-                     group_col = "group", id_col = "ID", subid_col = "subID") {
-    # The other attributes, only keep those with one value per geometry
-    cols_use <- setdiff(names(df), c(group_col, id_col, subid_col,
-                                     spatialCoordsNames))
-    col_merge <- if (group_col %in% names(df)) group_col else id_col
-    cols_use <- c(cols_use, col_merge)
-    if (!is.data.table(df)) ..cols_use <- cols_use
-    df_attrs <- unique(df[,..cols_use, drop = FALSE])
-    geometry_use <- st_sf(ID = names(geometry_use), geometry = geometry_use)
-    out <- merge(geometry_use, df_attrs, by.x = "ID", by.y = col_merge,
-                 all.x = TRUE)
-    names(out$geometry) <- NULL
-    rownames(out) <- out$ID
-    return(out)
-}
-
-.df2sf_polygon <- function(df, spatialCoordsNames, multi, BPPARAM,
+.df2sf_polygon <- function(df, spatialCoordsNames, multi,
                            group_col = "group", id_col, subid_col) {
     df <- unique(df)
     gt <- if (multi) "MULTIPOLYGON" else "POLYGON"
     df <- .df2sf_check(df, spatialCoordsNames, gt,
                        group_col, id_col, subid_col)
     if (multi) {
-        df_split <- split(df, df[[group_col]])
-        geometry_use <- lapply(df_split, function(x) {
-            ms1 <- split(x, x[[id_col]])
-            if ("subID" %in% names(df)) {
-                m <- bplapply(ms1, function(y) {
-                    ms2 <- split(y, y[[subid_col]])
-                    lapply(ms2, .df2poly_mat, spatialCoordsNames = spatialCoordsNames)
-                }, BPPARAM = BPPARAM)
-            } else {
-                m <- bplapply(ms1, function(y) list(.df2poly_mat(y, spatialCoordsNames)),
-                              BPPARAM = BPPARAM)
-            }
-            st_multipolygon(m)
-        })
+        out <- sf_multipolygon(df, x = spatialCoordsNames[1],
+                               y = spatialCoordsNames[2],
+                               z = .use_z(spatialCoordsNames),
+                               polygon_id = id_col,
+                               multipolygon_id = group_col,
+                               linestring_id = .use_subid(df, subid_col),
+                               keep = TRUE)
     } else {
-        df_split <- split(df, df[[id_col]])
-        if ("subID" %in% names(df)) {
-            # Might be holes
-            geometry_use <- bplapply(df_split, function(y) {
-                ms <- split(y, y[[subid_col]])
-                out <- lapply(ms, .df2poly_mat, spatialCoordsNames = spatialCoordsNames)
-                st_polygon(out)
-            }, BPPARAM = BPPARAM)
-        } else { # Definitely no holes
-            geometry_use <- bplapply(df_split, function(y) {
-                st_polygon(list(.df2poly_mat(y, spatialCoordsNames)))
-            }, BPPARAM = BPPARAM)
-        }
+        out <- sf_polygon(df, x = spatialCoordsNames[1],
+                          y = spatialCoordsNames[2],
+                          z = .use_z(spatialCoordsNames),
+                          polygon_id = id_col,
+                          linestring_id = .use_subid(df, subid_col),
+                          keep = TRUE)
     }
-    geometry_use <- st_sfc(geometry_use)
-    .df_attr(df, geometry_use, spatialCoordsNames, group_col,
-             id_col = id_col, subid_col = subid_col)
+    return(out)
 }
 
-.df2sf_linestring <- function(df, spatialCoordsNames, multi, BPPARAM,
+.df2sf_linestring <- function(df, spatialCoordsNames, multi,
                               group_col = "group", id_col) {
     df <- unique(df)
     gt <- if (multi) "MULTILINESTRING" else "LINESTRING"
     df <- .df2sf_check(df, spatialCoordsNames, gt,
                        group_col, id_col)
-    if (!is.data.table(df)) ..spatialCoordsNames <- spatialCoordsNames
     if (multi) {
-        df_split <- split(df, df[[group_col]])
-        geometry_use <- lapply(df_split, function(x) {
-            ms <- split(x, x[[id_col]])
-            m <- bplapply(ms, function(y) as.matrix(y[, ..spatialCoordsNames]),
-                          BPPARAM = BPPARAM)
-            st_multilinestring(m)
-        })
+        out <- sf_multilinestring(df, x = spatialCoordsNames[1],
+                                  y = spatialCoordsNames[2],
+                                  z = .use_z(spatialCoordsNames),
+                                  multilinestring_id = group_col,
+                                  linestring_id = id_col,
+                                  keep = TRUE)
     } else {
-        df_split <- split(df, df[[id_col]])
-        geometry_use <- bplapply(df_split, function(x) {
-            st_linestring(as.matrix(x[, ..spatialCoordsNames]))
-        }, BPPARAM = BPPARAM)
+        out <- sf_linestring(df, x = spatialCoordsNames[1],
+                             y = spatialCoordsNames[2],
+                             z = .use_z(spatialCoordsNames),
+                             linestring_id = id_col,
+                             keep = TRUE)
     }
-    geometry_use <- st_sfc(geometry_use)
-    .df_attr(df, geometry_use, spatialCoordsNames, group_col,
-             id_col = id_col)
+    return(out)
 }
 
 .is_de_facto_point <- function(df, group_col, id_col) {
@@ -211,6 +168,8 @@
 #' @export
 #' @concept Utilities
 #' @importFrom BiocParallel bplapply SerialParam
+#' @importFrom sfheaders sf_multipoint sf_polygon sf_multipolygon sf_linestring
+#' sf_multilinestring
 #' @examples
 #' # Points, use spotDiameter to convert to circle polygons
 #' # This is done to Visium spots
@@ -249,10 +208,14 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                       "POINT", "LINESTRING", "POLYGON",
                       "MULTIPOINT", "MULTILINESTRING",
                       "MULTIPOLYGON"
-                  ), BPPARAM = SerialParam(),
+                  ), BPPARAM = deprecated(),
                   group_col = "group",
                   id_col = "ID",
                   subid_col = "subID") {
+    if (is_present(BPPARAM)) {
+        deprecate_warn("1.6.0", "df2sf(BPPARAM = )",
+                       details = "The sfheaders package is now used instead for much better performance")
+    }
     if (is.matrix(df)) df <- as.data.frame(df)
     if (any(!spatialCoordsNames %in% names(df))) {
         cols_absent <- setdiff(spatialCoordsNames, names(df))
@@ -265,16 +228,16 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     if (.is_de_facto_point(df, group_col, id_col)) geometryType <- "POINT"
     geometryType <- match.arg(geometryType)
     out <- switch(geometryType,
-        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE, BPPARAM),
-        MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE, BPPARAM,
+        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE),
+        MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE,
                                   group_col = group_col),
-        LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE, BPPARAM,
+        LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE,
                                        id_col = id_col),
-        MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE, BPPARAM,
+        MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE,
                                             group_col = group_col, id_col = id_col),
-        POLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = FALSE, BPPARAM,
+        POLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = FALSE,
                                  id_col = id_col, subid_col = subid_col),
-        MULTIPOLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = TRUE, BPPARAM,
+        MULTIPOLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = TRUE,
                                       group_col = group_col, id_col = id_col,
                                       subid_col = subid_col)
     )
