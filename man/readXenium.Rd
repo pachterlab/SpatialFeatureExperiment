@@ -75,14 +75,8 @@ object.}
   using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.
 
-  \item To filter cell segmentation polygons based on size.
-
-  \item To convert centroid points to sf POINT geometry.
-
-  \item When the cell segmentation is unavailable, to convert cell bounding
-  boxes to POLYGON geometries.
-
-  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }}
+  \item To get the largest piece and see if it's larger than \code{min_area}
+  when there are multiple pieces in the cell segmentation for one cell.}}
 
 \item{file_out}{Name of file to save the geometry or raster to disk.
 Especially when the geometries are so large that it's unwieldy to load

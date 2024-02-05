@@ -64,8 +64,7 @@ read10xVisiumSFE <- function(samples = "",
                              data = c("filtered", "raw"),
                              images = c("lowres", "hires"),
                              unit = c("full_res_image_pixel", "micron"),
-                             style = "W", zero.policy = NULL,
-                             BPPARAM = SerialParam(), load = FALSE) {
+                             style = "W", zero.policy = NULL, load = FALSE) {
   type <- match.arg(type)
   data <- match.arg(data)
   unit <- match.arg(unit)
@@ -88,7 +87,7 @@ read10xVisiumSFE <- function(samples = "",
                      annotGeometries = NULL, spatialCoordsNames = NULL,
                      annotGeometryType = NULL, spatialGraphs = NULL,
                      spotDiameter = scalefactors[["spot_diameter_fullres"]],
-                     unit = unit, BPPARAM = BPPARAM
+                     unit = unit
     )
     # Add spatial enrichment if present
     fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
@@ -364,14 +363,8 @@ read10xVisiumSFE <- function(samples = "",
 #'   using a server and larger number of threads. This argument is not used if
 #'   \code{use_cellpose = TRUE} and the parquet file is present.
 #'
-#'   \item To filter cell segmentation polygons based on size.
-#'
-#'   \item To convert centroid points to sf POINT geometry.
-#'
-#'   \item When the cell segmentation is unavailable, to convert cell bounding
-#'   boxes to POLYGON geometries.
-#'
-#'   \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }
+#'   \item To get the largest piece and see if it's larger than \code{min_area}
+#'   when there are multiple pieces in the cell segmentation for one cell.}
 #' @param ... Other arguments passed to \code{\link{formatTxSpots}} to format
 #'   and add the transcript spots data to the SFE object, except that extent is
 #'   read from `manifest.json` and that `dest = "rowGeometry"` because the spot
@@ -621,7 +614,7 @@ readVizgen <- function(data_dir,
                                   colData = metadata,
                                   sample_id = sample_id,
                                   spatialCoordsNames = c("center_x", "center_y"),
-                                  unit = "micron", BPPARAM = BPPARAM)
+                                  unit = "micron")
   # add sample_id to centroids
   colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
 
@@ -629,6 +622,7 @@ readVizgen <- function(data_dir,
   # NOTE: might take some time to run
   if (use_bboxes && is.null(polys)) {
     message(">>> Creating bounding boxes from `cell_metadata`")
+      # TODO: rewrite to use the now much faster df2sf
     bboxes_sfc <-
       bplapply(seq_len(nrow(metadata)),
                function(i) {
@@ -664,7 +658,7 @@ readVizgen <- function(data_dir,
   sfe
 }
 
-.mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, BPPARAM, not_in_cell_id) {
+.mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, not_in_cell_id) {
   # For one part of the split, e.g. cell compartment
   if (dest == "rowGeometry") {
     # Should have genes as row names
@@ -683,10 +677,10 @@ readVizgen <- function(data_dir,
 }
 
 .mols2geo_split <- function(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                            BPPARAM, not_in_cell_id, split_col) {
+                            not_in_cell_id, split_col) {
   if (!is.null(split_col) && split_col %in% names(mols)) {
     mols <- split(mols, mols[[split_col]])
-    mols <- lapply(mols, .mols2geo, dest = dest, BPPARAM = BPPARAM,
+    mols <- lapply(mols, .mols2geo, dest = dest,
                    spatialCoordsNames = spatialCoordsNames,
                    gene_col = gene_col, cell_col = cell_col,
                    not_in_cell_id = not_in_cell_id)
@@ -697,7 +691,7 @@ readVizgen <- function(data_dir,
     }
   } else {
     mols <- .mols2geo(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                      BPPARAM, not_in_cell_id)
+                      not_in_cell_id)
   }
   mols
 }
@@ -791,6 +785,9 @@ readVizgen <- function(data_dir,
 #'   z coordinates are not integers, 3D geometries will always be constructed
 #'   since there are no z-planes to speak of. This argument does not apply when
 #'   `spatialCoordsNames` has length 2.
+#' @param BPPARAM \code{\link{BiocParallelParam}} object to specify
+#'   multithreading to convert raw char in some parquet files to R objects. Not
+#'   used otherwise.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
@@ -958,7 +955,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     mols <- split(mols, mols[[spatialCoordsNames[3]]])
     mols <- lapply(mols, .mols2geo_split, dest = dest,
                    spatialCoordsNames = spatialCoordsNames[1:2],
-                   gene_col = gene_col, cell_col = cell_col, BPPARAM = BPPARAM,
+                   gene_col = gene_col, cell_col = cell_col,
                    not_in_cell_id = not_in_cell_id, split_col = split_col)
     # If list of list, i.e. colGeometry, or do split
     if (!is(mols[[1]], "sf")) {
@@ -978,7 +975,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     }
   } else {
     mols <- .mols2geo_split(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                            BPPARAM, not_in_cell_id, split_col)
+                            not_in_cell_id, split_col)
   }
 
   if (!is.null(file_out)) {
@@ -1491,7 +1488,7 @@ readXenium <- function(data_dir,
   colData(sce) <- metadata
   sfe <- toSpatialFeatureExperiment(sce, sample_id = sample_id,
                                     spatialCoordsNames = c("x_centroid", "y_centroid"),
-                                    unit = "micron", BPPARAM = BPPARAM)
+                                    unit = "micron")
   # add sample_id to centroids
   colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
 

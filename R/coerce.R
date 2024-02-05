@@ -17,9 +17,7 @@
 #' @inheritParams SpatialExperiment::toSpatialExperiment
 #' @param x A \code{SpatialExperiment} object to be coerced to a
 #'   \code{SpatialFeatureExperiment} object.
-#' @param BPPARAM Passed to \code{\link{df2sf}}, to parallelize the conversion
-#'   of centroid spatial coordinates in the SPE object to \code{sf} point
-#'   geometry.
+#' @param BPPARAM Deprecated.
 #' @return An SFE object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
@@ -65,8 +63,7 @@ setAs(
             spatialCoordsNames(from), "POLYGON",
             int_metadata(from)[["spatialGraphs"]],
             spotDiameter = NA,
-            int_metadata(from)[["unit"]],
-            BPPARAM = SerialParam()
+            int_metadata(from)[["unit"]]
         )
     }
 )
@@ -84,8 +81,7 @@ setMethod(
     function(x, colGeometries = NULL, rowGeometries = NULL,
              annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
              annotGeometryType = "POLYGON",
-             spatialGraphs = NULL, spotDiameter = NA, unit = NULL,
-             BPPARAM = SerialParam()) {
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
         if (is.null(colGeometries)) {
             colGeometries <- int_colData(x)$colGeometries
         }
@@ -101,7 +97,7 @@ setMethod(
         .spe_to_sfe(
             x, colGeometries, rowGeometries, annotGeometries,
             spatialCoordsNames, annotGeometryType,
-            spatialGraphs, spotDiameter, unit, BPPARAM
+            spatialGraphs, spotDiameter, unit
         )
     }
 )
@@ -121,8 +117,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                    image_id=NULL,
                    loadImage=TRUE,
                    imgData=NULL,
-                   unit = NULL,
-                   BPPARAM = SerialParam()) {
+                   unit = NULL) {
               spe <- toSpatialExperiment(x, sample_id=sample_id,
                                          spatialCoordsNames=spatialCoordsNames,
                                          spatialCoords=spatialCoords,
@@ -138,6 +133,5 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                          annotGeometryType = annotGeometryType,
                                          spatialGraphs = spatialGraphs,
                                          spotDiameter = spotDiameter,
-                                         unit = unit,
-                                         BPPARAM = BPPARAM)
+                                         unit = unit)
           })

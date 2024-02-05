@@ -247,7 +247,6 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
 # Call in SFE constructor and *Geometries replacement methods
 .df2sf_in_list <- function(x, spatialCoordsNames = c("x", "y"),
                            spotDiameter = NA, geometryType = "POLYGON",
-                           BPPARAM = SerialParam(),
                            group_col = "group", id_col = "ID", subid_col = "subID") {
     if (!is.null(x) && !is(x, "sf") && !is.data.frame(x) && !is.matrix(x)) {
         stop(
@@ -259,14 +258,12 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
         return(x)
     } else if (is.data.frame(x) || is.matrix(x)) {
         return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType,
-                     BPPARAM = BPPARAM,
                      group_col, id_col, subid_col))
     }
 }
 
 .df2sf_list <- function(x, spatialCoordsNames = c("x", "y"),
                         spotDiameter = NA, geometryType = "POLYGON",
-                        BPPARAM = SerialParam(),
                         group_col = "group", id_col = "ID", subid_col = "subID") {
     x_is_sf <- vapply(x, function(t) is(t, "sf"), FUN.VALUE = logical(1))
     if (all(x_is_sf)) {
@@ -285,7 +282,6 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
         MoreArgs = list(
             spatialCoordsNames = spatialCoordsNames,
             spotDiameter = spotDiameter,
-            BPPARAM = BPPARAM,
             group_col, id_col, subid_col
         ),
         SIMPLIFY = FALSE

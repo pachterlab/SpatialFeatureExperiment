@@ -32,9 +32,8 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 If the geometry in \code{df} is de facto points, then this argument will be
 ignored and the returned \code{sf} will have geometry type POINT.}
 
-\item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
-instance, passed to \code{\link{df2sf}} to parallelize the conversion of
-data frames with coordinates to \code{sf} geometries.}
+\item{BPPARAM}{Deprecated. The `sfheaders` package is used in
+\code{\link{df2sf}} for much better performance.}
 
 \item{group_col}{Column to indicate which coordinates for which MULTI geometry,
 such as to identify which MULTIPOLYGON or MULTIPOINT.}

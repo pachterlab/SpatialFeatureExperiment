@@ -18,7 +18,7 @@ SpatialFeatureExperiment(
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   unit = c("full_res_image_pixel", "micron"),
-  BPPARAM = SerialParam(),
+  BPPARAM = deprecated(),
   ...
 )
 }
@@ -119,9 +119,8 @@ for spatial neighborhood graphs.}
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
 
-\item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
-instance, passed to \code{\link{df2sf}} to parallelize the conversion of
-data frames with coordinates to \code{sf} geometries.}
+\item{BPPARAM}{Deprecated. The `sfheaders` package is used in
+\code{\link{df2sf}} for much better performance.}
 
 \item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
 and \code{\link{SingleCellExperiment}} constructors.}

@@ -98,23 +98,9 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
-  processing backend and number of threads to use for parallelizable tasks:
-  \enumerate{ \item To load cell segmentation from HDF5 files from different
-  fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link{BiocParallelParam}} object. When there are numerous
-  FOVs, reading in the geometries can be time consuming, so we recommend
-  using a server and larger number of threads. This argument is not used if
-  \code{use_cellpose = TRUE} and the parquet file is present.
-
-  \item To filter cell segmentation polygons based on size.
-
-  \item To convert centroid points to sf POINT geometry.
-
-  \item When the cell segmentation is unavailable, to convert cell bounding
-  boxes to POLYGON geometries.
-
-  \item Convert transcript coordinates into MULTIPOLYGON for rowGeometry. }}
+\item{BPPARAM}{\code{\link{BiocParallelParam}} object to specify
+multithreading to convert raw char in some parquet files to R objects. Not
+used otherwise.}
 
 \item{return}{Logical, whether to return the geometries in memory. This does
 not depend on whether the geometries are written to file. Always `FALSE`

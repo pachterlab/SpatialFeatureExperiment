@@ -14,7 +14,6 @@ read10xVisiumSFE(
   unit = c("full_res_image_pixel", "micron"),
   style = "W",
   zero.policy = NULL,
-  BPPARAM = SerialParam(),
   load = FALSE
 )
 }
@@ -51,10 +50,6 @@ microns. This is used to plot scale bar.}
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
-
-\item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}}
-instance, passed to \code{\link{df2sf}} to parallelize the conversion of
-data frames with coordinates to \code{sf} geometries.}
 
 \item{load}{Not used, kept for backward compatibility.}
 }

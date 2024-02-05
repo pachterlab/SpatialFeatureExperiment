@@ -16,8 +16,7 @@
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   spotDiameter = NA,
-  unit = NULL,
-  BPPARAM = SerialParam()
+  unit = NULL
 )
 
 \S4method{toSpatialFeatureExperiment}{SingleCellExperiment}(
@@ -36,8 +35,7 @@
   image_id = NULL,
   loadImage = TRUE,
   imgData = NULL,
-  unit = NULL,
-  BPPARAM = SerialParam()
+  unit = NULL
 )
 }
 \arguments{
@@ -107,10 +105,6 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
 
-\item{BPPARAM}{Passed to \code{\link{df2sf}}, to parallelize the conversion
-of centroid spatial coordinates in the SPE object to \code{sf} point
-geometry.}
-
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
 be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
@@ -142,6 +136,8 @@ Default = \code{FALSE}.}
 \item{imgData}{Optional \code{\link{DataFrame}} containing the image data.
 Alternatively, this can be built from the arguments \code{imageSources} and
 \code{image_id} (see Details).}
+
+\item{BPPARAM}{Deprecated.}
 }
 \value{
 An SFE object

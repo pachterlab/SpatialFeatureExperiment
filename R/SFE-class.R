@@ -86,10 +86,9 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   diameter must be in the same unit as the coordinates in the *Geometry
 #'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
 #' @param unit Unit the coordinates are in, either microns or pixels in full
-#' resolution image.
-#' @param BPPARAM An optional \code{\link[BiocParallel]{BiocParallelParam}}
-#'   instance, passed to \code{\link{df2sf}} to parallelize the conversion of
-#'   data frames with coordinates to \code{sf} geometries.
+#'   resolution image.
+#' @param BPPARAM Deprecated. The `sfheaders` package is used in
+#'   \code{\link{df2sf}} for much better performance.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @return A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
