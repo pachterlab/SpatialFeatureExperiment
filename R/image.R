@@ -28,7 +28,7 @@
 #'   \code{SpatRasterImage}, and methods for SFE return a modified SFE object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
 #' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster
-#'   imgSource getImg
+#'   imgSource getImg rotateImg
 #' @importFrom terra ext ext<-
 #' @importClassesFrom terra SpatRaster
 #' @importClassesFrom EBImage Image

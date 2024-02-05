@@ -5,36 +5,107 @@
 \alias{SFE-image}
 \alias{transposeImg}
 \alias{SpatRasterImage-class}
+\alias{BioFormatsImage-class}
+\alias{EBImage-class}
 \alias{SpatRasterImage}
+\alias{EBImage}
+\alias{BioFormatsImage}
+\alias{ext,BioFormatsImage-method}
+\alias{ext,EBImage-method}
+\alias{ext,SpatRasterImage-method}
+\alias{ext<-,BioFormatsImage,numeric-method}
+\alias{ext<-,EBImage,numeric-method}
+\alias{ext<-,SpatRasterImage,numeric-method}
 \alias{addImg,SpatialFeatureExperiment-method}
 \alias{transposeImg,SpatRasterImage-method}
-\alias{mirrorImg,SpatRasterImage-method}
+\alias{transposeImg,BioFormatsImage-method}
+\alias{transposeImg,EBImage-method}
 \alias{transposeImg,SpatialFeatureExperiment-method}
+\alias{mirrorImg,SpatRasterImage-method}
+\alias{mirrorImg,BioFormatsImage-method}
+\alias{mirrorImg,EBImage-method}
 \alias{mirrorImg,SpatialFeatureExperiment-method}
+\alias{rotateImg,SpatRasterImage-method}
+\alias{rotateImg,BioFormatsImage-method}
+\alias{rotateImg,EBImage-method}
+\alias{rotateImg,SpatialFeatureExperiment-method}
 \alias{imgRaster,SpatRasterImage-method}
+\alias{imgRaster,BioFormatsImage-method}
+\alias{imgRaster,EBImage-method}
 \alias{imgSource,SpatRasterImage-method}
+\alias{imgSource,BioFormatsImage-method}
 \title{Images in SpatialFeatureExperiment object}
 \usage{
 SpatRasterImage(img)
 
-\S4method{addImg}{SpatialFeatureExperiment}(x, file, sample_id, image_id, extent = NULL, scale_fct = 1)
+EBImage(img, ext)
 
-\S4method{transposeImg}{SpatRasterImage}(x)
+BioFormatsImage(path, ext)
 
-\S4method{mirrorImg}{SpatRasterImage}(x, direction = "vertical")
+\S4method{ext}{BioFormatsImage}(x)
 
-\S4method{transposeImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL)
+\S4method{ext}{EBImage}(x)
 
-\S4method{mirrorImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL, direction = "vertical")
+\S4method{ext}{SpatRasterImage}(x)
+
+\S4method{ext}{BioFormatsImage,numeric}(x) <- value
+
+\S4method{ext}{EBImage,numeric}(x) <- value
+
+\S4method{ext}{SpatRasterImage,numeric}(x) <- value
+
+\S4method{addImg}{SpatialFeatureExperiment}(
+  x,
+  imageSource,
+  sample_id,
+  image_id,
+  extent = NULL,
+  scale_fct = 1,
+  file = deprecated()
+)
+
+\S4method{transposeImg}{SpatRasterImage}(x, ...)
+
+\S4method{transposeImg}{BioFormatsImage}(x, resolution = 4L)
+
+\S4method{transposeImg}{EBImage}(x, ...)
+
+\S4method{transposeImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL, resolution = 4L)
+
+\S4method{mirrorImg}{SpatRasterImage}(x, direction = c("vertical", "horizontal"), ...)
+
+\S4method{mirrorImg}{BioFormatsImage}(x, direction = c("vertical", "horizontal"), resolution = 4L)
+
+\S4method{mirrorImg}{EBImage}(x, direction = c("vertical", "horizontal"), ...)
+
+\S4method{mirrorImg}{SpatialFeatureExperiment}(
+  x,
+  sample_id = NULL,
+  image_id = NULL,
+  direction = "vertical",
+  resolution = 4L
+)
+
+\S4method{rotateImg}{SpatRasterImage}(x, degree, maxcell = 1e+07, ...)
+
+\S4method{rotateImg}{BioFormatsImage}(x, degree, resolution = 4L, ...)
+
+\S4method{rotateImg}{EBImage}(x, degree, ...)
+
+\S4method{rotateImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL, degree, resolution = 4L)
 
 \S4method{imgRaster}{SpatRasterImage}(x)
 
+\S4method{imgRaster}{BioFormatsImage}(x, resolution = 4L)
+
+\S4method{imgRaster}{EBImage}(x)
+
 \S4method{imgSource}{SpatRasterImage}(x)
+
+\S4method{imgSource}{BioFormatsImage}(x)
 }
 \arguments{
 \item{x}{SpatRaster or SpatVector}
-
-\item{file}{File from which to read the image.}
 
 \item{sample_id}{Which sample the image is associated with. Use
 \code{\link{sampleIDs}} to get sample IDs present in the SFE object.}
@@ -48,6 +119,10 @@ xmax, and ymax, specifying the extent of the image.}
 \item{scale_fct}{Scale factor -- multiply pixel coordinates in full
 resolution image by this scale factor should yield pixel coordinates in a
 different resolution. \code{extent} takes precedence over \code{scale_fct}.}
+
+\item{file}{File from which to read the image.}
+
+\item{...}{additional arguments for writing files as in \code{\link[terra]{writeRaster}}}
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 }

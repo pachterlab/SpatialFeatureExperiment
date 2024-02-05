@@ -51,8 +51,7 @@ sfe <-
              filter_counts = FALSE,
              add_molecules = TRUE,
              BPPARAM = BPPARAM,
-             file_out = NULL
-             #file_out = file.path(data_dir, "tx_spots.parquet")
+             file_out = file.path(data_dir, "tx_spots.parquet")
   )
 # Cells seem pretty uniformly distributed, not surprising since it's cell culture
 plotGeometry(sfe, "cellSeg")
