@@ -233,3 +233,9 @@ if (!isGeneric("saveRDS")) {setGeneric("saveRDS", function (object, file="", asc
 
 #' @export
 setGeneric("toEBImage", function(x, ...) standardGeneric("toEBImage"))
+
+#' @export
+setGeneric("toSpatRasterImage", function(x, ...) standardGeneric("toSpatRasterImage"))
+
+#' @export
+setGeneric("isFull", function(x) standardGeneric("isFull"))

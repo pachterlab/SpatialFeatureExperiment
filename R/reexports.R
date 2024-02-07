@@ -21,3 +21,9 @@ SpatialExperiment::getImg
 
 #' @export
 SpatialExperiment::imgData
+
+#' @export
+SpatialExperiment::rmvImg
+
+#' @export
+SpatialExperiment::imgRaster
