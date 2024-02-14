@@ -262,7 +262,7 @@ colGeometryNames <- function(x) {
 
 .check_rg_type <- function(type, x, sample_id) {
     rg_names <- rowGeometryNames(x)
-    if (is.numeric(type)) type <- rg_names[1]
+    if (is.numeric(type)) type <- rg_names[type]
     # Deal with: no sample_id in the name, meaning for all samples
     # Have sample_id, but it's not the sample requested
     # What if there's both name and name_sample?
@@ -285,7 +285,7 @@ colGeometryNames <- function(x) {
 .check_rg_sample_all <- function(type, x) {
     # Make sure no sample_ids in the name if sample_id == "all"
     rg_names <- rowGeometryNames(x)
-    if (is.numeric(type)) type <- rg_names[1]
+    if (is.numeric(type)) type <- rg_names[type]
     patterns <- paste0(sampleIDs(x), "$")
     has_other <- vapply(patterns, str_detect, string = type, FUN.VALUE = logical(1))
     if (any(has_other)) {

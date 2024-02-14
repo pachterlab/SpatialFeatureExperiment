@@ -12,9 +12,10 @@ img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
                                   "tissue_lowres_image.png"),
                         package = "SpatialFeatureExperiment")
 # TODO: Change later, copy entire directory in each test & delete afterwards
-xenium_fn <- "xenium_toy/morphology_mip.ome.tif"
+xenium_fn <- system.file(file.path("extdata", "xenium_toy", "morphology_mip.ome.tif"),
+                         package = "SpatialFeatureExperiment")
 
-test_that("addImg", {
+test_that("addImg, SpatRasterImage", {
     expect_error(addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
                         extent = "foo"),
                  "extent must be a numeric vector.")
@@ -24,18 +25,25 @@ test_that("addImg", {
     expect_error(addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
                         scale_fct = -1),
                  "scale_fct must be a positive number.")
+    expect_error(addImg(sfe, "foo/bar", sample_id = "Vis5A", image_id = "ome"),
+                 "img is not a valid file path.")
     sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
                   scale_fct = 0.023)
     expect_s4_class(getImg(sfe), "SpatRasterImage")
     expect_error(addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
                         scale_fct = 0.023),
                  "already contains an entry with")
+})
 
-    # Add BioFormatsImage
+test_that("addImg, BioFormatsImage", {
+    library(RBioFormats)
+    # Weird, would always fail the first time
+    try(addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome"))
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     expect_s4_class(getImg(sfe, image_id = "ome"), "BioFormatsImage")
+})
 
-    # Add EBImage
+test_that("addImg, EBImage", {
     img <- readImage(system.file('images', 'nuclei.tif', package='EBImage'))
     ext_img <- c(xmin = 0, xmax = dim(img)[1], ymin = 0, ymax = dim(img)[2])
     sfe <- addImg(sfe, img, sample_id = "Vis5A", image_id = "ebi", extent = ext_img)
@@ -52,6 +60,7 @@ test_that("transposeImg, SFE method, SpatRasterImage", {
 })
 
 test_that("transposeImg, SFE method, BioFormatsImage", {
+    library(RBioFormats)
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     img <- getImg(sfe, image_id = "ome")
     sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "ome")
@@ -84,12 +93,13 @@ test_that("mirrorImg, SFE method, SpatRasterImage", {
 })
 
 test_that("mirrorImg, SFE method, BioFormatsImage", {
+    library(RBioFormats)
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     img <- getImg(sfe, image_id = "ome")
     img_m <- mirrorImg(img)
     mat1 <- as.array(imgRaster(img)) |> t()
     # SFE method
-    sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
+    sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "ome")
     img_m2 <- getImg(sfe)
     mat3 <- as.array(imgRaster(img_m)) |> t()
     mat3_rev <- apply(mat3, 2, rev)
@@ -105,11 +115,18 @@ test_that("Rotate method, SFE, SpatRasterImage", {
     ebi <- getImg(sfe, image_id = "lowres")
     ext_new <- ext(ebi)
     ext_old <- ext(spi)
-    expect_equal(ext_new[["ymax"]], ext_old[["xmax"]])
-    expect_equal(ext_new[["xmax"]], ext_old[["ymax"]])
+    center <- bbox_center(ext_new)
+    expect_equal(center, bbox_center(ext_old))
+    x_dist <- (ext_old["xmax"] - ext_old["xmin"])/2
+    y_dist <- (ext_old["ymax"] - ext_old["ymin"])/2
+    expect_equal(ext_new[["xmin"]], unname(center[1] - y_dist))
+    expect_equal(ext_new[["xmax"]], unname(center[1] + y_dist))
+    expect_equal(ext_new[["ymin"]], unname(center[2] - x_dist))
+    expect_equal(ext_new[["ymax"]], unname(center[2] + x_dist))
 })
 
 test_that("Rotate method, SFE, BioFormatsImage", {
+    library(RBioFormats)
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     bfi <- getImg(sfe, image_id = "ome")
     sfe <- rotateImg(sfe, sample_id = "Vis5A", image_id = "ome",
@@ -117,8 +134,28 @@ test_that("Rotate method, SFE, BioFormatsImage", {
     ebi <- getImg(sfe, image_id = "ome")
     ext_new <- ext(ebi)
     ext_old <- ext(bfi)
-    expect_equal(ext_new[["ymax"]], ext_old[["xmax"]])
-    expect_equal(ext_new[["xmax"]], ext_old[["ymax"]])
+    center <- bbox_center(ext_new)
+    expect_equal(center, bbox_center(ext_old))
+    x_dist <- (ext_old["xmax"] - ext_old["xmin"])/2
+    y_dist <- (ext_old["ymax"] - ext_old["ymin"])/2
+    expect_equal(ext_new[["xmin"]], unname(center[1] - y_dist))
+    expect_equal(ext_new[["xmax"]], unname(center[1] + y_dist))
+    expect_equal(ext_new[["ymin"]], unname(center[2] - x_dist))
+    expect_equal(ext_new[["ymax"]], unname(center[2] + x_dist))
+})
+
+test_that("translateImg method, SFE", {
+    v <- c(135, 246)
+    sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
+                  scale_fct = 0.023)
+    spi <- getImg(sfe, image_id = "lowres")
+    sfe <- translateImg(sfe, sample_id = "Vis5A", image_id = "lowres",
+                        v = v)
+    spi_tr <- getImg(sfe, image_id = "lowres")
+    ext_new <- ext(spi_tr)
+    ext_old <- ext(spi)
+    expect_equal(ext_new[c("xmin", "xmax")], ext_old[c("xmin", "xmax")] + v[1])
+    expect_equal(ext_new[c("ymin", "ymax")], ext_old[c("ymin", "ymax")] + v[2])
 })
 
 # SpatRasterImage-------------
@@ -145,8 +182,24 @@ test_that("Rotate method for SpatRasterImage which converts to EBImage", {
     ebi <- rotateImg(spi, 90)
     ext_new <- ext(ebi)
     ext_old <- ext(spi)
-    expect_equal(ext_new[["ymax"]], ext_old[["xmax"]])
-    expect_equal(ext_new[["xmax"]], ext_old[["ymax"]])
+    center <- bbox_center(ext_new)
+    expect_equal(center, bbox_center(ext_old))
+    x_dist <- (ext_old["xmax"] - ext_old["xmin"])/2
+    y_dist <- (ext_old["ymax"] - ext_old["ymin"])/2
+    expect_equal(ext_new[["xmin"]], unname(center[1] - y_dist))
+    expect_equal(ext_new[["xmax"]], unname(center[1] + y_dist))
+    expect_equal(ext_new[["ymin"]], unname(center[2] - x_dist))
+    expect_equal(ext_new[["ymax"]], unname(center[2] + x_dist))
+})
+
+test_that("translateImg, SpatRasterImage method", {
+    img <- SpatRasterImage(suppressWarnings(rast(img_path)))
+    ext_old <- ext(img)
+    v <- c(135, 246)
+    img_tr <- translateImg(img, v)
+    ext_new <- ext(img_tr)
+    expect_equal(ext_new[c("xmin", "xmax")], ext_old[c("xmin", "xmax")] + v[1])
+    expect_equal(ext_new[c("ymin", "ymax")], ext_old[c("ymin", "ymax")] + v[2])
 })
 
 sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
@@ -176,9 +229,10 @@ test_that("Convert SpatRasterImage to EBImage, RGB", {
     expect_equal(imgRaster(spi) |> as.array(),
                  imgRaster(ebi) |> as.array() |> aperm(c(2,1,3)))
 })
-
+fn <- system.file(file.path("extdata", "vizgen_cellbound", "images",
+                            "mosaic_Cellbound1_z3.tif"),
+                  package = "SpatialFeatureExperiment")
 test_that("Convert SpatRasterImage to EBImage, grayscale", {
-    fn <- "inst/extdata/vizgen_cellbound/images/mosaic_Cellbound1_z3.tif"
     suppressWarnings(spi <- SpatRasterImage(rast(fn)))
     ebi <- toEBImage(spi)
     expect_equal(ext(spi), ext(ebi))
@@ -197,10 +251,11 @@ test_that("BioFormatsImage constructor", {
     ext_bfi <- ext(bfi)
     expect_setequal(names(ext_bfi), c("xmin", "xmax", "ymin", "ymax"))
     ext_expect <- c(xmin = 0, ymin = 0, xmax = 11454*0.2125, ymax = 10307*0.2125)
-    expect_equal(ext_bfi, ext_expect)
+    expect_equal(ext_bfi, ext_expect[names(ext_bfi)])
 })
 
 test_that("Errors when constructing BioFormatsImage", {
+    library(RBioFormats)
     # Invalid bbox
     bbox_use <- c(xmin = 100, xmax = 0, ymin = 0, ymax = 102)
     expect_error(BioFormatsImage(xenium_fn, ext = bbox_use, isFull = FALSE),
@@ -209,7 +264,7 @@ test_that("Errors when constructing BioFormatsImage", {
     expect_error(BioFormatsImage(xenium_fn, ext = bbox_use, isFull = NA),
                  "isFull must be either TRUE or FALSE, not NA")
     # Trying to read image that doesn't have physical pixel size
-    expect_error(BioFormatsImage("inst/extdata/vizgen_cellbound/images/mosaic_Cellbound1_z3.tif"),
+    expect_error(BioFormatsImage(fn),
                  "Physical pixel size absent from image metadata.")
 })
 
@@ -219,16 +274,18 @@ psx <- psy <- 0.2125
 sizeX4 <- 1431
 sizeY4 <- 1288
 test_that("Convert BioFormatsImage to EBImage, full extent", {
+    library(RBioFormats)
     ext_expect <- c(xmin = 0, ymin = 0, xmax = sizeX_full*psx, ymax = sizeY_full*psy)
     bfi <- BioFormatsImage(xenium_fn)
     ebi <- toEBImage(bfi, resolution = 4L)
     expect_s4_class(ebi, "EBImage")
-    expect_equal(ext(ebi), ext_expect)
+    expect_equal(ext(ebi), ext_expect[c("xmin", "xmax", "ymin", "ymax")])
     dim_img <- dim(imgRaster(ebi))
     expect_equal(dim_img, c(sizeX4, sizeY4))
 })
 ext_use <- c(xmin = 200, xmax = 1200, ymin = 200, ymax = 1200)
 test_that("Convert BioFormatsImage to EBImage, not full extent", {
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use, isFull = FALSE)
     ebi <- toEBImage(bfi, resolution = 4L)
     expect_s4_class(ebi, "EBImage")
@@ -243,18 +300,23 @@ test_that("Convert BioFormatsImage to EBImage, not full extent", {
 })
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
+    # TODO: After making smaller xenium subset, copy the whole directory and delete after test
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use, isFull = FALSE)
     expect_message(spi <- toSpatRasterImage(bfi, resolution = 4L), "Saving image")
-    fn <- "xenium_toy/morphology_mip_res4.tif"
+    fn <- system.file(file.path("extdata", "xenium_toy", "morphology_mip_res4.tif"),
+                      package = "SpatialFeatureExperiment")
     expect_true(file.exists(fn))
     expect_s4_class(spi, "SpatRasterImage")
     ext_sf_bfi <- st_bbox(ext_use) |> st_as_sfc()
     ext_sf_spi <- st_bbox(ext(spi)) |> st_as_sfc()
     expect_true(st_covered_by(ext_sf_bfi, ext_sf_spi, sparse = FALSE))
     expect_true(st_area(ext_sf_spi) / st_area(ext_sf_bfi) < 1.005)
+    unlink(fn)
 })
 ext_use2 <- c(xmin = 200, xmax = 1700, ymin = 200, ymax = 1200)
 test_that("transpose, check ext", {
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- transposeImg(bfi)
     expect_s4_class(ebi, "EBImage")
@@ -264,6 +326,7 @@ test_that("transpose, check ext", {
 })
 
 test_that("mirror (EBI behind the scene), vertical", {
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- mirrorImg(bfi, direction = "vertical")
     expect_s4_class(ebi, "EBImage")
@@ -274,6 +337,7 @@ test_that("mirror (EBI behind the scene), vertical", {
 })
 
 test_that("mirror (EBI behind the scene), horizontal", {
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- mirrorImg(bfi, direction = "horizontal")
     expect_s4_class(ebi, "EBImage")
@@ -284,17 +348,69 @@ test_that("mirror (EBI behind the scene), horizontal", {
 })
 
 test_that("rotate (EBI behind the scene)", {
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     expect_error(rotateImg(bfi, 45), "degrees%%90 == 0 is not TRUE")
     ebi <- rotateImg(bfi, 90)
     ext_ebi <- ext(ebi)
     ebi_orig <- toEBImage(bfi)
-    expect_true(ext_ebi["ymax"] > ext_ebi["xmax"])
     expect_equal(imgRaster(ebi), EBImage::rotate(imgRaster(ebi_orig), 90))
+    ext_new <- ext(ebi)
+    ext_old <- ext(bfi)
+    center <- bbox_center(ext_new)
+    expect_equal(round(center), bbox_center(ext_old))
+    x_dist <- (ext_old["xmax"] - ext_old["xmin"])/2
+    y_dist <- (ext_old["ymax"] - ext_old["ymin"])/2
+    bbox_exp <- c(center[1] - y_dist, center[1] + y_dist,
+                  center[2] - x_dist, center[2] + x_dist)
+    names(bbox_exp) <- c("xmin", "xmax", "ymin", "ymax")
+    new_sf <- st_bbox(ext_new) |> st_as_sfc()
+    exp_sf <- st_bbox(bbox_exp) |> st_as_sfc()
+    # Because new ext is slightly larger due to snapping out and larger pixel size
+    expect_true(st_covers(new_sf, exp_sf, sparse = FALSE))
+    expect_true(st_area(new_sf)/st_area(exp_sf) < 1.01)
+})
+
+test_that("translateImg, BioFormatsImage method", {
+    bfi <- BioFormatsImage(xenium_fn)
+    v <- c(135, 246)
+    ext_old <- ext(bfi)
+    bfi_tr <- translateImg(bfi, v)
+    ext_new <- ext(bfi_tr)
+    expect_equal(ext_new[c("xmin", "xmax")], ext_old[c("xmin", "xmax")] + v[1])
+    expect_equal(ext_new[c("ymin", "ymax")], ext_old[c("ymin", "ymax")] + v[2])
+    expect_equal(SpatialFeatureExperiment::origin(bfi_tr), v)
+})
+
+test_that("translateImg, EBImage method", {
+    library(RBioFormats)
+    bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
+    ebi <- toEBImage(bfi, resolution = 4L)
+    ext_old <- ext(ebi)
+    v <- c(135, 246)
+    ebi_tr <- translateImg(ebi, v)
+    ext_new <- ext(ebi_tr)
+    expect_equal(ext_new[c("xmin", "xmax")], ext_old[c("xmin", "xmax")] + v[1])
+    expect_equal(ext_new[c("ymin", "ymax")], ext_old[c("ymin", "ymax")] + v[2])
+})
+
+test_that("Convert BioFormatsImage to EBImage after translation", {
+    library(RBioFormats)
+    # Make sure that the right part of the image is loaded
+    bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
+    ebi <- toEBImage(bfi, resolution = 4L)
+    v <- c(135, 246)
+    bfi_tr <- translateImg(bfi, v)
+    ebi_sub <- toEBImage(bfi_tr, resolution = 4L)
+    ext_sub <- ext(ebi_sub)
+    ext_exp <- ext(ebi)
+    ext_exp[c("xmin", "xmax")] <- ext_exp[c("xmin", "xmax")] + v[1]
+    ext_exp[c("ymin", "ymax")] <- ext_exp[c("ymin", "ymax")] + v[2]
+    expect_equal(ext_sub, ext_exp)
+    expect_equal(imgRaster(ebi), imgRaster(ebi_sub))
 })
 
 test_that("Crop SpatRasterImage", {
-    fn <- "inst/extdata/vizgen_cellbound/images/mosaic_Cellbound1_z3.tif"
     suppressWarnings(spi <- SpatRasterImage(rast(fn)))
     bbox_use <- c(xmin = 100, xmax = 200, ymin = 100, ymax = 200)
     spi_sub <- cropImg(spi, bbox_use)
@@ -303,6 +419,7 @@ test_that("Crop SpatRasterImage", {
 })
 
 test_that("Crop BioFormatsImage", {
+    library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn)
     bfi_sub <- cropImg(bfi, ext_use)
     expect_s4_class(bfi_sub, "BioFormatsImage")
@@ -316,6 +433,7 @@ test_that("Crop BioFormatsImage", {
 })
 
 test_that("Crop EBImage", {
+    library(RBioFormats)
     ebi <- BioFormatsImage(xenium_fn) |> toEBImage(resolution = 4L)
     ebi_sub <- cropImg(ebi, ext_use)
     expect_s4_class(ebi_sub, "EBImage")

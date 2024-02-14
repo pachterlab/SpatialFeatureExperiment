@@ -112,13 +112,29 @@ changeSampleIDs <- function(sfe, replacement) {
 #' sfe <- McKellarMuscleData(dataset = "small")
 #' sfe |> callMeta() |> str
 callMeta <- function(object = NULL) {
-    return(colData(object) |> 
-         methods::slot(name = "listData") |> 
+    return(colData(object) |>
+         methods::slot(name = "listData") |>
          as.data.frame.list())
 }
 
 .path_valid2 <- function(x) {
     all(c(length(x) == 1, is.character(x), file.exists(x)))
+}
+
+#' Find center of bounding box
+#'
+#' Get x-y coordinates of the center of any bounding box
+#'
+#' @param bbox A numeric vector of length 4 with names xmin, xmax, ymin, ymax,
+#' in any order.
+#' @return A numeric vector of length 2.
+#' @examples
+#' bbox <- c(xmin = 0, xmax = 100, ymin = 0, ymax = 80)
+#' bbox_center(bbox)
+#' @export
+bbox_center <- function(bbox) {
+    c(mean(bbox[c("xmin", "xmax")]),
+      mean(bbox[c("ymin", "ymax")]))
 }
 
 # TODO: Use geometry to decide which cells should have sample_id changed

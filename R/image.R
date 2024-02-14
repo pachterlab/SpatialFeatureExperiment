@@ -77,20 +77,26 @@ SpatRasterImage <- function(img) {
 #' @param isFull Logical, if the extent specified in \code{ext} is the full
 #' extent. If \code{ext = NULL} so it will be inferred from metadata then
 #' \code{isFull = TRUE} will be set internally.
+#' @param origin Origin of the image in the x-y plane, defaults to \code{c(0,0)}.
+#' This is shifted when the image is translated.
 #' @importFrom RBioFormats read.metadata coreMetadata
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
 #' @concept Image and raster
-#' @seealso [isFull()]
+#' @seealso [isFull()], [origin()]
 #' @export
 setClass("BioFormatsImage", contains = "VirtualSpatialImage",
-         slots = c(path = "character", ext = "numeric", isFull = "logical"))
+         slots = c(path = "character", ext = "numeric", isFull = "logical",
+                   origin = "numeric"))
 
 setValidity("BioFormatsImage", function(object) {
-    outs <- character(2)
+    outs <- character(3)
     e <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
     if (!is.null(e)) outs[1] <- e
     outs[2] <- if (is.na(object@isFull)) "isFull must be either TRUE or FALSE, not NA." else ""
+    if (length(object@origin) != 2L || anyNA(object@origin) || !is.numeric(object@origin)) {
+        outs[3] <- "origin must be a numeric vector of length 2 without NAs."
+    }
     outs <- outs[outs != ""]
     if (length(outs)) return(outs) else TRUE
 })
@@ -135,21 +141,42 @@ setValidity("BioFormatsImage", function(object) {
 # I think there should be separate documentation page for BioFormatsImage
 #' @rdname BioFormatsImage
 #' @export
-BioFormatsImage <- function(path, ext = NULL, isFull = TRUE) {
+BioFormatsImage <- function(path, ext = NULL, isFull = TRUE,
+                            origin = c(0,0)) {
     # It would still be nice to automatically fill in ext from metadata
     # Previously I used NA to imply that it's full extent, but that could be confusing
     # I'll use another field, isFull, to indicate if it's full extent
     if (is.null(ext)) {
         ext <- .get_full_ext(path)
     }
-    new("BioFormatsImage", path = path, ext = ext, isFull = isFull)
+    new("BioFormatsImage", path = path, ext = ext, isFull = isFull, origin = origin)
 }
 
-#' Check if the extent is the full extent of the image
+#' Other \code{BioFormatsImage} getters
+#'
+#' \code{isFULL} indicates if the extent is the full extent of the image.
+#' \code{origin} gets the x-y coordinates of the origin of the image, i.e. the
+#' smallest possible x-y coordinate values within the full image.
 #'
 #' @param x A \code{\link{BioFormatsImage}} object.
-#' @return Logical scalar indicating whether the extent is the full extent.
+#' @return For \code{isFull}: Logical scalar indicating whether the extent is
+#'   the full extent. For \code{origin}: Numeric vector of length 2.
+#' @name BioFormatsImage-getters
+#' @aliases isFull, origin
+NULL
+
+#' @rdname BioFormatsImage-getters
+#' @export
 setMethod("isFull", "BioFormatsImage", function(x) x@isFull)
+
+#' @rdname BioFormatsImage-getters
+#' @export
+setMethod("origin", "BioFormatsImage", function(x) x@origin)
+
+setReplaceMethod("origin", "BioFormatsImage", function(x, value) {
+    x@origin <- value
+    x
+})
 
 # EBImage==============
 
@@ -185,6 +212,12 @@ EBImage <- function(img, ext = NULL) {
     new("EBImage", image = img, ext = ext)
 }
 
+.shift_ext <- function(x, v) {
+    x[c("xmin", "xmax")] <- x[c("xmin", "xmax")] + v[1]
+    x[c("ymin", "ymax")] <- x[c("ymin", "ymax")] + v[2]
+    x
+}
+
 # Coercion of Image classes===================
 .toEBImage <- function(x, resolution = 4L) {
     # PhysicalSizeX seems to be a standard field
@@ -202,7 +235,7 @@ EBImage <- function(img, ext = NULL) {
     x_nms <- c("xmin", "xmax")
     y_nms <- c("ymin", "ymax")
     if (!isFull(x)) {
-        bbox_use <- ext(x)
+        bbox_use <- ext(x) |> .shift_ext(v = -origin(x))
         # Convert to full res pixel space
         bbox_use[x_nms] <- bbox_use[x_nms] * sfx
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
@@ -235,7 +268,7 @@ EBImage <- function(img, ext = NULL) {
                                    read.metadata = FALSE,
                                    normalize = FALSE,
                                    subset = subset_use)
-    EBImage(img, ext_use)
+    EBImage(img, .shift_ext(ext_use, origin(x)))
 }
 
 # SpatRasterImage method: allow downsampling first
@@ -474,7 +507,9 @@ setMethod("addImg", "SpatialFeatureExperiment",
     # EBImage
     if (is(img, "Image")) {
         spi <- EBImage(img, extent)
-    } else if (.path_valid2(img)) {
+    } else {
+        if (!.path_valid2(img))
+            stop("img is not a valid file path.")
         e <- tryCatch(suppressWarnings(rast(img)), error = function(e) e)
         if (is(e, "error")) {
             spi <- BioFormatsImage(img, extent)
@@ -517,7 +552,6 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  sfct <- imgData(x)$scaleFactor[idx]
                   new <- lapply(old, transposeImg, resolution = resolution)
                   imgData(x)$data[idx] <- new
               }
@@ -534,7 +568,6 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  sfct <- imgData(x)$scaleFactor[idx]
                   new <- lapply(old, mirrorImg, resolution = resolution,
                                 direction = direction)
                   imgData(x)$data[idx] <- new
@@ -552,10 +585,24 @@ setMethod("rotateImg", "SpatialFeatureExperiment",
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  sfct <- imgData(x)$scaleFactor[idx]
                   new <- lapply(old, rotateImg, resolution = resolution,
                                 maxcell = maxcell,
                                 degrees = degrees)
+                  imgData(x)$data[idx] <- new
+              }
+              return(x)
+          })
+
+#' @rdname SFE-image
+#' @export
+setMethod("translateImg", "SpatialFeatureExperiment",
+          function(x, sample_id=NULL, image_id=NULL, v) {
+              sample_id <- .check_sample_id(x, sample_id, one = TRUE)
+              old <- getImg(x, sample_id, image_id)
+              if (!is.null(old)) {
+                  if (!is.list(old)) old <- list(old)
+                  idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
+                  new <- lapply(old, translateImg, v = v)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -773,6 +820,11 @@ setMethod("rotateImg", "BioFormatsImage",
               rotateImg(x, degrees)
           })
 
+bbox_center <- function(bbox) {
+    c(mean(bbox[c("xmin", "xmax")]),
+      mean(bbox[c("ymin", "ymax")]))
+}
+
 #' @rdname rotateImg
 #' @export
 setMethod("rotateImg", "EBImage",
@@ -784,10 +836,54 @@ setMethod("rotateImg", "EBImage",
               x@image <- EBImage::rotate(x@image, degrees)
               # Deal with extent
               if (degrees %% 180 > 0) {
-                  ext(x) <- .trans_extent(ext(x))
+                  ext_old <- ext(x)
+                  center <- bbox_center(ext_old)
+                  x_dist <- ext_old[["xmax"]] - center[1]
+                  y_dist <- ext_old[["ymax"]] - center[2]
+                  ext_new <- c(xmin = center[1] - y_dist,
+                               xmax = center[1] + y_dist,
+                               ymin = center[2] - x_dist,
+                               ymax = center[2] + x_dist)
+                  ext(x) <- ext_new
               }
               x
           })
+
+# Translate-------------
+
+#' Translate/shift image in space
+#'
+#' This function shifts the spatial extent of the image in the x-y plane.
+#'
+#' @inheritParams transposeImg
+#' @param v Numeric vector of length 2 to shift the image in the x-y plane.
+#' @return A \code{*Image} object of the same class that has been shifted in
+#'   space.
+#' @name translateImg
+#' @aliases translateImg
+#' @importFrom terra shift
+#' @export
+setMethod("translateImg", "SpatRasterImage", function(x, v) {
+    img <- imgRaster(x)
+    img <- shift(img, dx = v[1], dy = v[2])
+    x@image <- img
+    x
+})
+
+#' @rdname translateImg
+#' @export
+setMethod("translateImg", "BioFormatsImage", function(x, v) {
+    ext(x) <- .shift_ext(ext(x), v)
+    origin(x) <- origin(x) + v
+    x
+})
+
+#' @rdname translateImg
+#' @export
+setMethod("translateImg", "EBImage", function(x, v) {
+    ext(x) <- .shift_ext(ext(x), v)
+    x
+})
 
 # Crop---------------
 
@@ -864,7 +960,7 @@ setMethod("cropImg", "EBImage", function(x, bbox) {
         }
         new_imgs <- lapply(samples, function(s) {
             img_data <- imgData(x)$data[imgData(x)$sample_id == s]
-            bbox_use <- ext(bboxes[c("xmin", "xmax", "ymin", "ymax"),s])
+            bbox_use <- bboxes[c("xmin", "xmax", "ymin", "ymax"),s]
             lapply(img_data, cropImg, bbox = bbox_use)
         })
         new_imgs <- unlist(new_imgs, recursive = FALSE)

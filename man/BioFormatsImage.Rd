@@ -5,7 +5,7 @@
 \alias{BioFormatsImage}
 \title{On disk representation of BioFormats images in SFE object}
 \usage{
-BioFormatsImage(path, ext = NULL, isFull = TRUE)
+BioFormatsImage(path, ext = NULL, isFull = TRUE, origin = c(0, 0))
 }
 \arguments{
 \item{path}{Path to an OME-TIFF image file.}
@@ -18,6 +18,9 @@ number of pixels.}
 \item{isFull}{Logical, if the extent specified in \code{ext} is the full
 extent. If \code{ext = NULL} so it will be inferred from metadata then
 \code{isFull = TRUE} will be set internally.}
+
+\item{origin}{Origin of the image in the x-y plane, defaults to \code{c(0,0)}.
+This is shifted when the image is translated.}
 }
 \value{
 A \code{BioFormatsImage} object.
@@ -33,6 +36,6 @@ wrapper inheriting from \code{VirtualSpatialImage} so it's compatible with
 \code{SpatialExperiment} from which SFE is derived.
 }
 \seealso{
-[isFull()]
+[isFull()], [origin()]
 }
 \concept{Image and raster}

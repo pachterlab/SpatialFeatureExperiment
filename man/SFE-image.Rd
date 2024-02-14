@@ -6,6 +6,7 @@
 \alias{transposeImg,SpatialFeatureExperiment-method}
 \alias{mirrorImg,SpatialFeatureExperiment-method}
 \alias{rotateImg,SpatialFeatureExperiment-method}
+\alias{translateImg,SpatialFeatureExperiment-method}
 \title{Methods for handling image-related data}
 \usage{
 \S4method{addImg}{SpatialFeatureExperiment}(
@@ -36,6 +37,8 @@
   resolution = 4L,
   maxcell = 1e+07
 )
+
+\S4method{translateImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL, v)
 }
 \arguments{
 \item{x}{A SFE object.}

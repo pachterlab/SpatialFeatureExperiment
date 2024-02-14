@@ -149,7 +149,7 @@ setGeneric(
 # Have this generic and S4 dispatch to avoid conflict with sp::bbox
 # Will change if this causes trouble
 #' @export
-setGeneric("bbox", function(sfe, sample_id = "all") standardGeneric("bbox"))
+setGeneric("bbox", function(sfe, sample_id = "all", ...) standardGeneric("bbox"))
 
 # Local results--------------
 #' @export
@@ -227,6 +227,9 @@ setGeneric("unit", function(x) standardGeneric("unit"))
 setGeneric("transposeImg", function(x, ...) standardGeneric("transposeImg"))
 
 #' @export
+setGeneric("translateImg", function(x, ...) standardGeneric("translateImg"))
+
+#' @export
 setGeneric("cropImg", function(x, bbox, ...) standardGeneric("cropImg"))
 
 if (!isGeneric("saveRDS")) {setGeneric("saveRDS", function (object, file="", ascii=FALSE, version=NULL, compress=TRUE, refhook=NULL) standardGeneric("saveRDS"))}
@@ -239,3 +242,9 @@ setGeneric("toSpatRasterImage", function(x, ...) standardGeneric("toSpatRasterIm
 
 #' @export
 setGeneric("isFull", function(x) standardGeneric("isFull"))
+
+#' @export
+setGeneric("origin", function(x) standardGeneric("origin"))
+
+#' @export
+setGeneric("origin<-", function(x, value) standardGeneric("origin<-"))
