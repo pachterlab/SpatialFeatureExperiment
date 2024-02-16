@@ -290,7 +290,7 @@ read10xVisiumSFE <- function(samples = "",
   fn
 }
 
-#' sanity on geometries to remove any self-intersection
+# sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
 .check_st_valid <- function(sf_df = NULL, dist = 0) {
   if (!is(sf_df, "list")) { sf_df <- list(sf_df) }
