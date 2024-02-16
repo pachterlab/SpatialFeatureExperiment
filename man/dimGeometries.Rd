@@ -88,9 +88,9 @@ rowGeometry(
   translate = TRUE
 ) <- value
 
-rowGeometries(x, withDimnames = TRUE)
+rowGeometries(x, sample_id = "all", withDimnames = TRUE)
 
-rowGeometries(x, withDimnames = TRUE, translate = TRUE) <- value
+rowGeometries(x, sample_id = "all", withDimnames = TRUE, translate = TRUE) <- value
 
 rowGeometryNames(x)
 
