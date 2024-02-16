@@ -141,7 +141,7 @@ setMethod("spatialGraphs", "SpatialFeatureExperiment",
               if (is.null(MARGIN)) {
                   if (name != "all")
                       stop("Cannot get graphs of the same name across different margins")
-                  if (sample_id == "all") {
+                  if (identical(sample_id, "all")) {
                       return(.get_graphs(x, "all"))
                   } else {
                       sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -151,7 +151,7 @@ setMethod("spatialGraphs", "SpatialFeatureExperiment",
                   if (!is.numeric(MARGIN) && (MARGIN %in% c(1L, 2L, 3L))) {
                       stop("MARGIN must be an integer, 1L, 2L, or 3L")
                   }
-                  if (name == "all" && sample_id == "all")
+                  if (name == "all" && identical(sample_id, "all"))
                       return(.get_graphs(x, "margin_all", MARGIN))
                   sample_id <- .check_sample_id(x, sample_id, one = FALSE)
                   if (name == "all") {
@@ -265,7 +265,7 @@ setReplaceMethod("spatialGraphs", "SpatialFeatureExperiment",
                      if (is.null(MARGIN)) {
                          if (name != "all")
                              stop("Cannot set graphs of the same name across different margins")
-                         if (sample_id == "all") {
+                         if (identical(sample_id, "all")) {
                              return(.set_graphs(x, "all", value = value))
                          } else {
                              sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -278,7 +278,7 @@ setReplaceMethod("spatialGraphs", "SpatialFeatureExperiment",
                          if (!is.numeric(MARGIN) && (MARGIN %in% c(1L, 2L, 3L))) {
                              stop("MARGIN must be an integer, 1L, 2L, or 3L")
                          }
-                         if (name == "all" && sample_id == "all")
+                         if (name == "all" && identical(sample_id, "all"))
                              return(.set_graphs(x, "margin_all", which = MARGIN, value = value))
                          sample_id <- .check_sample_id(x, sample_id, one = FALSE)
                          if (name == "all") {
