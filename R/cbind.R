@@ -47,14 +47,14 @@
     if (is.null(nms)) return(NULL)
     # Append sample_id to items that don't already have sample_id
     # For one sample
-    inds <- !str_detect(nms, paste0(sample_id, "$"))
+    inds <- !grepl(paste0(sample_id, "$"), nms)
     nms[inds] <- paste(nms[inds], sample_id, sep = "_")
     nms
 }
 
 .rg_xy_rename <- function(nms, sample_id, overlap, xy) {
     if (is.null(nms)) return(NULL)
-    inds <- str_detect(nms, paste0(sample_id, "$"))
+    inds <- grepl(paste0(sample_id, "$"), nms)
     nms[inds] <- str_remove(nms[inds], paste0("_", sample_id, "$"))
     which_overlap <- which(nms %in% overlap)
     nms[which_overlap] <- paste(nms[which_overlap], xy, sep = "_")
@@ -64,7 +64,7 @@
 
 .has_any_sample <- function(nms, sample_ids) {
     patterns <- paste0(sample_ids, "$")
-    out <- vapply(patterns, str_detect, string = nms, FUN.VALUE = logical(length(nms)))
+    out <- vapply(patterns, grepl, x = nms, FUN.VALUE = logical(length(nms)))
     # out is a matrix with patterns as columns
     apply(out, 1, any)
 }
