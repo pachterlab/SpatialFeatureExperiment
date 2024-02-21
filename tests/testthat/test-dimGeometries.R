@@ -221,12 +221,12 @@ test_that("rowGeometries getter, multiple samples", {
 })
 
 test_that("rowGeometry getter, multiple samples", {
-    rgs <- list(foo = rg_toy1,
+    rgs <- list(bar = rg_toy1,
                 bar_sample01 = rg_toy2,
                 baz_sample02 = rg_toy3)
     rowGeometries(sfe_visium, sample_id = "all") <- rgs
     # Use sample_id = "all" for non-sample-specific rowGeometries
-    rg1 <- rowGeometry(sfe_visium, type = "foo", sample_id = "all")
+    rg1 <- rowGeometry(sfe_visium, type = "bar", sample_id = "all")
     expect_equal(rg1, rg_toy1)
     # Numeric type
     rg2 <- rowGeometry(sfe_visium, type = 1L, sample_id = "all")
