@@ -11,24 +11,6 @@
 #' implemented in a way similar to those of \code{reducedDims} in
 #' \code{SingleCellExperiment}.
 #'
-#' These are convenience wrappers for getters and setters of special geometries:
-#' \describe{ \item{colGeometry/ies}{dimGeometry/ies with MARGIN = 2, for
-#' geometries associated with columns of the gene count matrix (cells/Visium
-#' spots/samples).} \item{rowGeometry/ies}{dimGeometry/ies with MARGIN = 1, for
-#' geometries associated with rows of the gene count matrix (genes/features).}
-#' \item{spotPoly}{Polygons of spots from technologies such as Visium, ST, and
-#' slide-seq, which do not correspond to cells. Centroids of the polygons are
-#' stored in \code{spatialCoords} of the underlying \code{SpatialExperiment}
-#' object.} \item{ROIPoly}{Polygons of regions of interest (ROIs) from
-#' technologies such as laser capture microdissection (LCM) and GeoMX DSP. These
-#' should correspond to columns of the gene count matrix.} \item{cellSeg}{Cell
-#' segmentation polygons. If the columns of the gene count matrix are single
-#' cells, then this is stored in \code{colGeometries}. Otherwise, this is stored
-#' in \code{\link{annotGeometries}}.} \item{nucSeg}{Similar to \code{cellSeg},
-#' but for nuclei rather than whole cell.} \item{txSpots}{POINT or MULTIPOINT
-#' geometries of transcript spots of single molecular resolution technologies,
-#' stored in \code{rowGeometries}.} }
-#'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param MARGIN As in \code{\link{apply}}. 1 stands for rows and 2 stands for
 #'   columns.
@@ -59,9 +41,9 @@
 #'   return an \code{sf} data frame. Setters return an SFE object.
 #' @concept Column or row geometries
 #' @name dimGeometries
+#' @seealso [colGeometries()], [rowGeometries()]
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
 #'   dimGeometryNames<-
-#' @docType methods
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
@@ -212,7 +194,38 @@ setReplaceMethod(
     }
 )
 
-#' @rdname dimGeometries
+#' Column geometry getters and setters
+#'
+#' \code{colGeometries} are geometries that correspond to columns of the gene
+#' count matrix, such as Visium spots or cells. Same as \code{dimGeometry(x,
+#' MARGIN = 2L, ...)}, with convenience wrappers for getters and setters of
+#' special geometries:
+#' \describe{
+#' \item{spotPoly}{Polygons of spots from technologies such as Visium, ST, and
+#' slide-seq, which do not correspond to cells. Centroids of the polygons are
+#' stored in \code{spatialCoords} of the underlying \code{SpatialExperiment}
+#' object.}
+#' \item{ROIPoly}{Polygons of regions of interest (ROIs) from
+#' technologies such as laser capture microdissection (LCM) and GeoMX DSP. These
+#' should correspond to columns of the gene count matrix.}
+#' \item{cellSeg}{Cell segmentation polygons. If the columns of the gene count
+#' matrix are single cells, then this is stored in \code{colGeometries}.
+#' Otherwise, this is stored in \code{\link{annotGeometries}}.}
+#' \item{nucSeg}{Similar to \code{cellSeg}, but for nuclei rather than whole
+#' cell.}}
+#'
+#' @inheritParams dimGeometries
+#' @name colGeometries
+#' @concept Column or row geometries
+#' @seealso [dimGeometries()], [rowGeometries()]
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' cgs <- colGeometries(sfe)
+#' spots <- spotPoly(sfe)
+NULL
+
+#' @rdname colGeometries
 #' @export
 colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
     dimGeometry(x, type,
@@ -221,7 +234,7 @@ colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 `colGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE,
                             translate = TRUE, value) {
@@ -232,13 +245,13 @@ colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 colGeometries <- function(x, withDimnames = TRUE) {
     dimGeometries(x, MARGIN = 2, withDimnames = withDimnames)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 `colGeometries<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
     `dimGeometries<-`(x,
@@ -247,18 +260,142 @@ colGeometries <- function(x, withDimnames = TRUE) {
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 colGeometryNames <- function(x) {
     dimGeometryNames(x, MARGIN = 2)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 `colGeometryNames<-` <- function(x, value) {
     dimGeometryNames(x, MARGIN = 2) <- value
     x
 }
+
+#' @rdname colGeometries
+#' @export
+spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
+    colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id)
+}
+
+#' @rdname colGeometries
+#' @export
+`spotPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                         translate = TRUE, value) {
+    colGeometry(x, "spotPoly", withDimnames,
+                sample_id = sample_id,
+                translate = translate
+    ) <- value
+    x
+}
+
+#' @rdname colGeometries
+#' @export
+centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
+    colGeometry(x, "centroids", withDimnames, sample_id = sample_id)
+}
+
+#' @rdname colGeometries
+#' @export
+`centroids<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                          translate = TRUE, value) {
+    colGeometry(x, "centroids", withDimnames,
+                sample_id = sample_id,
+                translate = translate
+    ) <- value
+    x
+}
+
+#' @rdname colGeometries
+#' @export
+ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
+    colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id)
+}
+
+#' @rdname colGeometries
+#' @export
+`ROIPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                        translate = TRUE, value) {
+    colGeometry(x, "ROIPoly", withDimnames,
+                sample_id = sample_id,
+                translate = translate
+    ) <- value
+    x
+}
+
+.get_col_then_annot <- function(x, name, sample_id, withDimnames) {
+    if (name %in% colGeometryNames(x)) {
+        colGeometry(x, name, sample_id, withDimnames)
+    } else {
+        annotGeometry(x, name, sample_id)
+    }
+}
+
+.set_col_then_annot <- function(x, name, sample_id, withDimnames, translate,
+                                value) {
+    if (nrow(value) == ncol(x)) {
+        colGeometry(x, name, sample_id, withDimnames, translate) <- value
+    } else {
+        annotGeometry(x, name, sample_id, translate) <- value
+    }
+    return(x)
+}
+
+#' @rdname colGeometries
+#' @export
+cellSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
+    .get_col_then_annot(x, "cellSeg", sample_id, withDimnames)
+}
+
+#' @rdname colGeometries
+#' @export
+`cellSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                        translate = TRUE, value) {
+    .set_col_then_annot(x, "cellSeg", sample_id, withDimnames,
+                        translate = translate, value
+    )
+}
+
+#' @rdname colGeometries
+#' @export
+nucSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
+    .get_col_then_annot(x, "nucSeg", sample_id, withDimnames)
+}
+
+#' @rdname colGeometries
+#' @export
+`nucSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                       translate = TRUE, value) {
+    .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, translate, value)
+}
+
+#' Row geometry getters and setters
+#'
+#' \code{rowGeometries} are geometries that corresponding to rows of the gene
+#' count matrix, such as smFISH transcript spots. The \code{txSpots()} function
+#' is a convenience wrapper for transcript spots, although this entirely depends
+#' on the \code{rowGeometry} being named \code{txSpots}.
+#'
+#' When there are multiple samples in the SFE object, \code{rowGeometries} for
+#' each sample has the \code{sample_id} appended to the name of the geometry.
+#' For example, if the name is \code{txSpots} and the sample ID is
+#' \code{sample01}, then the actual name of the \code{rowGeometry} is
+#' \code{txSpots_sample01}. In the getter, one can still specify
+#' \code{rowGeometry(sfe, "txSpots", sample_id = "sample01")}.
+#'
+#' Appending the \code{sample_id} is unnecessary when there is only one sample,
+#' but \code{sample_id} will be appended when to SFE objects are combined with
+#' \code{cbind}. It is necessary to distinguish bewteen different samples
+#' because they can have overlapping coordinate values.
+#'
+#' @inheritParams dimGeometries
+#' @name rowGeometries
+#' @concept Column or row geometries
+#' @seealso [dimGeometries()], [colGeometries()]
+#' @examples
+#' # Use Xenium toy example
+NULL
 
 .check_rg_type <- function(type, x, sample_id) {
     rg_names <- rowGeometryNames(x)
@@ -282,7 +419,7 @@ colGeometryNames <- function(x) {
             stop("Type does not match sample_id")
         }
     }
-    if (!type %in% rg_names && !grepl(paste0(sample_id, "$"), type)) {
+    if (length(sampleIDs(x)) > 1L && !grepl(paste0(sample_id, "$"), type)) {
         type <- paste(type, sample_id, sep = "_")
     }
     type
@@ -340,7 +477,7 @@ colGeometryNames <- function(x) {
     type
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
 rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
     type <- .check_rg(type, x, sample_id)
@@ -350,7 +487,7 @@ rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
 `rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
                             translate = TRUE, value) {
@@ -385,7 +522,7 @@ rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
 rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
     out <- dimGeometries(x, MARGIN = 1, withDimnames = withDimnames)
@@ -395,7 +532,7 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
     out[rgns]
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
 `rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
                               translate = TRUE, value) {
@@ -419,50 +556,29 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
     x
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
 rowGeometryNames <- function(x) {
     dimGeometryNames(x, MARGIN = 1)
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
 `rowGeometryNames<-` <- function(x, value) {
     dimGeometryNames(x, MARGIN = 1) <- value
     x
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
-spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
-    colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id)
+txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames)
 }
 
-#' @rdname dimGeometries
+#' @rdname rowGeometries
 #' @export
-`spotPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
-                         translate = TRUE, value) {
-    colGeometry(x, "spotPoly", withDimnames,
-        sample_id = sample_id,
-        translate = translate
-    ) <- value
-    x
-}
-
-#' @rdname dimGeometries
-#' @export
-centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
-    colGeometry(x, "centroids", withDimnames, sample_id = sample_id)
-}
-
-#' @rdname dimGeometries
-#' @export
-`centroids<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
-                         translate = TRUE, value) {
-    colGeometry(x, "centroids", withDimnames,
-                sample_id = sample_id,
-                translate = translate
-    ) <- value
+`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE, value) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames, translate) <- value
     x
 }
 
@@ -492,81 +608,5 @@ addVisiumSpotPoly <- function(x, spotDiameter) {
     rownames(df) <- colnames(x)
     spotPoly(x, sample_id = "all", translate = FALSE) <-
         df2sf(df, names(df), spotDiameter = spotDiameter, geometryType = "POINT")
-    x
-}
-
-#' @rdname dimGeometries
-#' @export
-ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
-    colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id)
-}
-
-#' @rdname dimGeometries
-#' @export
-`ROIPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
-                        translate = TRUE, value) {
-    colGeometry(x, "ROIPoly", withDimnames,
-        sample_id = sample_id,
-        translate = translate
-    ) <- value
-    x
-}
-
-.get_col_then_annot <- function(x, name, sample_id, withDimnames) {
-    if (name %in% colGeometryNames(x)) {
-        colGeometry(x, name, sample_id, withDimnames)
-    } else {
-        annotGeometry(x, name, sample_id)
-    }
-}
-
-.set_col_then_annot <- function(x, name, sample_id, withDimnames, translate,
-                                value) {
-    if (nrow(value) == ncol(x)) {
-        colGeometry(x, name, sample_id, withDimnames, translate) <- value
-    } else {
-        annotGeometry(x, name, sample_id, translate) <- value
-    }
-    return(x)
-}
-
-#' @rdname dimGeometries
-#' @export
-cellSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
-    .get_col_then_annot(x, "cellSeg", sample_id, withDimnames)
-}
-
-#' @rdname dimGeometries
-#' @export
-`cellSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
-                        translate = TRUE, value) {
-    .set_col_then_annot(x, "cellSeg", sample_id, withDimnames,
-        translate = translate, value
-    )
-}
-
-#' @rdname dimGeometries
-#' @export
-nucSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
-    .get_col_then_annot(x, "nucSeg", sample_id, withDimnames)
-}
-
-#' @rdname dimGeometries
-#' @export
-`nucSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
-                       translate = TRUE, value) {
-    .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, translate, value)
-}
-
-#' @rdname dimGeometries
-#' @export
-txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
-    rowGeometry(x, "txSpots", sample_id, withDimnames)
-}
-
-#' @rdname dimGeometries
-#' @export
-`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE, value) {
-    rowGeometry(x, "txSpots", sample_id, withDimnames, translate) <- value
     x
 }
