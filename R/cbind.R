@@ -47,7 +47,8 @@
 #'
 #' On top of the \code{cbind} method of \code{SpatialExperiment}, this method is
 #' needed to properly merge the \code{spatialGraphs} field in the different SFE
-#' objects.
+#' objects. \code{rowGeometries} and \code{annotGeometries} also need to be
+#' combined properly.
 #'
 #' @param ... SFE objects to cbind.
 #' @param deparse.level See \code{?\link[base]{rbind}}.
