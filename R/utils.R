@@ -48,7 +48,7 @@ changeSampleIDs <- function(sfe, replacement) {
         # I won't change the spatial results since those depend on the sample definitions
         if (length(rowGeometries(sfe))) {
             nms <- rowGeometryNames(sfe)
-            nms <- str_replace(nms, paste0(names(replacement)[i], "$"), replacement[i])
+            nms <- gsub(paste0(names(replacement)[i], "$"), replacement[i], nms)
             rowGeometryNames(sfe) <- nms
             # Edge case: what if one sample_id includes another one?
             # e.g. sample01_x and x
@@ -57,10 +57,6 @@ changeSampleIDs <- function(sfe, replacement) {
             imgData(sfe)$sample_id[imgData(sfe)$sample_id == names(replacement)[i]] <-
                 replacement[i]
         }
-        # TODO: change sample_ids with a list whose names are new sample_ids and values
-        # are vectors of cell IDs for each new sample. This is used when using
-        # geometry to split samples, say multiple pieces within the same Visium capture area.
-        # Need to generalize to that tree.
     }
     sfe
 }
@@ -136,6 +132,3 @@ bbox_center <- function(bbox) {
     c(mean(bbox[c("xmin", "xmax")]),
       mean(bbox[c("ymin", "ymax")]))
 }
-
-# TODO: Use geometry to decide which cells should have sample_id changed
-# This will also split the rowGeometries.
