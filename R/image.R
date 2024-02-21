@@ -79,7 +79,6 @@ SpatRasterImage <- function(img) {
 #' \code{isFull = TRUE} will be set internally.
 #' @param origin Origin of the image in the x-y plane, defaults to \code{c(0,0)}.
 #' This is shifted when the image is translated.
-#' @importFrom RBioFormats read.metadata coreMetadata
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
 #' @concept Image and raster
@@ -123,8 +122,9 @@ setValidity("BioFormatsImage", function(object) {
 }
 
 .get_fullres_size <- function(file) {
-    #check_installed("RBioFormats")
-    meta <- read.metadata(file) |>
+    check_installed("RBioFormats")
+    coreMetadata <- RBioFormats::coreMetadata
+    meta <- RBioFormats::read.metadata(file) |>
         coreMetadata(series = 1L)
     sizeX_full <- meta$sizeX
     sizeY_full <- meta$sizeY
@@ -220,6 +220,7 @@ EBImage <- function(img, ext = NULL) {
 
 # Coercion of Image classes===================
 .toEBImage <- function(x, resolution = 4L) {
+    check_installed("RBioFormats")
     # PhysicalSizeX seems to be a standard field
     if (length(resolution) != 1L ||
         !isTRUE(all.equal(floor(resolution), resolution))) {
@@ -241,7 +242,8 @@ EBImage <- function(img, ext = NULL) {
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
         # Convert to lower res pixel space
         if (resolution > 1L) {
-            meta <- read.metadata(file) |>
+            coreMetadata <- RBioFormats::coreMetadata
+            meta <- RBioFormats::read.metadata(file) |>
                 coreMetadata(series = resolution)
             sfx2 <- meta$sizeX/sizeX_full
             sfy2 <- meta$sizeY/sizeY_full
@@ -466,7 +468,7 @@ NULL
 #' @rdname SFE-image
 #' @export
 setMethod("addImg", "SpatialFeatureExperiment",
-          function(x, imageSource, sample_id, image_id,
+          function(x, imageSource, sample_id = 1L, image_id,
                    extent = NULL, scale_fct = 1, file = deprecated()) {
               if (lifecycle::is_present(file)) {
                   deprecate_warn("1.6.0", "SpatialFeatureExperiment::addImg(file = )",
