@@ -309,7 +309,7 @@
         MARGIN = MARGIN,
         withDimnames = withDimnames, fun = funstr
     )
-    if (sf) value <- .translate_value(x, translate, value)
+    if (sf) value <- .translate_value(x, translate, value, sample_id)
     .set_internal_fun(x, type, value,
         getfun = getfun,
         setfun = setfun,

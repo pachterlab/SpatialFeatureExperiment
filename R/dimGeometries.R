@@ -468,7 +468,7 @@ NULL
 .check_rg <- function(type, x, sample_id) {
     if (identical(sample_id, "all")) {
         .check_rg_sample_all(type, x)
-    } else if (sample_id != "all") {
+    } else if (!identical(sample_id, "all")) {
         sample_id <- .check_sample_id(x, sample_id, TRUE)
         # By convention, should be name_sample to distinguish between samples for
         # rowGeometries of the same name
@@ -538,7 +538,7 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
 #' @export
 `rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
                               translate = TRUE, value) {
-    if (sample_id != "all" && length(sampleIDs(x)) > 1L) {
+    if (!identical(sample_id, "all") && length(sampleIDs(x)) > 1L) {
         sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         existing <- rowGeometries(x, sample_id = "all")
         # Set to NULL

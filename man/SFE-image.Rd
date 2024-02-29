@@ -12,7 +12,7 @@
 \S4method{addImg}{SpatialFeatureExperiment}(
   x,
   imageSource,
-  sample_id,
+  sample_id = 1L,
   image_id,
   extent = NULL,
   scale_fct = 1,
@@ -81,7 +81,10 @@ implemented here, but are simply re-exported.
 \details{
 Method of \code{\link{transposeImg}}, \code{\link{mirrorImg}}, and
 \code{\link{rotateImg}} perform the method on all images within the SFE
-object that are specified with \code{sample_id} and \code{image_id}.
+object that are specified with \code{sample_id} and \code{image_id}. For
+images that are not loaded into memory, \code{rotateImg} will load
+\code{SpatRasterImage} into memory and all image operations except translate
+will load \code{BioFormatsImage} into memory.
 }
 \examples{
 library(SFEData)

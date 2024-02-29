@@ -60,7 +60,6 @@ setMethod(
             for (g in seq_along(ag_sub)) {
                 ag_ind <- ag_sub[[g]]
                 ag_ind <- ag_ind[ag_ind$sample_id %in% sample_ids, ]
-                if (nrow(ag_ind) == 0L) ag_ind <- NULL
                 ag_sub[[g]] <- ag_ind
             }
             annotGeometries(x) <- ag_sub
@@ -73,7 +72,9 @@ setMethod(
             }
         }
         # Crop images with new bbox
-        x <- .crop_imgs(x, bbox(x, sample_id = "all"))
+        if (!missing(j)) {
+            x <- .crop_imgs(x, bbox(x, sample_id = "all"))
+        }
         # Subset *Graphs based on sample_id and reconstruct row and colGraphs
         if (!is.null(spatialGraphs(x)) && (!missing(j) && !.is0(j))) {
             graphs_sub <- int_metadata(x)$spatialGraphs

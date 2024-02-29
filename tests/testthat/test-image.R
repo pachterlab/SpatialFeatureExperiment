@@ -314,6 +314,17 @@ test_that("Convert BioFormatsImage to SpatRasterImage", {
     expect_true(st_area(ext_sf_spi) / st_area(ext_sf_bfi) < 1.005)
     unlink(fn)
 })
+test_that("Convert BioFormatsImage to SpatRasterImage not saving geotiff", {
+    library(RBioFormats)
+    bfi <- BioFormatsImage(xenium_fn, ext_use, isFull = FALSE)
+    expect_no_message(spi <- toSpatRasterImage(bfi, save_geotiff = FALSE))
+    expect_s4_class(spi, "SpatRasterImage")
+    ext_sf_bfi <- st_bbox(ext_use) |> st_as_sfc()
+    ext_sf_spi <- st_bbox(ext(spi)) |> st_as_sfc()
+    expect_true(st_covered_by(ext_sf_bfi, ext_sf_spi, sparse = FALSE))
+    expect_true(st_area(ext_sf_spi) / st_area(ext_sf_bfi) < 1.005)
+})
+
 ext_use2 <- c(xmin = 200, xmax = 1700, ymin = 200, ymax = 1200)
 test_that("transpose, check ext", {
     library(RBioFormats)

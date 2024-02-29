@@ -5,12 +5,19 @@
 \alias{toSpatRasterImage,BioFormatsImage-method}
 \title{Convert images to SpatRasterImage}
 \usage{
-\S4method{toSpatRasterImage}{EBImage}(x, file_out = "img.tiff", overwrite = FALSE)
+\S4method{toSpatRasterImage}{EBImage}(
+  x,
+  save_geotiff = TRUE,
+  file_out = "img.tiff",
+  overwrite = FALSE
+)
 
-\S4method{toSpatRasterImage}{BioFormatsImage}(x, resolution = 4L, overwrite = FALSE)
+\S4method{toSpatRasterImage}{BioFormatsImage}(x, save_geotiff = TRUE, resolution = 4L, overwrite = FALSE)
 }
 \arguments{
 \item{x}{Either a \code{BioFormatsImage} or \code{EBIImage} object.}
+
+\item{save_geotiff}{Logical, whether to save the image to GeoTIFF file.}
 
 \item{overwrite}{Logical, whether to overwrite existing file of the same
 name.}

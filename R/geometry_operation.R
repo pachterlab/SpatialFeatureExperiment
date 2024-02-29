@@ -52,8 +52,8 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 
 .crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
                            id_col = "id", remove_empty = FALSE) {
-    # Need pred for 3D
-    # g has column sample_id as in colGeometry and annotGeometry
+    if (!nrow(g)) return(g)
+    # g may have column sample_id as in colGeometry and annotGeometry
     # g should also have row names if it is colGeometry
     if (!id_col %in% names(g)) {
         rm_id <- TRUE
@@ -319,7 +319,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 }
 
 .bbox2sf <- function(bbox, sample_id) {
-    if (is.vector(bbox)) {
+    if (is.vector(bbox) || is(bbox, "bbox")) {
         bbox <- matrix(bbox, ncol = 1, dimnames = list(names(bbox), sample_id[1]))
     } else {
         samples_use <- intersect(colnames(bbox), sample_id)
@@ -368,18 +368,23 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
 #'   are allowed. If "intersection", then only things inside \code{y} is kept
 #'   after cropping. If "difference", then only things outside \code{y} is kept.
-#' @param keep_whole_cg Logical, whether to keep the whole items in
-#'   \code{colGeometries} that fulfill the criteria in \code{pred}. If
-#'   \code{TRUE} the geometries that partially intersect (if the predicate is
-#'   \code{st_intersects}) are kept and the part not overlapping is not cropped
-#'   off. Then the \code{annotGeometries}, \code{rowGeometries}, and images are
-#'   cropped with the bounding box of the \code{colGeometries}. If \code{FALSE},
-#'   the geometries at the boundary are cropped, which may break some cells into
-#'   multiple pieces or convert polygons into points or lines.
+#' @param keep_whole Character vector, can be one or more of "col" and "annot"
+#'   to keep whole items from \code{colGeometries} or \code{annotGeometries},
+#'   keeping geometries that partially intersect with \code{y} whole. This can
+#'   greatly speed up code while not breaking geometries into multiple pieces.
+#'   Can also be "none" so all geometries are actually cropped.
+#' @param cover Logical, whether the geometries in \code{x} must be entirely
+#'   covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
+#'   be entirely outside \code{y} if \code{op = st_difference}. Only relevant
+#'   when \code{keep_whole != "none"}.
+#' @param xmin Deprecated. Supply the bounding box to argument \code{y} instead.
+#' @param xmax Deprecated.
+#' @param ymin Deprecated.
+#' @param ymax Deprecated.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
-#' @importFrom sf st_intersection st_union st_agr
+#' @importFrom sf st_intersection st_union st_agr st_covered_by st_disjoint
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @export
 #' @examples
@@ -392,15 +397,34 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                  pred = deprecated(), op = st_intersection,
-                 keep_whole_cg = FALSE) {
+                 keep_whole = "none",
+                 cover = FALSE,
+                 xmin = deprecated(), xmax = deprecated(),
+                 ymin = deprecated(), ymax = deprecated()) {
     if (is_present(pred)) {
         deprecate_warn("1.6.0", "SpatialFeatureExperiment::crop(pred = )")
+    }
+    if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
+                       is_present(ymin) || is_present(ymax))) {
+        deprecate_warn("1.6.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
+                       details = "Please use argument `y` to specify bounding box instead.")
+        y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
+                      sample_id)
     }
     if (!(identical(op, sf::st_intersection) || identical(op, sf::st_difference))) {
         stop("op must be either st_intersection or st_difference.")
     }
+    keep_whole <- match.arg(keep_whole, choices = c("none", "col", "annot"),
+                            several.ok = TRUE)
+    if (length(keep_whole) > 1L && "none" %in% keep_whole) {
+        keep_whole <- keep_whole[keep_whole != "none"]
+    }
     is_difference <- identical(op, sf::st_difference)
-    pred <- if (is_difference) function(x, y) !st_covered_by(x, y) else st_intersects
+    pred <- if (is_difference) {
+        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covered_by(x, y, sparse = sparse)
+    } else {
+        if (cover) st_covered_by else st_intersects
+    }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
         # y should be bbox, either named vector or matrix with samples in columns
@@ -425,7 +449,16 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     preds <- c(preds, other_samples)
     preds <- preds[colnames(x)]
     out <- x[, preds]
-    if (!keep_whole_cg) {
+    samples_rmed <- setdiff(sample_id, sampleIDs(out))
+    if (!any(preds)) {
+        warning("No cells/spots left after cropping")
+    } else if (length(samples_rmed)) {
+        warning(
+            "Sample(s) ", paste(samples_rmed, collapse = ", "),
+            " was/were removed by the cropping."
+        )
+    }
+    if (!"col" %in% keep_whole) {
         # colGeometries should have already been subsetted here
         # Also actually crop all geometries for the samples of interest.
         colGeometries(out) <- lapply(colGeometries(out), .crop_geometry,
@@ -434,46 +467,58 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                                      id_col = "barcode",
                                      sample_col = colData(out)$sample_id
         )
-    } else {
-        # What about rowGeometries? Can't just use preds.
-        # I think use the actual bbox of colGeometries if not cropped
-        # What about annotGeometries? I think also use colGeometries bbox
-        cgs <- int_colData(sfe)[["colGeometries"]]
-        cgs$sample_id <- sfe$sample_id
-        cgs <- cgs[preds, ,drop = FALSE]
-        y <- lapply(samples_use, function(s) {
-            cgs_sub <- cgs[cgs$sample_id == s,, drop = FALSE]
-            cgs_sub$sample_id <- NULL
-            cgs_sub <- as.list(cgs_sub)
-            .bbox_sample_g(cgs_sub)
-        })
-        y <- do.call(cbind, y)
-        colnames(y) <- samples_use
-        y <- .bbox2sf(y, samples_use)
     }
-    rowGeometries(out) <- lapply(rowGeometries(out), .crop_geometry,
-                                 y = y,
-                                 samples_use = samples_use, op = op,
-                                 id_col = "barcode"
-    )
-    annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
-                                   y = y,
-                                   samples_use = samples_use, op = op,
-                                   remove_empty = TRUE
-    )
-    out <- .crop_imgs(out, bbox(out, sample_id = "all"))
-    samples_rmed <- setdiff(sample_id, sampleIDs(out))
-    if (length(samples_rmed)) {
-        warning(
-            "Sample(s) ", paste(samples_rmed, collapse = ", "),
-            " was/were removed by the cropping."
+    if ("annot" %in% keep_whole) {
+        annotGeometries(out) <- lapply(annotGeometries(out), function(x) {
+            inds <- x$sample_id %in% sample_id
+            other_samples <- x[!inds,]
+            in_sample <- x[inds,]
+            preds <- pred(in_sample, y, sparse = FALSE)
+            if (!any(preds)) other_samples else
+                rbind(in_sample[preds,], other_samples)
+        })
+    } else {
+        if ("col" %in% keep_whole) {
+            y <- lapply(samples_use, function(s) {
+                sample_index <- colData(out)$sample_id == s
+                cgs <- as.list(int_colData(out)[["colGeometries"]][sample_index, ,
+                                                                   drop = FALSE
+                ])
+                lapply(cgs, st_bbox) |> .agg_bboxes()
+            })
+            y <- do.call(cbind, y)
+            colnames(y) <- samples_use
+            y <- .bbox2sf(y, samples_use)
+        }
+        annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
+                                       y = y,
+                                       samples_use = samples_use, op = op,
+                                       remove_empty = TRUE
         )
     }
+    if (length(rowGeometries(out))) {
+        if (!identical(keep_whole, "none") && length(rowGeometries(out))) {
+            # What about rowGeometries? Can't just use preds.
+            # I think use the actual bbox of colGeometries if not cropped
+            y <- bbox(out, sample_id = samples_use, include_row = FALSE)
+            y <- .bbox2sf(y, samples_use)
+        }
+        for (s in samples_use) {
+            rgs <- rowGeometries(out, sample_id = s)
+            rowGeometries(out, sample_id = s) <-
+                lapply(rgs, .crop_geometry, y = y, op = op, sample_col = s,
+                       samples_use = s)
+        }
+    }
+    out <- .crop_imgs(out, bbox(out, sample_id = samples_use, include_image = FALSE))
     out
 }
 
 .agg_bboxes <- function(bboxes) {
-    if (is.list(bboxes)) bboxes <- do.call(rbind, bboxes)
+    if (is.list(bboxes)) {
+        bboxes <- lapply(bboxes, function(x) x[c("xmin", "ymin", "xmax", "ymax")])
+        bboxes <- do.call(rbind, bboxes)
+    }
     c(
         xmin = min(bboxes[, "xmin"], na.rm = TRUE),
         ymin = min(bboxes[, "ymin"], na.rm = TRUE),
@@ -489,7 +534,8 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     .agg_bboxes(bboxes)
 }
 
-.bbox_sample <- function(sfe, sample_id) { # For one sample
+.bbox_sample <- function(sfe, sample_id, include_images = FALSE,
+                         include_row = FALSE) { # For one sample
     sample_index <- colData(sfe)$sample_id == sample_id
     cgs <- as.list(int_colData(sfe)[["colGeometries"]][sample_index, ,
         drop = FALSE
@@ -502,22 +548,21 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     } else {
         ags_bboxes <- NULL
     }
-    # What to do with samples in rowGeometry?
-    # Append sample_id to the names if not already done so
-    # Remove all sample_ids where other samples are detected
-    rgs <- rowGeometries(sfe)
-    other_samples <- setdiff(sampleIDs(sfe), sample_id)
-    if (length(other_samples)) {
-        patterns <- paste0(other_samples, "$")
-        has_other <- vapply(patterns, str_detect, string = type, FUN.VALUE = logical(1))
-        rg_names <- rowGeometryNames(sfe)[!has_other]
-        rgs <- rgs[rg_names]
-    }
-    if (length(rgs)) {
-        rgs_bboxes <- lapply(rgs, st_bbox)
-    } else rgs_bboxes <- NULL
 
-    all_bboxes <- c(cgs_bboxes, ags_bboxes, rgs_bboxes)
+    if (include_row) {
+        rgs <- rowGeometries(sfe)
+        if (length(rgs) && length(sampleIDs(sfe)) > 1L) {
+            pattern <- paste0(sample_id, "$")
+            has_sample <- grepl(pattern, names(rgs))
+            rgs <- rgs[has_sample]
+        }
+        if (length(rgs)) rgs_bboxes <- lapply(rgs, st_bbox) else rgs_bboxes <- NULL
+    } else rgs_bboxes <- NULL
+    if (isEmpty(imgData(sfe))) include_images <- FALSE
+    if (include_images) {
+        img_exts <- lapply(imgData(sfe)$data, ext)
+    } else img_exts <- NULL
+    all_bboxes <- c(cgs_bboxes, ags_bboxes, rgs_bboxes, img_exts)
     .agg_bboxes(all_bboxes)
 }
 
@@ -532,6 +577,11 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
 #' @param sample_id Sample(s) whose bounding box(es) to find. The bounding box
 #'   would be for the union of all \code{colGeometries} and
 #'   \code{annotGeometries} associated with each sample.
+#' @param include_images Logical, whether the bounding boxes should include
+#'   image extents. Defaults to \code{FALSE} because often the image has a lot
+#'   of empty space surrounding the tissue.
+#' @param include_row Logical, whether the bounding boxes should include
+#' \code{rowGeometries}, defaults to \code{TRUE}.
 #' @return For one sample, then a named vector with names \code{xmin},
 #'   \code{ymin}, \code{xmax}, and \code{ymax} specifying the bounding box. For
 #'   multiple samples, then a matrix whose columns are samples and whose rows
@@ -539,14 +589,22 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
 #' @concept Geometric operations
 #' @aliases bbox
 #' @importFrom sf st_bbox
+#' @importFrom S4Vectors isEmpty
 #' @export
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")
 #' bbox(sfe, sample_id = "Vis5A")
-setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
+setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
+                                                       include_images = FALSE,
+                                                       include_row = TRUE) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-    out <- lapply(sample_id, .bbox_sample, sfe = sfe)
+    out <- lapply(sample_id, .bbox_sample, sfe = sfe,
+                  include_images = include_images,
+                  include_row = include_row)
+    # Just as in sf for empty geometries
+    if (!length(out))
+        return(c(xmin = NA, ymin = NA, xmax = NA, ymax = NA))
     if (length(out) == 1L) {
         out <- out[[1]]
     } else {
@@ -556,83 +614,205 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = NULL) {
     out
 })
 
-.transform <- function(sfe, sample_id, mult, add, img_fun,
-                       shift_img = TRUE, ...) {
-    # m is a 2x2 matrix for the transformation
-    if (isTRUE(all.equal(add, c(0,0)))) shift_img <- FALSE
-    # spatialCoords
+.transform_geometry <- function(g, mult, add) UseMethod(".transform_geometry")
+
+.transform_geometry.sf <- function(g, mult, add) {
+    # z will not be affected if present
+    mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
+    add_3d <- c(add, 0)
+    # It's fine to put it here since I don't expect more than a handful of geometries
+    if (is.null(st_z_range(g))) {
+        # TODO: The * is slow, from mapply
+        # Consider getting the coordinates, do matrix multiplication, then use sfheaders
+        g$geometry <- g$geometry * mult + add
+    } else {
+        g$geometry <- g$geometry * mult_3d + add_3d
+    }
+    g
+}
+
+.transform_geometry.matrix <- function(g, mult, add) {
+    mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
+    add_3d <- c(add, 0)
+    if (dim(g)[2] == 2L) {
+        g <- g %*% mult
+        g <- sweep(g, 2, add, FUN = "+")
+    } else {
+        g <- g %*% mult_3d
+        g <- sweep(g, 2, add_3d, FUN = "+")
+    }
+    g
+}
+
+.translate_geometry <- function(g, bbox, v) {
+    m <- matrix(c(1,0,0,1), ncol = 2)
+    .transform_geometry(g, m, v)
+}
+
+.translate_img <- function(img, bbox, v, resolution, maxcell) {
+    translateImg(img, v)
+}
+
+.transpose_geometry <- function(g, bbox) {
+    # switch xmin and xmax with ymin and ymax as in terra for bbox
+    # Should be consistent with image transpose
+    m <- matrix(c(0,-1,-1,0), ncol = 2)
+    v <- c(((bbox["ymax"] - bbox["ymin"])/2 + bbox["ymin"])*2,
+           ((bbox["xmax"] - bbox["xmin"])/2 + bbox["xmin"])*2)
+    .transform_geometry(g, m, v)
+}
+
+.transpose_img <- function(img, bbox, resolution, maxcell) {
+    transposeImg(img, resolution)
+}
+
+.mirror_geometry <- function(g, bbox, direction) {
+    vec <- switch (direction,
+                   vertical = c(1,0,0,-1),
+                   horizontal = c(-1,0,0,1)
+    )
+    m <- matrix(vec, ncol = 2)
+    v <- switch (
+        direction,
+        vertical = c(0, ((bbox["ymax"] - bbox["ymin"])/2 + bbox["ymin"])*2),
+        horizontal = c(((bbox["xmax"] - bbox["xmin"])/2 + bbox["xmin"])*2, 0)
+    )
+    .transform_geometry(g, m, v)
+}
+# The internal .*_img functions here also shifts the image so its relative
+# position within the larger bbox of the entire sample remains the same. In
+# contrast, in the exported *Img functions, the mirroring and rotation are
+# performed wrt the center of the individual image.
+.mirror_img <- function(img, bbox, direction, resolution, maxcell) {
+    center_all <- bbox_center(bbox)
+    center_img <- bbox_center(ext(img))
+    v <- switch (direction,
+        vertical = c(0, center_img[2] - center_all[2]),
+        horizontal = c(center_img[1] - center_all[1], 0)
+    )
+    img <- mirrorImg(img, direction, resolution)
+    img <- translateImg(img, v)
+    img
+}
+
+.rotate_geometry <- function(g, bbox, degrees) {
+    # As in the images, must be a multiple of 90 degrees
+    # Centroid of bbox should not change
+    center <- bbox_center(bbox)
+    if (is(g, "sf")) {
+        g$geometry <- g$geometry - center
+    } else {
+        g <- sweep(g, 2, center, FUN = "-")
+    }
+    bbox[c("xmin", "xmax")] <- bbox[c("xmin", "xmax")] - center[1]
+    bbox[c("ymin", "ymax")] <- bbox[c("ymin", "ymax")] - center[2]
+    theta <- degrees / 180 * pi
+    # clockwise rotation
+    m <- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)),
+                ncol = 2)
+    .transform_geometry(g, m, center)
+}
+
+.rotate_img <- function(img, bbox, degrees, resolution, maxcell) {
+    center_all <- bbox_center(bbox)
+    center_img <- bbox_center(ext(img))
+    # Should shift the center to where the center of this image should be
+    # after overall rotation
+    v <- center_img - center_all
+    theta <- degrees / 180 * pi
+    # clockwise rotation
+    m <- matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)),
+                ncol = 2)
+    v <- m %*% v
+    img <- rotateImg(img, degrees, resolution = resolution, maxcell = maxcell)
+    img <- translateImg(img, v)
+    img
+}
+
+.transform <- function(sfe, sample_id, bbox, geometry_fun, img_fun,
+                       resolution = 4L, maxcell = 1e7, ...) {
+    # For one sample, bbox is different for each sample
     inds <- colData(sfe)$sample_id == sample_id
-    spatialCoords(sfe)[inds, ] <- spatialCoords(sfe)[inds, ] %*% mult
-    spatialCoords(sfe)[inds, ] <-
-        sweep(spatialCoords(sfe)[inds, ], 2, add, FUN = "+")
+    spatialCoords(sfe)[inds,] <- geometry_fun(spatialCoords(sfe)[inds,], bbox = bbox, ...)
     # colGeometries
     for (n in colGeometryNames(sfe)) {
         cg <- colGeometry(sfe, n, sample_id = sample_id)
-        cg$geometry <- cg$geometry * mult + add
+        cg <- geometry_fun(cg, bbox = bbox, ...)
         colGeometry(sfe, n, sample_id = sample_id) <- cg
     }
     # annotGeometries
     if (!is.null(annotGeometries(sfe))) {
         for (n in annotGeometryNames(sfe)) {
             ag <- annotGeometry(sfe, n, sample_id = sample_id)
-            ag$geometry <- ag$geometry * mult + add
+            ag <- geometry_fun(ag, bbox = bbox, ...)
             annotGeometry(sfe, n, sample_id = sample_id) <- ag
         }
     }
     # rowGeometries
-    if (!is.null(rowGeometries(sfe))) {
-        # OK, I will not allow rowGeometries shared between samples for now
-        # I need that tree where one can split beneath the samples, but
-        # for sample_id is a special lowest level for many operations
-        for (n in rowGeometryNames(sfe)) {
+    rgns <- rowGeometryNames(sfe)
+    if (length(sampleIDs(sfe)) == 1L)
+        rg_sample <- rgns
+    else
+        rg_sample <- rgns[grepl(paste0("_", sample_id, "$"), rgns)]
+    if (length(rg_sample)) {
+        for (n in rg_sample) {
             rg <- rowGeometry(sfe, n, sample_id = sample_id)
-            rg$geometry <- rg$geometry * mult + add
+            rg <- geometry_fun(rg, bbox = bbox, ...)
             rowGeometry(sfe, n, sample_id = sample_id) <- rg
         }
     }
-    # Images
-    if (nrow(imgData(sfe))) {
+    # images
+    if (!isEmpty(imgData(sfe))) {
         inds <- imgData(sfe)$sample_id == sample_id
         new_imgs <- lapply(imgData(sfe)$data[inds], function(img) {
-            img_new <- img_fun(imgRaster(img), ...)
-            if (shift_img)
-                img_new <- terra::shift(img_new, dx = add[1], dy = add[2])
-            new("SpatRasterImage", image = img_new)
+            # img_fun should use the overall bbox of the sample including images
+            img_new <- img_fun(img, bbox = bbox, resolution = resolution,
+                               maxcell = maxcell,...)
         })
         imgData(sfe)$data[inds] <- I(new_imgs)
     }
     sfe
 }
-
-.transform_samples <- function(sfe, sample_id, mult, add, img_fun, ...) {
+.transform_samples <- function(sfe, sample_id, geometry_fun, img_fun,
+                               resolution = 4L, maxcell = 1e7, ...) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+    bboxes <- bbox(sfe, sample_id, include_images = TRUE)
+    if (is.vector(bboxes)) bboxes <- matrix(bboxes, ncol = 1,
+                                            dimnames = list(names(bboxes), sample_id))
     for (s in sample_id) {
-        sfe <- .transform(sfe, s, mult, add, img_fun, ...)
+        sfe <- .transform(sfe, s, bboxes[,s], geometry_fun, img_fun,
+                          resolution, maxcell, ...)
     }
     sfe
 }
 
-.translate <- function(sfe, sample_id, v) {
-    m <- matrix(c(1,0,0,1), ncol = 2)
-    .transform_samples(sfe, sample_id, mult = m, add = v,
-                       img_fun = function(x) x)
-}
-
-#' Transpose or mirror SFE object in histological space
+#' Affine transfortaion of SFE object in histological space
 #'
-#' When images are present, transpose means switching rows and columns of the
-#' image (flipping about the axis from top left to bottom right) and geometries
-#' are transformed to match. When images are absent, transpose means switching x
-#' and y coordinates of the geometries. Mirroring means flipping either x or y
-#' coordinates, in histological space. When images are present, the geometries
-#' are flipped about the middle of the image. Whem images are absent, the
-#' geometries are flipped about the x or y axis. The transformation is applied
-#' to the geometries and the images, and can be applied to each sample
-#' independently.
+#' These functions perform affine transformations on SFE objects, including all
+#' geometries and images. The transformation is performed on each sample as a
+#' whole. This differs from functions such as \code{\link{mirrorImg}} in that
+#' \code{mirrorImg} and \code{rotateImg} transform the image with the center at
+#' the center of the image itself. In contrast, the center of transformation
+#' here is the center of the bounding box of the entire sample, including
+#' images.
+#'
+#' For images that are not loaded into memory, \code{rotateImg} will load
+#' \code{SpatRasterImage} into memory and all image operations except translate
+#' will load \code{BioFormatsImage} into memory.
 #'
 #' @inheritParams terra::flip
 #' @param sfe An SFE object.
 #' @param sample_id Sample(s) to transform.
+#' @param resolution Transposing, mirroring, and rotating \code{BioFormatsImage}
+#'   will convert it into \code{EBImage}, loading the image into memory. This
+#'   argument specifies the resolution of image in the OME-TIFF pyramid to load.
+#'   Ignored if no image of class \code{BioFormatsImage} is present in the
+#'   sample(s) of interest.
+#' @param maxcell Rotating \code{SpatRasterImage} will convert it into
+#'   \code{EBImage}, loading the image into memory. This argument specifies the
+#'   maximum number of pixels in the image loaded into memory. The image will be
+#'   down sampled to approximately this number of pixels.
+#' @param v Vector to spatially translate the SFE object.
 #' @return An SFE object with the sample(s) transformed.
 #' @name SFE-transform
 #' @concept Geometric operations
@@ -646,67 +826,39 @@ NULL
 
 #' @rdname SFE-transform
 #' @export
-transpose <- function(sfe, sample_id = "all") {
-    sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-    if (nrow(imgData(sfe))) {
-        m <- matrix(c(0,-1,-1,0), ncol = 2)
-        bboxes <- lapply(sample_id, function(s) {
-            # Assume that all images of the same sample have the same extent
-            img <- imgRaster(imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]])
-            as.vector(ext(img))
-        })
-        bboxes <- do.call(cbind, bboxes)
-        colnames(bboxes) <- sample_id
-        rownames(bboxes) <- c("xmin", "xmax", "ymin", "ymax")
-        v <- cbind(((bboxes["ymax",] - bboxes["ymin",])/2 + bboxes["ymin",])*2,
-                   ((bboxes["xmax",] - bboxes["xmin",])/2 + bboxes["xmin",])*2)
-        rownames(v) <- sample_id
-        for (s in sample_id) {
-            sfe <- .transform(sfe, s, mult = m, add = v[s,], img_fun = terra::trans,
-                              shift_img = FALSE)
-        }
-    } else {
-        m <- matrix(c(0,1,1,0), ncol = 2)
-        sfe <- .transform_samples(sfe, sample_id, mult = m, add = c(0,0))
-    }
-    sfe
+transpose <- function(sfe, sample_id = "all", resolution = 4L) {
+    .transform_samples(sfe, sample_id, geometry_fun = .transpose_geometry,
+                       img_fun = .transpose_img, resolution = resolution)
 }
 
 #' @rdname SFE-transform
 #' @export
 mirror <- function(sfe, sample_id = "all",
-                   direction = c("vertical", "horizontal")) {
-    sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-    direction <- match.arg(direction)
-    vec <- switch (direction,
-        vertical = c(1,0,0,-1),
-        horizontal = c(-1,0,0,1)
-    )
-    m <- matrix(vec, ncol = 2)
-    # Retain original bbox, i.e. reflect about middle of the original bbox
-    if (nrow(imgData(sfe))) {
-        bboxes <- lapply(sample_id, function(s) {
-            # Assume that all images of the same sample have the same extent
-            img <- imgRaster(imgData(sfe)$data[[which(imgData(sfe)$sample_id == s)[1]]])
-            as.vector(ext(img))
-        })
-        bboxes <- do.call(cbind, bboxes)
-        colnames(bboxes) <- sample_id
-        rownames(bboxes) <- c("xmin", "xmax", "ymin", "ymax")
-        v <- switch (
-            direction,
-            vertical = cbind(0, ((bboxes["ymax",] - bboxes["ymin",])/2 + bboxes["ymin",])*2),
-            horizontal = cbind(((bboxes["xmax",] - bboxes["xmin",])/2 + bboxes["xmin",])*2, 0)
-        )
-        rownames(v) <- sample_id
-        for (s in sample_id) {
-            sfe <- .transform(sfe, s, mult = m, add = v[s,], img_fun = terra::flip,
-                              direction = direction, shift_img = FALSE)
-        }
-    } else {
-        sfe <- .transform_samples(sfe, sample_id, mult = m, add = c(0,0), direction = direction)
-    }
-    sfe
+                   direction = c("vertical", "horizontal"),
+                   resolution = 4L) {
+    .transform_samples(sfe, sample_id, geometry_fun = .mirror_geometry,
+                       img_fun = .mirror_img, resolution = resolution,
+                       direction = direction)
+}
+
+#' @rdname SFE-transform
+#' @export
+rotate <- function(sfe, sample_id = "all", degrees,
+                   resolution = 4L, maxcell = 1e7) {
+    stopifnot(
+        length(degrees) == 1,
+        is.numeric(degrees),
+        degrees %% 90 == 0)
+    .transform_samples(sfe, sample_id, geometry_fun = .rotate_geometry,
+                       img_fun = .rotate_img, resolution = resolution,
+                       maxcell = maxcell, degrees = degrees)
+}
+
+#' @rdname SFE-transform
+#' @export
+translate <- function(sfe, sample_id = "all", v) {
+    .transform_samples(sfe, sample_id, geometry_fun = .translate_geometry,
+                       img_fun = .translate_img, v = v)
 }
 
 #' Remove empty space
@@ -714,7 +866,7 @@ mirror <- function(sfe, sample_id = "all",
 #' For each sample independently, all geometries and \code{spatialCoords} are
 #' translated so the origin is at the minimum coordinates of the bounding box
 #' of all geometries of the sample. This way coordinates of different samples
-#' will be more comparable.
+#' will be more comparable. This removes empty space in the images if present.
 #'
 #' @param sfe An SFE object.
 #' @param sample_id Sample to remove empty space.
@@ -733,13 +885,13 @@ mirror <- function(sfe, sample_id = "all",
 #' sfe <- removeEmptySpace(sfe)
 removeEmptySpace <- function(sfe, sample_id = "all") {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-    bboxes <- bbox(sfe, sample_id)
+    bboxes <- bbox(sfe, sample_id, include_images = FALSE)
     sfe <- .crop_imgs(sfe, bboxes)
     if (length(sample_id) == 1L) {
-        sfe <- .translate(sfe, sample_id, v = -bboxes[c("xmin", "ymin")])
+        sfe <- translate(sfe, sample_id, v = -bboxes[c("xmin", "ymin")])
     } else {
         for (s in sample_id) {
-            sfe <- .translate(sfe, s, v = -bboxes[c("xmin", "ymin"), s])
+            sfe <- translate(sfe, s, v = -bboxes[c("xmin", "ymin"), s])
         }
     }
     if (!is.null(int_metadata(sfe)$orig_bbox)) {

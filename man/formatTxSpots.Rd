@@ -33,6 +33,7 @@ addTxSpots(
   min_phred = 20,
   split_col = NULL,
   z_option = c("split", "3d"),
+  flip = FALSE,
   file_out = NULL,
   BPPARAM = SerialParam()
 )
@@ -107,6 +108,12 @@ not depend on whether the geometries are written to file. Always `FALSE`
 when `dest = "colGeometry"`.}
 
 \item{sfe}{A `SpatialFeatureExperiment` object.}
+
+\item{flip}{To flip the image, geometry coordinates, or none. Because the
+image has the origin at the top left while the geometry has origin at the
+bottom left, one of them needs to be flipped for them to match. If one of
+them is already flipped, then use "none". The image will not be flipped if
+it's GeoTIFF.}
 }
 \value{
 A sf data frame for vector geometries if `file_out` is not set.

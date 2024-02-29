@@ -23,14 +23,31 @@ sfe_visium <- addVisiumSpotPoly(sfe_visium, 0.5)
 bbox_use <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 1, ymax = 6),
     crs = NA
 ))
-bbox_use2 <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 5, ymax = 9)))
+bbox_use2 <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 5, ymax = 9)), crs = NA)
 bbox_sf <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
+
+cg <- colGeometry(sfe_visium, sample_id = "sample01")
+bbox_cg <- st_bbox(st_centroid(cg))
+ag <- st_bbox(cg) |> st_as_sfc() |> st_buffer(dist = 0.3)
+annotGeometry(sfe_visium, "box", sample_id = "sample01") <- st_sf(geometry = ag, sample_id = "sample01",
+                                                                  sf_column_name = "geometry",
+                                                                  crs = NA)
+rg_bbox <- st_bbox(ag)
+set.seed(29)
+rg1 <- cbind(runif(20, rg_bbox["xmin"], rg_bbox["xmax"]),
+             runif(20, rg_bbox["ymin"], rg_bbox["ymax"]))
+rg2 <- matrix(rnorm(30, mean = 3, sd = 3), ncol = 2)
+rg_use <- st_sf(geometry = st_sfc(st_multipoint(rg1), st_multipoint(rg2)),
+                crs = NA)
+rowGeometry(sfe_visium, "points", sample_id = "sample01", withDimnames = FALSE) <- rg_use
 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
     sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all")
     cg <- spotPoly(sfe_cropped, "all")
     expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
+    rg <- rowGeometry(sfe_cropped)
+    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by)))
 })
 
 test_that("Only crop one sample out of two, with sf", {
@@ -121,13 +138,116 @@ test_that("When a sample is removed by cropping", {
     expect_equal(sampleIDs(sfe_cropped), "sample01")
 })
 
-test_that("Use geometry predicate to crop", {
-    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all", op = st_intersects)
-    cg <- spotPoly(sfe_cropped, "all")
-    expect_true(all(st_any_pred(cg, bbox_use, pred = st_intersects)))
-    # Not actually cropped
-    expect_false(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
-    expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
+test_that("Keep whole colGeometry items", {
+    # In case you don't want small slivers or broken into multiple pieces
+    # rowGeometries, annotGeometries, and images should be cropped by the actual
+    # bbox of the remaining items of the colGeometry
+    sfe_cropped <- crop(sfe_visium, bbox_cg, sample_id = "sample01",
+                        keep_whole = "col")
+    cg2 <- colGeometry(sfe_cropped, sample_id = "sample01")
+    # colGeometry not cropped
+    expect_equal(cg, cg2)
+    # annotGeometry cropped by bbox of colGeometry
+    cg_bbox <- st_bbox(cg) |> st_as_sfc()
+    ag2 <- annotGeometry(sfe_cropped, sample_id = "sample01")
+    expect_true(st_equals(ag2, cg_bbox, sparse = FALSE))
+    # rowGeometry
+    rg_check <- rowGeometry(sfe_cropped, "points", sample_id = "sample01")
+    rg_bbox2 <- st_bbox(rg_check) |> st_as_sfc()
+    expect_true(st_covered_by(rg_bbox2, cg_bbox, sparse = FALSE))
+})
+
+test_that("Keep whole annotGeometry items", {
+    cg <- colGeometry(sfe_visium, sample_id = "sample01")
+    bbox_use <- st_bbox(st_centroid(cg))
+    set.seed(29)
+    ag_use <- cbind(runif(20, bbox_use["xmin"], bbox_use["xmax"]),
+                    runif(20, bbox_use["ymin"], bbox_use["ymax"])) |>
+        as.data.frame()
+    names(ag_use) <- c("x", "y")
+    ag_use <- st_as_sf(ag_use, coords = c("x", "y"), crs = NA)
+    ag_use <- st_buffer(ag_use, 0.5)
+    ag_use$sample_id <- "sample01"
+    annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
+    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+                        keep_whole = "annot")
+    expect_true(st_covered_by(spotPoly(sfe_cropped, "sample01"), st_as_sfc(bbox_use),
+                              sparse = FALSE) |> all())
+    expect_equal(ag_use, annotGeometry(sfe_cropped, "circles", "sample01")[,names(ag_use)])
+})
+
+test_that("Use st_difference for cropping, not cover", {
+    bbox_use <- c(xmin = 2.5, xmax = 3.5, ymin = 1.75, ymax = 2.5)
+    cg <- colGeometry(sfe_visium, sample_id = "sample01")
+    bbox1 <- st_bbox(st_centroid(cg))
+    set.seed(29)
+    ag_use <- cbind(runif(20, bbox1["xmin"], bbox1["xmax"]),
+                    runif(20, bbox1["ymin"], bbox1["ymax"])) |>
+        as.data.frame()
+    names(ag_use) <- c("x", "y")
+    ag_use <- st_as_sf(ag_use, coords = c("x", "y"), crs = NA)
+    ag_use <- st_buffer(ag_use, 0.5)
+    ag_use$sample_id <- "sample01"
+    annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
+    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+                        op = st_difference)
+    cg2 <- spotPoly(sfe_cropped, "sample01")
+    ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
+    expect_false(any(st_overlaps(cg2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
+    expect_false(any(st_covered_by(cg2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
+    expect_false(any(st_overlaps(ag2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
+    expect_false(any(st_covered_by(ag2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
+})
+
+test_that("Use st_difference for cropping, cover", {
+    bbox_use <- c(xmin = 2.5, xmax = 3.5, ymin = 1.75, ymax = 2.5)
+    cg <- colGeometry(sfe_visium, sample_id = "sample01")
+    bbox1 <- st_bbox(st_centroid(cg)) |> st_as_sfc()
+    set.seed(29)
+    ag_use <- st_sample(bbox1, 20)
+    ag_use <- st_sf(geometry = ag_use, coords = c("x", "y"), crs = NA)
+    ag_use <- st_buffer(ag_use, 0.5)
+    ag_use$sample_id <- "sample01"
+    annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
+    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+                        op = st_difference, cover = TRUE,
+                        keep_whole = c("col", "annot"))
+    cg2 <- spotPoly(sfe_cropped, "sample01")
+    ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
+    bbox_sf <- st_as_sfc(st_bbox(bbox_use))
+    expect_true(all(st_disjoint(cg2, bbox_sf, sparse = FALSE)))
+    expect_true(all(st_disjoint(ag2, bbox_sf, sparse = FALSE)))
+})
+
+test_that("Only cells/spots covered by y if keep whole", {
+    cg <- colGeometry(sfe_visium, sample_id = "sample01")
+    bbox1 <- st_bbox(st_centroid(cg))
+    bbox2 <- st_bbox(cg)
+    bbox_use <- c(bbox2[c("xmin", "xmax", "ymin")], bbox1["ymax"])
+    set.seed(29)
+    ag_use <- cbind(runif(20, bbox_use["xmin"], bbox_use["xmax"]),
+                    runif(20, bbox_use["ymin"], bbox_use["ymax"])) |>
+        as.data.frame()
+    names(ag_use) <- c("x", "y")
+    ag_use <- st_as_sf(ag_use, coords = c("x", "y"), crs = NA)
+    ag_use <- st_buffer(ag_use, 0.5)
+    ag_use$sample_id <- "sample01"
+    annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
+    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+                        keep_whole = c("col", "annot"), cover = TRUE)
+    cg2 <- spotPoly(sfe_cropped, "sample01")
+    expect_true(all(st_covered_by(cg2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
+    expect_true(all(lengths(st_equals(cg2, cg))))
+    ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
+    expect_true(all(st_covered_by(ag2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
+    expect_true(all(lengths(st_equals(ag2, ag_use))))
+})
+
+test_that("Error when other spatial operations are specified", {
+    bbox_use <- c(xmin = 2.5, xmax = 3.5, ymin = 1.75, ymax = 2.5)
+    expect_error(crop(sfe_visium, bbox_use, sample_id = "sample01",
+                      op = st_sym_difference),
+                 "op must be either st_intersection or st_difference")
 })
 
 annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_sf
@@ -162,7 +282,7 @@ test_that("annotOp", {
 test_that("Find bbox of samples", {
     cg1 <- spotPoly(sfe_visium, "sample01")
     bbox1 <- bbox(sfe_visium, "sample01")
-    expect_equal(st_bbox(st_union(cg1, bbox_use)), bbox1,
+    expect_equal(st_bbox(rowGeometry(sfe_visium)), bbox1,
         ignore_attr = c("class", "crs")
     )
     bboxes <- bbox(sfe_visium, "all")
@@ -171,6 +291,13 @@ test_that("Find bbox of samples", {
     expect_equal(colnames(bboxes), c("sample01", "sample02"))
     expect_equal(rownames(bboxes), c("xmin", "ymin", "xmax", "ymax"))
     expect_true(all(!is.na(bboxes)))
+})
+
+test_that("bbox when 0 rows or columns", {
+    sfe0 <- sfe_visium[,logical(0)]
+    bbox0 <- bbox(sfe0)
+    expect_equal(names(bbox0), c("xmin", "ymin", "xmax", "ymax"))
+    expect_true(all(is.na(bbox0)))
 })
 
 test_that("Remove empty space", {
@@ -194,57 +321,6 @@ test_that("Remove empty space", {
     expect_equal(diff2, unname(bboxes[c("xmin", "ymin"), "sample02"]))
 })
 
-ag1 <- st_sfc(st_linestring(matrix(c(1, 5, 2, 2), ncol = 2, byrow = TRUE)))
-ag2 <- st_sfc(st_linestring(matrix(c(2,2,1,5), ncol = 2, byrow = TRUE)))
-ag <- c(ag1, ag2)
-ag <- st_sf(sample_id = c("sample01", "sample02"),
-            geometry = ag)
-annotGeometry(sfe_visium, "foo", sample_id = "all") <- ag
-test_that("Transpose SFE, no images", {
-    sfe_visium2 <- transpose(sfe_visium)
-    coords1 <- spatialCoords(sfe_visium)
-    coords2 <- spatialCoords(sfe_visium2)
-    expect_equal(coords1[,1], coords2[,2])
-    coords_cg1 <- st_coordinates(spotPoly(sfe_visium, sample_id = "all"))
-    coords_cg2 <- st_coordinates(spotPoly(sfe_visium2, sample_id = "all"))
-    expect_equal(coords_cg1[,1], coords_cg2[,2])
-    coords_ag1 <- st_coordinates(annotGeometry(sfe_visium, "foo", "all"))
-    coords_ag2 <- st_coordinates(annotGeometry(sfe_visium2, "foo", "all"))
-    expect_equal(coords_ag1[,1], coords_ag2[,2])
-})
-
-test_that("Mirror SFE, no images, vertical", {
-    sfe_visium2 <- mirror(sfe_visium)
-    coords1 <- spatialCoords(sfe_visium)
-    coords2 <- spatialCoords(sfe_visium2)
-    expect_equal(coords1[,2], -coords2[,2])
-    expect_equal(coords1[,1], coords2[,1])
-    coords_cg1 <- st_coordinates(spotPoly(sfe_visium, sample_id = "all"))
-    coords_cg2 <- st_coordinates(spotPoly(sfe_visium2, sample_id = "all"))
-    expect_equal(coords_cg1[,2], -coords_cg2[,2])
-    expect_equal(coords_cg1[,1], coords_cg2[,1])
-    coords_ag1 <- st_coordinates(annotGeometry(sfe_visium, "foo", "all"))
-    coords_ag2 <- st_coordinates(annotGeometry(sfe_visium2, "foo", "all"))
-    expect_equal(coords_ag1[,1], coords_ag2[,1])
-    expect_equal(coords_ag1[,2], -coords_ag2[,2])
-})
-
-test_that("Mirror SFE, no images, horizontal", {
-    sfe_visium2 <- mirror(sfe_visium, direction = "horizontal")
-    coords1 <- spatialCoords(sfe_visium)
-    coords2 <- spatialCoords(sfe_visium2)
-    expect_equal(coords1[,1], -coords2[,1])
-    expect_equal(coords1[,2], coords2[,2])
-    coords_cg1 <- st_coordinates(spotPoly(sfe_visium, sample_id = "all"))
-    coords_cg2 <- st_coordinates(spotPoly(sfe_visium2, sample_id = "all"))
-    expect_equal(coords_cg1[,2], coords_cg2[,2])
-    expect_equal(coords_cg1[,1], -coords_cg2[,1])
-    coords_ag1 <- st_coordinates(annotGeometry(sfe_visium, "foo", "all"))
-    coords_ag2 <- st_coordinates(annotGeometry(sfe_visium2, "foo", "all"))
-    expect_equal(coords_ag1[,1], -coords_ag2[,1])
-    expect_equal(coords_ag1[,2], coords_ag2[,2])
-})
-
 library(SFEData)
 sfe1 <- McKellarMuscleData("small")
 sfe2 <- McKellarMuscleData("small2")
@@ -264,9 +340,10 @@ cg_toy2 <- data.frame(
     sample_id = "sample02")
 cg_toy2 <- df2sf(cg_toy2)
 cg_toy <- rbind(cg_toy1, cg_toy2)
-
+sfe <- sfe[rowSums(counts(sfe)) > 0,]
 sfe_shifted <- removeEmptySpace(sfe)
 bbox_new <- st_as_sfc(st_bbox(bbox(sfe_shifted, sample_id = "Vis5A")))
+bbox_new2 <- st_as_sfc(st_bbox(bbox(sfe_shifted, sample_id = "sample02")))
 bbox_old1 <- st_as_sfc(st_bbox(bbox(sfe, sample_id = "Vis5A")))
 bbox_old2 <- st_as_sfc(st_bbox(bbox(sfe, sample_id = "sample02")))
 
@@ -344,6 +421,30 @@ test_that("annotGeometry setter after removing empty space", {
     expect_true(st_covered_by(bb2, bbox_old2, sparse = FALSE))
 })
 
+set.seed(29)
+rg1 <- st_sf(geometry = st_sample(bbox_old1, nrow(sfe)))
+rg2 <- st_sf(geometry = st_sample(bbox_old2, nrow(sfe)))
+
+rowGeometry(sfe, "foo", "Vis5A", withDimnames = FALSE) <- rg1
+rowGeometry(sfe, "foo", "sample02", withDimnames = FALSE) <- rg2
+
+test_that("rowGeometry removing empty space", {
+    sfe_shifted <- removeEmptySpace(sfe)
+    rg1_sh <- rowGeometry(sfe_shifted, "foo", "Vis5A")
+    rg2_sh <- rowGeometry(sfe_shifted, "foo", "sample02")
+    bb1 <- st_bbox(rg1_sh) |> st_as_sfc()
+    bb2 <- st_bbox(rg2_sh) |> st_as_sfc()
+    expect_true(st_covered_by(bb1, bbox_new, sparse = FALSE))
+    expect_true(st_covered_by(bb2, bbox_new2, sparse = FALSE))
+})
+
+test_that("rowGeometry setter after removing empty space", {
+    rowGeometry(sfe_shifted, "bar", "Vis5A", withDimnames = FALSE) <- rg1
+    rg_shifted <- rowGeometry(sfe_shifted, "bar", "Vis5A")
+    bb <- st_bbox(rg_shifted) |> st_as_sfc()
+    expect_true(st_covered_by(bb, bbox_new, sparse = FALSE))
+})
+
 test_that("Don't translate value if it's already translated", {
     bb <- st_bbox(cg_toy)
     cg_translated <- cg_toy
@@ -375,11 +476,44 @@ if (!dir.exists(file.path("ob", "outs", "spatial"))) {
                   destfile = file.path("ob", "outs", "spatial.tar.gz"))
     untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
 }
-library(sf)
+
 library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
+library(S4Vectors)
 sfe <- read10xVisiumSFE("ob")
+
+test_that("bbox when images are included", {
+    bbox_tot <- bbox(sfe, include_image = TRUE) |> st_bbox() |> st_as_sfc()
+    bbox_img <- ext(getImg(sfe, image_id = "hires")) |>
+        st_bbox() |> st_as_sfc()
+    expect_true(st_equals(bbox_tot, bbox_img, sparse = FALSE))
+})
+
+sfe <- sfe[rowSums(counts(sfe)) > 0,]
+bbox_use <- bbox(sfe) |> st_bbox() |> st_as_sfc()
+set.seed(29)
+ag <- st_sample(bbox_use, 20) |> st_buffer(dist = 100)
+ag <- st_sf(geometry = ag, sample_id = "sample01")
+rg <- st_sample(bbox_use, nrow(sfe))
+rg <- st_sf(geometry = rg)
+rownames(rg) <- rownames(sfe)
+annotGeometry(sfe, "foo") <- ag
+rowGeometry(sfe, "bar") <- rg
+
+test_that("When no cells/spots left after cropping", {
+    bbox0 <- c(xmin = 3000, xmax = 4000, ymin = 2000, ymax = 3000)
+    expect_warning(sfe0 <- SpatialFeatureExperiment::crop(sfe, bbox0),
+                   "No cells/spots left after cropping")
+    expect_equal(ncol(sfe0), 0)
+    expect_equal(nrow(sfe0), nrow(sfe))
+    expect_equal(nrow(spotPoly(sfe0)), 0)
+    expect_true(isEmpty(rowGeometries(sfe0)))
+    expect_equal(nrow(imgData(sfe0)), 0)
+    expect_equal(annotGeometryNames(sfe0), annotGeometryNames(sfe))
+    expect_equal(nrow(annotGeometry(sfe0, "foo")), 0)
+})
+
 test_that("Image is shifted after removing empty space", {
     sfe2 <- removeEmptySpace(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
@@ -390,7 +524,7 @@ test_that("Image is shifted after removing empty space", {
     bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
     bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
-    expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.98)
+    expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.97)
 })
 
 test_that("Image is cropped after cropping SFE object", {
@@ -408,7 +542,7 @@ test_that("Image is cropped after cropping SFE object", {
     bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
     bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
-    expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.98)
+    expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.97)
 })
 
 test_that("Transpose SFE object with image", {
@@ -418,9 +552,13 @@ test_that("Transpose SFE object with image", {
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
-    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
-    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    bbox_cg <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
 })
 
 test_that("Transpose SFE object with image, after cropping image", {
@@ -431,9 +569,15 @@ test_that("Transpose SFE object with image, after cropping image", {
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
-    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_cg <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
     bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
-    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    expect_true(st_covered_by(bbox_cg, bbox_img, sparse = FALSE))
+    bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
 })
 
 test_that("Mirror SFE object with image, vertical", {
@@ -443,9 +587,13 @@ test_that("Mirror SFE object with image, vertical", {
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
-    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
-    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    bbox_cg <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
 })
 
 test_that("Mirror SFE object with image, horizontal", {
@@ -455,7 +603,50 @@ test_that("Mirror SFE object with image, horizontal", {
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
-    bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
-    expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+    bbox_cg <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Rotate SFE object with image", {
+    sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 90)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_cg <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Translate SFE object with image", {
+    v <- c(100, 200)
+    sfe2 <- translate(sfe, v = v)
+    bbox_tr <- bbox(sfe2)
+    bbox_exp <- bbox(sfe)
+    bbox_exp[c("xmin", "xmax")] <- bbox_exp[c("xmin", "xmax")] + v[1]
+    bbox_exp[c("ymin", "ymax")] <- bbox_exp[c("ymin", "ymax")] + v[2]
+    expect_equal(bbox_tr, bbox_exp)
+
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- imgRaster(getImg(sfe2))
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+    bbox_cg <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
 })

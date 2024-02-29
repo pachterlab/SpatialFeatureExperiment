@@ -194,6 +194,7 @@ setReplaceMethod("origin", "BioFormatsImage", function(x, value) {
 #'   such as \code{\link{RBioFormats::AnnotatedImage}}.
 #' @return An \code{EBImage} object.
 #' @importClassesFrom EBImage Image
+#' @importFrom EBImage Image
 #' @name EBImage
 #' @export
 #' @concept Image and raster
@@ -337,6 +338,7 @@ setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
 #' @inheritParams toEBImage
 #' @param overwrite Logical, whether to overwrite existing file of the same
 #'   name.
+#' @param save_geotiff Logical, whether to save the image to GeoTIFF file.
 #' @param x Either a \code{BioFormatsImage} or \code{EBIImage} object.
 #' @return A \code{SpatRasterImage} object
 #' @aliases toSpatRasterImage
@@ -345,13 +347,14 @@ setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
 #' @export
 #' @concept Image and raster
 setMethod("toSpatRasterImage", "EBImage",
-          function(x, file_out = "img.tiff", overwrite = FALSE) {
+          function(x, save_geotiff = TRUE, file_out = "img.tiff", overwrite = FALSE) {
     m <- as.array(imgRaster(x))
     if (length(dim(m)) == 3L) m <- aperm(m, c(2,1,3))
     else m <- t(m)
     r <- rast(m, extent = ext(x))
+    if (!save_geotiff) return(SpatRasterImage(r))
     if (!file.exists(file_out) || overwrite) {
-        message(">>> Saving image with `.tif` (non OME-TIFF) format:",
+        message(">>> Saving image with `.tiff` (non OME-TIFF) format:",
                 paste0("\n", file_out))
         writeRaster(r, file_out, overwrite = overwrite)
     }
@@ -361,12 +364,12 @@ setMethod("toSpatRasterImage", "EBImage",
 #' @rdname toSpatRasterImage
 #' @export
 setMethod("toSpatRasterImage", "BioFormatsImage",
-          function(x, resolution = 4L, overwrite = FALSE) {
+          function(x, save_geotiff = TRUE, resolution = 4L, overwrite = FALSE) {
     #check_installed("RBioFormats")
     # Only for OME-TIFF, haven't tested on other BioFormats
     img <- toEBImage(x, resolution)
-    img_fn <- gsub(".ome", paste0("_res", resolution), imgSource(x))
-    toSpatRasterImage(img, img_fn, overwrite)
+    img_fn <- gsub("\\.(ome\\.)?tiff?$", paste0("_res", resolution,".tiff"), imgSource(x))
+    toSpatRasterImage(img, save_geotiff, img_fn, overwrite)
 })
 
 # Methods======================
@@ -433,7 +436,10 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #'
 #' Method of \code{\link{transposeImg}}, \code{\link{mirrorImg}}, and
 #' \code{\link{rotateImg}} perform the method on all images within the SFE
-#' object that are specified with \code{sample_id} and \code{image_id}.
+#' object that are specified with \code{sample_id} and \code{image_id}. For
+#' images that are not loaded into memory, \code{rotateImg} will load
+#' \code{SpatRasterImage} into memory and all image operations except translate
+#' will load \code{BioFormatsImage} into memory.
 #'
 #' @inheritParams mirrorImg
 #' @inheritParams rotateImg

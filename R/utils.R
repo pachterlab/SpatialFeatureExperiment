@@ -61,14 +61,18 @@ changeSampleIDs <- function(sfe, replacement) {
     sfe
 }
 
-.translate_value <- function(x, translate, value) {
+.translate_value <- function(x, translate, value, sample_id = NULL) {
     if (translate && !is.null(int_metadata(x)$orig_bbox)) {
-        if (anyNA(value$sample_id) && nrow(value) == ncol(x))
-            value$sample_id <- colData(x)$sample_id
+        if (anyNA(value$sample_id) || is.null(value$sample_id)) {
+            if (nrow(value) == ncol(x))
+                value$sample_id <- colData(x)$sample_id
+            else if (nrow(value) == nrow(x))
+                value$sample_id <- .check_sample_id(x, sample_id)
+        }
         orig_bbox <- int_metadata(x)$orig_bbox
         # Don't translate if already translated
         curr_bbox <- st_bbox(value)
-        samples <- unique(value$sample_id)
+        samples <- unique(value$sample_id) %||% sample_id
         if (length(samples) > 1L) {
             value$ID_ <- seq_len(nrow(value)) # Unlikely name
             df <- value[,c("ID_", "sample_id", "geometry")]

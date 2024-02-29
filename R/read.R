@@ -653,7 +653,7 @@ readVizgen <- function(data_dir,
     # get molecule coordiantes file
     mols_fn <- .check_vizgen_fns(data_dir, "detected_transcripts.csv")
     sfe <- addTxSpots(sfe, mols_fn, sample_id, BPPARAM = BPPARAM, z = z,
-                      file_out = file_out, ...)
+                      file_out = file_out, flip = (flip == "geometry"), ...)
   }
   sfe
 }
@@ -1005,7 +1005,7 @@ addTxSpots <- function(sfe, file, sample_id = NULL,
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
                        gene_col = "gene", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,
-                       z_option = c("split", "3d"),
+                       z_option = c("split", "3d"), flip = FALSE,
                        file_out = NULL, BPPARAM = SerialParam()) {
   sample_id <- .check_sample_id(sfe, sample_id)
   dest <- "rowGeometry"
@@ -1175,7 +1175,7 @@ readCosMX <- function(data_dir,
 }
 
 .read_xenium_img <- function(data_dir, image) {
-    # Read images ----
+    # Read images, get imgData data frame ----
     # supports 2 images
     # `morphology_mip.ome.tif` - 2D maximum projection intensity (MIP) image of the tissue morphology image.
     # `morphology_focus.ome.tif` - 2D autofocus projection image of the tissue morphology image.
@@ -1192,75 +1192,22 @@ readCosMX <- function(data_dir,
 
     # convert OME-TIFF images, if no `.tif` images are present for `terra::rast`
     img_tif <- grep(".ome.tif", img_fn, invert = TRUE, value = TRUE)
-    # check if images requested are converted already
-    if (!length(img_tif) == 0) {
-        image_match <-
-            match.arg(image, gsub(".tif", "", basename(img_tif)), several.ok = TRUE)
-    } else { image_match <- NaN }
+    if_exists <- FALSE
+    if (any(if_exists)) {
+        # using cell segmentation centroids
+        extent <- colGeometry(sfe, 1) |> st_geometry() |> st_bbox()
 
-    if (!all(image == image_match)) {
-        check_installed("RBioFormats")
-        # check which remaining image to convert
-        if (any(image == image_match)) {
-            img_fn_add <-
-                grep(image[which(!image == image_match)], img_fn, value = TRUE)
-        } else { img_fn_add <- NULL }
-        if (is.null(img_fn_add)) {
-            message(">>> Images with OME-TIFF format are found:", paste0("\n", basename(img_fn)))
-            if (is(read.image_args, "list") && !is.null(read.image_args)) {
-                # add file name args
-                read.image_args <-
-                    lapply(seq(img_fn), function(x) {
-                        read.image_args$file <- img_fn[x]
-                        return(read.image_args) })
-                message(">>> Reading images with RBioFormats, resolution = ", read.image_args[[1]]$resolution)
-                imgs <-
-                    lapply(read.image_args, function(i) do.call(RBioFormats::read.image, i))
-            } else {
-                message(">>> Reading images with RBioFormats, resolution = ", 4)
-                imgs <-
-                    lapply(seq(img_fn), function(i) {
-                        RBioFormats::read.image(file = img_fn[i],
-                                                resolution = 4,
-                                                filter.metadata = TRUE,
-                                                read.metadata = FALSE,
-                                                normalize = FALSE)
-                    })
-            }
-            # given image_threshold, set some low values to NA
-            if (!is.null(image_threshold)) {
-                # make sure it is integer
-                if (is.numeric(image_threshold)) {
-                    image_threshold <-
-                        floor(image_threshold) |> as.integer()
-                } else {
-                    # set some default value
-                    image_threshold <- 30L
-                }
-                message(">>> Filtering image values with `image_threshold` = ", image_threshold)
-                imgs <-
-                    lapply(imgs, function(x) {
-                        x[x < image_threshold] <- NA
-                        return(x)})
-            }
-            # new files
-            img_fn <- gsub(".ome.tif", ".tif", img_fn)
-            message(">>> Saving lower resolution images with `.tif` (non OME-TIFF) format:",
-                    paste0("\n", img_fn))
-            # export as .tif
-            for (x in seq(imgs)) {
-                RBioFormats::write.image(imgs[[x]], file = img_fn[x], force = TRUE)}
-            # combine image files
-            # if only 1 image was converted and another one was already present
-            if (!length(img_tif) == 0) {
-                img_fn <- c(img_tif, img_fn)
-            }
-        }
-    } else {
-        img_fn <- img_tif
-        message(">>> Images with `.tif` (non OME-TIFF) format will be used:",
-                paste0("\n", basename(img_fn)))
+        # Set up ImgData
+        img_dfs <- lapply(img_fn, function(fn) {
+            id_use <- sub("\\.tif$", "", basename(fn))
+            .get_imgData(fn, sample_id = sample_id,
+                         image_id = id_use, extent = extent,
+                         flip = (flip == "image"))
+        })
+        img_df <- do.call(rbind, img_dfs)
+        imgData(sfe) <- img_df
     }
+
     img_fn
 }
 
@@ -1409,6 +1356,7 @@ readXenium <- function(data_dir,
     names(polys) <- c(cell = "cellSeg", nucleus = "nucSeg")[names(fn_segs)]
     # Flip the coordinates
     if (flip == "geometry" && !is.null(polys)) {
+        # TODO: flip without altering the bbox
       mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
       for (i in seq_along(polys)) {
         st_geometry(polys[[i]]) <- st_geometry(polys[[i]]) * mat_flip
@@ -1522,21 +1470,6 @@ readXenium <- function(data_dir,
 
   # add images
   # TODO: use BioFormatsImage
-  if_exists <- FALSE
-  if (any(if_exists)) {
-    # using cell segmentation centroids
-    extent <- colGeometry(sfe, 1) |> st_geometry() |> st_bbox()
-
-    # Set up ImgData
-    img_dfs <- lapply(img_fn, function(fn) {
-      id_use <- sub("\\.tif$", "", basename(fn))
-      .get_imgData(fn, sample_id = sample_id,
-                   image_id = id_use, extent = extent,
-                   flip = (flip == "image"))
-    })
-    img_df <- do.call(rbind, img_dfs)
-    imgData(sfe) <- img_df
-  }
 
   # Read transcript coordinates ----
   # NOTE z-planes are non-integer, cannot select or use `z` as in `readVizgen`
@@ -1548,7 +1481,7 @@ readXenium <- function(data_dir,
                       sample_id,
                       gene_col = "feature_name",
                       spatialCoordsNames = c("x_location", "y_location", "z_location"),
-                      BPPARAM = BPPARAM,
+                      BPPARAM = BPPARAM, flip = (flip == "geometry"),
                       file_out = file_out, ...)
   }
   sfe

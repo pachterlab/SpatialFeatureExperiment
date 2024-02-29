@@ -18,7 +18,7 @@ An SFE object with empty space removed.
 For each sample independently, all geometries and \code{spatialCoords} are
 translated so the origin is at the minimum coordinates of the bounding box
 of all geometries of the sample. This way coordinates of different samples
-will be more comparable.
+will be more comparable. This removes empty space in the images if present.
 }
 \note{
 Unlike other functions in this package, this function operates on all

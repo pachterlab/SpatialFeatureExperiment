@@ -4,32 +4,59 @@
 \alias{SFE-transform}
 \alias{transpose}
 \alias{mirror}
-\title{Transpose or mirror SFE object in histological space}
+\alias{rotate}
+\alias{translate}
+\title{Affine transfortaion of SFE object in histological space}
 \usage{
-transpose(sfe, sample_id = "all")
+transpose(sfe, sample_id = "all", resolution = 4L)
 
-mirror(sfe, sample_id = "all", direction = c("vertical", "horizontal"))
+mirror(
+  sfe,
+  sample_id = "all",
+  direction = c("vertical", "horizontal"),
+  resolution = 4L
+)
+
+rotate(sfe, sample_id = "all", degrees, resolution = 4L, maxcell = 1e+07)
+
+translate(sfe, sample_id = "all", v)
 }
 \arguments{
 \item{sfe}{An SFE object.}
 
 \item{sample_id}{Sample(s) to transform.}
 
+\item{resolution}{Transposing, mirroring, and rotating \code{BioFormatsImage}
+will convert it into \code{EBImage}, loading the image into memory. This
+argument specifies the resolution of image in the OME-TIFF pyramid to load.
+Ignored if no image of class \code{BioFormatsImage} is present in the
+sample(s) of interest.}
+
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
+
+\item{maxcell}{Rotating \code{SpatRasterImage} will convert it into
+\code{EBImage}, loading the image into memory. This argument specifies the
+maximum number of pixels in the image loaded into memory. The image will be
+down sampled to approximately this number of pixels.}
+
+\item{v}{Vector to spatially translate the SFE object.}
 }
 \value{
 An SFE object with the sample(s) transformed.
 }
 \description{
-When images are present, transpose means switching rows and columns of the
-image (flipping about the axis from top left to bottom right) and geometries
-are transformed to match. When images are absent, transpose means switching x
-and y coordinates of the geometries. Mirroring means flipping either x or y
-coordinates, in histological space. When images are present, the geometries
-are flipped about the middle of the image. Whem images are absent, the
-geometries are flipped about the x or y axis. The transformation is applied
-to the geometries and the images, and can be applied to each sample
-independently.
+These functions perform affine transformations on SFE objects, including all
+geometries and images. The transformation is performed on each sample as a
+whole. This differs from functions such as \code{\link{mirrorImg}} in that
+\code{mirrorImg} and \code{rotateImg} transform the image with the center at
+the center of the image itself. In contrast, the center of transformation
+here is the center of the bounding box of the entire sample, including
+images.
+}
+\details{
+For images that are not loaded into memory, \code{rotateImg} will load
+\code{SpatRasterImage} into memory and all image operations except translate
+will load \code{BioFormatsImage} into memory.
 }
 \examples{
 library(SFEData)

@@ -5,7 +5,7 @@
 \alias{bbox}
 \title{Find bounding box of SFE objects}
 \usage{
-\S4method{bbox}{SpatialFeatureExperiment}(sfe, sample_id = NULL)
+\S4method{bbox}{SpatialFeatureExperiment}(sfe, sample_id = "all", include_images = FALSE, include_row = TRUE)
 }
 \arguments{
 \item{sfe}{A \code{SpatialFeatureExperiment} object.}
@@ -13,6 +13,13 @@
 \item{sample_id}{Sample(s) whose bounding box(es) to find. The bounding box
 would be for the union of all \code{colGeometries} and
 \code{annotGeometries} associated with each sample.}
+
+\item{include_images}{Logical, whether the bounding boxes should include
+image extents. Defaults to \code{FALSE} because often the image has a lot
+of empty space surrounding the tissue.}
+
+\item{include_row}{Logical, whether the bounding boxes should include
+\code{rowGeometries}, defaults to \code{TRUE}.}
 }
 \value{
 For one sample, then a named vector with names \code{xmin},

@@ -11,7 +11,12 @@ crop(
   sample_id = "all",
   pred = deprecated(),
   op = st_intersection,
-  keep_whole_cg = FALSE
+  keep_whole = "none",
+  cover = FALSE,
+  xmin = deprecated(),
+  xmax = deprecated(),
+  ymin = deprecated(),
+  ymax = deprecated()
 )
 }
 \arguments{
@@ -41,14 +46,24 @@ object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
 are allowed. If "intersection", then only things inside \code{y} is kept
 after cropping. If "difference", then only things outside \code{y} is kept.}
 
-\item{keep_whole_cg}{Logical, whether to keep the whole items in
-\code{colGeometries} that fulfill the criteria in \code{pred}. If
-\code{TRUE} the geometries that partially intersect (if the predicate is
-\code{st_intersects}) are kept and the part not overlapping is not cropped
-off. Then the \code{annotGeometries}, \code{rowGeometries}, and images are
-cropped with the bounding box of the \code{colGeometries}. If \code{FALSE},
-the geometries at the boundary are cropped, which may break some cells into
-multiple pieces or convert polygons into points or lines.}
+\item{keep_whole}{Character vector, can be one or more of "col" and "annot"
+to keep whole items from \code{colGeometries} or \code{annotGeometries},
+keeping geometries that partially intersect with \code{y} whole. This can
+greatly speed up code while not breaking geometries into multiple pieces.
+Can also be "none" so all geometries are actually cropped.}
+
+\item{cover}{Logical, whether the geometries in \code{x} must be entirely
+covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
+be entirely outside \code{y} if \code{op = st_difference}. Only relevant
+when \code{keep_whole != "none"}.}
+
+\item{xmin}{Deprecated. Supply the bounding box to argument \code{y} instead.}
+
+\item{xmax}{Deprecated.}
+
+\item{ymin}{Deprecated.}
+
+\item{ymax}{Deprecated.}
 }
 \value{
 An SFE object. There is no guarantee that the geometries after

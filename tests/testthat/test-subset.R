@@ -1,3 +1,4 @@
+library(S4Vectors)
 # Unit test the subsetting method
 sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
     package = "SpatialFeatureExperiment"
@@ -19,7 +20,7 @@ annotGeometry(sfe2, "baz", "sample01") <- ag
 
 test_that("After removing one sample_id, it's also removed in annotGeometries", {
     sfe2 <- sfe2[, 4:5]
-    expect_true(is.null(int_metadata(sfe2)$annotGeometries$baz))
+    expect_equal(nrow(int_metadata(sfe2)$annotGeometries$baz), 0)
 })
 
 test_that("row and col graphs are dropped if drop = TRUE", {
@@ -148,8 +149,13 @@ test_that("Images are cropped after subsetting, multiple samples", {
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 })
 
+test_that("Images are not cropped when only subsetting rows not cols", {
+    sfe3 <- sfe[123,]
+    expect_equal(bbox(sfe3, include_image = TRUE), bbox(sfe, include_image = TRUE))
+})
+
 sfe1 <- sfe1[rowSums(counts(sfe1)) > 0,]
-bbox_use <- bbox(sfe1, include_image = TRUE) |> st_bbox() |> st_as_sfc()
+bbox_use <- bbox(sfe1) |> st_bbox() |> st_as_sfc()
 set.seed(29)
 ag <- st_sample(bbox_use, 20) |> st_buffer(dist = 100)
 ag <- st_sf(geometry = ag, sample_id = "ob")
@@ -184,7 +190,8 @@ test_that("Returning 0 columns", {
     expect_equal(nrow(colData(sfe0)), 0)
     expect_equal(nrow(imgData(sfe0)), 0)
     expect_true(isEmpty(spatialGraphs(sfe0)))
-    expect_true(isEmpty(annotGeometries(sfe0)))
+    expect_equal(annotGeometryNames(sfe0), annotGeometryNames(sfe1))
+    expect_equal(nrow(annotGeometry(sfe0, "foo")), 0)
 })
 
 test_that("Still works when using logical vector of all FALSE", {
@@ -195,5 +202,6 @@ test_that("Still works when using logical vector of all FALSE", {
     expect_equal(nrow(colData(sfe0)), 0)
     expect_equal(nrow(imgData(sfe0)), 0)
     expect_true(isEmpty(spatialGraphs(sfe0)))
-    expect_true(isEmpty(annotGeometries(sfe0)))
+    expect_equal(annotGeometryNames(sfe0), annotGeometryNames(sfe1))
+    expect_equal(nrow(annotGeometry(sfe0, "foo")), 0)
 })
