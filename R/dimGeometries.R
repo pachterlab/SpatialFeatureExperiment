@@ -481,8 +481,9 @@ NULL
 #' @export
 rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
     type <- .check_rg(type, x, sample_id)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     dimGeometry(x, type,
-                MARGIN = 1, sample_id = "all",
+                MARGIN = 1, sample_id = sample_id,
                 withDimnames = withDimnames
     )
 }
@@ -492,8 +493,9 @@ rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 `rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
                             translate = TRUE, value) {
     type <- .check_rg_setter(type, x, sample_id)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     `dimGeometry<-`(x, type,
-        MARGIN = 1, sample_id = "all",
+        MARGIN = 1, sample_id = sample_id,
         withDimnames = withDimnames, translate = translate,
         value = value
     )

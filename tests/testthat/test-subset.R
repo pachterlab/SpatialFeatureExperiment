@@ -115,6 +115,7 @@ library(sf)
 library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
+library(S4Vectors)
 sfe1 <- read10xVisiumSFE("ob", sample_id = "ob", unit = "micron")
 sfe2 <- read10xVisiumSFE("kidney", sample_id = "kidney", zero.policy = TRUE,
                          unit = "micron")
@@ -145,4 +146,54 @@ test_that("Images are cropped after subsetting, multiple samples", {
     bbox_geom <- st_bbox(spotPoly(sfe3, "kidney")) |> st_as_sfc()
     bbox_img <- as.vector(ext(img2)) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
+})
+
+sfe1 <- sfe1[rowSums(counts(sfe1)) > 0,]
+bbox_use <- bbox(sfe1, include_image = TRUE) |> st_bbox() |> st_as_sfc()
+set.seed(29)
+ag <- st_sample(bbox_use, 20) |> st_buffer(dist = 100)
+ag <- st_sf(geometry = ag, sample_id = "ob")
+rg <- st_sample(bbox_use, nrow(sfe1))
+rg <- st_sf(geometry = rg)
+rownames(rg) <- rownames(sfe1)
+annotGeometry(sfe1, "foo") <- ag
+rowGeometry(sfe1, "bar") <- rg
+
+test_that("When returning SFE object with 0 rows", {
+    # colData shouldn't be affected
+    sfe0 <- sfe1[integer(0),]
+    expect_equal(dim(sfe0), c(0, ncol(sfe1)))
+    expect_equal(names(rowData(sfe0)), names(rowData(sfe1)))
+    expect_equal(nrow(rowData(sfe0)), 0)
+    expect_equal(rowGeometryNames(sfe0), rowGeometryNames(sfe1))
+    expect_equal(colData(sfe0), colData(sfe1))
+    expect_equal(annotGeometries(sfe0), annotGeometries(sfe1))
+    expect_equal(colGeometries(sfe0), colGeometries(sfe1))
+    # Don't want to deal with the SpatRaster pointers
+    expect_equal(imgData(sfe0)[,c("sample_id", "image_id", "scaleFactor")],
+                 imgData(sfe1)[,c("sample_id", "image_id", "scaleFactor")])
+    expect_equal(spatialGraphs(sfe0), spatialGraphs(sfe1))
+})
+
+test_that("Returning 0 columns", {
+    # Should drop everything with sample_ids
+    sfe0 <- sfe1[,integer(0)]
+    expect_equal(dim(sfe0), c(nrow(sfe1), 0))
+    expect_equal(rowData(sfe0), rowData(sfe1))
+    expect_equal(names(colData(sfe0)), names(colData(sfe1)))
+    expect_equal(nrow(colData(sfe0)), 0)
+    expect_equal(nrow(imgData(sfe0)), 0)
+    expect_true(isEmpty(spatialGraphs(sfe0)))
+    expect_true(isEmpty(annotGeometries(sfe0)))
+})
+
+test_that("Still works when using logical vector of all FALSE", {
+    sfe0 <- sfe1[,rep(FALSE, ncol(sfe1))]
+    expect_equal(dim(sfe0), c(nrow(sfe1), 0))
+    expect_equal(rowData(sfe0), rowData(sfe1))
+    expect_equal(names(colData(sfe0)), names(colData(sfe1)))
+    expect_equal(nrow(colData(sfe0)), 0)
+    expect_equal(nrow(imgData(sfe0)), 0)
+    expect_true(isEmpty(spatialGraphs(sfe0)))
+    expect_true(isEmpty(annotGeometries(sfe0)))
 })

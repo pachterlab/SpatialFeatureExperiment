@@ -206,12 +206,18 @@ annotGraphs <- function(x, sample_id = "all", name = "all")
         sample1 = I(empty_col),
         row.names = c("row", "col", "annot")
     )
-    names(args_init)[1] <- samples[1]
-    df <- do.call(DataFrame, c(args_init, list(check.names = FALSE)))
-    if (length(samples) > 1) {
-        for (i in 2:length(samples)) {
-            df[[samples[i]]] <- empty_col
+    # Deal with 0 cols, where samples has length 0
+    if (length(samples)) {
+        names(args_init)[1] <- samples[1]
+        df <- do.call(DataFrame, c(args_init, list(check.names = FALSE)))
+        if (length(samples) > 1) {
+            for (i in 2:length(samples)) {
+                df[[samples[i]]] <- empty_col
+            }
         }
+    } else {
+        df <- make_zero_col_DFrame(3)
+        rownames(df) <- c("row", "col", "annot")
     }
     df
 }
