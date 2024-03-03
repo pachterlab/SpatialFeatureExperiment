@@ -13,7 +13,8 @@
 \item{x}{Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.}
 
 \item{resolution}{Integer, which resolution in the \code{BioFormatsImage} to
-read and convert. Defaults to 4, which is a lower resolution.}
+read and convert. Defaults to 4, which is a lower resolution. Ignored if only
+1 resolution is present.}
 }
 \value{
 A \code{EBImage} object. The image is loaded into memory.
