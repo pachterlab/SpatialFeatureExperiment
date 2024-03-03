@@ -69,16 +69,23 @@ SpatRasterImage <- function(img) {
 #' wrapper inheriting from \code{VirtualSpatialImage} so it's compatible with
 #' \code{SpatialExperiment} from which SFE is derived.
 #'
+#' Spatial extent is inferred from OME-TIFF metadata if not specified. Physical
+#' pixel size from the metadata is used to make the extent in micron space. If
+#' physical pixel size is absent from metadata, then the extent will be in pixel
+#' space, which might mean that the image will not align with the geometries
+#' because often the geometry coordinates are in microns, so a warning is
+#' issued in this case.
+#'
 #' @param path Path to an OME-TIFF image file.
-#' @param ext Numeric vector with names "xmin", "xmax", "ymin", "ymax" in microns
-#' indicating the spatial extent covered by the image. If \code{NULL}, then the
-#' extent will be inferred from the metadata, from physical pixel size and the
-#' number of pixels.
+#' @param ext Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
+#'   microns indicating the spatial extent covered by the image. If \code{NULL},
+#'   then the extent will be inferred from the metadata, from physical pixel
+#'   size and the number of pixels.
 #' @param isFull Logical, if the extent specified in \code{ext} is the full
-#' extent. If \code{ext = NULL} so it will be inferred from metadata then
-#' \code{isFull = TRUE} will be set internally.
-#' @param origin Origin of the image in the x-y plane, defaults to \code{c(0,0)}.
-#' This is shifted when the image is translated.
+#'   extent. If \code{ext = NULL} so it will be inferred from metadata then
+#'   \code{isFull = TRUE} will be set internally.
+#' @param origin Origin of the image in the x-y plane, defaults to
+#'   \code{c(0,0)}. This is shifted when the image is translated.
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
 #' @concept Image and raster
@@ -107,17 +114,12 @@ setValidity("BioFormatsImage", function(object) {
     psx <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeX") |> as.numeric()
     psy <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeY") |> as.numeric()
     if (!length(psx) && !length(psy)) {
-        stop("Physical pixel size absent from image metadata.")
+        warning("Physical pixel size absent from image metadata, using pixel space.")
+        sfx <- sfy <- 1
+    } else {
+        sfx <- 1/psx
+        sfy <- 1/psy
     }
-    #if (!is.null(psx) && is.null(psy)) {
-    #    message("Assuming equal physical pixel size on x and y.")
-    #    psy <- psx
-    #} else if (is.null(psx) && !is.null(psy)) {
-    #    message("Assuming equal physical pixel size on x and y.")
-    #    psx <- psy
-    #}
-    sfx <- 1/psx
-    sfy <- 1/psy
     c(sfx, sfy)
 }
 
@@ -138,14 +140,11 @@ setValidity("BioFormatsImage", function(object) {
     sizeX_full <- size_full[1]; sizeY_full <- size_full[2]
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
-# I think there should be separate documentation page for BioFormatsImage
+
 #' @rdname BioFormatsImage
 #' @export
 BioFormatsImage <- function(path, ext = NULL, isFull = TRUE,
                             origin = c(0,0)) {
-    # It would still be nice to automatically fill in ext from metadata
-    # Previously I used NA to imply that it's full extent, but that could be confusing
-    # I'll use another field, isFull, to indicate if it's full extent
     if (is.null(ext)) {
         ext <- .get_full_ext(path)
     }
@@ -236,6 +235,14 @@ EBImage <- function(img, ext = NULL) {
     max_nms <- c("xmax", "ymax")
     x_nms <- c("xmin", "xmax")
     y_nms <- c("ymin", "ymax")
+
+    coreMetadata <- RBioFormats::coreMetadata
+    m <- RBioFormats::read.metadata(file)
+    cm <- coreMetadata(m)
+    if ("sizeX" %in% names(cm)) {
+        # Indicating there's only 1 series/resolution
+        resolution <- 1L
+    } else meta <- coreMetadata(m, series = resolution)
     if (!isFull(x)) {
         bbox_use <- ext(x) |> .shift_ext(v = -origin(x))
         # Convert to full res pixel space
@@ -243,9 +250,6 @@ EBImage <- function(img, ext = NULL) {
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
         # Convert to lower res pixel space
         if (resolution > 1L) {
-            coreMetadata <- RBioFormats::coreMetadata
-            meta <- RBioFormats::read.metadata(file) |>
-                coreMetadata(series = resolution)
             sfx2 <- meta$sizeX/sizeX_full
             sfy2 <- meta$sizeY/sizeY_full
             bbox_use[x_nms] <- bbox_use[x_nms] * sfx2

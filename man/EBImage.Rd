@@ -11,10 +11,10 @@ EBImage(img, ext = NULL)
 \item{img}{An \code{Image} object or anything that inherits from \code{Image}
 such as \code{\link{RBioFormats::AnnotatedImage}}.}
 
-\item{ext}{Numeric vector with names "xmin", "xmax", "ymin", "ymax" in microns
-indicating the spatial extent covered by the image. If \code{NULL}, then the
-extent will be inferred from the metadata, from physical pixel size and the
-number of pixels.}
+\item{ext}{Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
+microns indicating the spatial extent covered by the image. If \code{NULL},
+then the extent will be inferred from the metadata, from physical pixel
+size and the number of pixels.}
 }
 \value{
 An \code{EBImage} object.

@@ -275,9 +275,6 @@ test_that("Errors when constructing BioFormatsImage", {
     # isFull
     expect_error(BioFormatsImage(xenium_fn, ext = bbox_use, isFull = NA),
                  "isFull must be either TRUE or FALSE, not NA")
-    # Trying to read image that doesn't have physical pixel size
-    expect_error(BioFormatsImage(fn),
-                 "Physical pixel size absent from image metadata.")
 })
 
 sizeX_full <- 11454
@@ -309,6 +306,26 @@ test_that("Convert BioFormatsImage to EBImage, not full extent", {
     # pixel range
     dim_expect <- c(1000/(sizeX_full*psx)*sizeX4, 1000/(sizeY_full*psy)*sizeY4)
     expect_equal(dim(imgRaster(ebi)), round(dim_expect))
+})
+
+test_that("When physical pixel size is absent from metadata", {
+    fn <- system.file(file.path("extdata", "xenium", "morphology_focus.ome.tif"),
+                      package = "SpatialFeatureExperiment")
+    ext_use <- c(xmin = 0, xmax = 237, ymin = 0, ymax = 237)
+    expect_warning(bfi <- BioFormatsImage(fn),
+                   "Physical pixel size absent from image metadata")
+    expect_equal(ext(bfi), ext_use)
+})
+
+test_that("Ignore resolution in toEBImage when there's only 1 resolution", {
+    # TODO: change file path after I make the toy dataset
+    fn <- system.file(file.path("extdata", "xenium", "morphology_focus.ome.tif"),
+                      package = "SpatialFeatureExperiment")
+    ext_use <- c(xmin = 0, xmax = 237, ymin = 0, ymax = 237)
+    suppressWarnings(bfi <- BioFormatsImage(fn))
+    expect_warning(ebi <- toEBImage(bfi, resolution = 4L),
+                   "Physical pixel size absent from image metadata")
+    expect_equal(ext(ebi), ext_use)
 })
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
