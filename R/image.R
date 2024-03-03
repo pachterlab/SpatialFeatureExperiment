@@ -383,9 +383,16 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #'
 #' @param x A \code{*Image} object.
 #' @param value A numeric vector with names "xmin", "xmax", "ymin", "ymax"
-#' specifying the extent to use.
+#'   specifying the extent to use.
+#' @note For \code{SpatRasterImage}, the image may be may not be loaded into
+#' memory. You can check if the image is loaded into memory with
+#' \code{terra::inMemory(imgRaster(x))}, and check the original file path with
+#' \code{\link{imgSource}}. If the image is not loaded into memory, then the
+#' original file must be present at the path indicated by
+#' \code{\link{imgSource}} in order for any code using the image to work, which
+#' includes this function \code{ext}.
 #' @return Getters return a numeric vector specifying the extent. Setters return
-#' a \code{*Image} object of the same class as the input.
+#'   a \code{*Image} object of the same class as the input.
 #' @name ext
 #' @aliases ext
 #' @concept Image and raster
@@ -401,7 +408,7 @@ setMethod("ext", "EBImage", function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
 
 #' @rdname ext
 #' @export
-setMethod("ext", "SpatRasterImage", function(x) ext(x@image) |> as.vector())
+setMethod("ext", "SpatRasterImage", function(x) ext(unwrap(x@image)) |> as.vector())
 
 .set_ext <- function(x, value) {
     x@ext <- value[c("xmin", "xmax", "ymin", "ymax")]

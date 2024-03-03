@@ -30,12 +30,21 @@ specifying the extent to use.}
 }
 \value{
 Getters return a numeric vector specifying the extent. Setters return
-a \code{*Image} object of the same class as the input.
+  a \code{*Image} object of the same class as the input.
 }
 \description{
 Unlike in \code{SpatialExperiment}, images in SFE have extents which are used
 to align them to the geometries and in geometric operations on SFE objects.
 These functions get or set the extent for S4 image classes inheriting from
 \code{VirtualSpatialImage} implemented in the SFE package.
+}
+\note{
+For \code{SpatRasterImage}, the image may be may not be loaded into
+memory. You can check if the image is loaded into memory with
+\code{terra::inMemory(imgRaster(x))}, and check the original file path with
+\code{\link{imgSource}}. If the image is not loaded into memory, then the
+original file must be present at the path indicated by
+\code{\link{imgSource}} in order for any code using the image to work, which
+includes this function \code{ext}.
 }
 \concept{Image and raster}
