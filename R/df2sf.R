@@ -73,18 +73,21 @@
     if (multi) {
         df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
                            group_col = group_col)
+        if (!is.data.table(df)) ..group_col <- group_col
+        df <- df[order(df[,..group_col]),]
         out <- sf_multipoint(df, x = spatialCoordsNames[1],
                              y = spatialCoordsNames[2],
                              z = .use_z(spatialCoordsNames),
                              multipoint_id = group_col,
                              keep = TRUE)
+        rownames(out) <- out[[group_col]]
     } else {
         rns <- rownames(df)
         out <- sf::st_as_sf(df, coords = spatialCoordsNames, crs = NA,
                             row.names = rns) # in this case faster than sf_point
     }
     if (!is.na(spotDiameter)) {
-        out$geometry <- st_buffer(out$geometry, spotDiameter / 2)
+        st_geometry(out) <- st_buffer(st_geometry(out), spotDiameter / 2)
     }
     out
 }
@@ -103,6 +106,7 @@
                                multipolygon_id = group_col,
                                linestring_id = .use_subid(df, subid_col),
                                keep = TRUE)
+        rownames(out) <- out[[group_col]]
     } else {
         out <- sf_polygon(df, x = spatialCoordsNames[1],
                           y = spatialCoordsNames[2],
@@ -110,6 +114,7 @@
                           polygon_id = id_col,
                           linestring_id = .use_subid(df, subid_col),
                           keep = TRUE)
+        rownames(out) <- out[[id_col]]
     }
     return(out)
 }
@@ -127,12 +132,14 @@
                                   multilinestring_id = group_col,
                                   linestring_id = id_col,
                                   keep = TRUE)
+        rownames(out) <- out[[group_col]]
     } else {
         out <- sf_linestring(df, x = spatialCoordsNames[1],
                              y = spatialCoordsNames[2],
                              z = .use_z(spatialCoordsNames),
                              linestring_id = id_col,
                              keep = TRUE)
+        rownames(out) <- out[[id_col]]
     }
     return(out)
 }

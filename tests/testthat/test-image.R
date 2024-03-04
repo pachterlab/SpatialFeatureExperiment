@@ -36,6 +36,7 @@ test_that("addImg, SpatRasterImage", {
 })
 
 test_that("addImg, BioFormatsImage", {
+    skip_on_bioc()
     library(RBioFormats)
     # Weird, would always fail the first time
     try(addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome"))
@@ -60,6 +61,7 @@ test_that("transposeImg, SFE method, SpatRasterImage", {
 })
 
 test_that("transposeImg, SFE method, BioFormatsImage", {
+    skip_on_bioc()
     library(RBioFormats)
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     img <- getImg(sfe, image_id = "ome")
@@ -93,6 +95,7 @@ test_that("mirrorImg, SFE method, SpatRasterImage", {
 })
 
 test_that("mirrorImg, SFE method, BioFormatsImage", {
+    skip_on_bioc()
     library(RBioFormats)
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     img <- getImg(sfe, image_id = "ome")
@@ -126,6 +129,7 @@ test_that("Rotate method, SFE, SpatRasterImage", {
 })
 
 test_that("Rotate method, SFE, BioFormatsImage", {
+    skip_on_bioc()
     library(RBioFormats)
     sfe <- addImg(sfe, xenium_fn, sample_id = "Vis5A", image_id = "ome")
     bfi <- getImg(sfe, image_id = "ome")
@@ -255,6 +259,7 @@ test_that("Convert SpatRasterImage to EBImage, grayscale", {
 
 # BioFormatsImage=================
 test_that("BioFormatsImage constructor", {
+    skip_on_bioc()
     # Extent inferred from metadata
     bfi <- BioFormatsImage(xenium_fn)
     expect_s4_class(bfi, "BioFormatsImage")
@@ -267,6 +272,7 @@ test_that("BioFormatsImage constructor", {
 })
 
 test_that("Errors when constructing BioFormatsImage", {
+    skip_on_bioc()
     library(RBioFormats)
     # Invalid bbox
     bbox_use <- c(xmin = 100, xmax = 0, ymin = 0, ymax = 102)
@@ -283,6 +289,7 @@ psx <- psy <- 0.2125
 sizeX4 <- 1431
 sizeY4 <- 1288
 test_that("Convert BioFormatsImage to EBImage, full extent", {
+    skip_on_bioc()
     library(RBioFormats)
     ext_expect <- c(xmin = 0, ymin = 0, xmax = sizeX_full*psx, ymax = sizeY_full*psy)
     bfi <- BioFormatsImage(xenium_fn)
@@ -294,6 +301,7 @@ test_that("Convert BioFormatsImage to EBImage, full extent", {
 })
 ext_use <- c(xmin = 200, xmax = 1200, ymin = 200, ymax = 1200)
 test_that("Convert BioFormatsImage to EBImage, not full extent", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use, isFull = FALSE)
     ebi <- toEBImage(bfi, resolution = 4L)
@@ -309,6 +317,7 @@ test_that("Convert BioFormatsImage to EBImage, not full extent", {
 })
 
 test_that("When physical pixel size is absent from metadata", {
+    skip_on_bioc()
     fn <- system.file(file.path("extdata", "xenium", "morphology_focus.ome.tif"),
                       package = "SpatialFeatureExperiment")
     ext_use <- c(xmin = 0, xmax = 237, ymin = 0, ymax = 237)
@@ -318,6 +327,7 @@ test_that("When physical pixel size is absent from metadata", {
 })
 
 test_that("Ignore resolution in toEBImage when there's only 1 resolution", {
+    skip_on_bioc()
     # TODO: change file path after I make the toy dataset
     fn <- system.file(file.path("extdata", "xenium", "morphology_focus.ome.tif"),
                       package = "SpatialFeatureExperiment")
@@ -329,6 +339,7 @@ test_that("Ignore resolution in toEBImage when there's only 1 resolution", {
 })
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
+    skip_on_bioc()
     # TODO: After making smaller xenium subset, copy the whole directory and delete after test
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use, isFull = FALSE)
@@ -344,6 +355,7 @@ test_that("Convert BioFormatsImage to SpatRasterImage", {
     unlink(fn)
 })
 test_that("Convert BioFormatsImage to SpatRasterImage not saving geotiff", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use, isFull = FALSE)
     expect_no_message(spi <- toSpatRasterImage(bfi, save_geotiff = FALSE))
@@ -356,6 +368,7 @@ test_that("Convert BioFormatsImage to SpatRasterImage not saving geotiff", {
 
 ext_use2 <- c(xmin = 200, xmax = 1700, ymin = 200, ymax = 1200)
 test_that("transpose, check ext", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- transposeImg(bfi)
@@ -366,6 +379,7 @@ test_that("transpose, check ext", {
 })
 
 test_that("mirror (EBI behind the scene), vertical", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- mirrorImg(bfi, direction = "vertical")
@@ -377,6 +391,7 @@ test_that("mirror (EBI behind the scene), vertical", {
 })
 
 test_that("mirror (EBI behind the scene), horizontal", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- mirrorImg(bfi, direction = "horizontal")
@@ -388,6 +403,7 @@ test_that("mirror (EBI behind the scene), horizontal", {
 })
 
 test_that("rotate (EBI behind the scene)", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     expect_error(rotateImg(bfi, 45), "degrees%%90 == 0 is not TRUE")
@@ -412,6 +428,7 @@ test_that("rotate (EBI behind the scene)", {
 })
 
 test_that("translateImg, BioFormatsImage method", {
+    skip_on_bioc()
     bfi <- BioFormatsImage(xenium_fn)
     v <- c(135, 246)
     ext_old <- ext(bfi)
@@ -423,6 +440,7 @@ test_that("translateImg, BioFormatsImage method", {
 })
 
 test_that("translateImg, EBImage method", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     ebi <- toEBImage(bfi, resolution = 4L)
@@ -435,6 +453,7 @@ test_that("translateImg, EBImage method", {
 })
 
 test_that("Convert BioFormatsImage to EBImage after translation", {
+    skip_on_bioc()
     library(RBioFormats)
     # Make sure that the right part of the image is loaded
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
@@ -459,6 +478,7 @@ test_that("Crop SpatRasterImage", {
 })
 
 test_that("Crop BioFormatsImage", {
+    skip_on_bioc()
     library(RBioFormats)
     bfi <- BioFormatsImage(xenium_fn)
     bfi_sub <- cropImg(bfi, ext_use)
@@ -473,6 +493,7 @@ test_that("Crop BioFormatsImage", {
 })
 
 test_that("Crop EBImage", {
+    skip_on_bioc()
     library(RBioFormats)
     ebi <- BioFormatsImage(xenium_fn) |> toEBImage(resolution = 4L)
     ebi_sub <- cropImg(ebi, ext_use)

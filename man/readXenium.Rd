@@ -34,7 +34,7 @@ be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not al
 Default = \code{sample01}.}
 
 \item{image}{Which image(s) to load, can be "morphology_mip",
-"morphology_focus" or both}
+"morphology_focus" or both.}
 
 \item{segmentations}{Which segmentation outputs to read, can be "cell",
 "nucleus", or both.}
@@ -103,7 +103,9 @@ An SFE object. If reading segmentations, the cell or nuclei
   boundaries can be read much more quickly. If reading transcript spots
   (`add_molecules = TRUE`), then the reformatted transcript spots are saved
   to file specified in the `file_out` argument, which is by default
-  `tx_spots.parquet` in the same directory as the rest of the data.
+  `tx_spots.parquet` in the same directory as the rest of the data. If images
+  are present, then the images will be of the \code{BioFormatsImage} class
+  and not loaded into memory until necessary in later operations.
 }
 \description{
 This function reads the standard 10X Xenium output into an SFE object.
@@ -112,6 +114,7 @@ This function reads the standard 10X Xenium output into an SFE object.
 # TODO: Example code for Xenium toy data
 
 # custom example run:
+if (FALSE)
 sfe <-
  readXenium(data_dir = data_dir,
  sample_id = "test_xenium",

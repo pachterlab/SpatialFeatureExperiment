@@ -409,6 +409,11 @@ test_that("Read MERFISH transcript spots into rowGeometries", {
     expect_equal(rowGeometryNames(sfe), "txSpots")
     rg <- txSpots(sfe)
     expect_equal(as.character(st_geometry_type(rg, FALSE)), "MULTIPOINT")
+    # Check that the spots are flipped and aligned with the image
+    img <- imgRaster(getImg(sfe))
+    v <- terra::extract(img, rg)
+    expect_true(sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE) < 10)
+    expect_false(anyNA(v$mosaic_PolyT_z3))
     unlink("test_spots", recursive = TRUE)
 })
 
@@ -496,6 +501,7 @@ test_that("readCosMX, not reading transcript spots", {
     sfe <- readCosMX("cosmx", z = 1L)
     time_file <- file.info(file.path("cosmx", "cell_boundaries_sf.parquet"))$ctime
     expect_true(time_file < time_note)
+    unlink("cosmx", recursive = TRUE)
 })
 
 test_that("readCosMX, reading spots, 1 z-plane", {
@@ -528,7 +534,8 @@ test_that("readCosMX, 2 z-planes, split z, not splitting by cell compartments", 
     dir.create("cosmx")
     file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
 
-    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE) # default split z
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     z_option = "split")
     d <- file.path("cosmx", "tx_spots")
     expect_true(dir.exists(d))
     fns_expect <- paste0("tx_spots_z", 0:1, ".parquet")
@@ -539,7 +546,8 @@ test_that("readCosMX, 2 z-planes, split z, not splitting by cell compartments", 
     # Reloading the second time reading
     # Both z-planes
     time_note <- Sys.time()
-    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     z_option = "split")
     expect_null(st_z_range(rowGeometry(sfe, "tx_spots_z0")))
     fn <- file.path(d, "tx_spots_z0.parquet")
     time_check <- file.info(fn)$mtime
@@ -575,7 +583,7 @@ test_that("readCosMX, split z, split cell compartments", {
     file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
 
     sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
-                     split_cell_comps = TRUE)
+                     split_cell_comps = TRUE, z_option = "split")
     d <- file.path("cosmx", "tx_spots")
     expect_true(dir.exists(d))
     comps <- c("Nuclear", "None", "Membrane", "Cytoplasm")
@@ -589,7 +597,7 @@ test_that("readCosMX, split z, split cell compartments", {
     # Reloading the second time reading
     time_note <- Sys.time()
     sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
-                     split_cell_comps = TRUE)
+                     split_cell_comps = TRUE, z_option = "split")
     time_check <- file.info(file.path(d, fns[1]))$mtime
     expect_true(time_note > time_check)
     expect_setequal(rowGeometryNames(sfe), rgns)
@@ -610,7 +618,7 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
     file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
 
     cg <- formatTxSpots(file.path("cosmx", "Run5642_S3_Quarter_tx_file.csv"),
-                        dest = "colGeometry", z = "all",
+                        dest = "colGeometry", z = "all", z_option = "split",
                         cell_col = c("cell_ID", "fov"),
                         gene_col = "target", not_in_cell_id = "0",
                         spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
@@ -633,3 +641,24 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
 
 unlink("cosmx", recursive = TRUE)
 unlink("vizgen_cellbound", recursive = TRUE)
+
+# Check for alignment of cell and nuclei segmentation after flipping
+# Alignment of segmentations with images
+# Alignment of txSpots with segmentations and images
+# Read segmentations from parquet file
+# Only read one of cell or nuclei segmentation
+# Save sf parquet files
+# When images are absent
+# When geometries are absent
+# Construct cell bboxes
+# Read cell metadata from parquet file
+# Second time reading, read the _sf.parquet
+# Flip image
+test_that("readXenium", {
+    skip_on_bioc()
+    # TODO: Make small dataset and copy the entire directory
+    library(RBioFormats)
+    fn <- system.file("extdata/xenium_toy/", package = "SpatialFeatureExperiment")
+    sfe <- readXenium(fn, add_molecules = TRUE)
+
+})
