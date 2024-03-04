@@ -250,6 +250,26 @@ test_that("Error when other spatial operations are specified", {
                  "op must be either st_intersection or st_difference")
 })
 
+test_that("Crop 3D geometry", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     z_option = "3d")
+    bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
+    sfe_cropped <- crop(sfe, bbox1)
+    bbox_new <- bbox(sfe_cropped)
+    expect_true(st_covered_by(st_as_sfc(st_bbox(bbox_new)), st_as_sfc(st_bbox(bbox1)),
+                              sparse = FALSE))
+    rg <- txSpots(sfe_cropped)
+    expect_true(st_covered_by(st_as_sfc(st_bbox(rg)), st_as_sfc(st_bbox(bbox_new)),
+                              sparse = FALSE))
+    expect_equal(unclass(st_z_range(rg)), c(zmin = 0, zmax = 1),
+                 ignore_attr = "crs")
+    unlink("cosmx", recursive = TRUE)
+})
+
 annotGeometry(sfe_visium, "bbox", sample_id = "sample01") <- bbox_sf
 test_that("annotPred", {
     out <- annotPred(sfe_visium,
@@ -626,6 +646,23 @@ test_that("Rotate SFE object with image", {
     int1 <- st_intersects(ag, spotPoly(sfe))
     int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
     expect_equal(int1, int2)
+})
+
+test_that("Transformation when there's 3D geometry", {
+    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+    dir.create("cosmx")
+    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+
+    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+                     z_option = "3d")
+    sfe2 <- rotate(sfe, degrees = 90)
+    ints <- st_intersects(cellSeg(sfe), txSpots(sfe))
+    ints2 <- st_intersects(cellSeg(sfe2), txSpots(sfe2))
+    expect_equal(ints, ints2)
+    rg <- txSpots(sfe2)
+    expect_equal(unclass(st_z_range(rg)), c(zmin = 0, zmax = 1),
+                 ignore_attr = "crs")
+    unlink("cosmx", recursive = TRUE)
 })
 
 test_that("Translate SFE object with image", {

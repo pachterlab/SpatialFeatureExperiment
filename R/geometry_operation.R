@@ -619,14 +619,13 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 .transform_geometry.sf <- function(g, mult, add) {
     # z will not be affected if present
     mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
-    add_3d <- c(add, 0)
     # It's fine to put it here since I don't expect more than a handful of geometries
     if (is.null(st_z_range(g))) {
         # TODO: The * is slow, from mapply
         # Consider getting the coordinates, do matrix multiplication, then use sfheaders
         g$geometry <- g$geometry * mult + add
     } else {
-        g$geometry <- g$geometry * mult_3d + add_3d
+        g$geometry <- g$geometry * mult_3d + add
     }
     g
 }
