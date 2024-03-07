@@ -299,7 +299,7 @@ test_that("Convert BioFormatsImage to EBImage, full extent", {
     dim_img <- dim(imgRaster(ebi))
     expect_equal(dim_img, c(sizeX4, sizeY4))
 })
-ext_use <- c(xmin = 200, xmax = 1200, ymin = 200, ymax = 1200)
+ext_use <- c(xmin = 1000, xmax = 2000, ymin = 600, ymax = 1600)
 test_that("Convert BioFormatsImage to EBImage, not full extent", {
     skip_on_bioc()
     library(RBioFormats)
@@ -314,6 +314,9 @@ test_that("Convert BioFormatsImage to EBImage, not full extent", {
     # pixel range
     dim_expect <- c(1000/(sizeX_full*psx)*sizeX4, 1000/(sizeY_full*psy)*sizeY4)
     expect_equal(dim(imgRaster(ebi)), round(dim_expect))
+    # Check content, rather crude, check that it includes that big bright patch
+    expect_true(sum(imgRaster(ebi) > 1e4) > 400)
+    expect_true(all(imgRaster(ebi)[199:222,440:448]))
 })
 
 test_that("When physical pixel size is absent from metadata", {

@@ -255,11 +255,19 @@ EBImage <- function(img, ext = NULL) {
             bbox_use[x_nms] <- bbox_use[x_nms] * sfx2
             bbox_use[y_nms] <- bbox_use[y_nms] * sfy2
         } else sfx2 <- sfy2 <- 1
+        # ext(x) has origin at the bottom left, while image indices have
+        # origin at the top left. Need to convert the y indices.
+        ymin_px <- meta$sizeY - bbox_use["ymax"]
+        ymax_px <- meta$sizeY - bbox_use["ymin"]
+        bbox_img <- bbox_use
+        bbox_img["ymin"] <- ymin_px; bbox_img["ymax"] <- ymax_px
         bbox_use[min_nms] <- floor(bbox_use[min_nms])
         bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
+        bbox_img[min_nms] <- floor(bbox_img[min_nms])
+        bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
         # For instance, say xmin = 0. Then it should start with pixel 1.
-        subset_use <- list(x = seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L, by = 1L),
-                           y = seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L, by = 1L))
+        subset_use <- list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
+                           y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L))
         # Extent should account for the pixels
         ext_use <- bbox_use
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
@@ -662,6 +670,8 @@ setMethod("imgRaster", "SpatRasterImage", function(x) {
 setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
     toEBImage(x, resolution) |> imgRaster()
 })
+
+# dim method for BioFormatsImage
 
 #' @rdname imgRaster
 #' @export
