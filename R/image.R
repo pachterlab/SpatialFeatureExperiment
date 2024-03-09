@@ -588,7 +588,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("transposeImg", "SpatialFeatureExperiment",
-          function(x, sample_id = NULL, image_id = NULL,
+          function(x, sample_id = 'all', image_id = NULL,
                    resolution = 4L) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
