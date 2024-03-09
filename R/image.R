@@ -273,10 +273,25 @@ EBImage <- function(img, ext = NULL) {
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
         ext_use[y_nms] <- ext_use[y_nms]/(sfy*sfy2)
     } else {
-        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
+        # Extent of lower resolution may not be the same as the top one
+        # Need to more accurately infer extent
+        # Infer the scale factor, and then get the difference from the rounding
+        if (resolution > 1L) {
+            fct_x <- sizeX_full/meta$sizeX
+            fct_y <- sizeY_full/meta$sizeY
+            fct_round <- round(fct_x) # Should be the same for x and y
+            sfx2 <- fct_x/fct_round
+            sfy2 <- fct_y/fct_round
+            # The shift is worse when approaching the lower right corner
+            o <- origin(x)
+            o[1] <- o[1]/sfx2
+            o[2] <- o[2]/sfy2
+            origin(x) <- o
+        } else sfx2 <- sfy2 <- 1
+        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/(sfx*sfx2),
+                     ymax = sizeY_full/(sfy*sfy2))
         subset_use <- list()
     }
-
     img <- RBioFormats::read.image(file = file,
                                    resolution = resolution,
                                    filter.metadata = TRUE,
@@ -539,7 +554,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
         if (!.path_valid2(img))
             stop("img is not a valid file path.")
         e <- tryCatch(suppressWarnings(rast(img)), error = function(e) e)
-        if (is(e, "error")) {
+        if (is(e, "error") || grepl("\\.ome\\.tif", img)) {
             spi <- BioFormatsImage(img, extent)
             if (flip) spi <- mirrorImg(spi, direction = "vertical")
         } else {

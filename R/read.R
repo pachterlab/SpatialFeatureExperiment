@@ -423,11 +423,11 @@ readVizgen <- function(data_dir,
             paste0(grep("Cell", image_regex, value = TRUE), "\\d") }
 
     if (z == "all") {
-        img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z-?\\d+\\.tif$")
+        img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z-?\\d+\\.tiff?$")
     } else {
         num_pattern <- paste(z, collapse = "|")
         img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z",
-                              num_pattern, "\\.tif$")
+                              num_pattern, "\\.tiff?$")
     }
     img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern,
                          ignore.case = TRUE, full.names = TRUE)
@@ -604,7 +604,7 @@ readVizgen <- function(data_dir,
         img_dfs <- lapply(img_fn, function(fn) {
             # Now allowing multiple z planes
             id_use <- sub("^mosaic_", "", basename(fn))
-            id_use <- sub("\\.tif$", "", id_use)
+            id_use <- sub("\\.tiff?$", "", id_use)
             .get_imgData(fn, sample_id = sample_id, image_id = id_use,
                          extent = extent, flip = (flip == "image"))
         })
@@ -1173,8 +1173,6 @@ readCosMX <- function(data_dir,
 #'   "morphology_focus" or both.
 #' @param segmentations Which segmentation outputs to read, can be "cell",
 #'   "nucleus", or both.
-#' @param read.image_args list of arguments to be passed to
-#'   (`RBioFormats::read.image`)
 #' @param image_threshold Integer value, below which threshold is to set values
 #'   to `NA`, default is to `30L`, this removes some background artifacts.
 #' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
@@ -1228,11 +1226,6 @@ readXenium <- function(data_dir,
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
                        row.names = c("id", "symbol"),
-                       read.image_args = # list of arguments for RBioFormats::read.image
-                           list("resolution" = 4L,
-                                "filter.metadata" = TRUE,
-                                "read.metadata" = FALSE,
-                                "normalize" = FALSE),
                        image_threshold = NULL,
                        flip = c("geometry", "image", "none"),
                        max_flip = "50 MB",
@@ -1254,7 +1247,7 @@ readXenium <- function(data_dir,
     # `morphology_focus.ome.tif` - 2D autofocus projection image of the tissue morphology image.
     img_fn <-
         list.files(data_dir, full.names = TRUE,
-                   pattern = "morphology_")
+                   pattern = "morphology_.*\\.ome\\.tif")
     if_exists <- vapply(image, function(img) any(grepl(img, img_fn, ignore.case = TRUE)),
                         FUN.VALUE = logical(1))
     if (!all(if_exists)) {
@@ -1270,7 +1263,7 @@ readXenium <- function(data_dir,
     if (use_imgs) {
         # Set up ImgData
         img_dfs <- lapply(img_fn, function(fn) {
-            id_use <- sub("\\.tif$", "", basename(fn))
+            id_use <- sub("\\.tiff?$", "", basename(fn))
             .get_imgData(fn, sample_id = sample_id,
                          image_id = id_use,
                          flip = (flip == "image"))
@@ -1322,6 +1315,13 @@ readXenium <- function(data_dir,
             }
             # generate sf dataframe with geometries
             message(">>> Making POLYGON geometries")
+            # Flip the coordinates
+            if (flip == "geometry" && !is.null(polys)) {
+                polys <- lapply(polys, function(p) {
+                    p$vertex_y <- -p$vertex_y
+                    p
+                })
+            }
             polys <-
                 lapply(polys, function(x) {
                     df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
@@ -1337,14 +1337,6 @@ readXenium <- function(data_dir,
         }
         # add names to polys list
         names(polys) <- c(cell = "cellSeg", nucleus = "nucSeg")[names(fn_segs)]
-        # Flip the coordinates
-        if (flip == "geometry" && !is.null(polys)) {
-            m <- matrix(c(1,0,0,-1), ncol = 2)
-            polys <- lapply(polys, function(p) {
-                st_geometry(p) <- st_geometry(p) * m
-                p
-            })
-        }
         # keep only single segmentation file
         if (length(polys) == 1) { polys <- polys[[1]] }
     } else { polys <- NULL }
