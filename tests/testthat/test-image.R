@@ -293,6 +293,8 @@ test_that("Convert BioFormatsImage to EBImage, full extent", {
     library(RBioFormats)
     ext_expect <- c(xmin = 0, ymin = 0, xmax = sizeX_full*psx, ymax = sizeY_full*psy)
     bfi <- BioFormatsImage(xenium_fn)
+    expect_error(toEBImage(bfi, resolution = 10L),
+                 "Resolution subscript out of bound")
     ebi <- toEBImage(bfi, resolution = 4L)
     expect_s4_class(ebi, "EBImage")
     expect_equal(ext(ebi), ext_expect[c("xmin", "xmax", "ymin", "ymax")])

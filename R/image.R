@@ -242,7 +242,27 @@ EBImage <- function(img, ext = NULL) {
     if ("sizeX" %in% names(cm)) {
         # Indicating there's only 1 series/resolution
         resolution <- 1L
-    } else meta <- coreMetadata(m, series = resolution)
+    } else {
+        if (resolution > RBioFormats::seriesCount(m))
+            stop("Resolution subscript out of bound")
+        meta <- coreMetadata(m, series = resolution)
+    }
+    # Extent of lower resolution may not be the same as the top one
+    # Need to more accurately infer extent
+    # Infer the scale factor, and then get the difference from the rounding
+    if (resolution > 1L) {
+        fct_x <- sizeX_full/meta$sizeX
+        fct_y <- sizeY_full/meta$sizeY
+        fct_round <- round(fct_x) # Should be the same for x and y
+        fctx2 <- fct_x/fct_round
+        fcty2 <- fct_y/fct_round
+        # The shift is worse when approaching the lower right corner
+        o <- origin(x)
+        o[1] <- o[1]/fctx2
+        o[2] <- o[2]/fcty2
+        origin(x) <- o
+    } else fctx2 <- fcty2 <- 1
+
     if (!isFull(x)) {
         bbox_use <- ext(x) |> .shift_ext(v = -origin(x))
         # Convert to full res pixel space
@@ -250,8 +270,8 @@ EBImage <- function(img, ext = NULL) {
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
         # Convert to lower res pixel space
         if (resolution > 1L) {
-            sfx2 <- meta$sizeX/sizeX_full
-            sfy2 <- meta$sizeY/sizeY_full
+            sfx2 <- meta$sizeX*fctx2/sizeX_full
+            sfy2 <- meta$sizeY*fcty2/sizeY_full
             bbox_use[x_nms] <- bbox_use[x_nms] * sfx2
             bbox_use[y_nms] <- bbox_use[y_nms] * sfy2
         } else sfx2 <- sfy2 <- 1
@@ -273,23 +293,8 @@ EBImage <- function(img, ext = NULL) {
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
         ext_use[y_nms] <- ext_use[y_nms]/(sfy*sfy2)
     } else {
-        # Extent of lower resolution may not be the same as the top one
-        # Need to more accurately infer extent
-        # Infer the scale factor, and then get the difference from the rounding
-        if (resolution > 1L) {
-            fct_x <- sizeX_full/meta$sizeX
-            fct_y <- sizeY_full/meta$sizeY
-            fct_round <- round(fct_x) # Should be the same for x and y
-            sfx2 <- fct_x/fct_round
-            sfy2 <- fct_y/fct_round
-            # The shift is worse when approaching the lower right corner
-            o <- origin(x)
-            o[1] <- o[1]/sfx2
-            o[2] <- o[2]/sfy2
-            origin(x) <- o
-        } else sfx2 <- sfy2 <- 1
-        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/(sfx*sfx2),
-                     ymax = sizeY_full/(sfy*sfy2))
+        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/(sfx*fctx2),
+                     ymax = sizeY_full/(sfy*fcty2))
         subset_use <- list()
     }
     img <- RBioFormats::read.image(file = file,
