@@ -169,7 +169,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' # How many nuclei are there in each Visium spot
 #' n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                      sample_id = 1L, pred = st_intersects) {
+                      sample_id = NULL, pred = st_intersects) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -181,7 +181,7 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @rdname annotPred
 #' @export
 annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                       sample_id = 1L, pred = st_intersects) {
+                       sample_id = NULL, pred = st_intersects) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -217,7 +217,7 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     annotGeometryName = "myofiber_simplified"
 #' )
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                    sample_id = 1L, op = st_intersection) {
+                    sample_id = NULL, op = st_intersection) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id)
@@ -272,7 +272,7 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     annotColNames = c("area", "convexity")
 #' )
 annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                         annotColNames = 1L, sample_id = 1L,
+                         annotColNames = 1L, sample_id = NULL,
                          pred = st_intersects, summary_fun = mean) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)

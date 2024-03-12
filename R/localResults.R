@@ -222,7 +222,7 @@ setMethod(
 setMethod(
     "localResult", "SpatialFeatureExperiment",
     function(x, type = 1L, feature, colGeometryName = NULL,
-             annotGeometryName = NULL, sample_id = 1L,
+             annotGeometryName = NULL, sample_id = NULL,
              withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         .get_internal_feature(x,
             type = type, feature = feature,
@@ -245,7 +245,7 @@ setMethod(
 setReplaceMethod(
     "localResult", "SpatialFeatureExperiment",
     function(x, type = 1L, feature, colGeometryName = NULL,
-             annotGeometryName = NULL, sample_id = 1L,
+             annotGeometryName = NULL, sample_id = NULL,
              withDimnames = TRUE, value) {
         .set_internal_feature(x, type,
             feature = feature,

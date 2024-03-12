@@ -11,24 +11,6 @@
 #' implemented in a way similar to those of \code{reducedDims} in
 #' \code{SingleCellExperiment}.
 #'
-#' These are convenience wrappers for getters and setters of special geometries:
-#' \describe{ \item{colGeometry/ies}{dimGeometry/ies with MARGIN = 2, for
-#' geometries associated with columns of the gene count matrix (cells/Visium
-#' spots/samples).} \item{rowGeometry/ies}{dimGeometry/ies with MARGIN = 1, for
-#' geometries associated with rows of the gene count matrix (genes/features).}
-#' \item{spotPoly}{Polygons of spots from technologies such as Visium, ST, and
-#' slide-seq, which do not correspond to cells. Centroids of the polygons are
-#' stored in \code{spatialCoords} of the underlying \code{SpatialExperiment}
-#' object.} \item{ROIPoly}{Polygons of regions of interest (ROIs) from
-#' technologies such as laser capture microdissection (LCM) and GeoMX DSP. These
-#' should correspond to columns of the gene count matrix.} \item{cellSeg}{Cell
-#' segmentation polygons. If the columns of the gene count matrix are single
-#' cells, then this is stored in \code{colGeometries}. Otherwise, this is stored
-#' in \code{\link{annotGeometries}}.} \item{nucSeg}{Similar to \code{cellSeg},
-#' but for nuclei rather than whole cell.} \item{txSpots}{POINT or MULTIPOINT
-#' geometries of transcript spots of single molecular resolution technologies,
-#' stored in \code{rowGeometries}.} }
-#'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param MARGIN As in \code{\link{apply}}. 1 stands for rows and 2 stands for
 #'   columns.
@@ -57,10 +39,11 @@
 #' @return Getters for multiple geometries return a named list. Getters for names
 #'   return a character vector of the names. Getters for single geometries
 #'   return an \code{sf} data frame. Setters return an SFE object.
+#' @concept Column or row geometries
 #' @name dimGeometries
+#' @seealso [colGeometries()], [rowGeometries()]
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
 #'   dimGeometryNames<-
-#' @docType methods
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
@@ -177,40 +160,10 @@ setReplaceMethod(
 #' @rdname dimGeometries
 #' @export
 setMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "missing"),
-    function(x, type, MARGIN, sample_id = 1L, withDimnames = TRUE) {
-        .get_internal_missing(x,
-            basefun = dimGeometry,
-            namefun = dimGeometryNames,
-            funstr = "dimGeometry",
-            withDimnames = withDimnames,
-            sample_id = sample_id,
-            MARGIN = MARGIN
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "numeric"),
-    function(x, type, MARGIN, sample_id = 1L, withDimnames = TRUE) {
+    "dimGeometry", "SpatialFeatureExperiment",
+    function(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE) {
         .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
-            .get_internal_integer,
-            getfun = .getfun(MARGIN),
-            key = .dg_key(MARGIN), funstr = "dimGeometry",
-            substr = "type"
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "character"),
-    function(x, type, MARGIN, sample_id = 1L, withDimnames = TRUE) {
-        .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
-            .get_internal_character,
+            .get_internal,
             getfun = .getfun(MARGIN),
             key = .dg_key(MARGIN), funstr = "dimGeometry",
             substr = "type", namestr = .dg_key2(MARGIN)
@@ -221,31 +174,15 @@ setMethod(
 #' @rdname dimGeometries
 #' @export
 setReplaceMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "missing"),
-    function(x, type, MARGIN, sample_id = 1L, withDimnames = TRUE,
-             translate = TRUE, ..., value) {
-        .set_internal_missing(x, value,
-            withDimnames = withDimnames,
-            MARGIN = MARGIN, translate = translate,
-            sample_id = sample_id,
-            basefun = `dimGeometry<-`,
-            namefun = dimGeometryNames, ...
-        )
-    }
-)
-
-#' @rdname dimGeometries
-#' @export
-setReplaceMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "numeric"),
-    function(x, type, MARGIN, sample_id = 1L, withDimnames = TRUE,
+    "dimGeometry", "SpatialFeatureExperiment",
+    function(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE,
              translate = TRUE, ..., value) {
         .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
             translate,
             sf = TRUE,
             .get_all_fun = dimGeometries,
             .set_all_fun = `dimGeometries<-`,
-            .set_internal_fun = .set_internal_numeric,
+            .set_internal_fun = .set_internal,
             getfun = .getfun(MARGIN),
             setfun = .setfun(MARGIN),
             key = .dg_key(MARGIN),
@@ -257,41 +194,49 @@ setReplaceMethod(
     }
 )
 
-#' @rdname dimGeometries
-#' @export
-setReplaceMethod(
-    "dimGeometry", c("SpatialFeatureExperiment", "character"),
-    function(x, type, MARGIN, sample_id = 1L, withDimnames = TRUE,
-             translate = TRUE, ..., value) {
-        .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
-            translate,
-            sf = TRUE,
-            .get_all_fun = dimGeometries,
-            .set_all_fun = `dimGeometries<-`,
-            .set_internal_fun = .set_internal_character,
-            getfun = .getfun(MARGIN),
-            setfun = .setfun(MARGIN),
-            key = .dg_key(MARGIN),
-            xdimfun = .xdimfun(MARGIN),
-            funstr = "dimGeometry",
-            xdimstr = .xdimstr(MARGIN),
-            substr = "type", value, ...
-        )
-    }
-)
+#' Column geometry getters and setters
+#'
+#' \code{colGeometries} are geometries that correspond to columns of the gene
+#' count matrix, such as Visium spots or cells. Same as \code{dimGeometry(x,
+#' MARGIN = 2L, ...)}, with convenience wrappers for getters and setters of
+#' special geometries:
+#' \describe{
+#' \item{spotPoly}{Polygons of spots from technologies such as Visium, ST, and
+#' slide-seq, which do not correspond to cells. Centroids of the polygons are
+#' stored in \code{spatialCoords} of the underlying \code{SpatialExperiment}
+#' object.}
+#' \item{ROIPoly}{Polygons of regions of interest (ROIs) from
+#' technologies such as laser capture microdissection (LCM) and GeoMX DSP. These
+#' should correspond to columns of the gene count matrix.}
+#' \item{cellSeg}{Cell segmentation polygons. If the columns of the gene count
+#' matrix are single cells, then this is stored in \code{colGeometries}.
+#' Otherwise, this is stored in \code{\link{annotGeometries}}.}
+#' \item{nucSeg}{Similar to \code{cellSeg}, but for nuclei rather than whole
+#' cell.}}
+#'
+#' @inheritParams dimGeometries
+#' @name colGeometries
+#' @concept Column or row geometries
+#' @seealso [dimGeometries()], [rowGeometries()]
+#' @examples
+#' library(SFEData)
+#' sfe <- McKellarMuscleData(dataset = "small")
+#' cgs <- colGeometries(sfe)
+#' spots <- spotPoly(sfe)
+NULL
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
+colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
     dimGeometry(x, type,
         MARGIN = 2, sample_id = sample_id,
         withDimnames = withDimnames
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-`colGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
+`colGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE,
                             translate = TRUE, value) {
     `dimGeometry<-`(x, type,
         MARGIN = 2, sample_id = sample_id,
@@ -300,13 +245,13 @@ colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 colGeometries <- function(x, withDimnames = TRUE) {
     dimGeometries(x, MARGIN = 2, withDimnames = withDimnames)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 `colGeometries<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
     `dimGeometries<-`(x,
@@ -315,96 +260,46 @@ colGeometries <- function(x, withDimnames = TRUE) {
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 colGeometryNames <- function(x) {
     dimGeometryNames(x, MARGIN = 2)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
 `colGeometryNames<-` <- function(x, value) {
     dimGeometryNames(x, MARGIN = 2) <- value
     x
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
-    dimGeometry(x, type,
-        MARGIN = 1, sample_id = sample_id,
-        withDimnames = withDimnames
-    )
-}
-
-#' @rdname dimGeometries
-#' @export
-`rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
-                            translate = TRUE, value) {
-    `dimGeometry<-`(x, type,
-        MARGIN = 1, sample_id = sample_id,
-        withDimnames = withDimnames, translate = translate,
-        value = value
-    )
-    x
-}
-
-#' @rdname dimGeometries
-#' @export
-rowGeometries <- function(x, withDimnames = TRUE) {
-    dimGeometries(x, MARGIN = 1, withDimnames = withDimnames)
-}
-
-#' @rdname dimGeometries
-#' @export
-`rowGeometries<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
-    dimGeometries(x,
-        MARGIN = 1, withDimnames = withDimnames,
-        translate = translate
-    ) <- value
-    x
-}
-
-#' @rdname dimGeometries
-#' @export
-rowGeometryNames <- function(x) {
-    dimGeometryNames(x, MARGIN = 1)
-}
-
-#' @rdname dimGeometries
-#' @export
-`rowGeometryNames<-` <- function(x, value) {
-    dimGeometryNames(x, MARGIN = 1) <- value
-    x
-}
-
-#' @rdname dimGeometries
-#' @export
-spotPoly <- function(x, sample_id = "all", withDimnames = TRUE) {
+spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
     colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-`spotPoly<-` <- function(x, sample_id = "all", withDimnames = TRUE,
+`spotPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
                          translate = TRUE, value) {
     colGeometry(x, "spotPoly", withDimnames,
-        sample_id = sample_id,
-        translate = translate
+                sample_id = sample_id,
+                translate = translate
     ) <- value
     x
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-centroids <- function(x, sample_id = "all", withDimnames = TRUE) {
+centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
     colGeometry(x, "centroids", withDimnames, sample_id = sample_id)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-`centroids<-` <- function(x, sample_id = "all", withDimnames = TRUE,
-                         translate = TRUE, value) {
+`centroids<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+                          translate = TRUE, value) {
     colGeometry(x, "centroids", withDimnames,
                 sample_id = sample_id,
                 translate = translate
@@ -412,47 +307,19 @@ centroids <- function(x, sample_id = "all", withDimnames = TRUE) {
     x
 }
 
-#' Add Visium spot polygons to colGeometry
-#'
-#' For adding the spot polygons to SFE objects converted from SPE.
-#'
-#' @inheritParams dimGeometries
-#' @inheritParams SpatialFeatureExperiment
-#' @return A SFE object with a new colGeometry called spotPoly, which has
-#' polygons of the spots.
-#' @importFrom SpatialExperiment spatialCoordsNames
+#' @rdname colGeometries
 #' @export
-#' @examples
-#' library(SpatialExperiment)
-#' example(read10xVisium)
-#' # There can't be suplicate barcodes
-#' colnames(spe) <- make.unique(colnames(spe), sep = "-")
-#' rownames(spatialCoords(spe)) <- colnames(spe)
-#' sfe <- toSpatialFeatureExperiment(spe)
-#' # A hypothetical spot diameter; check the scalefactors_json.json file for
-#' # actual diameter in pixels in full resolution image.
-#' sfe <- addVisiumSpotPoly(sfe, spotDiameter = 80)
-addVisiumSpotPoly <- function(x, spotDiameter) {
-    df <- as.data.frame(spatialCoords(x))
-    rownames(df) <- colnames(x)
-    spotPoly(x, sample_id = "all", translate = FALSE) <-
-        df2sf(df, names(df), spotDiameter = spotDiameter, geometryType = "POINT")
-    x
-}
-
-#' @rdname dimGeometries
-#' @export
-ROIPoly <- function(x, sample_id = "all", withDimnames = TRUE) {
+ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
     colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-`ROIPoly<-` <- function(x, sample_id = "all", withDimnames = TRUE,
+`ROIPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
                         translate = TRUE, value) {
     colGeometry(x, "ROIPoly", withDimnames,
-        sample_id = sample_id,
-        translate = translate
+                sample_id = sample_id,
+                translate = translate
     ) <- value
     x
 }
@@ -475,43 +342,273 @@ ROIPoly <- function(x, sample_id = "all", withDimnames = TRUE) {
     return(x)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-cellSeg <- function(x, sample_id = "all", withDimnames = TRUE) {
+cellSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
     .get_col_then_annot(x, "cellSeg", sample_id, withDimnames)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-`cellSeg<-` <- function(x, sample_id = "all", withDimnames = TRUE,
+`cellSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
                         translate = TRUE, value) {
     .set_col_then_annot(x, "cellSeg", sample_id, withDimnames,
-        translate = translate, value
+                        translate = translate, value
     )
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-nucSeg <- function(x, sample_id = "all", withDimnames = TRUE) {
+nucSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
     .get_col_then_annot(x, "nucSeg", sample_id, withDimnames)
 }
 
-#' @rdname dimGeometries
+#' @rdname colGeometries
 #' @export
-`nucSeg<-` <- function(x, sample_id = "all", withDimnames = TRUE,
+`nucSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
                        translate = TRUE, value) {
     .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, translate, value)
 }
 
-#' @rdname dimGeometries
-#' @export
-txSpots <- function(x, withDimnames = TRUE) {
-    rowGeometry(x, "txSpots", withDimnames)
+#' Row geometry getters and setters
+#'
+#' \code{rowGeometries} are geometries that corresponding to rows of the gene
+#' count matrix, such as smFISH transcript spots. The \code{txSpots()} function
+#' is a convenience wrapper for transcript spots, although this entirely depends
+#' on the \code{rowGeometry} being named \code{txSpots}.
+#'
+#' When there are multiple samples in the SFE object, \code{rowGeometries} for
+#' each sample has the \code{sample_id} appended to the name of the geometry.
+#' For example, if the name is \code{txSpots} and the sample ID is
+#' \code{sample01}, then the actual name of the \code{rowGeometry} is
+#' \code{txSpots_sample01}. In the getter, one can still specify
+#' \code{rowGeometry(sfe, "txSpots", sample_id = "sample01")}.
+#'
+#' Appending the \code{sample_id} is unnecessary when there is only one sample,
+#' but \code{sample_id} will be appended when to SFE objects are combined with
+#' \code{cbind}. It is necessary to distinguish bewteen different samples
+#' because they can have overlapping coordinate values.
+#'
+#' @inheritParams dimGeometries
+#' @name rowGeometries
+#' @concept Column or row geometries
+#' @seealso [dimGeometries()], [colGeometries()]
+#' @examples
+#' # Use Xenium toy example
+NULL
+
+.check_rg_type <- function(type, x, sample_id) {
+    rg_names <- rowGeometryNames(x)
+    if (is.numeric(type)) {
+        if (identical(sample_id, "all") || length(sampleIDs(x)) == 1L) {
+            type <- rg_names[type]
+        } else {
+            type <- rg_names[grepl(paste0(sample_id, "$"), rg_names)][type]
+        }
+    }
+    # Deal with: no sample_id in the name, meaning for all samples
+    # Have sample_id, but it's not the sample requested
+    # What if there's both name and name_sample?
+    # the name in type doesn't have to exist in the SFE object,
+    # totally fine for setter and is later checked for getter
+    other_samples <- setdiff(sampleIDs(x), sample_id)
+    if (length(other_samples)) {
+        patterns <- paste0(other_samples, "$")
+        has_other <- vapply(patterns, grepl, x = type, FUN.VALUE = logical(1))
+        if (any(has_other)) {
+            stop("Type does not match sample_id")
+        }
+    }
+    if (length(sampleIDs(x)) > 1L && !grepl(paste0(sample_id, "$"), type)) {
+        type <- paste(type, sample_id, sep = "_")
+    }
+    type
 }
 
-#' @rdname dimGeometries
+.check_rg_setter <- function(type, x, sample_id) {
+    if (identical(sample_id, "all")) {
+        .check_rg_sample_all(type, x)
+        return(type)
+    }
+    sample_id <- .check_sample_id(x, sample_id, TRUE)
+    rg_names <- rowGeometryNames(x)
+    if (is.numeric(type) && type[1] > length(rg_names)) {
+        stop("subscript out of bound for numeric type")
+    }
+    if (is.numeric(type)) type <- rg_names[type]
+    # What do I want from the single geometry setter?
+    # When only one sample exists: can use the name as is
+    if (length(sampleIDs(x)) == 1L) return(type)
+    # When there're multiple samples in sfe: sample must be specified if not sample == "all"
+    other_samples <- setdiff(sampleIDs(x), sample_id)
+    if (length(other_samples)) {
+        patterns <- paste0(other_samples, "$")
+        has_other <- vapply(patterns, grepl, x = type, FUN.VALUE = logical(1))
+        if (any(has_other)) {
+            stop("Type does not match sample_id")
+        }
+    }
+    if (!grepl(paste0(sample_id, "$"), type)) {
+        type <- paste(type, sample_id, sep = "_")
+    }
+    type
+}
+
+.check_rg_sample_all <- function(type, x) {
+    # Make sure no sample_ids in the name if identical(sample_id, "all")
+    rg_names <- rowGeometryNames(x)
+    if (is.numeric(type)) type <- rg_names[type]
+    patterns <- paste0(sampleIDs(x), "$")
+    has_other <- vapply(patterns, grepl, x = type, FUN.VALUE = logical(1))
+    if (any(has_other)) {
+        stop("Name of rowGeometry for all samples should not include any sample ID.")
+    }
+}
+
+.check_rg <- function(type, x, sample_id) {
+    if (identical(sample_id, "all")) {
+        .check_rg_sample_all(type, x)
+    } else if (!identical(sample_id, "all")) {
+        sample_id <- .check_sample_id(x, sample_id, TRUE)
+        # By convention, should be name_sample to distinguish between samples for
+        # rowGeometries of the same name
+        type <- .check_rg_type(type, x, sample_id)
+    }
+    type
+}
+
+#' @rdname rowGeometries
 #' @export
-`txSpots<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
-    rowGeometry(x, "txSpots", withDimnames, translate) <- value
+rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
+    type <- .check_rg(type, x, sample_id)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    dimGeometry(x, type,
+                MARGIN = 1, sample_id = sample_id,
+                withDimnames = withDimnames
+    )
+}
+
+#' @rdname rowGeometries
+#' @export
+`rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
+                            translate = TRUE, value) {
+    type <- .check_rg_setter(type, x, sample_id)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    `dimGeometry<-`(x, type,
+        MARGIN = 1, sample_id = sample_id,
+        withDimnames = withDimnames, translate = translate,
+        value = value
+    )
+}
+
+.get_rg_multi <- function(x, sample_id) {
+    if (length(sample_id) > 1L) {
+        pattern <- paste0("(", paste(sample_id, collapse = ")|("), ")")
+    } else pattern <- paste0(sample_id, "$")
+    rgns <- rowGeometryNames(x)
+    rgns[grepl(pattern, rgns)]
+}
+
+.check_rg_multi_sample <- function(rgns, sample_id) {
+    if (length(sample_id) > 1L) {
+        pattern <- paste0("(", paste(sample_id, collapse = ")|("), ")")
+    } else pattern <- paste0(sample_id, "$")
+    has_sample <- grepl(pattern, rgns)
+    if (!all(has_sample)) {
+        if (length(sample_id) == 1L)
+            rgns[!has_sample] <- paste(rgns[!has_sample], sample_id, sep = "_")
+        else
+            stop("sample_id should be indicated in the names of rowGeometries")
+    }
+    rgns
+
+}
+
+#' @rdname rowGeometries
+#' @export
+rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
+    out <- dimGeometries(x, MARGIN = 1, withDimnames = withDimnames)
+    if (identical(sample_id, "all") || length(sampleIDs(x)) == 1L) return(out)
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    rgns <- .get_rg_multi(x, sample_id)
+    out[rgns]
+}
+
+#' @rdname rowGeometries
+#' @export
+`rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
+                              translate = TRUE, value) {
+    if (!identical(sample_id, "all") && length(sampleIDs(x)) > 1L) {
+        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+        existing <- rowGeometries(x, sample_id = "all")
+        # Set to NULL
+        if (is.null(value)) {
+            rgns_rm <- .get_rg_multi(x, sample_id)
+            value <- existing[setdiff(names(existing), rgns_rm)]
+        } else {
+            names(value) <- .check_rg_multi_sample(names(value), sample_id)
+            existing <- existing[setdiff(names(existing), names(value))]
+            value <- c(existing, value)
+        }
+    }
+    dimGeometries(x,
+        MARGIN = 1, withDimnames = withDimnames,
+        translate = translate
+    ) <- value
+    x
+}
+
+#' @rdname rowGeometries
+#' @export
+rowGeometryNames <- function(x) {
+    dimGeometryNames(x, MARGIN = 1)
+}
+
+#' @rdname rowGeometries
+#' @export
+`rowGeometryNames<-` <- function(x, value) {
+    dimGeometryNames(x, MARGIN = 1) <- value
+    x
+}
+
+#' @rdname rowGeometries
+#' @export
+txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames)
+}
+
+#' @rdname rowGeometries
+#' @export
+`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE, value) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames, translate) <- value
+    x
+}
+
+#' Add Visium spot polygons to colGeometry
+#'
+#' For adding the spot polygons to SFE objects converted from SPE.
+#'
+#' @inheritParams dimGeometries
+#' @inheritParams SpatialFeatureExperiment
+#' @return A SFE object with a new colGeometry called spotPoly, which has
+#' polygons of the spots.
+#' @importFrom SpatialExperiment spatialCoordsNames
+#' @concept Column or row geometries
+#' @export
+#' @examples
+#' library(SpatialExperiment)
+#' example(read10xVisium)
+#' # There can't be suplicate barcodes
+#' colnames(spe) <- make.unique(colnames(spe), sep = "-")
+#' rownames(spatialCoords(spe)) <- colnames(spe)
+#' sfe <- toSpatialFeatureExperiment(spe)
+#' # A hypothetical spot diameter; check the scalefactors_json.json file for
+#' # actual diameter in pixels in full resolution image.
+#' sfe <- addVisiumSpotPoly(sfe, spotDiameter = 80)
+addVisiumSpotPoly <- function(x, spotDiameter) {
+    df <- as.data.frame(spatialCoords(x))
+    rownames(df) <- colnames(x)
+    spotPoly(x, sample_id = "all", translate = FALSE) <-
+        df2sf(df, names(df), spotDiameter = spotDiameter, geometryType = "POINT")
     x
 }

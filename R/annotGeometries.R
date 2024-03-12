@@ -115,7 +115,7 @@ setReplaceMethod(
     }
 )
 
-.ag <- function(x, type = 1L, sample_id = 1L) {
+.ag <- function(x, type = 1L, sample_id = NULL) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     out <- int_metadata(x)$annotGeometries[[type]]
     if (!is.null(sample_id)) {
@@ -130,7 +130,7 @@ setReplaceMethod(
 #' @export
 setMethod("annotGeometry", "SpatialFeatureExperiment", .ag)
 
-.ag_r <- function(x, type = 1L, sample_id = 1L, translate = TRUE, ..., value) {
+.ag_r <- function(x, type = 1L, sample_id = NULL, translate = TRUE, ..., value) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (length(sampleIDs(x)) == 1L && !"sample_id" %in% names(value)) {
         value$sample_id <- sample_id
@@ -163,13 +163,13 @@ setReplaceMethod("annotGeometry", "SpatialFeatureExperiment", .ag_r)
 
 #' @rdname annotGeometries
 #' @export
-tissueBoundary <- function(x, sample_id = 'all') {
+tissueBoundary <- function(x, sample_id = NULL) {
     annotGeometry(x, "tissueBoundary", sample_id)
 }
 
 #' @rdname annotGeometries
 #' @export
-`tissueBoundary<-` <- function(x, sample_id = 'all', translate = TRUE, ...,
+`tissueBoundary<-` <- function(x, sample_id = NULL, translate = TRUE, ...,
                                value) {
     annotGeometry(x, "tissueBoundary", sample_id, translate, ...) <- value
     x
