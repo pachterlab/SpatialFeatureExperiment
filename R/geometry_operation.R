@@ -666,6 +666,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 }
 
 .mirror_geometry <- function(g, bbox, direction) {
+    direction <- match.arg(direction, choices = c("vertical", "horizontal"))
     vec <- switch (direction,
                    vertical = c(1,0,0,-1),
                    horizontal = c(-1,0,0,1)

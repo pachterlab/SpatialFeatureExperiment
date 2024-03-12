@@ -10,8 +10,6 @@ readXenium(
   image = c("morphology_focus", "morphology_mip"),
   segmentations = c("cell", "nucleus"),
   row.names = c("id", "symbol"),
-  read.image_args = list(resolution = 4L, filter.metadata = TRUE, read.metadata = FALSE,
-    normalize = FALSE),
   image_threshold = NULL,
   flip = c("geometry", "image", "none"),
   max_flip = "50 MB",
@@ -44,9 +42,6 @@ symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 appended to disambiguate in case the same symbol corresponds to multiple
 Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
 symbols are used in the transcript spot files.}
-
-\item{read.image_args}{list of arguments to be passed to
-(`RBioFormats::read.image`)}
 
 \item{image_threshold}{Integer value, below which threshold is to set values
 to `NA`, default is to `30L`, this removes some background artifacts.}
