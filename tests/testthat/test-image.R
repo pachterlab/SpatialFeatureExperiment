@@ -12,8 +12,8 @@ img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
                                   "tissue_lowres_image.png"),
                         package = "SpatialFeatureExperiment")
 # TODO: Change later, copy entire directory in each test & delete afterwards
-xenium_fn <- system.file(file.path("extdata", "xenium_toy", "morphology_mip.ome.tif"),
-                         package = "SpatialFeatureExperiment")
+xenium_dir <- "xenium_lr"
+xenium_fn <- "xenium_lr/morphology_mip.ome.tif"
 
 test_that("addImg, SpatRasterImage", {
     expect_error(addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
