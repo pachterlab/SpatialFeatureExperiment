@@ -280,6 +280,12 @@ test_that("BioFormatsImage constructor", {
     expect_equal(ext_bfi, ext_expect[names(ext_bfi)])
 })
 
+test_that("dim for BioFormatsImage", {
+    bfi <- BioFormatsImage(xenium_fn)
+    d <- dim(bfi)
+    expect_equal(d, c(sizeX_full, sizeY_full))
+})
+
 test_that("Errors when constructing BioFormatsImage", {
     skip_on_bioc()
     library(RBioFormats)

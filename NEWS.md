@@ -1,3 +1,7 @@
+# Version 1.5.3
+* Changed defaults from sample_id = NULL to sample_id = 1L when dealing with 1 sample or "all" when dealing with multiple samples
+* dim method for BioFormatsImage that doesn't load the image into memory
+
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)
 * Added BioFormatsImage and EBImage classes to deal with Xenium OME-TIFF

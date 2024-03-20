@@ -463,7 +463,19 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
                      ext(x@image) <- value[c("xmin", "xmax", "ymin", "ymax")]
                      x
                  })
+# dim - BioFormatsImage----------
 
+#' Find dimension of BioFormatsImage
+#'
+#' This is different from other classes. The metadata is read where the
+#' dimensions in pixels can be found. The image itself is not read into memory
+#' here.
+#'
+#' @param x A \code{\link{BioFormatsImage}} object.
+#' @return An integer vector of length 2 showing the number of rows and columns
+#' in the full resolution image.
+#' @export
+setMethod("dim", "BioFormatsImage", function(x) .get_fullres_size(imgSource(x)))
 
 #' Methods for handling image-related data
 #'
