@@ -18,5 +18,5 @@ Call metadata of an object
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
-sfe |> callMeta() |> str
+sfe |> callMeta() |> str()
 }

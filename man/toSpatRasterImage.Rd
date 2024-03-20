@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{toSpatRasterImage}
 \alias{toSpatRasterImage}
+\alias{toSpatRasterImage,EBImage-method}
 \alias{toSpatRasterImage,BioFormatsImage-method}
 \title{Convert images to SpatRasterImage}
 \usage{
@@ -18,6 +19,8 @@
 \item{x}{Either a \code{BioFormatsImage} or \code{EBIImage} object.}
 
 \item{save_geotiff}{Logical, whether to save the image to GeoTIFF file.}
+
+\item{file_out}{File to save the non-OME TIFF file for \code{SpatRaster}.}
 
 \item{overwrite}{Logical, whether to overwrite existing file of the same
 name.}

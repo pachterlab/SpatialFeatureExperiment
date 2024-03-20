@@ -43,6 +43,9 @@
 \arguments{
 \item{x}{A SFE object.}
 
+\item{imageSource}{a character string specifying an image file name 
+(.png, .jpg or .tif) or URL to source the image from}
+
 \item{sample_id}{Which sample the image is associated with. Use
 \code{\link{sampleIDs}} to get sample IDs present in the SFE object.}
 
@@ -70,6 +73,9 @@ number means clockwise and negative number means counterclockwise.}
 memory. The default 1e7 is chosen because this is the approximate number of
 pixels in the medium resolution image at \code{resolution = 4L} in Xenium
 OME-TIFF to make different methods of this function consistent.}
+
+\item{v}{A numeric vector of length 2 specifying the vector in the xy plane
+to translate the SFE object.}
 }
 \description{
 Generics of these functions are defined in \code{SpatialExperiment}, except

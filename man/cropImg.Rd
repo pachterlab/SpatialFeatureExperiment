@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{cropImg}
 \alias{cropImg}
+\alias{cropImg,SpatRasterImage-method}
 \alias{cropImg,BioFormatsImage-method}
 \alias{cropImg,EBImage-method}
 \title{Crop images}

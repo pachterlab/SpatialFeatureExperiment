@@ -727,7 +727,6 @@ readVizgen <- function(data_dir,
 #' specific subset and add them separately to the SFE object with the setter
 #' functions.
 #'
-#' @inheritParams readVizgen
 #' @param sfe A `SpatialFeatureExperiment` object.
 #' @param file File with the transcript spot coordinates. Should be one row per
 #'   spot when read into R and should have columns for coordinates on each axis,
@@ -772,18 +771,20 @@ readVizgen <- function(data_dir,
 #'   not depend on whether the geometries are written to file. Always `FALSE`
 #'   when `dest = "colGeometry"`.
 #' @param flip Logical, whether to flip the geometry to match image. Here the y
-#' coordinates are simply set to -y, so the original bounding box is not
-#' preserved. This is consistent with \code{readVizgen} and \code{readXenium}.
+#'   coordinates are simply set to -y, so the original bounding box is not
+#'   preserved. This is consistent with \code{readVizgen} and \code{readXenium}.
 #' @param z_option What to do with z coordinates. "3d" is to construct 3D
-#'   geometries. "split" is to create a separate 2D geometry for
-#'   each z-plane so geometric operations are fully supported but some data
-#'   wrangling is required to perform 3D analyses. When the
-#'   z coordinates are not integers, 3D geometries will always be constructed
-#'   since there are no z-planes to speak of. This argument does not apply when
-#'   `spatialCoordsNames` has length 2.
+#'   geometries. "split" is to create a separate 2D geometry for each z-plane so
+#'   geometric operations are fully supported but some data wrangling is
+#'   required to perform 3D analyses. When the z coordinates are not integers,
+#'   3D geometries will always be constructed since there are no z-planes to
+#'   speak of. This argument does not apply when `spatialCoordsNames` has length
+#'   2.
 #' @param BPPARAM \code{\link{BiocParallelParam}} object to specify
 #'   multithreading to convert raw char in some parquet files to R objects. Not
 #'   used otherwise.
+#' @param sample_id Which sample in the SFE object the transcript spots should
+#'   be added to.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
@@ -1429,9 +1430,9 @@ readXenium <- function(data_dir,
             rownames(polys) <- polys$cell_id
             polys$cell_id <- NULL
             # support single segmentation names
-            if (names(fn_segs_out) == "nucleus") {
+            if (names(fn_segs) == "nucleus") {
                 nucSeg(sfe) <- polys
-            } else if (names(fn_segs_out) == "cell") {
+            } else if (names(fn_segs) == "cell") {
                 cellSeg(sfe) <- polys
             }
         }

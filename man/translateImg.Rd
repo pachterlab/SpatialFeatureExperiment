@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{translateImg}
 \alias{translateImg}
+\alias{translateImg,SpatRasterImage-method}
 \alias{translateImg,BioFormatsImage-method}
 \alias{translateImg,EBImage-method}
 \title{Translate/shift image in space}

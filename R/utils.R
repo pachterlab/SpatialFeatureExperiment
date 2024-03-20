@@ -110,7 +110,7 @@ changeSampleIDs <- function(sfe, replacement) {
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
-#' sfe |> callMeta() |> str
+#' sfe |> callMeta() |> str()
 callMeta <- function(object = NULL) {
     return(colData(object) |>
          methods::slot(name = "listData") |>

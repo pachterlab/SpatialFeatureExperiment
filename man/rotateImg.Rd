@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{rotateImg}
 \alias{rotateImg}
+\alias{rotateImg,SpatRasterImage-method}
 \alias{rotateImg,BioFormatsImage-method}
 \alias{rotateImg,EBImage-method}
 \title{Rotate image}

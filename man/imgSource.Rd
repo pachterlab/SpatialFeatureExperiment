@@ -2,12 +2,16 @@
 % Please edit documentation in R/image.R
 \name{imgSource}
 \alias{imgSource}
+\alias{imgSource,SpatRasterImage-method}
 \alias{imgSource,BioFormatsImage-method}
+\alias{imgSource,EBImage-method}
 \title{Source of images that are on disk}
 \usage{
 \S4method{imgSource}{SpatRasterImage}(x)
 
 \S4method{imgSource}{BioFormatsImage}(x)
+
+\S4method{imgSource}{EBImage}(x)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}

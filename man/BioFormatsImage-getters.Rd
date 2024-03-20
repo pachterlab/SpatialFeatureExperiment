@@ -2,7 +2,7 @@
 % Please edit documentation in R/image.R
 \name{BioFormatsImage-getters}
 \alias{BioFormatsImage-getters}
-\alias{isFull,}
+\alias{isFull}
 \alias{origin}
 \alias{isFull,BioFormatsImage-method}
 \alias{origin,BioFormatsImage-method}

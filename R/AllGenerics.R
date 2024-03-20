@@ -246,5 +246,4 @@ setGeneric("isFull", function(x) standardGeneric("isFull"))
 #' @export
 setGeneric("origin", function(x) standardGeneric("origin"))
 
-#' @export
 setGeneric("origin<-", function(x, value) standardGeneric("origin<-"))

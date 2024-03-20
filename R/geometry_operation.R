@@ -801,6 +801,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 #' will load \code{BioFormatsImage} into memory.
 #'
 #' @inheritParams terra::flip
+#' @inheritParams rotateImg
 #' @param sfe An SFE object.
 #' @param sample_id Sample(s) to transform.
 #' @param resolution Transposing, mirroring, and rotating \code{BioFormatsImage}

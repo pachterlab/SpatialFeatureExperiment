@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{mirrorImg}
 \alias{mirrorImg}
+\alias{mirrorImg,SpatRasterImage-method}
 \alias{mirrorImg,BioFormatsImage-method}
 \alias{mirrorImg,EBImage-method}
 \title{Mirror/flip images}

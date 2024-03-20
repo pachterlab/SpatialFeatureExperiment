@@ -658,7 +658,9 @@ test_that("readXenium", {
     skip_on_bioc()
     # TODO: Make small dataset and copy the entire directory
     library(RBioFormats)
-    fn <- system.file("extdata/xenium_toy/", package = "SpatialFeatureExperiment")
+    fn <- "~/SpatialFeatureExperiment/xenium_lr"
+    # Weirdly the first time I get the null pointer error
+    try(m <- read.omexml(file.path(fn, "morphology_focus.ome.tif")))
     sfe <- readXenium(fn, add_molecules = TRUE)
 
 })
