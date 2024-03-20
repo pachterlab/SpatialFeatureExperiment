@@ -318,7 +318,6 @@ EBImage <- function(img, ext = NULL) {
     return(r)
 }
 
-# TODO: refactor functions related to geom_spi_rgb in Voyager since some of the code got moved here
 .toEBImage2 <- function(x, maxcell = 1e7) {
     # 1e7 comes from the number of pixels in resolution = 4L in the ome.tiff
     x <- x@image
@@ -593,7 +592,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("transposeImg", "SpatialFeatureExperiment",
-          function(x, sample_id = NULL, image_id = NULL,
+          function(x, sample_id = 1L, image_id = NULL,
                    resolution = 4L) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
@@ -609,7 +608,7 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("mirrorImg", "SpatialFeatureExperiment",
-          function(x, sample_id=NULL, image_id=NULL, direction = "vertical",
+          function(x, sample_id = 1L, image_id = NULL, direction = "vertical",
                    resolution = 4L) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
@@ -626,7 +625,7 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("rotateImg", "SpatialFeatureExperiment",
-          function(x, sample_id=NULL, image_id=NULL, degrees,
+          function(x, sample_id = 1L, image_id = NULL, degrees,
                    resolution = 4L, maxcell = 1e7) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
@@ -644,7 +643,7 @@ setMethod("rotateImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("translateImg", "SpatialFeatureExperiment",
-          function(x, sample_id=NULL, image_id=NULL, v) {
+          function(x, sample_id = 1L, image_id = NULL, v) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {

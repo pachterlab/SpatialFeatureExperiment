@@ -29,9 +29,9 @@
 
 \S4method{annotGeometry}{SpatialFeatureExperiment}(x, type = 1L, sample_id = NULL, translate = TRUE, ...) <- value
 
-tissueBoundary(x, sample_id = NULL)
+tissueBoundary(x, sample_id = 1L)
 
-tissueBoundary(x, sample_id = NULL, translate = TRUE, ...) <- value
+tissueBoundary(x, sample_id = 1L, translate = TRUE, ...) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}

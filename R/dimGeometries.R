@@ -161,7 +161,7 @@ setReplaceMethod(
 #' @export
 setMethod(
     "dimGeometry", "SpatialFeatureExperiment",
-    function(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE) {
+    function(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE) {
         .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
             .get_internal,
             getfun = .getfun(MARGIN),
@@ -175,7 +175,7 @@ setMethod(
 #' @export
 setReplaceMethod(
     "dimGeometry", "SpatialFeatureExperiment",
-    function(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE,
+    function(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE,
              translate = TRUE, ..., value) {
         .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
             translate,
@@ -227,7 +227,7 @@ NULL
 
 #' @rdname colGeometries
 #' @export
-colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
+colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
     dimGeometry(x, type,
         MARGIN = 2, sample_id = sample_id,
         withDimnames = withDimnames
@@ -236,7 +236,7 @@ colGeometry <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-`colGeometry<-` <- function(x, type = 1L, sample_id = NULL, withDimnames = TRUE,
+`colGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
                             translate = TRUE, value) {
     `dimGeometry<-`(x, type,
         MARGIN = 2, sample_id = sample_id,
@@ -275,13 +275,13 @@ colGeometryNames <- function(x) {
 
 #' @rdname colGeometries
 #' @export
-spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
+spotPoly <- function(x, sample_id = 1L, withDimnames = TRUE) {
     colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id)
 }
 
 #' @rdname colGeometries
 #' @export
-`spotPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+`spotPoly<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
                          translate = TRUE, value) {
     colGeometry(x, "spotPoly", withDimnames,
                 sample_id = sample_id,
@@ -292,13 +292,13 @@ spotPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
+centroids <- function(x, sample_id = 1L, withDimnames = TRUE) {
     colGeometry(x, "centroids", withDimnames, sample_id = sample_id)
 }
 
 #' @rdname colGeometries
 #' @export
-`centroids<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+`centroids<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
                           translate = TRUE, value) {
     colGeometry(x, "centroids", withDimnames,
                 sample_id = sample_id,
@@ -309,13 +309,13 @@ centroids <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
+ROIPoly <- function(x, sample_id = 1L, withDimnames = TRUE) {
     colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id)
 }
 
 #' @rdname colGeometries
 #' @export
-`ROIPoly<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+`ROIPoly<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
                         translate = TRUE, value) {
     colGeometry(x, "ROIPoly", withDimnames,
                 sample_id = sample_id,
@@ -344,13 +344,13 @@ ROIPoly <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-cellSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
+cellSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
     .get_col_then_annot(x, "cellSeg", sample_id, withDimnames)
 }
 
 #' @rdname colGeometries
 #' @export
-`cellSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+`cellSeg<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
                         translate = TRUE, value) {
     .set_col_then_annot(x, "cellSeg", sample_id, withDimnames,
                         translate = translate, value
@@ -359,13 +359,13 @@ cellSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-nucSeg <- function(x, sample_id = NULL, withDimnames = TRUE) {
+nucSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
     .get_col_then_annot(x, "nucSeg", sample_id, withDimnames)
 }
 
 #' @rdname colGeometries
 #' @export
-`nucSeg<-` <- function(x, sample_id = NULL, withDimnames = TRUE,
+`nucSeg<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
                        translate = TRUE, value) {
     .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, translate, value)
 }

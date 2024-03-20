@@ -1002,7 +1002,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
 
 #' @rdname formatTxSpots
 #' @export
-addTxSpots <- function(sfe, file, sample_id = NULL,
+addTxSpots <- function(sfe, file, sample_id = 1L,
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
                        gene_col = "gene", z = 3L,
                        phred_col = "qv", min_phred = 20, split_col = NULL,

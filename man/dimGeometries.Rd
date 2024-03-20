@@ -23,13 +23,13 @@
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment,numeric,character}(x, MARGIN) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = NULL, withDimnames = TRUE)
+\S4method{dimGeometry}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE)
 
 \S4method{dimGeometry}{SpatialFeatureExperiment}(
   x,
   type = 1L,
   MARGIN,
-  sample_id = NULL,
+  sample_id = 1L,
   withDimnames = TRUE,
   translate = TRUE,
   ...

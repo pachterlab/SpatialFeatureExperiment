@@ -10,10 +10,10 @@ df2sf(
   spotDiameter = NA,
   geometryType = c("POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING",
     "MULTIPOLYGON"),
-  BPPARAM = deprecated(),
   group_col = "group",
   id_col = "ID",
-  subid_col = "subID"
+  subid_col = "subID",
+  BPPARAM = deprecated()
 )
 }
 \arguments{
@@ -32,9 +32,6 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 If the geometry in \code{df} is de facto points, then this argument will be
 ignored and the returned \code{sf} will have geometry type POINT.}
 
-\item{BPPARAM}{Deprecated. The `sfheaders` package is used in
-\code{\link{df2sf}} for much better performance.}
-
 \item{group_col}{Column to indicate which coordinates for which MULTI geometry,
 such as to identify which MULTIPOLYGON or MULTIPOINT.}
 
@@ -43,6 +40,9 @@ MULTI geometry if applicable, such as to identify which POLYGON or which
 polygon within a MULTIPOLYGON.}
 
 \item{subid_col}{Column to indicate coordinates for holes in polygons.}
+
+\item{BPPARAM}{Deprecated. The `sfheaders` package is used in
+\code{\link{df2sf}} for much better performance.}
 }
 \value{
 An \code{sf} object.

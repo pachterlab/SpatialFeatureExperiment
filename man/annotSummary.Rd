@@ -9,7 +9,7 @@ annotSummary(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   annotColNames = 1L,
-  sample_id = NULL,
+  sample_id = "all",
   pred = st_intersects,
   summary_fun = mean
 )

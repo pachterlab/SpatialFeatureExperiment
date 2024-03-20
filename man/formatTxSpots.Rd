@@ -26,7 +26,7 @@ formatTxSpots(
 addTxSpots(
   sfe,
   file,
-  sample_id = NULL,
+  sample_id = 1L,
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
   z = 3L,

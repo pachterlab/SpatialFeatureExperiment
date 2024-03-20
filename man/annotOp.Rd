@@ -8,7 +8,7 @@ annotOp(
   sfe,
   colGeometryName = 1L,
   annotGeometryName = 1L,
-  sample_id = NULL,
+  sample_id = "all",
   op = st_intersection
 )
 }
