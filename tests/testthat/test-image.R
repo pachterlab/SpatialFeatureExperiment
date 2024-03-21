@@ -283,7 +283,7 @@ test_that("BioFormatsImage constructor", {
 test_that("dim for BioFormatsImage", {
     bfi <- BioFormatsImage(xenium_fn)
     d <- dim(bfi)
-    expect_equal(d, c(sizeX_full, sizeY_full))
+    expect_equal(d, c(X=sizeX_full, Y=sizeY_full, C=1,Z=1,"T"=1))
 })
 
 test_that("Errors when constructing BioFormatsImage", {

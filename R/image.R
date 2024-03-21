@@ -488,10 +488,17 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #' here.
 #'
 #' @param x A \code{\link{BioFormatsImage}} object.
-#' @return An integer vector of length 2 showing the number of rows and columns
-#' in the full resolution image.
+#' @return An integer vector of length 5 showing the number of rows and columns
+#'   in the full resolution image. The 5 dimensions are in the order of XYCZT:
+#'   x, y, channel, z, and time.
 #' @export
-setMethod("dim", "BioFormatsImage", function(x) .get_fullres_size(imgSource(x)))
+setMethod("dim", "BioFormatsImage", function(x) {
+    check_installed("RBioFormats")
+    coreMetadata <- RBioFormats::coreMetadata
+    meta <- RBioFormats::read.metadata(imgSource(x)) |>
+        coreMetadata(series = 1L)
+    c(X=meta$sizeX, Y=meta$sizeY, C=meta$sizeC, Z=meta$sizeZ, "T"=meta$sizeT)
+})
 
 #' Methods for handling image-related data
 #'
