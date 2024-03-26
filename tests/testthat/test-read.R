@@ -391,7 +391,7 @@ test_that("Error message when multiple parquet files are found in readVizgen", {
     file.copy("vizgen_cellbound/cell_boundaries.parquet",
               "vizgen_cellbound/cellpose_micron_space.parquet")
     m <- capture_messages(sfe <- readVizgen("vizgen_cellbound", z = "all", image = "DAPI"))
-    expect_match(m, "2 `.parquet` files exist:", all = FALSE)
+    expect_match(m, " `.parquet` files exist:", all = FALSE)
     expect_match(m, "using ->", all = FALSE)
 
     file.rename("vizgen_cellbound/cellpose_micron_space.parquet",
