@@ -54,6 +54,7 @@ Collate:
     'data.R'
     'df2sf.R'
     'dimGeometries.R'
+    'featureData.R'
     'geometry_operation.R'
     'graph_wrappers.R'
     'image.R'
@@ -74,9 +75,9 @@ Suggests:
     RBioFormats,
     rhdf5,
     rmarkdown,
-    sfarrow,
     SFEData,
     testthat (>= 3.0.0),
+    Voyager,
     xml2
 Config/testthat/edition: 3
 Depends: 
