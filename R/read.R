@@ -292,21 +292,13 @@ read10xVisiumSFE <- function(samples = "",
 
 # sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
-.check_st_valid <- function(sf_df = NULL, dist = 0) {
-    if (!is(sf_df, "list")) { sf_df <- list(sf_df) }
-    test_st_valid <-
-        lapply(sf_df, function(i) {
-            i <- st_geometry(i) |> st_is_valid()
-            i <- any(x = !(i)) }) |> unlist()
-    if (any(test_st_valid)) {
-        seg <- which(test_st_valid)
-        for (i in seq(seg)) {
-            geoms <-
-                st_buffer(sf_df[[i]] |> st_geometry(), dist = 0)
-            st_geometry(sf_df[[i]] ) <- geoms
-        }
+.check_st_valid <- function(sf_df = NULL) {
+    invalid_inds <- lapply(sf_df, function(x) which(!st_is_valid(x)))
+    for (i in seq_along(sf_df)) {
+        if (!length(invalid_inds[[i]])) next
+        geoms <- st_geometry(sf_df[[i]])[invalid_inds[[i]]]
+        st_geometry(sf_df[[i]])[invalid_inds[[i]]] <- st_buffer(geoms, dist = 0)
     }
-    if (length(sf_df) == 1) { sf_df <- sf_df[[1]] }
     return(sf_df)
 }
 
@@ -332,8 +324,8 @@ read10xVisiumSFE <- function(samples = "",
 #'   \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 #'   \code{detected_transcripts.csv}.
 #' @param z Integer, z index to read, only affecting images read since cell
-#' segmentation for all z-planes are the same and cell centroids are only provided
-#' in 2 dimensions.
+#'   segmentation for all z-planes are the same and cell centroids are only
+#'   provided in 2 dimensions.
 #' @param max_flip Maximum size of the image allowed to flip the image. Because
 #'   the image will be loaded into memory to be flipped. If the image is larger
 #'   than this size then the coordinates will be flipped instead.
@@ -379,8 +371,12 @@ read10xVisiumSFE <- function(samples = "",
 #' @return A \code{SpatialFeatureExperiment} object.
 #' @export
 #' @note Since the transcript spots file is often very large, we recommend only
-#'   using \code{add_molecules = TRUE} on servers with a lot of memory.
-#' @importFrom sf st_area st_geometry<- st_as_sf
+#'   using \code{add_molecules = TRUE} on servers with a lot of memory. If
+#'   reading all z-planes, conversion of transcript spot geometry to parquet
+#'   file might fail. In this case, call \code{formatTxSpots} separately, use
+#'   \code{split_genes = TRUE} to save spots of each gene to a separate parquet
+#'   file, and later selectively load genes of interest.
+#' @importFrom sf st_area st_geometry<- st_as_sf st_read
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
@@ -489,13 +485,12 @@ readVizgen <- function(data_dir,
             message(">>> using -> " , parq)
         } else if (all(parq_sanity == FALSE)) { parq <- NULL }
         if (!is.null(parq)) {
-            check_installed("sfarrow")
             message(">>> Cell segmentations are found in `.parquet` file",
                     if (any(grepl("hdf5s_micron", parq))) {
                         paste0("\n", ">>> processed hdf5 files will be used") })
             fn <- parq
             # read file and filter to keep selected single z section as they're the same anyway
-            polys <- sfarrow::st_read_parquet(fn)
+            polys <- st_read(fn)
             # Can use any z-plane since they're all the same
             # This way so this part still works when the parquet file is written after
             # reading in HDF5 the first time. Only writing one z-plane to save disk space.
@@ -527,7 +522,7 @@ readVizgen <- function(data_dir,
             polys$Type <- "cell"
             parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
             if (!file.exists(parq_file)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+                st_write(polys, dsn = parq_file, driver = "Parquet")
             }
         } else if (length(fns) == 0) {
             warning("No '.hdf5' files present, check input directory -> `data_dir`")
@@ -547,7 +542,9 @@ readVizgen <- function(data_dir,
 
     # Column without colname is read as V1
     mat <- fread(mat_fn, colClasses = list(character = 1))
-
+    # TODO: write the sparse matrix to disk as hdf5 or mtx and check for the file
+    # next time, so the costly step using a lot of memory to read in the dense
+    # matrix can be avoided
     # get spatial metadata file---------
     meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
     metadata <- fread(meta_fn, colClasses = list(character = 1))
@@ -635,7 +632,7 @@ readVizgen <- function(data_dir,
 
     if (!is.null(polys)) {
         # sanity on geometries
-        polys <- .check_st_valid(polys)
+        polys <- .check_st_valid(polys)[[1]]
         rownames(polys) <- polys$ID
         polys$ID <- NULL
         cellSeg(sfe) <- polys
@@ -714,6 +711,56 @@ readVizgen <- function(data_dir,
     return(input_df)
 }
 
+.make_sql_query <- function(fn, gene_select, gene_col) {
+    if (is.null(gene_select)) return(NA)
+    lyr_name <- basename(fn) |> file_path_sans_ext()
+    gene_part <- paste0("('", paste0(gene_select, collapse = "','"), "')")
+    paste0("SELECT * FROM ", lyr_name, " WHERE ", gene_col, " IN ", gene_part)
+}
+
+.read_tx_output <- function(file_out, z, z_option, gene_col, return,
+                            gene_select = NULL) {
+    file_out <- normalizePath(file_out, mustWork = FALSE)
+    file_dir <- file_path_sans_ext(file_out)
+    # File or dir already exists, skip processing
+    # read transcripts from ./detected_transcripts
+    if (dir.exists(file_dir)) {
+        # Multiple files
+        pattern <- "\\.parquet$"
+        # Need to deal with z-planes
+        if (z != "all") {
+            pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
+        }
+        fns <- list.files(file_dir, pattern, full.names = TRUE)
+        if (!length(fns) && (length(z) == 1L || z_option == "3d")) {
+            pattern <- "\\.parquet$"
+            fns <- list.files(file_dir, pattern, full.names = TRUE)
+        }
+        if (length(fns)) {
+            if (!return) return(file_dir)
+            out <- lapply(fns, function(x) {
+                q <- .make_sql_query(x, gene_select, gene_col)
+                st_read(x, query = q)
+            })
+            # add names to a list
+            names(out) <- gsub(".parquet", "",
+                               x = list.files(file_dir, pattern))
+            out <- lapply(out, function(x) {
+                # row names are dropped in st_read/write_parquet
+                rownames(x) <- x[[gene_col]]
+                return(x)
+            })
+            return(out)
+        }
+        # read transcripts from detected_transcripts.parquet
+    } else if (file.exists(file_out) && !dir.exists(file_dir)) {
+        if (!return) return(file_out)
+        out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col))
+        rownames(out) <- out[[gene_col]]
+        return(out)
+    }
+}
+
 #' Read and process transcript spots geometry for SFE
 #'
 #' The function `formatTxSpots` reads the transcript spot coordinates of
@@ -785,15 +832,19 @@ readVizgen <- function(data_dir,
 #'   used otherwise.
 #' @param sample_id Which sample in the SFE object the transcript spots should
 #'   be added to.
+#' @param gene_select Character vector of a subset of genes as appearing in the
+#'   column \code{gene_col} and consistent with the row names of \code{sfe} to
+#'   add. If \code{NULL}, then all genes that have transcript spots are added.
+#'   Only relevant when reading data from formatted files on disk.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
 #'   directory with the same name as `file_out` will be created (but without the
 #'   extension) and the files are written to that directory with informative
-#'   names. `parquet` files that can be read with `sfarrow::st_read_parquet` is
-#'   written for vector geometries and `geotiff` files that can be read with
-#'   `terra::rast` is written for raster. When `return = FALSE`, the file name
-#'   or directory (when there're multiple files) is returned.
+#'   names. `parquet` files that can be read with `st_read` is written for
+#'   vector geometries and `geotiff` files that can be read with `terra::rast`
+#'   is written for raster. When `return = FALSE`, the file name or directory
+#'   (when there're multiple files) is returned.
 #' @note When `dest = "colGeometry"`, the geometries are always written to disk
 #'   and not returned in memory, because this is essentially the gene count
 #'   matrix, which is sparse. This kind of reformatting is implemented so users
@@ -822,11 +873,11 @@ readVizgen <- function(data_dir,
 #' file_out = "tx_spots")
 formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                          gene_col = "gene", cell_col = "cell_id", z = 3L,
+                          gene_col = "gene", cell_col = "cell_id", z = "all",
                           phred_col = "qv", min_phred = 20, split_col = NULL,
                           not_in_cell_id = c("-1", "UNASSIGNED"),
                           z_option = c("3d", "split"), flip = FALSE,
-                          file_out = NULL, BPPARAM = SerialParam(),
+                          file_out = NULL, gene_select = NULL, BPPARAM = SerialParam(),
                           return = TRUE) {
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
@@ -840,48 +891,10 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     if (!ext %in% c("csv", "gz", "tsv", "txt", "parquet")) {
         stop("The file must be one of csv, gz, tsv, txt, or parquet")
     }
-    if (!is.null(file_out)) {
-        file_out <- normalizePath(file_out, mustWork = FALSE)
-        if (!dir.exists(dirname(file_out)))
-            dir.create(dirname(file_out))
-        file_dir <- file_path_sans_ext(file_out)
-        # File or dir already exists, skip processing
-        # read transcripts from ./detected_transcripts
-        if (dir.exists(file_dir)) {
-            # TODO: always output multiple files, splitting by genes so you don't have
-            # to load all genes.
-            # I think this is a prequel to alabaster.SFE
-            # Multiple files
-            pattern <- "\\.parquet$"
-            # Need to deal with z-planes
-            if (z != "all") {
-                pattern <- paste0("_z", paste0(z, collapse = "|"), pattern)
-            }
-            fns <- list.files(file_dir, pattern, full.names = TRUE)
-            if (!length(fns) && (length(z) == 1L || z_option == "3d")) {
-                pattern <- "\\.parquet$"
-                fns <- list.files(file_dir, pattern, full.names = TRUE)
-            }
-            if (length(fns)) {
-                if (!return) return(file_dir)
-                out <- lapply(fns, sfarrow::st_read_parquet)
-                # add names to a list
-                names(out) <- gsub(".parquet", "",
-                                   x = list.files(file_dir, pattern))
-                out <- lapply(out, function(x) {
-                    # row names are dropped in st_read/write_parquet
-                    rownames(x) <- x[[gene_col]]
-                    return(x)
-                })
-                return(out)
-            }
-            # read transcripts from detected_transcripts.parquet
-        } else if (file.exists(file_out) && !dir.exists(file_dir)) {
-            if (!return) return(file_out)
-            out <- sfarrow::st_read_parquet(file_out)
-            rownames(out) <- out[[gene_col]]
-            return(out)
-        }
+    if (!is.null(file_out) && (file.exists(file_out) ||
+        dir.exists(basename(file_out) |> file_path_sans_ext()))) {
+        out <- .read_tx_output(file_out, z, z_option, gene_col, return)
+        return(out)
     }
     if (!is.numeric(z) && z != "all") {
         stop("z must either be numeric or be 'all' indicating all z-planes.")
@@ -953,6 +966,10 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         }
         mols[,cell_col] <- as.character(mols[[cell_col]])
     }
+    if (!is.null(file_out)) {
+        file_out <- normalizePath(file_out, mustWork = FALSE)
+        file_dir <- file_path_sans_ext(file_out)
+    }
     if (z_option == "split" && use_z) {
         mols <- split(mols, mols[[spatialCoordsNames[3]]])
         mols <- lapply(mols, .mols2geo_split, dest = dest,
@@ -982,17 +999,18 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
 
     if (!is.null(file_out)) {
         message(">>> Writing reformatted transcript spots to disk")
+        if (!dir.exists(dirname(file_out)))
+            dir.create(dirname(file_out))
         if (is(mols, "sf")) {
-            suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
+            st_write(mols, file_out, driver = "Parquet", quiet = TRUE)
             if (!return) return(file_out)
         } else {
             if (!dir.exists(file_dir)) dir.create(file_dir)
             suppressWarnings({
                 bplapply(names(mols), function(n) {
                     name_use <- gsub("/", ".", n)
-                    sfarrow::st_write_parquet(mols[[n]],
-                                              file.path(file_dir,
-                                                        paste0(name_use, ".parquet")))
+                    st_write(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet")),
+                             driver = "Parquet")
                 }, BPPARAM = SerialParam(progressbar = TRUE))
             })
             if (!return) return(file_dir)
@@ -1003,25 +1021,36 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
 
 #' @rdname formatTxSpots
 #' @export
-addTxSpots <- function(sfe, file, sample_id = 1L,
+addTxSpots <- function(sfe, file, sample_id = 1L, gene_select = NULL,
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                       gene_col = "gene", z = 3L,
+                       gene_col = "gene", z = "all",
                        phred_col = "qv", min_phred = 20, split_col = NULL,
                        z_option = c("3d", "split"), flip = FALSE,
                        file_out = NULL, BPPARAM = SerialParam()) {
     sample_id <- .check_sample_id(sfe, sample_id)
     z_option <- match.arg(z_option)
     dest <- "rowGeometry"
+    gene_select <- intersect(gene_select, rownames(sfe))
+    if (!length(gene_select)) gene_select <- NULL
+    if (!is.null(gene_select)) {
+        if (is.null(file_out))
+            stop("file_out must be specified if only loading a subset of genes")
+        return <- FALSE
+        partial <- TRUE
+    } else {
+        return <- TRUE
+        partial <- FALSE
+    }
     mols <- formatTxSpots(file, dest = dest, spatialCoordsNames = spatialCoordsNames,
                           gene_col = gene_col, z = z, phred_col = phred_col,
                           min_phred = min_phred, split_col = split_col,
-                          flip = flip,
+                          flip = flip, gene_select = gene_select,
                           z_option = z_option, file_out = file_out,
-                          BPPARAM = BPPARAM)
+                          BPPARAM = BPPARAM, return = return)
     if (is(mols, "sf")) {
-        txSpots(sfe, withDimnames = TRUE) <- mols
+        txSpots(sfe, withDimnames = TRUE, partial = partial) <- mols
     } else if (is(mols, "list")) {
-        rowGeometries(sfe) <- c(rowGeometries(sfe), mols)
+        rowGeometries(sfe, partial = partial) <- mols
     }
 
     # make sure that sfe and rowGeometries have the same features
@@ -1100,7 +1129,7 @@ readCosMX <- function(data_dir,
     fn_polys <- grep("polygons", fns, value = TRUE)
 
     meta <- fread(fn_metadata)
-    mat <- fread(fn_mat)
+    mat <- fread(fn_mat) # TODO: write to h5 or mtx. Consult alabaster.sce
     polys <- fread(fn_polys)
 
     meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")
@@ -1117,7 +1146,7 @@ readCosMX <- function(data_dir,
     poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
     if (file.exists(poly_sf_fn)) {
         message(">>> File cell_boundaries_sf.parquet found")
-        polys <- sfarrow::st_read_parquet(poly_sf_fn)
+        polys <- st_read(poly_sf_fn)
         rownames(polys) <- polys$cellID
     } else {
         message(">>> Constructing cell polygons")
@@ -1125,14 +1154,14 @@ readCosMX <- function(data_dir,
                        geometryType = "POLYGON",
                        id_col = "cellID")
         polys <- polys[match(meta$cell_ID, polys$cellID),]
-        suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
+        st_write(polys, poly_sf_fn, driver = "Parquet")
     }
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
                                     spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
                                     unit = "full_res_image_pixel")
     # sanity on geometries
-    polys <- .check_st_valid(polys)
+    polys <- .check_st_valid(polys)[[1]]
     cellSeg(sfe) <- polys
 
     if (add_molecules) {
@@ -1147,17 +1176,22 @@ readCosMX <- function(data_dir,
     sfe
 }
 
-.check_xenium_fns <- function(data_dir, keyword) {
+.check_xenium_fns <- function(data_dir, keyword, no_raw_bytes = FALSE) {
     fn_all <-
         list.files(data_dir,
                    pattern = keyword,
                    full.names = TRUE)
     if (any(grep(keyword, fn_all))) {
         # Priorities: 1. _sf.parquet, 2. csv, 3. parquet
-        #..since .parquet has cols with raw bytes format
+        #..since .parquet has cols with raw bytes format in v1.3 or less
         fn <- grep("_sf.parquet", fn_all, value = TRUE)
-        if (!length(fn)) fn <- grep(".csv", fn_all, value = TRUE)
-        if (!length(fn)) fn <- grep(".parquet", fn_all, value = TRUE)
+        if (no_raw_bytes) {
+            if (!length(fn)) fn <- grep(".parquet", fn_all, value = TRUE)
+            if (!length(fn)) fn <- grep(".csv", fn_all, value = TRUE)
+        } else {
+            if (!length(fn)) fn <- grep(".csv", fn_all, value = TRUE)
+            if (!length(fn)) fn <- grep(".parquet", fn_all, value = TRUE)
+        }
     }
     if (!length(fn)) {
         stop("No `", keyword, "` file is available")
@@ -1171,7 +1205,10 @@ readCosMX <- function(data_dir,
 #'
 #' @inheritParams readVizgen
 #' @param image Which image(s) to load, can be "morphology_mip",
-#'   "morphology_focus" or both.
+#'   "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
+#'   v2, there is no longer "morphology_mip" and "morphology_focus" is a
+#'   directory with 4 images corresponding to 4 channels: DAPI, "Cadherin", 18S,
+#'   and Vimentin. So this argument is ignored for XOA v2.
 #' @param segmentations Which segmentation outputs to read, can be "cell",
 #'   "nucleus", or both.
 #' @param image_threshold Integer value, below which threshold is to set values
@@ -1192,7 +1229,7 @@ readCosMX <- function(data_dir,
 #'   and not loaded into memory until necessary in later operations.
 #' @export
 #'
-#' @importFrom sf st_area st_geometry<- st_as_sf
+#' @importFrom sf st_area st_geometry<- st_as_sf st_write
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
@@ -1242,21 +1279,36 @@ readXenium <- function(data_dir,
         message(">>> Must use gene symbols as row names when adding transcript spots.")
         row.names <- "symbol"
     }
+    xoa_version <- fromJSON(file = file.path(data_dir, "experiment.xenium"),
+                            simplify = TRUE)$analysis_sw_version
+    major_version <- substr(xoa_version, 8, 8) |> as.integer()
+    minor_version <- substr(xoa_version, 10, 10) |> as.integer()
+
     # Read images-----------
-    # supports 2 images
+    # supports 2 images, in XOA v1:
     # `morphology_mip.ome.tif` - 2D maximum projection intensity (MIP) image of the tissue morphology image.
     # `morphology_focus.ome.tif` - 2D autofocus projection image of the tissue morphology image.
-    img_fn <-
-        list.files(data_dir, full.names = TRUE,
-                   pattern = "morphology_.*\\.ome\\.tif")
-    if_exists <- vapply(image, function(img) any(grepl(img, img_fn, ignore.case = TRUE)),
-                        FUN.VALUE = logical(1))
-    if (!all(if_exists)) {
-        warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
-                " don't exist, or have non-standard file name(s).")
+    # XOA v2: morphology_focus directory with multi-file OME-TIFF
+    if (major_version == 1L) {
+        img_fn <-
+            list.files(data_dir, full.names = TRUE,
+                       pattern = "morphology_.*\\.ome\\.tif")
+        if_exists <- vapply(image, function(img) any(grepl(img, img_fn, ignore.case = TRUE)),
+                            FUN.VALUE = logical(1))
+        if (!all(if_exists)) {
+            warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
+                    " don't exist, or have non-standard file name(s).")
+        }
+    } else { # For now there's only v2. We'll see what v3 will be like
+        img_fn <- paste0("morphology_focus_000", 0:3, ".ome.tif")
+        img_fn <- file.path(data_dir, "morphology_focus", img_fn)
+        if_exists <- vapply(img_fn, file.exists, FUN.VALUE = logical(1))
+        if (!all(if_exists)) {
+            warning("Image file(s) ", paste0(img_fn[!if_exists], collapse = ", "),
+                    " not found")
+        }
     }
     use_imgs <- any(if_exists)
-    if (use_imgs) { image <- image[if_exists] }
     do_flip <- .if_flip_img(img_fn, max_flip)
     if (!length(img_fn)) {
         flip <- "none"
@@ -1264,7 +1316,7 @@ readXenium <- function(data_dir,
     if (use_imgs) {
         # Set up ImgData
         img_dfs <- lapply(img_fn, function(fn) {
-            id_use <- sub("\\.tiff?$", "", basename(fn))
+            id_use <- sub("\\.ome\\.tiff?$", "", basename(fn))
             .get_imgData(fn, sample_id = sample_id,
                          image_id = id_use,
                          flip = (flip == "image"))
@@ -1281,11 +1333,11 @@ readXenium <- function(data_dir,
 
     # Read cell/nucleus segmentation ----
     if (!is.null(segmentations)) {
-        check_installed("sfarrow")
         # get files .parquet or .csv
         # What if only cell or only nucleus is available
-        fn_segs <- c(cell = .check_xenium_fns(data_dir, "cell_boundaries"),
-                     nucleus = .check_xenium_fns(data_dir, "nucleus_boundaries"))
+        no_raw_bytes <- (major_version == 1L && minor_version > 3L) || major_version == 2L
+        fn_segs <- c(cell = .check_xenium_fns(data_dir, "cell_boundaries", no_raw_bytes),
+                     nucleus = .check_xenium_fns(data_dir, "nucleus_boundaries", no_raw_bytes))
         fn_segs <- fn_segs[segmentations]
         if (length(fn_segs) == 0) {
             warning("No segmentation files are found, check input directory -> `data_dir`")
@@ -1296,26 +1348,41 @@ readXenium <- function(data_dir,
                     ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
                     " segmentations")
             # add cell id to rownames
-            polys <- lapply(fn_segs, sfarrow::st_read_parquet)
+            polys <- lapply(fn_segs, st_read, quiet = TRUE)
         } else {
-            if (any(grep(".csv", fn_segs))) {
-                message(">>> Cell segmentations are found in `.csv` file(s)", "\n",
-                        ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
-                        " segmentations")
-                # read .csv data
-                polys <- lapply(fn_segs, fread)
-            } else if (any(grep("..parquet", fn_segs))) {
-                check_installed("arrow")
-                message(">>> Cell segmentations are found in `.parquet` file(s)", "\n",
-                        ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
-                        " segmentations")
-                polys <- lapply(fn_segs, arrow::read_parquet)
-                # convert cell ids, from raw bytes to character
-                polys <- lapply(polys, function(x)
-                    .rawToChar_df(x, BPPARAM = BPPARAM))
+            if (no_raw_bytes) {
+                if (any(grep("..parquet", fn_segs))) {
+                    check_installed("arrow")
+                    message(">>> Cell segmentations are found in `.parquet` file(s)", "\n",
+                            ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                            " segmentations")
+                    polys <- lapply(fn_segs, arrow::read_parquet)
+                } else if (any(grep(".csv", fn_segs))) {
+                    message(">>> Cell segmentations are found in `.csv` file(s)", "\n",
+                            ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                            " segmentations")
+                    # read .csv data
+                    polys <- lapply(fn_segs, fread)
+                }
+            } else {
+                if (any(grep(".csv", fn_segs))) {
+                    message(">>> Cell segmentations are found in `.csv` file(s)", "\n",
+                            ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                            " segmentations")
+                    # read .csv data
+                    polys <- lapply(fn_segs, fread)
+                } else if (any(grep("..parquet", fn_segs))) {
+                    check_installed("arrow")
+                    message(">>> Cell segmentations are found in `.parquet` file(s)", "\n",
+                            ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
+                            " segmentations")
+                    polys <- lapply(fn_segs, arrow::read_parquet)
+                    # convert cell ids, from raw bytes to character
+                    polys <- lapply(polys, function(x)
+                        .rawToChar_df(x, BPPARAM = BPPARAM))
+                }
             }
             # generate sf dataframe with geometries
-            message(">>> Making POLYGON geometries")
             # Flip the coordinates
             if (flip == "geometry" && !is.null(polys)) {
                 polys <- lapply(polys, function(p) {
@@ -1323,23 +1390,41 @@ readXenium <- function(data_dir,
                     p
                 })
             }
-            polys <-
-                lapply(polys, function(x) {
-                    df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
-                          geometryType = "POLYGON") })
+            if (major_version == 2L) {
+                if ("nucleus" %in% names(polys)) {
+                    message(">>> Making MULTIPOLYGON nuclei geometries")
+                    polys[["nucleus"]] <- df2sf(polys[["nucleus"]],
+                                                c("vertex_x", "vertex_y"),
+                                                id_col = "label_id",
+                                                group_col = "cell_id",
+                                                geometryType = "MULTIPOLYGON")
+                }
+                if ("cell" %in% names(polys)) {
+                    message(">>> Making POLYGON cell geometries")
+                    polys[["cell"]] <- df2sf(polys[["cell"]],
+                                             c("vertex_x", "vertex_y"),
+                                             id_col = "cell_id",
+                                             geometryType = "POLYGON")
+                }
+            } else {
+                message(">>> Making POLYGON geometries")
+                polys <-
+                    lapply(polys, function(x) {
+                        df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
+                              geometryType = "POLYGON") })
+            }
+
             fn_out <- c(cell = "cell_boundaries_sf.parquet",
                         nucleus = "nucleus_boundaries_sf.parquet")
             fn_out <- fn_out[names(fn_segs)]
             fn_out <- file.path(data_dir, fn_out)
             message(">>> Saving geometries to parquet files")
             for (i in seq_along(polys)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+                st_write(polys[[i]], fn_out[[i]], driver = "Parquet", quiet = TRUE)
             }
         }
         # add names to polys list
         names(polys) <- c(cell = "cellSeg", nucleus = "nucSeg")[names(fn_segs)]
-        # keep only single segmentation file
-        if (length(polys) == 1) { polys <- polys[[1]] }
     } else { polys <- NULL }
 
     # Read metadata ----
@@ -1348,25 +1433,39 @@ readXenium <- function(data_dir,
         warning("No metadata files are found, check input directory -> `data_dir`")
         metadata <- NULL
     }
-    if (any(grep(".csv", fn_meta))) {
-        message(">>> Reading cell metadata -> `cells.csv`")
-        # read .csv data
-        metadata <- fread(fn_meta)
-    } else if (any(grep(".parquet", fn_meta))) {
-        check_installed("arrow")
-        metadata <- arrow::read_parquet(fn_meta)
-        message(">>> Reading cell metadata -> `cells.parquet`")
-        # convert cell ids, from raw bytes to character
-        metadata <- .rawToChar_df(metadata, BPPARAM = BPPARAM)
+    if ((major_version == 1L && minor_version > 3L) || major_version == 2L) {
+        if (any(grep(".parquet", fn_meta))) {
+            check_installed("arrow")
+            metadata <- arrow::read_parquet(fn_meta)
+            message(">>> Reading cell metadata -> `cells.parquet`")
+        } else if (any(grep(".csv", fn_meta))) {
+            message(">>> Reading cell metadata -> `cells.csv`")
+            # read .csv data
+            metadata <- fread(fn_meta)
+        }
+    } else {
+        if (any(grep(".csv", fn_meta))) {
+            message(">>> Reading cell metadata -> `cells.csv`")
+            # read .csv data
+            metadata <- fread(fn_meta)
+        } else if (any(grep(".parquet", fn_meta))) {
+            check_installed("arrow")
+            metadata <- arrow::read_parquet(fn_meta)
+            message(">>> Reading cell metadata -> `cells.parquet`")
+            # convert cell ids, from raw bytes to character
+            metadata <- .rawToChar_df(metadata, BPPARAM = BPPARAM)
+        }
     }
 
     # Read count matrix or SCE ----
     # all feature types are read in single count matrix and stored in rowData(sce)$Type
     #..ie -> 'Negative Control Probe, 'Negative Control Codeword', 'Unassigned Codeword'
     if (file.exists(file.path(data_dir, "cell_feature_matrix.h5"))) {
+        message(">>> Reading h5 gene count matrix")
         sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix.h5"),
                              col.names = TRUE, row.names = row.names)
     } else if (dir.exists(file.path(data_dir, "cell_feature_matrix"))) {
+        message(">>> Reading mtx gene count matrix")
         sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix"),
                              col.names = TRUE, row.names = row.names)
     } else { stop("No `cell_feature_matrix` files are found, check input directory -> `data_dir`") }
@@ -1418,24 +1517,13 @@ readXenium <- function(data_dir,
     if (!is.null(polys)) {
         # sanity on geometries
         polys <- .check_st_valid(polys)
-        if (is(polys, "list")) {
-            polys <-
-                lapply(polys, function(i) {
-                    rownames(i) <- i$cell_id
-                    i$cell_id <- NULL
-                    return(i)}
-                )
-            colGeometries(sfe) <- c(colGeometries(sfe), polys)
-        } else if (is(polys, "sf")) {
-            rownames(polys) <- polys$cell_id
-            polys$cell_id <- NULL
-            # support single segmentation names
-            if (names(fn_segs) == "nucleus") {
-                nucSeg(sfe) <- polys
-            } else if (names(fn_segs) == "cell") {
-                cellSeg(sfe) <- polys
-            }
-        }
+        polys <-
+            lapply(polys, function(i) {
+                rownames(i) <- i$cell_id
+                i$cell_id <- NULL
+                return(i)}
+            )
+        colGeometries(sfe) <- c(colGeometries(sfe), polys)
     }
 
     # add images
@@ -1446,11 +1534,12 @@ readXenium <- function(data_dir,
     if (add_molecules) {
         message(">>> Reading transcript coordinates")
         # get molecule coordiantes file
-        fn_mols <- .check_xenium_fns(data_dir, "transcripts")
+        fn_mols <- .check_xenium_fns(data_dir, "transcripts", no_raw_bytes)
         sfe <- addTxSpots(sfe, fn_mols,
                           sample_id,
                           gene_col = "feature_name",
                           spatialCoordsNames = c("x_location", "y_location", "z_location"),
+                          z_option = "3d",
                           BPPARAM = BPPARAM, flip = (flip == "geometry"),
                           file_out = file_out, ...)
     }

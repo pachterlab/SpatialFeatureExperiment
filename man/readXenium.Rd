@@ -32,7 +32,10 @@ be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not al
 Default = \code{sample01}.}
 
 \item{image}{Which image(s) to load, can be "morphology_mip",
-"morphology_focus" or both.}
+"morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
+v2, there is no longer "morphology_mip" and "morphology_focus" is a
+directory with 4 images corresponding to 4 channels: DAPI, "Cadherin", 18S,
+and Vimentin. So this argument is ignored for XOA v2.}
 
 \item{segmentations}{Which segmentation outputs to read, can be "cell",
 "nucleus", or both.}

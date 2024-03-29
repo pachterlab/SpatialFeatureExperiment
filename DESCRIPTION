@@ -79,6 +79,7 @@ Suggests:
     testthat (>= 3.0.0),
     Voyager,
     xml2
+SystemRequirements: GDAL (>= 3.8.0)
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)
