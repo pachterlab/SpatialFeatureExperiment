@@ -1335,7 +1335,7 @@ readXenium <- function(data_dir,
     if (!is.null(segmentations)) {
         # get files .parquet or .csv
         # What if only cell or only nucleus is available
-        no_raw_bytes <- (major_version == 1L && minor_version > 3L) || major_version == 2L
+        no_raw_bytes <- (major_version == 1L && minor_version > 4L) || major_version == 2L
         fn_segs <- c(cell = .check_xenium_fns(data_dir, "cell_boundaries", no_raw_bytes),
                      nucleus = .check_xenium_fns(data_dir, "nucleus_boundaries", no_raw_bytes))
         fn_segs <- fn_segs[segmentations]
@@ -1433,7 +1433,7 @@ readXenium <- function(data_dir,
         warning("No metadata files are found, check input directory -> `data_dir`")
         metadata <- NULL
     }
-    if ((major_version == 1L && minor_version > 3L) || major_version == 2L) {
+    if (no_raw_bytes) {
         if (any(grep(".parquet", fn_meta))) {
             check_installed("arrow")
             metadata <- arrow::read_parquet(fn_meta)
