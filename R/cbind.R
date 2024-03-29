@@ -1,30 +1,65 @@
-.concat_annotgeometries <- function(x, y) {
-    # Check the names of the geometries in each object
-    # For geometries with the same name, check column names for rbind
-    # If the columns are different, then append sample_id to the geometry names
-    ag_names_x <- annotGeometryNames(x)
-    ag_names_y <- annotGeometryNames(y)
+#' @importFrom S4Vectors combineCols
+.combine_fd <- function(fd_x, fd_y) {
+    if (is.null(fd_x) && is.null(fd_y)) {
+        return(NULL)
+    }
+    # Edge case: what if fd_x and fd_y have different numbers of rows
+    empty <- make_zero_col_DFrame(nrow(fd_x) %||% nrow(fd_y))
+    rns <- rownames(empty) <- rownames(fd_x) %||% rownames(fd_y)
+    fd_x <- fd_x %||% empty
+    fd_y <- fd_y %||% empty
+    combineCols(fd_x, fd_y)
+}
+
+.combine_attr_fd <- function(x, y) {
+    # x and y should have the same number of columns and rows
+    o <- rbind(x, y)
+    if (!is.null(attr(x, "featureData")) ||
+        !is.null(attr(y, "featureData"))) {
+        fd_x <- attr(x, "featureData")
+        fd_y <- attr(y, "featureData")
+        fd <- .combine_fd(fd_x, fd_y)
+        attr(o, "featureData") <- fd
+    }
+    o
+}
+#' @importFrom SingleCellExperiment reducedDims reducedDims<- reducedDimNames
+.combine_reduceddim_fd <- function(x, y) {
+    # x and y are named lists of featureData
+    # By this time x and y should have the same reducedDim or colGeometry names
     if (is.null(x) && is.null(y)) {
         return(NULL)
     }
+    out <- lapply(names(x), function(n) {
+        .combine_fd(x[[n]], y[[n]])
+    })
+    names(out) <- names(x)
+    out
+}
+
+.concat_annotgeometries <- function(x, y) {
+    # x, y are lists of annotGeometries from each SFE object
+    # Check the names of the geometries in each object
+    # For geometries with the same name, check column names for rbind
+    # If the columns are different, then append sample_id to the geometry names
+    if (is.null(x) && is.null(y)) {
+        return(NULL)
+    }
+    ag_names_x <- names(x)
+    ag_names_y <- names(y)
     names_intersect <- intersect(ag_names_x, ag_names_y)
     if (length(names_intersect)) {
         # A bit of repetition, just to get the names right
         which_rbind <- vapply(names_intersect, function(n) {
-            ag_x <- annotGeometry(x, n, sample_id = "all")
-            ag_y <- annotGeometry(y, n, sample_id = "all")
-            setequal(names(ag_x), names(ag_y))
+            setequal(names(x[[n]]), names(y[[n]]))
         }, FUN.VALUE = logical(1))
 
         out_rbind <- lapply(names_intersect[which_rbind], function(n) {
-            ag_x <- annotGeometry(x, n, sample_id = "all")
-            ag_y <- annotGeometry(y, n, sample_id = "all")
-            ag_y <- ag_y[, names(ag_x)]
-            rbind(ag_x, ag_y)
+            .combine_attr_fd(x[[n]], y[[n]])
         })
         out_append <- lapply(names_intersect[!which_rbind], function(n) {
-            ag_x <- annotGeometry(x, n, sample_id = "all")
-            ag_y <- annotGeometry(y, n, sample_id = "all")
+            ag_x <- x[[n]]
+            ag_y <- y[[n]]
             setNames(list(ag_x, ag_y), paste(n,
                 c(ag_x$sample_id[1], ag_y$sample_id[1]),
                 sep = "_"
@@ -32,12 +67,12 @@
         })
         out_append <- unlist(out_append, recursive = FALSE)
         names(out_rbind) <- names_intersect[which_rbind]
-        out_x <- annotGeometries(x)[setdiff(ag_names_x, ag_names_y)]
-        out_y <- annotGeometries(y)[setdiff(ag_names_y, ag_names_x)]
+        out_x <- x[setdiff(ag_names_x, ag_names_y)]
+        out_y <- y[setdiff(ag_names_y, ag_names_x)]
     } else {
         out_rbind <- out_append <- NULL
-        out_x <- annotGeometries(x)
-        out_y <- annotGeometries(y)
+        out_x <- x
+        out_y <- y
     }
     out <- c(out_rbind, out_append, out_x, out_y)
     return(out)
@@ -54,6 +89,7 @@
 #' @param deparse.level See \code{?\link[base]{rbind}}.
 #' @return A combined SFE object.
 #' @importFrom BiocGenerics cbind
+#' @importFrom S4Vectors metadata<- metadata
 #' @export
 #' @concept Non-spatial operations
 #' @examples
@@ -137,6 +173,12 @@ setMethod(
                 x
             })
         }
+        # Remove rowData's metadata; I might regret it but I don't care so much
+        # about the params
+        args <- lapply(args, function(x) {
+            metadata(rowData(x)) <- list()
+            x
+        })
         out <- do.call(
             callNextMethod,
             c(args, list(deparse.level = deparse.level))
@@ -145,15 +187,48 @@ setMethod(
         if (length(rgns)) {
             rowGeometries(out) <- rgs
         }
-        # Combine the annotGeometries
         has_ag <- vapply(args, function(a) length(annotGeometries(a)) > 0L,
             FUN.VALUE = logical(1)
         )
         if (any(has_ag)) {
-            new_ag <- Reduce(.concat_annotgeometries, args)
+            ags <- lapply(args, annotGeometries)
+            new_ag <- Reduce(.concat_annotgeometries, ags)
             int_metadata(out)[["annotGeometries"]] <- NULL
             int_metadata(out)[["annotGeometries"]] <- new_ag
         }
+        # Combine reducedDims featureData
+        if (!is.null(reducedDimNames(out))) {
+            fds <- lapply(args, function(x) {
+                rdns <- reducedDimNames(x)
+                f <- lapply(rdns, reducedDimFeatureData, sfe = x)
+                names(f) <- rdns
+                f
+            })
+            new_rd_fds <- Reduce(.combine_reduceddim_fd, fds)
+            rdns <- reducedDimNames(out)
+            for (n in rdns) {
+                reducedDimFeatureData(out, n) <- new_rd_fds[[n]]
+            }
+        }
+        # Combine colGeometry featureData
+        if (!is.null(colGeometryNames(out))) {
+            fds <- lapply(args, function(x) {
+                cgns <- colGeometryNames(x)
+                f <- lapply(cgns, geometryFeatureData, sfe = x, MARGIN = 2L)
+                names(f) <- cgns
+                f
+            })
+            new_cg_fds <- Reduce(.combine_reduceddim_fd, fds)
+            cgns <- colGeometryNames(out)
+            for (n in cgns) {
+                geometryFeatureData(out, n, MARGIN = 2) <- new_cg_fds[[n]]
+            }
+        }
+        # Combine colData featureData
+        cd_fds <- lapply(args, colFeatureData)
+        cd_fds_new <- Reduce(.combine_fd, cd_fds)
+        colFeatureData(out) <- cd_fds_new
+
         # Combine the spatialGraphs
         # TODO: benchmark spatial methods. Consider switching to sparse matrices
         has_sg <- vapply(args, function(a) !is.null(spatialGraphs(a)),
@@ -171,7 +246,6 @@ setMethod(
             int_metadata(out)[["spatialGraphs"]] <- NULL
             int_metadata(out)$spatialGraphs <- new_sgs
         }
-
         # Clean up duplicate version field in int_metadata
         # Bug in SCE
         im_names <- unique(names(int_metadata(out)))
@@ -180,7 +254,3 @@ setMethod(
         out
     }
 )
-
-# TODO: merge function, kind of like cbind but allow for different number of rows
-# Error when the row names don't overlap, warning when the overlap is too small
-# Add 0's to the matrices and empty geometries to rowGeometries. Kind of like full_join

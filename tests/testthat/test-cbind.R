@@ -84,3 +84,18 @@ test_that("cbind when only one or no SFE object is specified", {
     sfe2 <- cbind(sfe_visium1)
     expect_equal(sfe2, sfe_visium1)
 })
+
+test_that("cbind more than 2 SFE objects", {
+    sfe_visium3 <- changeSampleIDs(sfe_visium1, c("sample01" = "sample03"))
+    colnames(sfe_visium3) <- paste0(colnames(sfe_visium3), "-3")
+    sfe_c <- cbind(sfe_visium1, sfe_visium2, sfe_visium3)
+
+    ag_orig <- annotGeometries(sfe_visium)
+    ag_concat <- annotGeometries(sfe_c)
+    ag_concat <- ag_concat[names(ag_orig)]
+    expect_equal(ag_orig$foo, ag_concat$foo[ag_concat$foo$sample_id!="sample03",])
+    expect_equal(ag_orig$foo[ag_orig$foo$sample_id == "sample01","geometry"],
+                 ag_concat$foo[ag_concat$foo$sample_id == "sample03","geometry"])
+    expect_equal(spatialGraphs(sfe_visium), spatialGraphs(sfe_c)[c("sample01", "sample02")])
+    expect_equal(spatialGraphs(sfe_visium)[["sample01"]], spatialGraphs(sfe_c)[["sample03"]])
+})
