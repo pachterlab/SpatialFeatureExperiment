@@ -1,8 +1,8 @@
 library(SFEData)
 library(sf)
 library(scater)
-#library(Voyager)
-devtools::load_all("~/Voyager/")
+library(Voyager)
+
 sfe <- McKellarMuscleData("small")
 rg <- matrix(rnorm(2*nrow(sfe)), ncol = 2)
 colnames(rg) <- c("x", "y")
