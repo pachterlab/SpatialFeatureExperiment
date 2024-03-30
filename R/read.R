@@ -1227,6 +1227,11 @@ readCosMX <- function(data_dir,
 #'   `tx_spots.parquet` in the same directory as the rest of the data. If images
 #'   are present, then the images will be of the \code{BioFormatsImage} class
 #'   and not loaded into memory until necessary in later operations.
+#' @note Sometimes when reading images, you will see this error the first time:
+#' 'java.lang.NullPointerException: Cannot invoke
+#' "loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
+#' "RBioFormats.reader" is null'. Rerun the code and it should work the second
+#' time.
 #' @export
 #'
 #' @importFrom sf st_area st_geometry<- st_as_sf st_write
@@ -1315,13 +1320,19 @@ readXenium <- function(data_dir,
     } else if (!any(do_flip) && flip == "image") { flip <- "geometry" }
     if (use_imgs) {
         # Set up ImgData
-        img_dfs <- lapply(img_fn, function(fn) {
-            id_use <- sub("\\.ome\\.tiff?$", "", basename(fn))
-            .get_imgData(fn, sample_id = sample_id,
-                         image_id = id_use,
-                         flip = (flip == "image"))
-        })
-        img_df <- do.call(rbind, img_dfs)
+        if (major_version == 1L) {
+            img_dfs <- lapply(img_fn, function(fn) {
+                id_use <- sub("\\.ome\\.tiff?$", "", basename(fn))
+                .get_imgData(fn, sample_id = sample_id,
+                             image_id = id_use,
+                             flip = (flip == "image"))
+            })
+            img_df <- do.call(rbind, img_dfs)
+        } else {
+            img_df <- .get_imgData(img_fn[1], sample_id = sample_id,
+                                   image_id = "morphology_focus",
+                                   flip = (flip == "image"))
+        }
         if (flip == "geometry") {
             img_df$data <- lapply(img_df$data, function(img) {
                 extent <- ext(img)
