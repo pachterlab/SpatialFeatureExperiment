@@ -56,6 +56,20 @@ SpatRasterImage <- function(img) {
     new("SpatRasterImage", image = img)
 }
 
+setMethod("show", "SpatRasterImage", function(object) {
+    d <- dim(object)
+    dim <- paste(d[c(2,1,3)], collapse=" x ")
+    str <- paste0(dim, " (width x height x channels) ", class(object), "\n")
+    cat(str)
+    str <- imgSource(object)
+    if (!is.na(str)) {
+        if (nchar(str) > 80) {
+            str <- strwrap(str, width = 80)
+        }
+        cat("imgSource():\n ", str, "\n")
+    }
+})
+
 # BioFormatsImage====================
 
 #' On disk representation of BioFormats images in SFE object
@@ -112,11 +126,8 @@ setValidity("BioFormatsImage", function(object) {
 })
 
 .get_fullres_scale_factor <- function(file) {
-    check_installed(c("xml2", "RBioFormats"))
-    xml_meta <- RBioFormats::read.omexml(file) |>
-        xml2::read_xml() |> xml2::as_list()
-    psx <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeX") |> as.numeric()
-    psy <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeY") |> as.numeric()
+    ps <- .get_pixel_size(file)
+    psx <- ps[1]; psy <- ps[2]
     if (!length(psx) && !length(psy)) {
         warning("Physical pixel size absent from image metadata, using pixel space.")
         sfx <- sfy <- 1
@@ -144,6 +155,20 @@ setValidity("BioFormatsImage", function(object) {
     sizeX_full <- size_full[1]; sizeY_full <- size_full[2]
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
+
+setMethod("show", "BioFormatsImage", function(object) {
+    d <- dim(object)
+    dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
+    str <- paste0(dim, ", ", class(object), "\n")
+    cat(str)
+    str <- imgSource(object)
+    if (!is.na(str)) {
+        if (nchar(str) > 80) {
+            str <- strwrap(str, width = 80)
+        }
+        cat("imgSource():\n ", str, "\n")
+    }
+})
 
 #' @rdname BioFormatsImage
 #' @export
@@ -208,6 +233,23 @@ setClass("EBImage", contains = "VirtualSpatialImage",
 setValidity("EBImage", function(object) {
     out <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
     if (length(out)) return(out) else TRUE
+})
+
+setMethod("show", "EBImage", function(object) {
+    d <- dim(object)
+    dim <- paste(dim(object), collapse=" x ")
+    if (length(d) == 2L)
+        str <- paste0(dim, " (width x height) ", class(object), "\n")
+    else if (length(d) == 3L)
+        str <- paste0(dim, " (width x height x channels) ", class(object), "\n")
+    cat(str)
+    str <- imgSource(object)
+    if (!is.na(str)) {
+        if (nchar(str) > 80) {
+            str <- strwrap(str, width = 80)
+        }
+        cat("imgSource():\n ", str, "\n")
+    }
 })
 
 #' @rdname EBImage
@@ -615,7 +657,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
                 img <- w
                 flip <- FALSE
             }
-            if (flip) img <- terra::flip(img)
+            if (flip) img <- mirrorImg(img, direction = "vertical")
             spi <- new("SpatRasterImage", image = img)
         }
     }
@@ -631,13 +673,14 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("transposeImg", "SpatialFeatureExperiment",
           function(x, sample_id = 1L, image_id = NULL,
-                   resolution = 4L) {
+                   resolution = 4L, filename = "") {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  new <- lapply(old, transposeImg, resolution = resolution)
+                  new <- lapply(old, transposeImg, resolution = resolution,
+                                filename = filename)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -647,14 +690,14 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("mirrorImg", "SpatialFeatureExperiment",
           function(x, sample_id = 1L, image_id = NULL, direction = "vertical",
-                   resolution = 4L) {
+                   resolution = 4L, filename = "") {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
                   new <- lapply(old, mirrorImg, resolution = resolution,
-                                direction = direction)
+                                direction = direction, filename = filename)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -763,7 +806,9 @@ NULL
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              sources(imgRaster(x))
+              out <- sources(imgRaster(x))
+              if (out == "") out <- NA_character_
+              return(out)
           })
 
 #' @rdname imgSource
@@ -782,6 +827,7 @@ setMethod("imgSource", "EBImage", function(x) NA_character_)
 #' the diagonal running from top left to bottom right.
 #'
 #' @inheritParams imgRaster
+#' @param filename Output file name for transformed SpatRaster.
 #' @param ... Ignored. It's there so different methods can all be passed to the
 #' same \code{lapply} in the method for SFE objects.
 #' @return For \code{SpatRasterImage} and \code{EBImage}, object of the same
@@ -799,8 +845,8 @@ NULL
 #' @rdname transposeImg
 #' @export
 setMethod("transposeImg", "SpatRasterImage",
-          function(x, ...) {
-              x@image <- terra::trans(imgRaster(x))
+          function(x, filename = "", ...) {
+              x@image <- terra::trans(imgRaster(x), filename = "")
               # What terra does to extent: swap xmin and xmax with ymin and ymax
               x
           })
@@ -808,7 +854,7 @@ setMethod("transposeImg", "SpatRasterImage",
 #' @rdname transposeImg
 #' @export
 setMethod("transposeImg", "BioFormatsImage",
-          function(x, resolution = 4L) {
+          function(x, resolution = 4L, ...) {
               x <- toEBImage(x, resolution)
               transposeImg(x)
           })
@@ -851,9 +897,10 @@ NULL
 #' @rdname mirrorImg
 #' @export
 setMethod("mirrorImg", "SpatRasterImage",
-          function(x, direction = c("vertical", "horizontal"), ...) {
+          function(x, direction = c("vertical", "horizontal"), filename = "", ...) {
               direction <- match.arg(direction)
-              x@image <- terra::flip(imgRaster(x), direction = direction)
+              x@image <- terra::flip(imgRaster(x), direction = direction,
+                                     filename = filename)
               x
           })
 
@@ -861,7 +908,7 @@ setMethod("mirrorImg", "SpatRasterImage",
 #' @export
 setMethod("mirrorImg", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
-                   resolution = 4L) {
+                   resolution = 4L, ...) {
               direction <- match.arg(direction)
               x <- toEBImage(x, resolution)
               mirrorImg(x, direction)
@@ -1015,8 +1062,9 @@ NULL
 
 #' @rdname cropImg
 #' @export
-setMethod("cropImg", "SpatRasterImage", function(x, bbox) {
-    x@image <- terra::crop(x@image, bbox, snap = "out")
+setMethod("cropImg", "SpatRasterImage", function(x, bbox, filename = "") {
+    # TODO: add argument filename to save the resulting file
+    x@image <- terra::crop(x@image, bbox, snap = "out", filename = filename)
     x
 })
 
