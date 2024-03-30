@@ -6,7 +6,7 @@
 \alias{toEBImage,SpatRasterImage-method}
 \title{Convert images to EBImage}
 \usage{
-\S4method{toEBImage}{BioFormatsImage}(x, resolution = 4L)
+\S4method{toEBImage}{BioFormatsImage}(x, resolution = 4L, channel = NULL)
 
 \S4method{toEBImage}{SpatRasterImage}(x, maxcell = 1e+07)
 }
@@ -14,8 +14,11 @@
 \item{x}{Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.}
 
 \item{resolution}{Integer, which resolution in the \code{BioFormatsImage} to
-read and convert. Defaults to 4, which is a lower resolution. Ignored if only
-1 resolution is present.}
+read and convert. Defaults to 4, which is a lower resolution. Ignored if
+only 1 resolution is present.}
+
+\item{channel}{Integer vector to indicate channel(s) to read. If \code{NULL},
+then all channels will be read.}
 
 \item{maxcell}{Maximum number of pixels when \code{SpatRasterImage} is read
 into memory.}

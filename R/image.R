@@ -266,7 +266,7 @@ EBImage <- function(img, ext = NULL) {
 }
 
 # Coercion of Image classes===================
-.toEBImage <- function(x, resolution = 4L) {
+.toEBImage <- function(x, resolution = 4L, channel = NULL) {
     check_installed("RBioFormats")
     # PhysicalSizeX seems to be a standard field
     if (length(resolution) != 1L ||
@@ -334,7 +334,8 @@ EBImage <- function(img, ext = NULL) {
         bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
         # For instance, say xmin = 0. Then it should start with pixel 1.
         subset_use <- list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
-                           y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L))
+                           y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L),
+                           c = channel)
         # Extent should account for the pixels
         ext_use <- bbox_use
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
@@ -342,7 +343,7 @@ EBImage <- function(img, ext = NULL) {
     } else {
         ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/(sfx*fctx2),
                      ymax = sizeY_full/(sfy*fcty2))
-        subset_use <- list()
+        subset_use <- list(c = channel)
     }
     img <- RBioFormats::read.image(file = file,
                                    resolution = resolution,
@@ -393,10 +394,12 @@ EBImage <- function(img, ext = NULL) {
 #'
 #' @param x Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.
 #' @param resolution Integer, which resolution in the \code{BioFormatsImage} to
-#' read and convert. Defaults to 4, which is a lower resolution. Ignored if only
-#' 1 resolution is present.
+#'   read and convert. Defaults to 4, which is a lower resolution. Ignored if
+#'   only 1 resolution is present.
+#' @param channel Integer vector to indicate channel(s) to read. If \code{NULL},
+#'   then all channels will be read.
 #' @param maxcell Maximum number of pixels when \code{SpatRasterImage} is read
-#' into memory.
+#'   into memory.
 #' @return A \code{EBImage} object. The image is loaded into memory.
 #' @name toEBImage
 #' @seealso toSpatRasterImage
@@ -454,7 +457,8 @@ setMethod("toSpatRasterImage", "EBImage",
 #' @rdname toSpatRasterImage
 #' @export
 setMethod("toSpatRasterImage", "BioFormatsImage",
-          function(x, save_geotiff = TRUE, resolution = 4L, overwrite = FALSE) {
+          function(x, save_geotiff = TRUE, resolution = 4L, channel = NULL,
+                   overwrite = FALSE) {
     #check_installed("RBioFormats")
     # Only for OME-TIFF, haven't tested on other BioFormats
     img <- toEBImage(x, resolution)

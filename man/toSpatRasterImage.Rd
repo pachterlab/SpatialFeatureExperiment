@@ -13,7 +13,13 @@
   overwrite = FALSE
 )
 
-\S4method{toSpatRasterImage}{BioFormatsImage}(x, save_geotiff = TRUE, resolution = 4L, overwrite = FALSE)
+\S4method{toSpatRasterImage}{BioFormatsImage}(
+  x,
+  save_geotiff = TRUE,
+  resolution = 4L,
+  channel = NULL,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{x}{Either a \code{BioFormatsImage} or \code{EBIImage} object.}
@@ -26,8 +32,11 @@
 name.}
 
 \item{resolution}{Integer, which resolution in the \code{BioFormatsImage} to
-read and convert. Defaults to 4, which is a lower resolution. Ignored if only
-1 resolution is present.}
+read and convert. Defaults to 4, which is a lower resolution. Ignored if
+only 1 resolution is present.}
+
+\item{channel}{Integer vector to indicate channel(s) to read. If \code{NULL},
+then all channels will be read.}
 }
 \value{
 A \code{SpatRasterImage} object
