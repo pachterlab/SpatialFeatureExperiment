@@ -19,11 +19,11 @@
   file = deprecated()
 )
 
-\S4method{transposeImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL, resolution = 4L)
+\S4method{transposeImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, resolution = 4L)
 
 \S4method{mirrorImg}{SpatialFeatureExperiment}(
   x,
-  sample_id = NULL,
+  sample_id = 1L,
   image_id = NULL,
   direction = "vertical",
   resolution = 4L
@@ -31,17 +31,20 @@
 
 \S4method{rotateImg}{SpatialFeatureExperiment}(
   x,
-  sample_id = NULL,
+  sample_id = 1L,
   image_id = NULL,
   degrees,
   resolution = 4L,
   maxcell = 1e+07
 )
 
-\S4method{translateImg}{SpatialFeatureExperiment}(x, sample_id = NULL, image_id = NULL, v)
+\S4method{translateImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, v)
 }
 \arguments{
 \item{x}{A SFE object.}
+
+\item{imageSource}{a character string specifying an image file name 
+(.png, .jpg or .tif) or URL to source the image from}
 
 \item{sample_id}{Which sample the image is associated with. Use
 \code{\link{sampleIDs}} to get sample IDs present in the SFE object.}
@@ -70,6 +73,9 @@ number means clockwise and negative number means counterclockwise.}
 memory. The default 1e7 is chosen because this is the approximate number of
 pixels in the medium resolution image at \code{resolution = 4L} in Xenium
 OME-TIFF to make different methods of this function consistent.}
+
+\item{v}{A numeric vector of length 2 specifying the vector in the xy plane
+to translate the SFE object.}
 }
 \description{
 Generics of these functions are defined in \code{SpatialExperiment}, except

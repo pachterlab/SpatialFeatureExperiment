@@ -50,37 +50,37 @@ rowGraphs(x, sample_id = "all", name = "all") <- value
 
 annotGraphs(x, sample_id = "all", name = "all") <- value
 
-\S4method{spatialGraphNames}{SpatialFeatureExperiment,numeric}(x, MARGIN, sample_id = NULL)
+\S4method{spatialGraphNames}{SpatialFeatureExperiment,numeric}(x, MARGIN, sample_id = 1L)
 
-\S4method{spatialGraphNames}{SpatialFeatureExperiment,numeric,ANY,character}(x, MARGIN, sample_id = NULL) <- value
+\S4method{spatialGraphNames}{SpatialFeatureExperiment,numeric,ANY,character}(x, MARGIN, sample_id = 1L) <- value
 
-colGraphNames(x, sample_id = NULL)
+colGraphNames(x, sample_id = 1L)
 
-rowGraphNames(x, sample_id = NULL)
+rowGraphNames(x, sample_id = 1L)
 
-annotGraphNames(x, sample_id = NULL)
+annotGraphNames(x, sample_id = 1L)
 
-colGraphNames(x, sample_id = NULL) <- value
+colGraphNames(x, sample_id = 1L) <- value
 
-rowGraphNames(x, sample_id = NULL) <- value
+rowGraphNames(x, sample_id = 1L) <- value
 
-annotGraphNames(x, sample_id = NULL) <- value
+annotGraphNames(x, sample_id = 1L) <- value
 
-\S4method{spatialGraph}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = NULL)
+\S4method{spatialGraph}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = 1L)
 
-colGraph(x, type = 1L, sample_id = NULL)
+colGraph(x, type = 1L, sample_id = 1L)
 
-rowGraph(x, type = 1L, sample_id = NULL)
+rowGraph(x, type = 1L, sample_id = 1L)
 
-annotGraph(x, type = 1L, sample_id = NULL)
+annotGraph(x, type = 1L, sample_id = 1L)
 
 \S4method{spatialGraph}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = NULL) <- value
 
-colGraph(x, type = 1L, sample_id = NULL) <- value
+colGraph(x, type = 1L, sample_id = 1L) <- value
 
-rowGraph(x, type = 1L, sample_id = NULL) <- value
+rowGraph(x, type = 1L, sample_id = 1L) <- value
 
-annotGraph(x, type = 1L, sample_id = NULL) <- value
+annotGraph(x, type = 1L, sample_id = 1L) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}

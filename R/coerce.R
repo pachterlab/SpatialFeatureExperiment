@@ -81,7 +81,11 @@ setMethod(
     function(x, colGeometries = NULL, rowGeometries = NULL,
              annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
              annotGeometryType = "POLYGON",
-             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL,
+             BPPARAM = deprecated()) {
+        if (is_present(BPPARAM)) {
+            deprecate_warn("1.6.0", "toSpatialFeatureExperiment(BPPARAM = )")
+        }
         if (is.null(colGeometries)) {
             colGeometries <- int_colData(x)$colGeometries
         }
@@ -117,7 +121,11 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                    image_id=NULL,
                    loadImage=TRUE,
                    imgData=NULL,
-                   unit = NULL) {
+                   unit = NULL,
+                   BPPARAM = deprecated()) {
+              if (is_present(BPPARAM)) {
+                  deprecate_warn("1.6.0", "toSpatialFeatureExperiment(BPPARAM = )")
+              }
               spe <- toSpatialExperiment(x, sample_id=sample_id,
                                          spatialCoordsNames=spatialCoordsNames,
                                          spatialCoords=spatialCoords,

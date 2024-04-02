@@ -26,4 +26,10 @@ SpatialExperiment::imgData
 SpatialExperiment::rmvImg
 
 #' @export
-SpatialExperiment::imgRaster
+SingleCellExperiment::counts
+#' @importFrom SingleCellExperiment logcounts reducedDim
+#' @export
+SingleCellExperiment::logcounts
+
+#' @export
+SingleCellExperiment::reducedDim

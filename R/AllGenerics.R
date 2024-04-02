@@ -6,14 +6,14 @@
 #' @export
 setGeneric(
     "dimGeometry",
-    function(x, type = 1L, MARGIN, sample_id = NULL,
+    function(x, type = 1L, MARGIN, sample_id = 1L,
              withDimnames = TRUE) {
         standardGeneric("dimGeometry")
     }
 )
 
 #' @export
-setGeneric("dimGeometry<-", function(x, type = 1L, MARGIN, sample_id = NULL,
+setGeneric("dimGeometry<-", function(x, type = 1L, MARGIN, sample_id = 1L,
                                      withDimnames = TRUE, translate = TRUE, ...,
                                      value) {
     standardGeneric("dimGeometry<-")
@@ -51,13 +51,13 @@ setGeneric(
 #' @export
 setGeneric(
     "annotGeometry",
-    function(x, type = 1L, sample_id = NULL) standardGeneric("annotGeometry")
+    function(x, type = 1L, sample_id = 1L) standardGeneric("annotGeometry")
 )
 
 #' @export
 setGeneric(
     "annotGeometry<-",
-    function(x, type = 1L, sample_id = NULL, translate = TRUE, ..., value)
+    function(x, type = 1L, sample_id = 1L, translate = TRUE, ..., value)
         standardGeneric("annotGeometry<-")
 )
 
@@ -111,7 +111,7 @@ setGeneric(
 #' @export
 setGeneric(
     "spatialGraph",
-    function(x, type = 1L, MARGIN, sample_id = NULL) {
+    function(x, type = 1L, MARGIN, sample_id = 1L) {
         standardGeneric("spatialGraph")
     }
 )
@@ -119,7 +119,7 @@ setGeneric(
 #' @export
 setGeneric(
     "spatialGraph<-",
-    function(x, type = 1L, MARGIN, sample_id = NULL, value) {
+    function(x, type = 1L, MARGIN, sample_id = 1L, value) {
         standardGeneric("spatialGraph<-")
     }
 )
@@ -127,7 +127,7 @@ setGeneric(
 #' @export
 setGeneric(
     "spatialGraphNames",
-    function(x, MARGIN, sample_id = NULL) {
+    function(x, MARGIN, sample_id = 1L) {
         standardGeneric("spatialGraphNames")
     }
 )
@@ -135,7 +135,7 @@ setGeneric(
 #' @export
 setGeneric(
     "spatialGraphNames<-",
-    function(x, MARGIN, sample_id = NULL, value) {
+    function(x, MARGIN, sample_id = 1L, value) {
         standardGeneric("spatialGraphNames<-")
     }
 )
@@ -177,7 +177,7 @@ setGeneric(
 setGeneric(
     "localResult",
     function(x, type = 1L, feature, colGeometryName = NULL,
-             annotGeometryName = NULL, sample_id = NULL,
+             annotGeometryName = NULL, sample_id = 1L,
              withDimnames = TRUE, simplify = TRUE, swap_rownames = NULL) {
         standardGeneric("localResult")
     }
@@ -187,7 +187,7 @@ setGeneric(
 setGeneric(
     "localResult<-",
     function(x, type = 1L, feature, colGeometryName = NULL,
-             annotGeometryName = NULL, sample_id = NULL, swap_rownames = NULL,
+             annotGeometryName = NULL, sample_id = 1L, swap_rownames = NULL,
              withDimnames = TRUE, value) {
         standardGeneric("localResult<-")
     }
@@ -246,5 +246,4 @@ setGeneric("isFull", function(x) standardGeneric("isFull"))
 #' @export
 setGeneric("origin", function(x) standardGeneric("origin"))
 
-#' @export
 setGeneric("origin<-", function(x, value) standardGeneric("origin<-"))

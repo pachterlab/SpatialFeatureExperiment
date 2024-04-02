@@ -9,7 +9,7 @@ annotPred(
   sfe,
   colGeometryName = 1L,
   annotGeometryName = 1L,
-  sample_id = NULL,
+  sample_id = "all",
   pred = st_intersects
 )
 
@@ -17,7 +17,7 @@ annotNPred(
   sfe,
   colGeometryName = 1L,
   annotGeometryName = 1L,
-  sample_id = NULL,
+  sample_id = "all",
   pred = st_intersects
 )
 }

@@ -43,7 +43,7 @@ Imports:
     utils
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.1
 Collate: 
     'AllGenerics.R'
     'utils.R'
@@ -54,6 +54,7 @@ Collate:
     'data.R'
     'df2sf.R'
     'dimGeometries.R'
+    'featureData.R'
     'geometry_operation.R'
     'graph_wrappers.R'
     'image.R'
@@ -74,10 +75,11 @@ Suggests:
     RBioFormats,
     rhdf5,
     rmarkdown,
-    sfarrow,
     SFEData,
     testthat (>= 3.0.0),
+    Voyager,
     xml2
+SystemRequirements: GDAL (>= 3.8.0)
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

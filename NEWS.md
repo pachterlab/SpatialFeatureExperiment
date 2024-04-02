@@ -1,3 +1,19 @@
+# Version 1.5.3
+* Changed defaults from sample_id = NULL to sample_id = 1L when dealing with 1 sample or "all" when dealing with multiple samples
+* dim method for BioFormatsImage that doesn't load the image into memory
+
+# Version 1.5.2 (03/04/2024)
+* Added readXenium (for XOA v1)
+* Added BioFormatsImage and EBImage classes to deal with Xenium OME-TIFF
+* Conversion bewteen SpatRasterImage, BioFormatsImage, and EBImage
+* Overhaul of geometry operation functions for images and SFE objects for the new image classes, including bbox, crop, and affine transforms
+
+# Version 1.5.1 (02/02/2024)
+* Added support for rowGeometry and transcript spots
+* Reformat transcript spot files from Vizgen and CosMX
+* Improved readVizgen for transcript spots
+* Added readCosMX
+
 # Version 1.3.1 (09/22/2023)
 * Refactored to remove "missing" methods for geometries, graphs, and local results.
 * Changed defaults from sample_id = NULL to sample_id = "all" unless only one sample can be specified.

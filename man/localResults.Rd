@@ -71,7 +71,7 @@
   feature,
   colGeometryName = NULL,
   annotGeometryName = NULL,
-  sample_id = NULL,
+  sample_id = 1L,
   withDimnames = TRUE,
   simplify = TRUE,
   swap_rownames = NULL
@@ -83,7 +83,7 @@
   feature,
   colGeometryName = NULL,
   annotGeometryName = NULL,
-  sample_id = NULL,
+  sample_id = 1L,
   withDimnames = TRUE
 ) <- value
 }

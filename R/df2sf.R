@@ -215,10 +215,10 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                       "POINT", "LINESTRING", "POLYGON",
                       "MULTIPOINT", "MULTILINESTRING",
                       "MULTIPOLYGON"
-                  ), BPPARAM = deprecated(),
+                  ),
                   group_col = "group",
                   id_col = "ID",
-                  subid_col = "subID") {
+                  subid_col = "subID", BPPARAM = deprecated()) {
     if (is_present(BPPARAM)) {
         deprecate_warn("1.6.0", "df2sf(BPPARAM = )",
                        details = "The sfheaders package is now used instead for much better performance")
@@ -289,7 +289,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
         MoreArgs = list(
             spatialCoordsNames = spatialCoordsNames,
             spotDiameter = spotDiameter,
-            group_col, id_col, subid_col
+            group_col = group_col, id_col = id_col, subid_col = subid_col
         ),
         SIMPLIFY = FALSE
     )

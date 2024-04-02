@@ -3,6 +3,7 @@
 \docType{class}
 \name{BioFormatsImage}
 \alias{BioFormatsImage}
+\alias{BioFormatsImage-class}
 \title{On disk representation of BioFormats images in SFE object}
 \usage{
 BioFormatsImage(path, ext = NULL, isFull = TRUE, origin = c(0, 0))
@@ -26,22 +27,25 @@ extent. If \code{ext = NULL} so it will be inferred from metadata then
 A \code{BioFormatsImage} object.
 }
 \description{
-At present, the \code{BioFormatsImage} is designed for OME-TIFF from Xenium
-and has not been tested on other formats that can be read with
-\code{BioFormats}. The image is not loaded into memory, and when it is, the
-the \code{BioFormatsImage} object is converted into \code{\link{EBImage}}
-because the loaded image is of a class that inherits from
-\code{\link{EBImage::Image}}. The \code{\link{EBImage}} class is a thin
-wrapper inheriting from \code{VirtualSpatialImage} so it's compatible with
-\code{SpatialExperiment} from which SFE is derived.
+`r lifecycle::badge("experimental")` At present, the \code{BioFormatsImage}
+is designed for OME-TIFF from Xenium and has not been tested on other formats
+that can be read with \code{BioFormats}. The image is not loaded into memory,
+and when it is, the the \code{BioFormatsImage} object is converted into
+\code{\link{EBImage}} because the loaded image is of a class that inherits
+from \code{\link{Image}}. The \code{\link{EBImage}} class is a thin wrapper
+inheriting from \code{VirtualSpatialImage} so it's compatible with
+\code{SpatialExperiment} from which SFE is derived. This class might
+drastically change as it matures, say to accommodate other formats supported
+by \code{BioFormats} and to store the transformation matrix rather than
+loading image into memory upon transform.
 }
 \details{
 Spatial extent is inferred from OME-TIFF metadata if not specified. Physical
 pixel size from the metadata is used to make the extent in micron space. If
 physical pixel size is absent from metadata, then the extent will be in pixel
 space, which might mean that the image will not align with the geometries
-because often the geometry coordinates are in microns, so a warning is
-issued in this case.
+because often the geometry coordinates are in microns, so a warning is issued
+in this case.
 }
 \seealso{
 [isFull()], [origin()]

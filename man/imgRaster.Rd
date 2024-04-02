@@ -2,16 +2,10 @@
 % Please edit documentation in R/image.R
 \name{imgRaster}
 \alias{imgRaster}
+\alias{imgRaster,SpatRasterImage-method}
 \alias{imgRaster,BioFormatsImage-method}
 \alias{imgRaster,EBImage-method}
 \title{Get the image from *Image class}
-\usage{
-\S4method{imgRaster}{SpatRasterImage}(x)
-
-\S4method{imgRaster}{BioFormatsImage}(x, resolution = 4L)
-
-\S4method{imgRaster}{EBImage}(x)
-}
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
 

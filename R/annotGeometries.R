@@ -163,13 +163,13 @@ setReplaceMethod("annotGeometry", "SpatialFeatureExperiment", .ag_r)
 
 #' @rdname annotGeometries
 #' @export
-tissueBoundary <- function(x, sample_id = NULL) {
+tissueBoundary <- function(x, sample_id = 1L) {
     annotGeometry(x, "tissueBoundary", sample_id)
 }
 
 #' @rdname annotGeometries
 #' @export
-`tissueBoundary<-` <- function(x, sample_id = NULL, translate = TRUE, ...,
+`tissueBoundary<-` <- function(x, sample_id = 1L, translate = TRUE, ...,
                                value) {
     annotGeometry(x, "tissueBoundary", sample_id, translate, ...) <- value
     x

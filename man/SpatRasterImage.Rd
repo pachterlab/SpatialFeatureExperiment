@@ -9,7 +9,7 @@
 SpatRasterImage(img)
 }
 \arguments{
-\item{img}{A \code{\link{SpatRaster}} or \code{\link{PackedSpatRaster}} object.}
+\item{img}{A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.}
 }
 \value{
 Methods for \code{SpatRasterImage} return a modified

@@ -19,12 +19,12 @@
 \alias{nucSeg<-}
 \title{Column geometry getters and setters}
 \usage{
-colGeometry(x, type = 1L, sample_id = NULL, withDimnames = TRUE)
+colGeometry(x, type = 1L, sample_id = 1L, withDimnames = TRUE)
 
 colGeometry(
   x,
   type = 1L,
-  sample_id = NULL,
+  sample_id = 1L,
   withDimnames = TRUE,
   translate = TRUE
 ) <- value
@@ -37,25 +37,25 @@ colGeometryNames(x)
 
 colGeometryNames(x) <- value
 
-spotPoly(x, sample_id = NULL, withDimnames = TRUE)
+spotPoly(x, sample_id = 1L, withDimnames = TRUE)
 
-spotPoly(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
+spotPoly(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
 
-centroids(x, sample_id = NULL, withDimnames = TRUE)
+centroids(x, sample_id = 1L, withDimnames = TRUE)
 
-centroids(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
+centroids(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
 
-ROIPoly(x, sample_id = NULL, withDimnames = TRUE)
+ROIPoly(x, sample_id = 1L, withDimnames = TRUE)
 
-ROIPoly(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
+ROIPoly(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
 
-cellSeg(x, sample_id = NULL, withDimnames = TRUE)
+cellSeg(x, sample_id = 1L, withDimnames = TRUE)
 
-cellSeg(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
+cellSeg(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
 
-nucSeg(x, sample_id = NULL, withDimnames = TRUE)
+nucSeg(x, sample_id = 1L, withDimnames = TRUE)
 
-nucSeg(x, sample_id = NULL, withDimnames = TRUE, translate = TRUE) <- value
+nucSeg(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}

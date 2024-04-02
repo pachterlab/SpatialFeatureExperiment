@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{transposeImg}
 \alias{transposeImg}
+\alias{transposeImg,SpatRasterImage-method}
 \alias{transposeImg,BioFormatsImage-method}
 \alias{transposeImg,EBImage-method}
 \title{Transpose images}

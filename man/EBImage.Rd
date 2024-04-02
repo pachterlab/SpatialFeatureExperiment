@@ -3,13 +3,14 @@
 \docType{class}
 \name{EBImage}
 \alias{EBImage}
+\alias{EBImage-class}
 \title{Representation of EBImage images in SFE objects}
 \usage{
 EBImage(img, ext = NULL)
 }
 \arguments{
 \item{img}{An \code{Image} object or anything that inherits from \code{Image}
-such as \code{\link{RBioFormats::AnnotatedImage}}.}
+such as \code{AnnotatedImage} in \code{RBioFormats}.}
 
 \item{ext}{Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
 microns indicating the spatial extent covered by the image. If \code{NULL},
@@ -20,11 +21,11 @@ size and the number of pixels.}
 An \code{EBImage} object.
 }
 \description{
-This is a thin wrapper around the \code{\link{EBImage::Image}} class so it
-inherits from \code{VirtualSpatialImage} to be compatible with
-\code{SpatialExperiment} from which SFE inherits. An \code{ext} field is
-added to specify the spatial extent of the image in microns to facilitate
-geometric operations on the SFE object (including the images) and plotting
-with \code{Voyager}.
+This is a thin wrapper around the \code{\link{Image}} class in the
+\code{EBImage package} so it inherits from \code{VirtualSpatialImage} to be
+compatible with \code{SpatialExperiment} from which SFE inherits. An
+\code{ext} field is added to specify the spatial extent of the image in
+microns to facilitate geometric operations on the SFE object (including the
+images) and plotting with \code{Voyager}.
 }
 \concept{Image and raster}

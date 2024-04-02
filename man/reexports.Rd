@@ -12,7 +12,9 @@
 \alias{getImg}
 \alias{imgData}
 \alias{rmvImg}
-\alias{imgRaster}
+\alias{counts}
+\alias{logcounts}
+\alias{reducedDim}
 \title{Objects exported from other packages}
 \keyword{internal}
 \description{
@@ -20,7 +22,9 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{SpatialExperiment}{\code{\link[SpatialExperiment:imgData-methods]{getImg}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{imgData}}, \code{\link[SpatialExperiment:SpatialImage-class]{imgRaster}}, \code{\link[SpatialExperiment:imgData-methods]{rmvImg}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{spatialCoords}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{spatialCoords<-}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{spatialCoordsNames}}}
+  \item{SingleCellExperiment}{\code{\link[SingleCellExperiment:assays]{counts}}, \code{\link[SingleCellExperiment:assays]{logcounts}}, \code{\link[SingleCellExperiment:reducedDims]{reducedDim}}}
+
+  \item{SpatialExperiment}{\code{\link[SpatialExperiment:imgData-methods]{getImg}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{imgData}}, \code{\link[SpatialExperiment:imgData-methods]{rmvImg}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{spatialCoords}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{spatialCoords<-}}, \code{\link[SpatialExperiment:SpatialExperiment-methods]{spatialCoordsNames}}}
 
   \item{SummarizedExperiment}{\code{\link[SummarizedExperiment:SummarizedExperiment-class]{colData}}, \code{\link[SummarizedExperiment:SummarizedExperiment-class]{colData<-}}, \code{\link[SummarizedExperiment:SummarizedExperiment-class]{rowData}}}
 }}

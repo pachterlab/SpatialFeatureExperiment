@@ -10,7 +10,7 @@
 #' large image into memory; rather the image will be downsampled and the
 #' downsampled version is plotted.
 #'
-#' @param img A \code{\link{SpatRaster}} or \code{\link{PackedSpatRaster}} object.
+#' @param img A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.
 #' @note If the image is already a GeoTIFF file that already has an extent, then
 #'   the extent associated with the file will be honored and the \code{extent}
 #'   and \code{scale_fct} arguments are ignored. Also, when the image is
@@ -56,25 +56,42 @@ SpatRasterImage <- function(img) {
     new("SpatRasterImage", image = img)
 }
 
+setMethod("show", "SpatRasterImage", function(object) {
+    d <- dim(object)
+    dim <- paste(d[c(2,1,3)], collapse=" x ")
+    str <- paste0(dim, " (width x height x channels) ", class(object), "\n")
+    cat(str)
+    str <- imgSource(object)
+    if (!is.na(str)) {
+        if (nchar(str) > 80) {
+            str <- strwrap(str, width = 80)
+        }
+        cat("imgSource():\n ", str, "\n")
+    }
+})
+
 # BioFormatsImage====================
 
 #' On disk representation of BioFormats images in SFE object
 #'
-#' At present, the \code{BioFormatsImage} is designed for OME-TIFF from Xenium
-#' and has not been tested on other formats that can be read with
-#' \code{BioFormats}. The image is not loaded into memory, and when it is, the
-#' the \code{BioFormatsImage} object is converted into \code{\link{EBImage}}
-#' because the loaded image is of a class that inherits from
-#' \code{\link{EBImage::Image}}. The \code{\link{EBImage}} class is a thin
-#' wrapper inheriting from \code{VirtualSpatialImage} so it's compatible with
-#' \code{SpatialExperiment} from which SFE is derived.
+#' `r lifecycle::badge("experimental")` At present, the \code{BioFormatsImage}
+#' is designed for OME-TIFF from Xenium and has not been tested on other formats
+#' that can be read with \code{BioFormats}. The image is not loaded into memory,
+#' and when it is, the the \code{BioFormatsImage} object is converted into
+#' \code{\link{EBImage}} because the loaded image is of a class that inherits
+#' from \code{\link{Image}}. The \code{\link{EBImage}} class is a thin wrapper
+#' inheriting from \code{VirtualSpatialImage} so it's compatible with
+#' \code{SpatialExperiment} from which SFE is derived. This class might
+#' drastically change as it matures, say to accommodate other formats supported
+#' by \code{BioFormats} and to store the transformation matrix rather than
+#' loading image into memory upon transform.
 #'
 #' Spatial extent is inferred from OME-TIFF metadata if not specified. Physical
 #' pixel size from the metadata is used to make the extent in micron space. If
 #' physical pixel size is absent from metadata, then the extent will be in pixel
 #' space, which might mean that the image will not align with the geometries
-#' because often the geometry coordinates are in microns, so a warning is
-#' issued in this case.
+#' because often the geometry coordinates are in microns, so a warning is issued
+#' in this case.
 #'
 #' @param path Path to an OME-TIFF image file.
 #' @param ext Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
@@ -88,9 +105,10 @@ SpatRasterImage <- function(img) {
 #'   \code{c(0,0)}. This is shifted when the image is translated.
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
+#' @aliases BioFormatsImage-class
 #' @concept Image and raster
 #' @seealso [isFull()], [origin()]
-#' @export
+#' @exportClass BioFormatsImage
 setClass("BioFormatsImage", contains = "VirtualSpatialImage",
          slots = c(path = "character", ext = "numeric", isFull = "logical",
                    origin = "numeric"))
@@ -108,11 +126,8 @@ setValidity("BioFormatsImage", function(object) {
 })
 
 .get_fullres_scale_factor <- function(file) {
-    check_installed(c("xml2", "RBioFormats"))
-    xml_meta <- RBioFormats::read.omexml(file) |>
-        xml2::read_xml() |> xml2::as_list()
-    psx <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeX") |> as.numeric()
-    psy <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeY") |> as.numeric()
+    ps <- .get_pixel_size(file)
+    psx <- ps[1]; psy <- ps[2]
     if (!length(psx) && !length(psy)) {
         warning("Physical pixel size absent from image metadata, using pixel space.")
         sfx <- sfy <- 1
@@ -141,6 +156,20 @@ setValidity("BioFormatsImage", function(object) {
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
 
+setMethod("show", "BioFormatsImage", function(object) {
+    d <- dim(object)
+    dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
+    str <- paste0(dim, ", ", class(object), "\n")
+    cat(str)
+    str <- imgSource(object)
+    if (!is.na(str)) {
+        if (nchar(str) > 80) {
+            str <- strwrap(str, width = 80)
+        }
+        cat("imgSource():\n ", str, "\n")
+    }
+})
+
 #' @rdname BioFormatsImage
 #' @export
 BioFormatsImage <- function(path, ext = NULL, isFull = TRUE,
@@ -161,7 +190,7 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE,
 #' @return For \code{isFull}: Logical scalar indicating whether the extent is
 #'   the full extent. For \code{origin}: Numeric vector of length 2.
 #' @name BioFormatsImage-getters
-#' @aliases isFull, origin
+#' @aliases isFull origin
 NULL
 
 #' @rdname BioFormatsImage-getters
@@ -181,21 +210,22 @@ setReplaceMethod("origin", "BioFormatsImage", function(x, value) {
 
 #' Representation of EBImage images in SFE objects
 #'
-#' This is a thin wrapper around the \code{\link{EBImage::Image}} class so it
-#' inherits from \code{VirtualSpatialImage} to be compatible with
-#' \code{SpatialExperiment} from which SFE inherits. An \code{ext} field is
-#' added to specify the spatial extent of the image in microns to facilitate
-#' geometric operations on the SFE object (including the images) and plotting
-#' with \code{Voyager}.
+#' This is a thin wrapper around the \code{\link{Image}} class in the
+#' \code{EBImage package} so it inherits from \code{VirtualSpatialImage} to be
+#' compatible with \code{SpatialExperiment} from which SFE inherits. An
+#' \code{ext} field is added to specify the spatial extent of the image in
+#' microns to facilitate geometric operations on the SFE object (including the
+#' images) and plotting with \code{Voyager}.
 #'
 #' @inheritParams BioFormatsImage
 #' @param img An \code{Image} object or anything that inherits from \code{Image}
-#'   such as \code{\link{RBioFormats::AnnotatedImage}}.
+#'   such as \code{AnnotatedImage} in \code{RBioFormats}.
 #' @return An \code{EBImage} object.
 #' @importClassesFrom EBImage Image
 #' @importFrom EBImage Image
 #' @name EBImage
-#' @export
+#' @aliases EBImage-class
+#' @exportClass EBImage
 #' @concept Image and raster
 setClass("EBImage", contains = "VirtualSpatialImage",
          slots = c(image = "Image", ext = "numeric"))
@@ -203,6 +233,23 @@ setClass("EBImage", contains = "VirtualSpatialImage",
 setValidity("EBImage", function(object) {
     out <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
     if (length(out)) return(out) else TRUE
+})
+
+setMethod("show", "EBImage", function(object) {
+    d <- dim(object)
+    dim <- paste(dim(object), collapse=" x ")
+    if (length(d) == 2L)
+        str <- paste0(dim, " (width x height) ", class(object), "\n")
+    else if (length(d) == 3L)
+        str <- paste0(dim, " (width x height x channels) ", class(object), "\n")
+    cat(str)
+    str <- imgSource(object)
+    if (!is.na(str)) {
+        if (nchar(str) > 80) {
+            str <- strwrap(str, width = 80)
+        }
+        cat("imgSource():\n ", str, "\n")
+    }
 })
 
 #' @rdname EBImage
@@ -219,7 +266,7 @@ EBImage <- function(img, ext = NULL) {
 }
 
 # Coercion of Image classes===================
-.toEBImage <- function(x, resolution = 4L) {
+.toEBImage <- function(x, resolution = 4L, channel = NULL) {
     check_installed("RBioFormats")
     # PhysicalSizeX seems to be a standard field
     if (length(resolution) != 1L ||
@@ -242,7 +289,27 @@ EBImage <- function(img, ext = NULL) {
     if ("sizeX" %in% names(cm)) {
         # Indicating there's only 1 series/resolution
         resolution <- 1L
-    } else meta <- coreMetadata(m, series = resolution)
+    } else {
+        if (resolution > RBioFormats::seriesCount(m))
+            stop("Resolution subscript out of bound")
+        meta <- coreMetadata(m, series = resolution)
+    }
+    # Extent of lower resolution may not be the same as the top one
+    # Need to more accurately infer extent
+    # Infer the scale factor, and then get the difference from the rounding
+    if (resolution > 1L) {
+        fct_x <- sizeX_full/meta$sizeX
+        fct_y <- sizeY_full/meta$sizeY
+        fct_round <- round(fct_x) # Should be the same for x and y
+        fctx2 <- fct_x/fct_round
+        fcty2 <- fct_y/fct_round
+        # The shift is worse when approaching the lower right corner
+        o <- origin(x)
+        o[1] <- o[1]/fctx2
+        o[2] <- o[2]/fcty2
+        origin(x) <- o
+    } else fctx2 <- fcty2 <- 1
+
     if (!isFull(x)) {
         bbox_use <- ext(x) |> .shift_ext(v = -origin(x))
         # Convert to full res pixel space
@@ -250,25 +317,34 @@ EBImage <- function(img, ext = NULL) {
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
         # Convert to lower res pixel space
         if (resolution > 1L) {
-            sfx2 <- meta$sizeX/sizeX_full
-            sfy2 <- meta$sizeY/sizeY_full
+            sfx2 <- meta$sizeX*fctx2/sizeX_full
+            sfy2 <- meta$sizeY*fcty2/sizeY_full
             bbox_use[x_nms] <- bbox_use[x_nms] * sfx2
             bbox_use[y_nms] <- bbox_use[y_nms] * sfy2
         } else sfx2 <- sfy2 <- 1
+        # ext(x) has origin at the bottom left, while image indices have
+        # origin at the top left. Need to convert the y indices.
+        ymin_px <- meta$sizeY - bbox_use["ymax"]
+        ymax_px <- meta$sizeY - bbox_use["ymin"]
+        bbox_img <- bbox_use
+        bbox_img["ymin"] <- ymin_px; bbox_img["ymax"] <- ymax_px
         bbox_use[min_nms] <- floor(bbox_use[min_nms])
         bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
+        bbox_img[min_nms] <- floor(bbox_img[min_nms])
+        bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
         # For instance, say xmin = 0. Then it should start with pixel 1.
-        subset_use <- list(x = seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L, by = 1L),
-                           y = seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L, by = 1L))
+        subset_use <- list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
+                           y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L),
+                           c = channel)
         # Extent should account for the pixels
         ext_use <- bbox_use
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
         ext_use[y_nms] <- ext_use[y_nms]/(sfy*sfy2)
     } else {
-        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
-        subset_use <- list()
+        ext_use <- c(xmin = 0, ymin = 0, xmax = sizeX_full/(sfx*fctx2),
+                     ymax = sizeY_full/(sfy*fcty2))
+        subset_use <- list(c = channel)
     }
-
     img <- RBioFormats::read.image(file = file,
                                    resolution = resolution,
                                    filter.metadata = TRUE,
@@ -290,7 +366,6 @@ EBImage <- function(img, ext = NULL) {
     return(r)
 }
 
-# TODO: refactor functions related to geom_spi_rgb in Voyager since some of the code got moved here
 .toEBImage2 <- function(x, maxcell = 1e7) {
     # 1e7 comes from the number of pixels in resolution = 4L in the ome.tiff
     x <- x@image
@@ -319,14 +394,22 @@ EBImage <- function(img, ext = NULL) {
 #'
 #' @param x Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.
 #' @param resolution Integer, which resolution in the \code{BioFormatsImage} to
-#' read and convert. Defaults to 4, which is a lower resolution. Ignored if only
-#' 1 resolution is present.
+#'   read and convert. Defaults to 4, which is a lower resolution. Ignored if
+#'   only 1 resolution is present.
+#' @param channel Integer vector to indicate channel(s) to read. If \code{NULL},
+#'   then all channels will be read.
+#' @param maxcell Maximum number of pixels when \code{SpatRasterImage} is read
+#'   into memory.
 #' @return A \code{EBImage} object. The image is loaded into memory.
 #' @name toEBImage
 #' @seealso toSpatRasterImage
 #' @aliases toEBImage
 #' @export
 #' @concept Image and raster
+NULL
+
+#' @rdname toEBImage
+#' @export
 setMethod("toEBImage", "BioFormatsImage", .toEBImage)
 
 #' @rdname toEBImage
@@ -345,12 +428,17 @@ setMethod("toEBImage", "SpatRasterImage", .toEBImage2)
 #'   name.
 #' @param save_geotiff Logical, whether to save the image to GeoTIFF file.
 #' @param x Either a \code{BioFormatsImage} or \code{EBIImage} object.
+#' @param file_out File to save the non-OME TIFF file for \code{SpatRaster}.
 #' @return A \code{SpatRasterImage} object
 #' @aliases toSpatRasterImage
 #' @name toSpatRasterImage
 #' @seealso toEBImage
 #' @export
 #' @concept Image and raster
+NULL
+
+#' @rdname toSpatRasterImage
+#' @export
 setMethod("toSpatRasterImage", "EBImage",
           function(x, save_geotiff = TRUE, file_out = "img.tiff", overwrite = FALSE) {
     m <- as.array(imgRaster(x))
@@ -361,7 +449,7 @@ setMethod("toSpatRasterImage", "EBImage",
     if (!file.exists(file_out) || overwrite) {
         message(">>> Saving image with `.tiff` (non OME-TIFF) format:",
                 paste0("\n", file_out))
-        writeRaster(r, file_out, overwrite = overwrite)
+        terra::writeRaster(r, file_out, overwrite = overwrite)
     }
     rast(file_out) |> SpatRasterImage()
 })
@@ -369,7 +457,8 @@ setMethod("toSpatRasterImage", "EBImage",
 #' @rdname toSpatRasterImage
 #' @export
 setMethod("toSpatRasterImage", "BioFormatsImage",
-          function(x, save_geotiff = TRUE, resolution = 4L, overwrite = FALSE) {
+          function(x, save_geotiff = TRUE, resolution = 4L, channel = NULL,
+                   overwrite = FALSE) {
     #check_installed("RBioFormats")
     # Only for OME-TIFF, haven't tested on other BioFormats
     img <- toEBImage(x, resolution)
@@ -436,7 +525,26 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
                      ext(x@image) <- value[c("xmin", "xmax", "ymin", "ymax")]
                      x
                  })
+# dim - BioFormatsImage----------
 
+#' Find dimension of BioFormatsImage
+#'
+#' This is different from other classes. The metadata is read where the
+#' dimensions in pixels can be found. The image itself is not read into memory
+#' here.
+#'
+#' @param x A \code{\link{BioFormatsImage}} object.
+#' @return An integer vector of length 5 showing the number of rows and columns
+#'   in the full resolution image. The 5 dimensions are in the order of XYCZT:
+#'   x, y, channel, z, and time.
+#' @export
+setMethod("dim", "BioFormatsImage", function(x) {
+    check_installed("RBioFormats")
+    coreMetadata <- RBioFormats::coreMetadata
+    meta <- RBioFormats::read.metadata(imgSource(x)) |>
+        coreMetadata(series = 1L)
+    c(X=meta$sizeX, Y=meta$sizeY, C=meta$sizeC, Z=meta$sizeZ, "T"=meta$sizeT)
+})
 
 #' Methods for handling image-related data
 #'
@@ -455,6 +563,7 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #'
 #' @inheritParams mirrorImg
 #' @inheritParams rotateImg
+#' @inheritParams SpatialExperiment::addImg
 #' @param x A SFE object.
 #' @param sample_id Which sample the image is associated with. Use
 #'   \code{\link{sampleIDs}} to get sample IDs present in the SFE object.
@@ -466,6 +575,8 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #' @param scale_fct Scale factor -- multiply pixel coordinates in full
 #'   resolution image by this scale factor should yield pixel coordinates in a
 #'   different resolution. \code{extent} takes precedence over \code{scale_fct}.
+#' @param v A numeric vector of length 2 specifying the vector in the xy plane
+#'   to translate the SFE object.
 #' @name SFE-image
 #' @concept Image and raster
 #' @family image methods
@@ -531,7 +642,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
         if (!.path_valid2(img))
             stop("img is not a valid file path.")
         e <- tryCatch(suppressWarnings(rast(img)), error = function(e) e)
-        if (is(e, "error")) {
+        if (is(e, "error") || grepl("\\.ome\\.tif", img)) {
             spi <- BioFormatsImage(img, extent)
             if (flip) spi <- mirrorImg(spi, direction = "vertical")
         } else {
@@ -550,7 +661,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
                 img <- w
                 flip <- FALSE
             }
-            if (flip) img <- terra::flip(img)
+            if (flip) img <- mirrorImg(img, direction = "vertical")
             spi <- new("SpatRasterImage", image = img)
         }
     }
@@ -565,14 +676,15 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("transposeImg", "SpatialFeatureExperiment",
-          function(x, sample_id = NULL, image_id = NULL,
-                   resolution = 4L) {
+          function(x, sample_id = 1L, image_id = NULL,
+                   resolution = 4L, filename = "") {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  new <- lapply(old, transposeImg, resolution = resolution)
+                  new <- lapply(old, transposeImg, resolution = resolution,
+                                filename = filename)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -581,15 +693,15 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("mirrorImg", "SpatialFeatureExperiment",
-          function(x, sample_id=NULL, image_id=NULL, direction = "vertical",
-                   resolution = 4L) {
+          function(x, sample_id = 1L, image_id = NULL, direction = "vertical",
+                   resolution = 4L, filename = "") {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
                   new <- lapply(old, mirrorImg, resolution = resolution,
-                                direction = direction)
+                                direction = direction, filename = filename)
                   imgData(x)$data[idx] <- new
               }
               return(x)
@@ -598,7 +710,7 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("rotateImg", "SpatialFeatureExperiment",
-          function(x, sample_id=NULL, image_id=NULL, degrees,
+          function(x, sample_id = 1L, image_id = NULL, degrees,
                    resolution = 4L, maxcell = 1e7) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
@@ -616,7 +728,7 @@ setMethod("rotateImg", "SpatialFeatureExperiment",
 #' @rdname SFE-image
 #' @export
 setMethod("translateImg", "SpatialFeatureExperiment",
-          function(x, sample_id=NULL, image_id=NULL, v) {
+          function(x, sample_id = 1L, image_id = NULL, v) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
@@ -648,22 +760,26 @@ setMethod("translateImg", "SpatialFeatureExperiment",
 #'   \code{EBImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
 #'   image of the specified resolution will be read into memory as
 #'   \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
-#' @name imgRaster
 #' @export
+#' @name imgRaster
+#' @aliases imgRaster,SpatRasterImage-method
+#' imgRaster,BioFormatsImage-method
+#' imgRaster,EBImage-method
 #' @concept Image and raster
 #' @family image methods
+NULL
+
+#' @export
 setMethod("imgRaster", "SpatRasterImage", function(x) {
     if (is(x@image, "PackedSpatRaster")) unwrap(x@image)
     else x@image
 })
 
-#' @rdname imgRaster
 #' @export
 setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
     toEBImage(x, resolution) |> imgRaster()
 })
 
-#' @rdname imgRaster
 #' @export
 setMethod("imgRaster", "EBImage", function(x) x@image)
 
@@ -687,16 +803,24 @@ setMethod("imgRaster", "EBImage", function(x) x@image)
 #' @concept Image and raster
 #' @importFrom terra sources
 #' @family image methods
+NULL
+
+#' @rdname imgSource
+#' @export
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              sources(imgRaster(x))
+              out <- sources(imgRaster(x))
+              if (out == "") out <- NA_character_
+              return(out)
           })
 
 #' @rdname imgSource
 #' @export
 setMethod("imgSource", "BioFormatsImage", function(x) x@path)
 
+#' @rdname imgSource
+#' @export
 setMethod("imgSource", "EBImage", function(x) NA_character_)
 
 # Transpose-------------
@@ -707,6 +831,7 @@ setMethod("imgSource", "EBImage", function(x) NA_character_)
 #' the diagonal running from top left to bottom right.
 #'
 #' @inheritParams imgRaster
+#' @param filename Output file name for transformed SpatRaster.
 #' @param ... Ignored. It's there so different methods can all be passed to the
 #' same \code{lapply} in the method for SFE objects.
 #' @return For \code{SpatRasterImage} and \code{EBImage}, object of the same
@@ -715,12 +840,17 @@ setMethod("imgSource", "EBImage", function(x) NA_character_)
 #'   \code{EBImage}. For the extent: xmin and xmax are switched with ymin and
 #'   ymax.
 #' @name transposeImg
+#' @aliases transposeImg
 #' @concept Image and raster
 #' @export
 #' @family image methods
+NULL
+
+#' @rdname transposeImg
+#' @export
 setMethod("transposeImg", "SpatRasterImage",
-          function(x, ...) {
-              x@image <- terra::trans(imgRaster(x))
+          function(x, filename = "", ...) {
+              x@image <- terra::trans(imgRaster(x), filename = "")
               # What terra does to extent: swap xmin and xmax with ymin and ymax
               x
           })
@@ -728,7 +858,7 @@ setMethod("transposeImg", "SpatRasterImage",
 #' @rdname transposeImg
 #' @export
 setMethod("transposeImg", "BioFormatsImage",
-          function(x, resolution = 4L) {
+          function(x, resolution = 4L, ...) {
               x <- toEBImage(x, resolution)
               transposeImg(x)
           })
@@ -762,13 +892,19 @@ setMethod("transposeImg", "EBImage",
 #'   read into memory and then the \code{EBImage} method is called, returning
 #'   \code{EBImage}. The extent is not changed.
 #' @name mirrorImg
+#' @aliases mirrorImg
 #' @concept Image and raster
 #' @export
 #' @family image methods
+NULL
+
+#' @rdname mirrorImg
+#' @export
 setMethod("mirrorImg", "SpatRasterImage",
-          function(x, direction = c("vertical", "horizontal"), ...) {
+          function(x, direction = c("vertical", "horizontal"), filename = "", ...) {
               direction <- match.arg(direction)
-              x@image <- terra::flip(imgRaster(x), direction = direction)
+              x@image <- terra::flip(imgRaster(x), direction = direction,
+                                     filename = filename)
               x
           })
 
@@ -776,7 +912,7 @@ setMethod("mirrorImg", "SpatRasterImage",
 #' @export
 setMethod("mirrorImg", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
-                   resolution = 4L) {
+                   resolution = 4L, ...) {
               direction <- match.arg(direction)
               x <- toEBImage(x, resolution)
               mirrorImg(x, direction)
@@ -813,9 +949,14 @@ setMethod("mirrorImg", "EBImage",
 #'   \code{BioFormatsImage} will be loaded into memory as \code{EBImage} before
 #'   rotating.
 #' @name rotateImg
+#' @aliases rotateImg
 #' @concept Image and raster
 #' @export
 #' @family image methods
+NULL
+
+#' @rdname rotateImg
+#' @export
 setMethod("rotateImg", "SpatRasterImage", # Deal with rotating SpatRaster?
           function(x, degrees, maxcell = 1e7, ...) {
               # Not sure what exactly to do. I think convert to EBImage as well.
@@ -839,11 +980,6 @@ setMethod("rotateImg", "BioFormatsImage",
               x <- toEBImage(x, resolution)
               rotateImg(x, degrees)
           })
-
-bbox_center <- function(bbox) {
-    c(mean(bbox[c("xmin", "xmax")]),
-      mean(bbox[c("ymin", "ymax")]))
-}
 
 #' @rdname rotateImg
 #' @export
@@ -882,6 +1018,10 @@ setMethod("rotateImg", "EBImage",
 #' @name translateImg
 #' @aliases translateImg
 #' @importFrom terra shift
+#' @export
+NULL
+
+#' @rdname translateImg
 #' @export
 setMethod("translateImg", "SpatRasterImage", function(x, v) {
     img <- imgRaster(x)
@@ -922,8 +1062,13 @@ setMethod("translateImg", "EBImage", function(x, v) {
 #' @concept Image and raster
 #' @export
 #' @family image methods
-setMethod("cropImg", "SpatRasterImage", function(x, bbox) {
-    x@image <- terra::crop(x@image, bbox, snap = "out")
+NULL
+
+#' @rdname cropImg
+#' @export
+setMethod("cropImg", "SpatRasterImage", function(x, bbox, filename = "") {
+    # TODO: add argument filename to save the resulting file
+    x@image <- terra::crop(x@image, bbox, snap = "out", filename = filename)
     x
 })
 
