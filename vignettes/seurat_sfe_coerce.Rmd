@@ -1,0 +1,272 @@
+---
+title: "seurat_sfe"
+author: "Alik Huseynov"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setup
+```{r setup}
+# set R options, paths, object params, names, functions, etc..
+message("Setting options, paths and object params..")
+Sys.setenv(LANG = "en")
+
+#' To get metadata df from sfe object
+    #' @param object SFE or Seurat object
+    #' @noRd
+    getMeta <- function(object = NULL) {
+      if (class(object) == "Seurat") {
+        #is(object, "Seurat")
+        # return Seurat metadata
+        return(methods::slot(object, name = "meta.data"))
+        } else {
+        #return(colData(object) |> slot(name = "listData") |> as.data.frame.list())
+          return(colData(object) |> 
+         methods::slot(name = "listData") |> 
+         as.data.frame.list())
+        }
+    }
+    
+# set root dir
+dir_root <- "~/Desktop/github_projects/SpatialFeatureExperiment/"
+dir_use <- "~/Desktop/projects_dkfz/sfe_Voyager_dev/tests/SpatialFeatureExperiment/seurat_v4/inst/extdata/"
+
+# set BPPARAM
+BPPARAM <- BiocParallel::MulticoreParam(3,
+                                        tasks = 2L,
+                                        force.GC = FALSE,
+                                        progressbar = TRUE)
+```
+
+## Load R packages
+```{r load_libs}
+suppressPackageStartupMessages({
+    library(ggplot2)
+    library(SingleCellExperiment)
+    library(scater)
+    library(Seurat)
+    library(SeuratData)
+    library(dplyr)
+    library(magrittr)
+    library(scales)    
+    #library(spatstat)
+    library(patchwork)
+    library(Matrix)
+    library(SpatialExperiment)
+    library(Voyager)   
+    library(SpatialFeatureExperiment)
+    library(SFEData)
+    library(terra)
+    library(BiocParallel)
+    library(sf)    
+    })
+```
+
+## Load SFE objects
+Note, these object were generated a priori, object names with eg `*_vis` correspond to specific spatial tech
+```{r sfe_objs}
+sfe_vz <- readRDS(file.path(dir_use, "sfe_vz_toy.rds"))
+sfe_vz # Vizgen
+sfe_xen <- readRDS(file.path(dir_use, "sfe_xen_toy.rds"))
+sfe_xen # Xenium
+sfe_vis <- readRDS(file.path(dir_use, "sfe_vis_toy.rds"))
+sfe_vis # Visium
+```
+
+## Load Seurat objects
+```{r sfe_objs}
+obj_vz <- readRDS(file.path(dir_use, "seurat_vz_toy.rds"))
+obj_vz
+obj_xen <- readRDS(file.path(dir_use, "seurat_xen_toy.rds"))
+obj_xen
+obj_vis <- readRDS(file.path(dir_use, "seurat_vis_toy.rds"))
+obj_vis
+```
+
+## Load real SFE - Visium object
+```{r sfe_vis}
+sfe_ms <- McKellarMuscleData(dataset = "small")
+sfe_ms
+```
+
+## Load real Seurat - Visium object
+Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`) and added to `./inst/extdata/`. Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
+```{r seu_vis}
+obj_vis_2 <- readRDS(file.path(dir_root, "inst/extdata/seu_anterior1.rds"))
+obj_vis_2
+```
+
+```{r}
+SpatialFeaturePlot(obj_vis_2, features = rownames(obj_vis_2)[1])
+```
+
+## Source modifed `coerce.R`
+```{r source_coerce}
+source(file.path(dir_root, "/R/coerce.R"))
+.sc2cg <- SpatialFeatureExperiment:::.sc2cg
+.check_st_valid <- SpatialFeatureExperiment:::.check_st_valid
+.pixel2micron <- SpatialFeatureExperiment:::.pixel2micron
+.spe_to_sfe <- SpatialFeatureExperiment:::.spe_to_sfe
+
+```
+
+## Test converter from Seurat -> SFE - Visium
+```{r}
+# real Visium data
+sfe_conv_vis_2 <- 
+    .as_SeuratSFE(seurat_obj = obj_vis_2, 
+                 image_scalefactors = "lowres",
+                 unit_use = "micron",
+                 to_Seurat = FALSE,
+                 BPPARAM = BPPARAM)
+sfe_conv_vis_2
+getMeta(sfe_conv_vis_2) %>% str
+```
+
+## Check how it works with formally with new method - Visium
+```{r}
+# real Visium data
+sfe_conv_vis_2 <-
+  toSpatialFeatureExperiment(x = obj_vis_2, 
+                             image_scalefactors = "lowres",
+                             unit_use = "micron",
+                             BPPARAM = BPPARAM)
+sfe_conv_vis_2
+getMeta(sfe_conv_vis_2) %>% str
+```
+
+## Plot to test Visium converted Seurat to SFE objects
+```{r}
+plotSpatialFeature(sfe_conv_vis_2, exprs_values = "counts",
+                   features = rownames(sfe_conv_vis_2)[1], 
+                   size = 1, colGeometryName = "spotPoly", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   #scattermore = TRUE # will plot only centroids!
+                  ) & DarkTheme()
+```
+
+## Test converter from Seurat -> SFE - Xenium
+```{r}
+# slim down Xenium obj to keep only 1 Assay
+if (!exists("obj_xen_slim"))
+  obj_xen_slim <- DietSeurat(obj_xen, assays = "Xenium")
+#real data subset
+sfe_conv_xen <-
+  toSpatialFeatureExperiment(x = obj_xen_slim,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             unit_use = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_xen
+getMeta(sfe_conv_xen) %>% str
+getMeta(obj_xen) %>% str
+```
+
+## Plot to test image-based converted Seurat to SFE object - Xenium
+```{r}
+#options(repr.plot.height = 5, repr.plot.width = 10)
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   #scattermore = TRUE # will plot only centroids!
+                  ) & DarkTheme()
+```
+
+## Test converter from Seurat -> SFE - Vizgen
+```{r}
+# real data
+sfe_conv_vz <-
+  toSpatialFeatureExperiment(x = obj_vz,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             unit_use = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_vz
+getMeta(sfe_conv_vz) %>% str
+getMeta(obj_vz) %>% str
+```
+
+## Plot to test image-based converted Seurat to SFE object - Vizgen
+```{r}
+#options(repr.plot.height = 5, repr.plot.width = 10)
+plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
+                   features = rownames(sfe_conv_vz)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   #scattermore = TRUE # will plot only centroids!
+                  ) & DarkTheme()
+plotSpatialFeature(sfe_vz, exprs_values = "counts",
+                   features = rownames(sfe_vz)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   #scattermore = TRUE # will plot only centroids!
+                  ) & DarkTheme()
+```
+
+## TODO: Test when > 1 Assays are present in Seurat object - Xenium
+```{r}
+#real data subset
+sfe_conv_xen2 <-
+  toSpatialFeatureExperiment(x = obj_xen,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             unit_use = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_xen2
+getMeta(sfe_conv_xen2) %>% str
+getMeta(obj_xen) %>% str
+```
+
+## TODO: Test when > 1 Assays are present in Seurat object - Vizgen + SCT
+```{r}
+
+
+
+
+```
+
+
+## TODO: Test when multiple samples are present in Seurat object
+```{r}
+
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+## TODO quick analysis using Voyager
+```{r}
+# 
+
+
+
+```
+
+
+
+
+
+
+
+
