@@ -144,3 +144,33 @@ NULL
     }
     g
 }
+
+#' @rdname internal-Voyager
+#' @export
+.get_pixel_size <- function(file, resolution = 1L) {
+    check_installed(c("xml2", "RBioFormats"))
+    xml_meta <- RBioFormats::read.omexml(file) |>
+        xml2::read_xml() |> xml2::as_list()
+    psx <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeX") |> as.numeric()
+    psy <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeY") |> as.numeric()
+    if (resolution == 1L) return(c(psx, psy))
+    else {
+        m <- RBioFormats::read.metadata(file)
+        coreMetadata <- RBioFormats::coreMetadata
+        meta <- coreMetadata(m, series = resolution)
+        meta1 <- coreMetadata(m, series = 1L)
+        sizeX_full <- meta1$sizeX
+        sizeY_full <- meta1$sizeY
+        fct_x <- sizeX_full/meta$sizeX
+        fct_y <- sizeY_full/meta$sizeY
+        fct_round <- round(fct_x) # Should be the same for x and y
+        fctx2 <- fct_x/fct_round
+        fcty2 <- fct_y/fct_round
+
+        sfx2 <- meta$sizeX*fctx2/sizeX_full # Multiply to get from full res pixel to low res pixel
+        sfy2 <- meta$sizeY*fcty2/sizeY_full
+        psx_out <- psx/sfx2
+        psy_out <- psy/sfy2
+        return(c(psx_out, psy_out))
+    }
+}
