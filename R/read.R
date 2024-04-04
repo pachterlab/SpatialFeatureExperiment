@@ -293,7 +293,7 @@ read10xVisiumSFE <- function(samples = "",
 # sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
 .check_st_valid <- function(sf_df = NULL) {
-    invalid_inds <- lapply(sf_df, function(x) which(!st_is_valid(x)))
+    invalid_inds <- lapply(st_geometry(sf_df), function(x) which(!st_is_valid(x)))
     for (i in seq_along(sf_df)) {
         if (!length(invalid_inds[[i]])) next
         geoms <- st_geometry(sf_df[[i]])[invalid_inds[[i]]]
