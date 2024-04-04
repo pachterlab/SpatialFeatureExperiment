@@ -11,7 +11,7 @@ formatTxSpots(
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
   cell_col = "cell_id",
-  z = 3L,
+  z = "all",
   phred_col = "qv",
   min_phred = 20,
   split_col = NULL,
@@ -19,6 +19,7 @@ formatTxSpots(
   z_option = c("3d", "split"),
   flip = FALSE,
   file_out = NULL,
+  gene_select = NULL,
   BPPARAM = SerialParam(),
   return = TRUE
 )
@@ -27,9 +28,10 @@ addTxSpots(
   sfe,
   file,
   sample_id = 1L,
+  gene_select = NULL,
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
-  z = 3L,
+  z = "all",
   phred_col = "qv",
   min_phred = 20,
   split_col = NULL,
@@ -102,6 +104,11 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
+\item{gene_select}{Character vector of a subset of genes as appearing in the
+column \code{gene_col} and consistent with the row names of \code{sfe} to
+add. If \code{NULL}, then all genes that have transcript spots are added.
+Only relevant when reading data from formatted files on disk.}
+
 \item{BPPARAM}{\code{\link{BiocParallelParam}} object to specify
 multithreading to convert raw char in some parquet files to R objects. Not
 used otherwise.}
@@ -121,10 +128,10 @@ A sf data frame for vector geometries if `file_out` is not set.
   splitting by cell compartment or when `dest = "colGeometry"`, then a
   directory with the same name as `file_out` will be created (but without the
   extension) and the files are written to that directory with informative
-  names. `parquet` files that can be read with `sfarrow::st_read_parquet` is
-  written for vector geometries and `geotiff` files that can be read with
-  `terra::rast` is written for raster. When `return = FALSE`, the file name
-  or directory (when there're multiple files) is returned.
+  names. `parquet` files that can be read with `st_read` is written for
+  vector geometries and `geotiff` files that can be read with `terra::rast`
+  is written for raster. When `return = FALSE`, the file name or directory
+  (when there're multiple files) is returned.
 
 The `sf` data frame, or path to file where geometries are written if
   `return = FALSE`.

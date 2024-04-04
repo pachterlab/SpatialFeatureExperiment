@@ -9,14 +9,14 @@
 \usage{
 \S4method{rotateImg}{SpatRasterImage}(x, degrees, maxcell = 1e+07, ...)
 
-\S4method{rotateImg}{BioFormatsImage}(x, degrees, resolution = 4L, ...)
+\S4method{rotateImg}{BioFormatsImage}(x, degrees, ...)
 
 \S4method{rotateImg}{EBImage}(x, degrees, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
 
-\item{degrees}{How many degrees to rotate, must be multiples of 90. Positive
+\item{degrees}{How many degrees to rotate. Positive
 number means clockwise and negative number means counterclockwise.}
 
 \item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
@@ -25,10 +25,8 @@ pixels in the medium resolution image at \code{resolution = 4L} in Xenium
 OME-TIFF to make different methods of this function consistent.}
 
 \item{...}{Ignored. It's there so different methods can all be passed to the
-same \code{lapply} in the method for SFE objects.}
-
-\item{resolution}{Resolution to read in from OME-TIFF, defaults to 4, which
-is a medium resolution in Xenium.}
+same \code{lapply} in the method for SFE objects. Some methods have extra
+arguments.}
 }
 \value{
 An \code{EBImage} object. Both \code{SpatRasterImage} and

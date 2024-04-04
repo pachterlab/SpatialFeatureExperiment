@@ -19,14 +19,21 @@
   file = deprecated()
 )
 
-\S4method{transposeImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, resolution = 4L)
+\S4method{transposeImg}{SpatialFeatureExperiment}(
+  x,
+  sample_id = 1L,
+  image_id = NULL,
+  resolution = 4L,
+  filename = ""
+)
 
 \S4method{mirrorImg}{SpatialFeatureExperiment}(
   x,
   sample_id = 1L,
   image_id = NULL,
   direction = "vertical",
-  resolution = 4L
+  resolution = 4L,
+  filename = ""
 )
 
 \S4method{rotateImg}{SpatialFeatureExperiment}(
@@ -61,12 +68,11 @@ different resolution. \code{extent} takes precedence over \code{scale_fct}.}
 
 \item{file}{File from which to read the image.}
 
-\item{resolution}{Resolution to read in from OME-TIFF, defaults to 4, which
-is a medium resolution in Xenium.}
+\item{filename}{character. Output filename}
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 
-\item{degrees}{How many degrees to rotate, must be multiples of 90. Positive
+\item{degrees}{How many degrees to rotate. Positive
 number means clockwise and negative number means counterclockwise.}
 
 \item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into

@@ -46,5 +46,9 @@ memory. You can check if the image is loaded into memory with
 original file must be present at the path indicated by
 \code{\link{imgSource}} in order for any code using the image to work, which
 includes this function \code{ext}.
+
+For \code{BioFormatsImage}, internally only the pre-transform extent is
+stored. The \code{ext} getter will apply the transformation on the fly. The
+setter sets the pre-transformation extent.
 }
 \concept{Image and raster}

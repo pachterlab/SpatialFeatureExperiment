@@ -108,6 +108,13 @@ An SFE object. If reading segmentations, the cell or nuclei
 \description{
 This function reads the standard 10X Xenium output into an SFE object.
 }
+\note{
+Sometimes when reading images, you will see this error the first time:
+'java.lang.NullPointerException: Cannot invoke
+"loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
+"RBioFormats.reader" is null'. Rerun the code and it should work the second
+time.
+}
 \examples{
 # TODO: Example code for Xenium toy data
 

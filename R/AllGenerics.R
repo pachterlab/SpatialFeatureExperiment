@@ -227,7 +227,13 @@ setGeneric("unit", function(x) standardGeneric("unit"))
 setGeneric("transposeImg", function(x, ...) standardGeneric("transposeImg"))
 
 #' @export
-setGeneric("translateImg", function(x, ...) standardGeneric("translateImg"))
+setGeneric("translateImg", function(x, v, ...) standardGeneric("translateImg"))
+
+#' @export
+setGeneric("scaleImg", function(x, factor, ...) standardGeneric("scaleImg"))
+
+#' @export
+setGeneric("affineImg", function(x, M, v, ...) standardGeneric("affineImg"))
 
 #' @export
 setGeneric("cropImg", function(x, bbox, ...) standardGeneric("cropImg"))
@@ -247,3 +253,8 @@ setGeneric("isFull", function(x) standardGeneric("isFull"))
 setGeneric("origin", function(x) standardGeneric("origin"))
 
 setGeneric("origin<-", function(x, value) standardGeneric("origin<-"))
+
+#' @export
+setGeneric("transformation", function(x) standardGeneric("transformation"))
+
+setGeneric("transformation<-", function(x, value) standardGeneric("transformation<-"))

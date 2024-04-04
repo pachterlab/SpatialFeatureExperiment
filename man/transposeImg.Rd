@@ -7,20 +7,25 @@
 \alias{transposeImg,EBImage-method}
 \title{Transpose images}
 \usage{
-\S4method{transposeImg}{SpatRasterImage}(x, ...)
+\S4method{transposeImg}{SpatRasterImage}(x, filename = "", maxcell = NULL, ...)
 
-\S4method{transposeImg}{BioFormatsImage}(x, resolution = 4L)
+\S4method{transposeImg}{BioFormatsImage}(x, ...)
 
 \S4method{transposeImg}{EBImage}(x, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
 
-\item{...}{Ignored. It's there so different methods can all be passed to the
-same \code{lapply} in the method for SFE objects.}
+\item{filename}{Output file name for transformed SpatRaster.}
 
-\item{resolution}{Resolution to read in from OME-TIFF, defaults to 4, which
-is a medium resolution in Xenium.}
+\item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
+memory. The default 1e7 is chosen because this is the approximate number of
+pixels in the medium resolution image at \code{resolution = 4L} in Xenium
+OME-TIFF to make different methods of this function consistent.}
+
+\item{...}{Ignored. It's there so different methods can all be passed to the
+same \code{lapply} in the method for SFE objects. Some methods have extra
+arguments.}
 }
 \value{
 For \code{SpatRasterImage} and \code{EBImage}, object of the same

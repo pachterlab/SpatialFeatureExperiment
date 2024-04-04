@@ -22,8 +22,8 @@ directories \code{cell_boundaries} and \code{images}, and files
 \code{detected_transcripts.csv}.}
 
 \item{z}{Integer, z index to read, only affecting images read since cell
-segmentation for all z-planes are the same and cell centroids are only provided
-in 2 dimensions.}
+segmentation for all z-planes are the same and cell centroids are only
+provided in 2 dimensions.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also

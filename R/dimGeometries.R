@@ -390,6 +390,8 @@ nucSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' because they can have overlapping coordinate values.
 #'
 #' @inheritParams dimGeometries
+#' @param partial In setters, if a \code{rowGeometry} of the same name exists,
+#'   whether to only replace the rows present in \code{value}.
 #' @name rowGeometries
 #' @concept Column or row geometries
 #' @seealso [dimGeometries()], [colGeometries()]
@@ -491,9 +493,18 @@ rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 #' @rdname rowGeometries
 #' @export
 `rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
-                            translate = TRUE, value) {
+                            partial = FALSE, translate = TRUE, value) {
     type <- .check_rg_setter(type, x, sample_id)
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    if (partial && type %in% rowGeometryNames(x)) {
+        if (!withDimnames)
+            stop("withDimnames must be TRUE for partial replace")
+        existing <- rowGeometry(x, type, sample_id)
+        cols_use <- intersect(names(existing), names(value))
+        rows_use <- intersect(rownames(existing), rownames(value))
+        existing[rows_use, cols_use] <- value[rows_use, cols_use]
+        value <- existing
+    }
     `dimGeometry<-`(x, type,
         MARGIN = 1, sample_id = sample_id,
         withDimnames = withDimnames, translate = translate,
@@ -537,8 +548,9 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
 #' @rdname rowGeometries
 #' @export
 `rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
-                              translate = TRUE, value) {
+                              partial = FALSE, translate = TRUE, value) {
     if (!identical(sample_id, "all") && length(sampleIDs(x)) > 1L) {
+        sample_id0 <- sample_id
         sample_id <- .check_sample_id(x, sample_id, one = FALSE)
         existing <- rowGeometries(x, sample_id = "all")
         # Set to NULL
@@ -547,6 +559,14 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
             value <- existing[setdiff(names(existing), rgns_rm)]
         } else {
             names(value) <- .check_rg_multi_sample(names(value), sample_id)
+            partial_names <- intersect(names(value), names(existing))
+            if (partial && length(partial_names)) {
+                for (p in partial_names) {
+                    rowGeometry(x, type = p, sample_id = sample_id0,
+                                partial = TRUE, withDimnames = TRUE) <- value[[p]]
+                }
+                existing <- rowGeometries(x, sample_id = "all")
+            }
             existing <- existing[setdiff(names(existing), names(value))]
             value <- c(existing, value)
         }
@@ -579,8 +599,9 @@ txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname rowGeometries
 #' @export
-`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE, value) {
-    rowGeometry(x, "txSpots", sample_id, withDimnames, translate) <- value
+`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+                        partial = FALSE, translate = TRUE, value) {
+    rowGeometry(x, "txSpots", sample_id, withDimnames, partial, translate) <- value
     x
 }
 

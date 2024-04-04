@@ -7,9 +7,15 @@
 \alias{mirrorImg,EBImage-method}
 \title{Mirror/flip images}
 \usage{
-\S4method{mirrorImg}{SpatRasterImage}(x, direction = c("vertical", "horizontal"), ...)
+\S4method{mirrorImg}{SpatRasterImage}(
+  x,
+  direction = c("vertical", "horizontal"),
+  filename = "",
+  maxcell = NULL,
+  ...
+)
 
-\S4method{mirrorImg}{BioFormatsImage}(x, direction = c("vertical", "horizontal"), resolution = 4L)
+\S4method{mirrorImg}{BioFormatsImage}(x, direction = c("vertical", "horizontal"), ...)
 
 \S4method{mirrorImg}{EBImage}(x, direction = c("vertical", "horizontal"), ...)
 }
@@ -18,10 +24,14 @@
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 
-\item{...}{additional arguments for writing files as in \code{\link[terra]{writeRaster}}}
+\item{filename}{character. Output filename}
 
-\item{resolution}{Resolution to read in from OME-TIFF, defaults to 4, which
-is a medium resolution in Xenium.}
+\item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
+memory. The default 1e7 is chosen because this is the approximate number of
+pixels in the medium resolution image at \code{resolution = 4L} in Xenium
+OME-TIFF to make different methods of this function consistent.}
+
+\item{...}{additional arguments for writing files as in \code{\link[terra]{writeRaster}}}
 }
 \value{
 For \code{SpatRasterImage} and \code{EBImage}, object of the same

@@ -6,7 +6,13 @@
 \alias{BioFormatsImage-class}
 \title{On disk representation of BioFormats images in SFE object}
 \usage{
-BioFormatsImage(path, ext = NULL, isFull = TRUE, origin = c(0, 0))
+BioFormatsImage(
+  path,
+  ext = NULL,
+  isFull = TRUE,
+  origin = c(0, 0),
+  transformation = NULL
+)
 }
 \arguments{
 \item{path}{Path to an OME-TIFF image file.}
@@ -20,8 +26,19 @@ size and the number of pixels.}
 extent. If \code{ext = NULL} so it will be inferred from metadata then
 \code{isFull = TRUE} will be set internally.}
 
-\item{origin}{Origin of the image in the x-y plane, defaults to
-\code{c(0,0)}. This is shifted when the image is translated.}
+\item{origin}{Origin of the whole image in the x-y plane, defaults to
+\code{c(0,0)}. This is shifted when the image is translated. This is not
+the same as xmin and xmax. For example, when the extent is only part of the
+whole image and the whole image itself can be spatially translated, the
+origin is needed to determine which part of the whole image this extent
+corresponds to.}
+
+\item{transformation}{Named list specifying affine transformation. The list
+can have names "name" and named parameter of the transformation, e.g.
+\code{list(name = "mirror", direction = "vertical")}, "rotate" and degrees = 90
+(clockwise), and "scale" and factor = 2. The list can also have names "M"
+for a 2x2 linear transformation matrix in the xy plane and "v" for a
+translation vector of length 2 to specify general affine transformation.}
 }
 \value{
 A \code{BioFormatsImage} object.
@@ -46,6 +63,14 @@ physical pixel size is absent from metadata, then the extent will be in pixel
 space, which might mean that the image will not align with the geometries
 because often the geometry coordinates are in microns, so a warning is issued
 in this case.
+
+Affine transformations can be specified in the \code{transformation}
+argument, either by name or by directly specifying the matrix. The
+transformations specified by name will always preserve the center of the
+image. When named transformations are chained, name and parameter will be
+converted to matrix and translation vector the second time a transformation
+is specified. If the subsequent transformation happens to restore the image
+to its original place, then transformation specifications will be removed.
 }
 \seealso{
 [isFull()], [origin()]
