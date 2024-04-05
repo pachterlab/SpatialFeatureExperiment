@@ -144,7 +144,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                          unit = unit)
           })
 
-
 #' Coerce from Seurat to SpatialFeatureExperiment
 #' This function converts \code{Seurat} (v4 & v5) object to \code{SpatialFeatureExperiment} object
 #' @inheritParams readVizgen
@@ -161,12 +160,13 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 #' @importFrom BiocParallel bplapply
 #' 
 #' @examples 
-#' # TODO or see ./vignettes/seurat_sfe_coerce.Rmd
+#' # TODO 
+#' # see ./vignettes/seurat_sfe_coerce.Rmd
 #' 
 
 # TODO, change dplyr functions, eg mutate, to base ----
 
-.seurat_to_sfe <- 
+.seu_to_sfe <- 
   function(seurat_obj = NULL,
            add_molecules = TRUE,
            flip = c("geometry", "image", "none"),
@@ -230,12 +230,12 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       
       # loop for multiple FOVs/tissue sections ----
       obj_list <-
-        lapply(Images(seurat_obj) |> seq(), function(wooh) {
+        lapply(Images(seurat_obj) |> seq(), function(fov_section) {
           message(">>> Seurat Assays found: ", paste0(assays_name, ", "), "\n",
                   ">>> ", DefaultAssay(seurat_obj), " -> will be used as 'Main Experiment'")
           # Make `sf` df geometries
           # get FOVs names
-          fovs <- seurat_obj[[Images(seurat_obj)[wooh]]] |> names()
+          fovs <- seurat_obj[[Images(seurat_obj)[fov_section]]] |> names()
           if(!is.null(fovs)) {
             geoms <- 
               match.arg(fovs, c("centroids", "segmentation", "molecules", "boxes"),
@@ -244,7 +244,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           
           # Support if Seurat object is Visium
           is_Visium <- grep("Visium", 
-                            class(seurat_obj[[Images(seurat_obj)[wooh]]]), value = TRUE)
+                            class(seurat_obj[[Images(seurat_obj)[fov_section]]]), value = TRUE)
           if (!length(is_Visium) == 0) {
             # get Visium spots coords
             message(">>> Seurat spatial object found: ", is_Visium, "\n",
@@ -253,7 +253,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                     ">>> set `unit_use = 'micron'` to convert spot coordinates to micron space")
             # get image/spots info
             meta_df_image <- 
-              slot(seurat_obj, name = "images")[[wooh]] |> 
+              slot(seurat_obj, name = "images")[[fov_section]] |> 
               slot(name = "coordinates")
             # get xy coords in "pixel" space
             # NOTE: Seurat "spot_diameter_fullres" from `scalefactors_json.json`
@@ -272,7 +272,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                array_row = row, 
                                array_col = col)
             spot_diameter <-
-              slot(seurat_obj, name = "images")[[wooh]] |> 
+              slot(seurat_obj, name = "images")[[fov_section]] |> 
               slot("scale.factors") |> _$spot
           }
           
@@ -285,12 +285,12 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                   ">>> Generating `sf` geometries")
           
           # Set cell IDs for each FOV/tissue section
-          cell_ids_fov <- seurat_obj[[Images(seurat_obj)[wooh]]] |> Cells()
+          cell_ids_fov <- seurat_obj[[Images(seurat_obj)[fov_section]]] |> Cells()
           
           # Get centroids
           if (any(geoms == "centroids")) {
             cents <- 
-              seurat_obj[[Images(seurat_obj)[wooh]]][[grep("centroids", geoms, value = TRUE)]] |> 
+              seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("centroids", geoms, value = TRUE)]] |> 
               as(object = _, "sf")
             rownames(cents) <- cell_ids_fov
           } else { cents <- NULL }
@@ -298,13 +298,13 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # Get cell polygon geometries
           if (any(geoms == "segmentation")) {
             polys <- 
-              seurat_obj[[Images(seurat_obj)[wooh]]][[grep("segmentation", geoms, value = TRUE)]] |>
+              seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("segmentation", geoms, value = TRUE)]] |>
               slot(name = "polygons")
           } else if (!any(geoms == "segmentation") &&
                      any(geoms == "boxes")) {
             # if no segs, use boxes if present
             polys <- 
-              seurat_obj[[Images(seurat_obj)[wooh]]][[grep("boxes", geoms, value = TRUE)]] |>
+              seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("boxes", geoms, value = TRUE)]] |>
               slot(name = "polygons")
           } else { polys <- NULL }
           if (!is.null(polys)) {
@@ -322,7 +322,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           
           # Get molecules if provided
           if (add_molecules && any(geoms == "molecules")) {
-            mols <- seurat_obj[[Images(seurat_obj)[wooh]]][[grep("molecules", geoms, value = TRUE)]]
+            mols <- seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("molecules", geoms, value = TRUE)]]
             mols <- 
               lapply(mols |> seq(), function(i) {
                 st_sf(geometry = mols[[i]] |>
@@ -354,7 +354,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           assays_sfe_out <<- assays_sfe
           
           # Make SFE from DefaultAssay of Seurat ----
-          message(">>> Creating `SFE` object -> ", Images(seurat_obj)[wooh])
+          message("\n", ">>> Creating `SFE` object -> ", Images(seurat_obj)[fov_section])
           sfe <- SpatialFeatureExperiment(assays = assays_sfe,
                                           colData = 
                                             if (!length(is_Visium) == 0) {
@@ -362,7 +362,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                                     meta_df_image)
                                             } else { .getMeta(seurat_obj)[cell_ids_fov,] },
                                           sample_id = gsub("_|-|[.]", "_", 
-                                                           x = Images(seurat_obj)[wooh]),
+                                                           x = Images(seurat_obj)[fov_section]),
                                           colGeometries = 
                                             if (!is.null(cents))
                                               # use centroids POINT here
@@ -422,12 +422,12 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
               # Scale factors for images
               # TODO: scale_imgs is a value in, eg @scale.factors$lowres ----
               scale_imgs <- 
-                slot(seurat_obj, name = "images")[[wooh]] |> 
+                slot(seurat_obj, name = "images")[[fov_section]] |> 
                 slot(name = "scale.factors") |> _[image_scalefactors]
               scale_imgs <- scale_imgs / scale_fct
               
               # eg image part
-              slot(seurat_obj, name = "images")[[wooh]] |> 
+              slot(seurat_obj, name = "images")[[fov_section]] |> 
                 slot(name = "image") |> str()
               # convert to image raster terra
               
@@ -523,7 +523,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
               altExp(sfe, assays_name[a]) <- 
                 SingleCellExperiment::SingleCellExperiment(assays = assays_add) |> 
                 SpatialExperiment::toSpatialExperiment(sample_id = gsub("_|-|[.]", "", 
-                                                                        x = Images(seurat_obj)[wooh])) |>
+                                                                        x = Images(seurat_obj)[fov_section])) |>
                 toSpatialFeatureExperiment(x = _,
                                            spatialCoordsNames = c("x", "y"), 
                                            colGeometries = list(centroids = colGeometry(sfe)), 
@@ -560,17 +560,17 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 #' @rdname SpatialFeatureExperiment-coercion
 #' @export
 setMethod("toSpatialFeatureExperiment", "Seurat",
-          function(x,
-                   add_molecules = TRUE,
-                   flip = c("geometry", "image", "none"),
-                   image_scalefactors = "lowres",
-                   unit_use = NULL,
-                   BPPARAM = SerialParam()) {
-            .seurat_to_sfe(seurat_obj = x,
-                           add_molecules = add_molecules,
-                           flip = flip,
-                           image_scalefactors = image_scalefactors,
-                           unit_use = unit_use,
-                           BPPARAM = BPPARAM)
+          definition = 
+            function(x,
+                     add_molecules = TRUE,
+                     flip = c("geometry", "image", "none"),
+                     image_scalefactors = "lowres",
+                     unit_use = NULL,
+                     BPPARAM = SerialParam()) {
+              .seu_to_sfe(seurat_obj = x,
+                          add_molecules = add_molecules,
+                          flip = flip,
+                          image_scalefactors = image_scalefactors,
+                          unit_use = unit_use,
+                          BPPARAM = BPPARAM)
             })
-
