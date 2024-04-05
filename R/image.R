@@ -586,7 +586,7 @@ NULL
 #' @export
 setMethod("ext", "BioFormatsImage",
           function(x) {
-              out <- .transform_bbox(.ext_(x), rotation(x), translation(x))
+              out <- .transform_bbox(.ext_(x), transformation(x))
               out[c("xmin", "xmax", "ymin", "ymax")]
           })
 
@@ -986,8 +986,7 @@ setMethod("transposeImg", "EBImage",
           function(x, ...) {
               x@image <- EBImage::transpose(x@image)
               # Extent
-              mat_use <- .get_affine_mat("transpose", ext(x))
-              ext(x) <- .transform_bbox(ext(x), mat_use$M, mat_use$v)
+              ext(x) <- .transform_bbox(ext(x), list(name="transpose"))
               x
           })
 
@@ -1087,8 +1086,7 @@ setMethod("rotateImg", "EBImage",
           function(x, degrees, ...) {
               x@image <- EBImage::rotate(x@image, degrees)
               # Extent
-              mat_use <- .get_affine_mat("rotate", ext(x), degrees = degrees)
-              ext(x) <- .transform_bbox(ext(x), mat_use$M, mat_use$v)
+              ext(x) <- .transform_bbox(ext(x), list(name="rotate", degrees=degrees))
               x
           })
 
@@ -1148,8 +1146,7 @@ setMethod("translateImg", "EBImage", function(x, v, ...) {
 NULL
 
 .scale_ext <- function(x, factor, ...) {
-    mat_use <- .get_affine_mat("scale", ext(x), factor = factor)
-    ext(x) <- .transform_bbox(ext(x), mat_use$M, mat_use$v)
+    ext(x) <- .transform_bbox(ext(x), list(name="scale", factor=factor))
     x
 }
 

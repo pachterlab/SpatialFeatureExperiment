@@ -1,5 +1,8 @@
 # Affine transformations for both images and geometries
-.transform_bbox <- function(bbox, M, v) {
+.transform_bbox <- function(bbox, tr) {
+    if (!length(tr)) return(bbox)
+    if ("name" %in% names(tr)) tr <- do.call(.get_affine_mat, c(tr, bbox = bbox))
+    M <- tr$M; v <- tr$v
     bbox_sf <- st_bbox(bbox) |> st_as_sfc()
     bbox_sf <- bbox_sf * t(M) + v
     out <- st_bbox(bbox_sf) |> as.vector() |> setNames(c("xmin", "ymin", "xmax", "ymax"))
@@ -147,7 +150,7 @@
     # bbox argument is just for compatibility, it's ignored
     bbox_old <- ext(img)
     scale_fct <- dim(img)[1]/(bbox_old["xmax"] - bbox_old["xmin"])
-    bbox_new <- .transform_bbox(bbox_old, M, v)
+    bbox_new <- .transform_bbox(bbox_old, list(M=M, v=v))
     dim_new_px <- c((bbox_new["xmax"] - bbox_new["xmin"])*scale_fct,
                     (bbox_new["ymax"] - bbox_new["ymin"])*scale_fct) |> abs()
     # abs because sf doesn't switch ymin and ymax after reflection
