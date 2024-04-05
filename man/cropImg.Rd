@@ -5,9 +5,9 @@
 \alias{cropImg,SpatRasterImage-method}
 \alias{cropImg,BioFormatsImage-method}
 \alias{cropImg,EBImage-method}
-\title{Crop images}
+\title{Affine transformation of images}
 \usage{
-\S4method{cropImg}{SpatRasterImage}(x, bbox)
+\S4method{cropImg}{SpatRasterImage}(x, bbox, filename = "")
 
 \S4method{cropImg}{BioFormatsImage}(x, bbox)
 
@@ -18,6 +18,8 @@
 
 \item{bbox}{Numeric vector with names "xmin", "xmax", "ymin", "ymax", in any
 order, to specify the bounding box.}
+
+\item{filename}{Output file name for transformed SpatRaster.}
 }
 \value{
 Image of the same class as input but cropped. For
@@ -25,6 +27,11 @@ Image of the same class as input but cropped. For
   extent is changed.
 }
 \description{
+This function performs affine transformation on images.
+}
+\details{
+Crop images
+
 Crop images of class \code{*Image} in this package with a bounding box.
 }
 \seealso{

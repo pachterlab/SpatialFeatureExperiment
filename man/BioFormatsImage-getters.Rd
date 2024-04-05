@@ -4,13 +4,17 @@
 \alias{BioFormatsImage-getters}
 \alias{isFull}
 \alias{origin}
+\alias{transformation}
 \alias{isFull,BioFormatsImage-method}
 \alias{origin,BioFormatsImage-method}
+\alias{transformation,BioFormatsImage-method}
 \title{Other \code{BioFormatsImage} getters}
 \usage{
 \S4method{isFull}{BioFormatsImage}(x)
 
 \S4method{origin}{BioFormatsImage}(x)
+
+\S4method{transformation}{BioFormatsImage}(x)
 }
 \arguments{
 \item{x}{A \code{\link{BioFormatsImage}} object.}
@@ -18,6 +22,7 @@
 \value{
 For \code{isFull}: Logical scalar indicating whether the extent is
   the full extent. For \code{origin}: Numeric vector of length 2.
+  For \code{transformation}, a list.
 }
 \description{
 \code{isFULL} indicates if the extent is the full extent of the image.

@@ -253,7 +253,7 @@ test_that("Errors and warnings in readVizgen", {
 
 # Make toy examples of multiple pieces
 dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
-parq <- sfarrow::st_read_parquet(file.path(dir_use, "cell_boundaries.parquet"))
+parq <- st_read(file.path(dir_use, "cell_boundaries.parquet"))
 # One large piece and one small piece
 large <- list(matrix(c(2500, 0,
                        2510, 0,
@@ -281,7 +281,7 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
 
     dir_use <- file.path("multi", "vizgen_cellbound")
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
-    suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cell_boundaries.parquet")))
+    st_write(parq2, file.path(dir_use, "cell_boundaries.parquet"), driver = "Parquet")
 
     w <- capture_warnings(sfe <- readVizgen(dir_use, z = 3L, image = "PolyT"))
     expect_match(w, "Sanity check", all = FALSE)
@@ -308,7 +308,7 @@ test_that("No polygons left", {
 
     dir_use <- file.path("small", "vizgen_cellbound")
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
-    suppressWarnings(sfarrow::st_write_parquet(parq2, file.path(dir_use, "cell_boundaries.parquet")))
+    st_write(parq2, file.path(dir_use, "cell_boundaries.parquet"), driver = "Parquet")
 
     expect_error(readVizgen(dir_use, z = 3L, image = "PolyT"),
                  "No polygons left after filtering")
@@ -367,10 +367,10 @@ test_that("Message when removing empty polygons", {
     file.copy(dir_use, "empty", recursive = TRUE)
 
     dir_use <- file.path("empty", "vizgen_cellbound")
-    parq <- sfarrow::st_read_parquet(file.path(dir_use, "cell_boundaries.parquet"))
+    parq <- st_read(file.path(dir_use, "cell_boundaries.parquet"))
     parq$Geometry[[1]] <- st_polygon()
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
-    suppressWarnings(sfarrow::st_write_parquet(parq, file.path(dir_use, "cell_boundaries.parquet")))
+    st_write(parq, file.path(dir_use, "cell_boundaries.parquet"), driver = "Parquet")
 
     expect_message(sfe <- readVizgen(dir_use, z = 3L, image = "PolyT"),
                    "..removing 1 empty polygons")
@@ -451,7 +451,7 @@ test_that("Format MERFISH transcript spots for colGeometries", {
 
     # Check contents
     fn <- file.path(dir_check, fns_expect[1])
-    g <- sfarrow::st_read_parquet(fn)
+    g <- st_read(fn)
     expect_equal(as.character(st_geometry_type(g, FALSE)), "MULTIPOINT")
 
     # Second run
@@ -634,7 +634,7 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
     expect_true(all(fns %in% fns_expect))
 
     fn <- file.path("cosmx", "tx_spots", fns[1])
-    g <- sfarrow::st_read_parquet(fn)
+    g <- st_read(fn)
     expect_equal(st_geometry_type(g, FALSE) |> as.character(), "MULTIPOINT")
     unlink("cosmx", recursive = TRUE)
 })
@@ -663,4 +663,8 @@ test_that("readXenium", {
     try(m <- read.omexml(file.path(fn, "morphology_focus.ome.tif")))
     sfe <- readXenium(fn, add_molecules = TRUE)
 
+})
+
+test_that("addTxSpots add a subset of spots", {
+    # Again, different scenarios in like splitting cell compartments
 })

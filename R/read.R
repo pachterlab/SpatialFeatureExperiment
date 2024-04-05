@@ -293,7 +293,7 @@ read10xVisiumSFE <- function(samples = "",
 # sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
 .check_st_valid <- function(sf_df = NULL) {
-    invalid_inds <- lapply(sf_df, function(x) which(!st_is_valid(x)))
+    invalid_inds <- lapply(st_geometry(sf_df), function(x) which(!st_is_valid(x)))
     for (i in seq_along(sf_df)) {
         if (!length(invalid_inds[[i]])) next
         geoms <- st_geometry(sf_df[[i]])[invalid_inds[[i]]]
@@ -490,7 +490,7 @@ readVizgen <- function(data_dir,
                         paste0("\n", ">>> processed hdf5 files will be used") })
             fn <- parq
             # read file and filter to keep selected single z section as they're the same anyway
-            polys <- st_read(fn)
+            polys <- st_read(fn, int64_as_string = TRUE)
             # Can use any z-plane since they're all the same
             # This way so this part still works when the parquet file is written after
             # reading in HDF5 the first time. Only writing one z-plane to save disk space.
@@ -632,7 +632,7 @@ readVizgen <- function(data_dir,
 
     if (!is.null(polys)) {
         # sanity on geometries
-        polys <- .check_st_valid(polys)[[1]]
+        polys <- .check_st_valid(polys)
         rownames(polys) <- polys$ID
         polys$ID <- NULL
         cellSeg(sfe) <- polys
@@ -740,7 +740,7 @@ readVizgen <- function(data_dir,
             if (!return) return(file_dir)
             out <- lapply(fns, function(x) {
                 q <- .make_sql_query(x, gene_select, gene_col)
-                st_read(x, query = q)
+                st_read(x, query = q, int64_as_string = TRUE, quiet = TRUE)
             })
             # add names to a list
             names(out) <- gsub(".parquet", "",
@@ -755,7 +755,8 @@ readVizgen <- function(data_dir,
         # read transcripts from detected_transcripts.parquet
     } else if (file.exists(file_out) && !dir.exists(file_dir)) {
         if (!return) return(file_out)
-        out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col))
+        out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col),
+                       int64_as_string = TRUE, quiet = TRUE)
         rownames(out) <- out[[gene_col]]
         return(out)
     }
@@ -1146,7 +1147,7 @@ readCosMX <- function(data_dir,
     poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
     if (file.exists(poly_sf_fn)) {
         message(">>> File cell_boundaries_sf.parquet found")
-        polys <- st_read(poly_sf_fn)
+        polys <- st_read(poly_sf_fn, int64_as_string = TRUE, quiet = TRUE)
         rownames(polys) <- polys$cellID
     } else {
         message(">>> Constructing cell polygons")
@@ -1161,7 +1162,7 @@ readCosMX <- function(data_dir,
                                     spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
                                     unit = "full_res_image_pixel")
     # sanity on geometries
-    polys <- .check_st_valid(polys)[[1]]
+    polys <- .check_st_valid(polys)
     cellSeg(sfe) <- polys
 
     if (add_molecules) {
@@ -1359,7 +1360,7 @@ readXenium <- function(data_dir,
                     ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
                     " segmentations")
             # add cell id to rownames
-            polys <- lapply(fn_segs, st_read, quiet = TRUE)
+            polys <- lapply(fn_segs, st_read, quiet = TRUE, int64_as_string = TRUE)
         } else {
             if (no_raw_bytes) {
                 if (any(grep("..parquet", fn_segs))) {
@@ -1527,7 +1528,7 @@ readXenium <- function(data_dir,
     # add segmentation geometries
     if (!is.null(polys)) {
         # sanity on geometries
-        polys <- .check_st_valid(polys)
+        polys <- lapply(polys, .check_st_valid)
         polys <-
             lapply(polys, function(i) {
                 rownames(i) <- i$cell_id

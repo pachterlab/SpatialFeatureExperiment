@@ -66,6 +66,7 @@ Collate:
     'saveRDS.R'
     'spatialGraphs.R'
     'subset.R'
+    'transformation.R'
     'updateObject.R'
     'validity.R'
 Suggests: 

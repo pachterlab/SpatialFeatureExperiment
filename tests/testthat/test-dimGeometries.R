@@ -132,6 +132,10 @@ test_that("rowGeometries setter, one sample", {
     expect_equal(rg, rg_toy)
 })
 
+test_that("rowGeometries setter, partial replace", {
+
+})
+
 test_that("rowGeometries getter, one sample", {
     internals <- int_elementMetadata(sfe)
     internals[['rowGeometries']] <- make_zero_col_DFrame(nrow(sfe))
@@ -147,6 +151,10 @@ test_that("rowGeometry setter, one sample", {
     rowGeometry(sfe, "foo") <- rg_toy
     rg <- int_elementMetadata(sfe)$rowGeometries$foo
     expect_equal(rg, rg_toy)
+})
+
+test_that("rowGeometry setter, partial replace", {
+
 })
 
 test_that("rowGeometry getter, one sample", {

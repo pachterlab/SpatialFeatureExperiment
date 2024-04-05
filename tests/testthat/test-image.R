@@ -350,6 +350,8 @@ test_that("Convert BioFormatsImage to EBImage, not resolution 1", {
     expect_true(all(imgRaster(ebi)[67:75,148:151]))
 })
 
+# TODO: test reading a subset of channels. Need xenium v2 test data
+
 test_that("When physical pixel size is absent from metadata", {
     skip_on_bioc()
     fn <- system.file(file.path("extdata", "xenium", "morphology_focus.ome.tif"),

@@ -18,12 +18,19 @@ rowGeometry(
   type = 1L,
   sample_id = 1L,
   withDimnames = TRUE,
+  partial = FALSE,
   translate = TRUE
 ) <- value
 
 rowGeometries(x, sample_id = "all", withDimnames = TRUE)
 
-rowGeometries(x, sample_id = "all", withDimnames = TRUE, translate = TRUE) <- value
+rowGeometries(
+  x,
+  sample_id = "all",
+  withDimnames = TRUE,
+  partial = FALSE,
+  translate = TRUE
+) <- value
 
 rowGeometryNames(x)
 
@@ -31,7 +38,13 @@ rowGeometryNames(x) <- value
 
 txSpots(x, sample_id = 1L, withDimnames = TRUE)
 
-txSpots(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
+txSpots(
+  x,
+  sample_id = 1L,
+  withDimnames = TRUE,
+  partial = FALSE,
+  translate = TRUE
+) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -45,6 +58,9 @@ the *Geometry to query or replace. If missing, then the first item in the
 \item{withDimnames}{Logical. If \code{TRUE}, then the dimnames (colnames or
 rownames) of the gene count matrix should correspond to row names of the
 \code{sf} data frames of interest.}
+
+\item{partial}{In setters, if a \code{rowGeometry} of the same name exists,
+whether to only replace the rows present in \code{value}.}
 
 \item{translate}{Logical. Only used if \code{\link{removeEmptySpace}} has
 been run of the SFE object. If that's the case, this argument indicates

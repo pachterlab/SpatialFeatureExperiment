@@ -42,7 +42,9 @@ setClass("PackedSpatRaster",
              attributes = list()
          )
 )
-
+# TODO: do multiple inheritance instead of wrapper since it's really annoying
+# to have to call imgRaster every time one wants to plot the image. Same thing
+# for EBImage.
 setClassUnion("GeneralizedSpatRaster", members = c("SpatRaster", "PackedSpatRaster"))
 
 #' @rdname SpatRasterImage
@@ -93,6 +95,14 @@ setMethod("show", "SpatRasterImage", function(object) {
 #' because often the geometry coordinates are in microns, so a warning is issued
 #' in this case.
 #'
+#' Affine transformations can be specified in the \code{transformation}
+#' argument, either by name or by directly specifying the matrix. The
+#' transformations specified by name will always preserve the center of the
+#' image. When named transformations are chained, name and parameter will be
+#' converted to matrix and translation vector the second time a transformation
+#' is specified. If the subsequent transformation happens to restore the image
+#' to its original place, then transformation specifications will be removed.
+#'
 #' @param path Path to an OME-TIFF image file.
 #' @param ext Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
 #'   microns indicating the spatial extent covered by the image. If \code{NULL},
@@ -101,8 +111,18 @@ setMethod("show", "SpatRasterImage", function(object) {
 #' @param isFull Logical, if the extent specified in \code{ext} is the full
 #'   extent. If \code{ext = NULL} so it will be inferred from metadata then
 #'   \code{isFull = TRUE} will be set internally.
-#' @param origin Origin of the image in the x-y plane, defaults to
-#'   \code{c(0,0)}. This is shifted when the image is translated.
+#' @param origin Origin of the whole image in the x-y plane, defaults to
+#'   \code{c(0,0)}. This is shifted when the image is translated. This is not
+#'   the same as xmin and xmax. For example, when the extent is only part of the
+#'   whole image and the whole image itself can be spatially translated, the
+#'   origin is needed to determine which part of the whole image this extent
+#'   corresponds to.
+#' @param transformation Named list specifying affine transformation. The list
+#'   can have names "name" and named parameter of the transformation, e.g.
+#'   \code{list(name = "mirror", direction = "vertical")}, "rotate" and degrees = 90
+#'   (clockwise), and "scale" and factor = 2. The list can also have names "M"
+#'   for a 2x2 linear transformation matrix in the xy plane and "v" for a
+#'   translation vector of length 2 to specify general affine transformation.
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
 #' @aliases BioFormatsImage-class
@@ -111,15 +131,39 @@ setMethod("show", "SpatRasterImage", function(object) {
 #' @exportClass BioFormatsImage
 setClass("BioFormatsImage", contains = "VirtualSpatialImage",
          slots = c(path = "character", ext = "numeric", isFull = "logical",
-                   origin = "numeric"))
+                   origin = "numeric", transformation = "list"))
 
+.numeric2NA <- function(x) {
+    length(x) != 2L || anyNA(x) || !is.numeric(x)
+}
 setValidity("BioFormatsImage", function(object) {
-    outs <- character(3)
+    outs <- character(4)
     e <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
     if (!is.null(e)) outs[1] <- e
     outs[2] <- if (is.na(object@isFull)) "isFull must be either TRUE or FALSE, not NA." else ""
-    if (length(object@origin) != 2L || anyNA(object@origin) || !is.numeric(object@origin)) {
+    if (.numeric2NA(object@origin)) {
         outs[3] <- "origin must be a numeric vector of length 2 without NAs."
+    }
+    if (length(object@transformation)) {
+        named <- "name" %in% names(object@transformation)
+        mat <- setequal(names(object@transformation), c("M", "v"))
+        if (!named && !mat) {
+            outs[4] <- "transformation must be a list with names 'name' and 'param', or alternatively 'M' and 'v'."
+        }
+        if (named) {
+            allowed_names <- c("transpose", "mirror", "rotate", "scale")
+            if (!object@transformation$name %in% allowed_names) {
+                outs[4] <- paste0("Name of transformation must be one of ",
+                                  paste0(allowed_names, collapse = ", "))
+                name <- object@transformation$name
+            }
+        } else if (mat) {
+            M <- object@transformation$M
+            v <- object@transformation$v
+            if (!identical(dim(M), c(2,2)) || !is.numeric(M) || .numeric2NA(v)) {
+                outs[4] <- paste0("M must be a 2x2 numeric matrix, and v a numeric vector of length 2 with no NA.")
+            }
+        }
     }
     outs <- outs[outs != ""]
     if (length(outs)) return(outs) else TRUE
@@ -172,12 +216,32 @@ setMethod("show", "BioFormatsImage", function(object) {
 
 #' @rdname BioFormatsImage
 #' @export
-BioFormatsImage <- function(path, ext = NULL, isFull = TRUE,
-                            origin = c(0,0)) {
+BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
+                            transformation = NULL) {
     if (is.null(ext)) {
         ext <- .get_full_ext(path)
     }
     new("BioFormatsImage", path = path, ext = ext, isFull = isFull, origin = origin)
+}
+
+# Combine transformations
+.get_mv <- function(tr, bbox) {
+    if ("name" %in% names(tr))
+        do.call(.get_affine_mat, c(tr, bbox = bbox))
+    else tr
+}
+.combine_transforms <- function(bfi, new) {
+    old <- transformation(bfi)
+    if (!length(old)) return(new)
+    old <- .get_mv(old, ext(bfi))
+    new <- .get_mv(new, ext(bfi))
+    out <- list(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
+    if (isTRUE(all.equal(out$M, diag(nrow = 2))) &&
+        isTRUE(all.equal(out$v, c(0,0)))) {
+        out <- list()
+    }
+    transformation(bfi) <- out
+    bfi
 }
 
 #' Other \code{BioFormatsImage} getters
@@ -189,8 +253,9 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE,
 #' @param x A \code{\link{BioFormatsImage}} object.
 #' @return For \code{isFull}: Logical scalar indicating whether the extent is
 #'   the full extent. For \code{origin}: Numeric vector of length 2.
+#'   For \code{transformation}, a list.
 #' @name BioFormatsImage-getters
-#' @aliases isFull origin
+#' @aliases isFull origin transformation
 NULL
 
 #' @rdname BioFormatsImage-getters
@@ -203,6 +268,15 @@ setMethod("origin", "BioFormatsImage", function(x) x@origin)
 
 setReplaceMethod("origin", "BioFormatsImage", function(x, value) {
     x@origin <- value
+    x
+})
+
+#' @rdname BioFormatsImage-getters
+#' @export
+setMethod("transformation", "BioFormatsImage", function(x) x@transformation)
+
+setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
+    x@transformation <- value
     x
 })
 
@@ -290,8 +364,11 @@ EBImage <- function(img, ext = NULL) {
         # Indicating there's only 1 series/resolution
         resolution <- 1L
     } else {
-        if (resolution > RBioFormats::seriesCount(m))
-            stop("Resolution subscript out of bound")
+        n_res <- RBioFormats::seriesCount(m)
+        if (resolution > n_res) {
+            message("Resolution subscript out of bound, reading the lowest resolution")
+            resolution <- n_res
+        }
         meta <- coreMetadata(m, series = resolution)
     }
     # Extent of lower resolution may not be the same as the top one
@@ -311,7 +388,7 @@ EBImage <- function(img, ext = NULL) {
     } else fctx2 <- fcty2 <- 1
 
     if (!isFull(x)) {
-        bbox_use <- ext(x) |> .shift_ext(v = -origin(x))
+        bbox_use <- .ext_(x) |> .shift_ext(v = -origin(x))
         # Convert to full res pixel space
         bbox_use[x_nms] <- bbox_use[x_nms] * sfx
         bbox_use[y_nms] <- bbox_use[y_nms] * sfy
@@ -351,7 +428,14 @@ EBImage <- function(img, ext = NULL) {
                                    read.metadata = FALSE,
                                    normalize = FALSE,
                                    subset = subset_use)
-    EBImage(img, .shift_ext(ext_use, origin(x)))
+    out <- EBImage(img, .shift_ext(ext_use, origin(x)))
+    if (length(transformation(x))) {
+        tr <- transformation(x)
+        if (!"name" %in% names(tr)) tr$name <- "affine"
+        trans_fun <- .transform_img_fun(tr$name)
+        out <- do.call(trans_fun, c(img = out, bbox = ext(out), tr))
+    }
+    out
 }
 
 # SpatRasterImage method: allow downsampling first
@@ -366,7 +450,7 @@ EBImage <- function(img, ext = NULL) {
     return(r)
 }
 
-.toEBImage2 <- function(x, maxcell = 1e7) {
+.toEBImage2 <- function(x, maxcell = 1e7, channel = NULL) {
     # 1e7 comes from the number of pixels in resolution = 4L in the ome.tiff
     x <- x@image
     if (dim(x)[3] == 3L) {
@@ -487,14 +571,24 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #' includes this function \code{ext}.
 #' @return Getters return a numeric vector specifying the extent. Setters return
 #'   a \code{*Image} object of the same class as the input.
+#' @note
+#' For \code{BioFormatsImage}, internally only the pre-transform extent is
+#' stored. The \code{ext} getter will apply the transformation on the fly. The
+#' setter sets the pre-transformation extent.
 #' @name ext
 #' @aliases ext
 #' @concept Image and raster
 NULL
 
+.ext_ <- function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
+
 #' @rdname ext
 #' @export
-setMethod("ext", "BioFormatsImage", function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")])
+setMethod("ext", "BioFormatsImage",
+          function(x) {
+              out <- .transform_bbox(.ext_(x), transformation(x))
+              out[c("xmin", "xmax", "ymin", "ymax")]
+          })
 
 #' @rdname ext
 #' @export
@@ -832,8 +926,13 @@ setMethod("imgSource", "EBImage", function(x) NA_character_)
 #'
 #' @inheritParams imgRaster
 #' @param filename Output file name for transformed SpatRaster.
+#' @param maxcell Max number of pixels to load \code{SpatRasterImage} into
+#'   memory. The default 1e7 is chosen because this is the approximate number of
+#'   pixels in the medium resolution image at \code{resolution = 4L} in Xenium
+#'   OME-TIFF to make different methods of this function consistent.
 #' @param ... Ignored. It's there so different methods can all be passed to the
-#' same \code{lapply} in the method for SFE objects.
+#'   same \code{lapply} in the method for SFE objects. Some methods have extra
+#'   arguments.
 #' @return For \code{SpatRasterImage} and \code{EBImage}, object of the same
 #'   class. For \code{BioFormatsImage}, the image of the specified resolution is
 #'   read into memory and then the \code{EBImage} method is called, returning
@@ -846,10 +945,23 @@ setMethod("imgSource", "EBImage", function(x) NA_character_)
 #' @family image methods
 NULL
 
+# From tidyterra
+.resample_spat <- function(r, maxcell) {
+    if (terra::ncell(r) > 1.1 * maxcell) {
+        r <- terra::spatSample(r, maxcell,
+                               as.raster = TRUE,
+                               method = "regular"
+        )
+    }
+    return(r)
+}
+
 #' @rdname transposeImg
 #' @export
 setMethod("transposeImg", "SpatRasterImage",
-          function(x, filename = "", ...) {
+          function(x, filename = "", maxcell = NULL, ...) {
+              # Option to convert to BioFormatsImage if not in memory
+              if (!is.null(maxcell)) x@image <- .resample_spat(x@image, maxcell)
               x@image <- terra::trans(imgRaster(x), filename = "")
               # What terra does to extent: swap xmin and xmax with ymin and ymax
               x
@@ -858,9 +970,8 @@ setMethod("transposeImg", "SpatRasterImage",
 #' @rdname transposeImg
 #' @export
 setMethod("transposeImg", "BioFormatsImage",
-          function(x, resolution = 4L, ...) {
-              x <- toEBImage(x, resolution)
-              transposeImg(x)
+          function(x, ...) {
+              .combine_transforms(x, list(name = "transpose"))
           })
 
 .trans_extent <- function(e) {
@@ -875,7 +986,7 @@ setMethod("transposeImg", "EBImage",
           function(x, ...) {
               x@image <- EBImage::transpose(x@image)
               # Extent
-              ext(x) <- .trans_extent(ext(x))
+              ext(x) <- .transform_bbox(ext(x), list(name="transpose"))
               x
           })
 
@@ -901,8 +1012,11 @@ NULL
 #' @rdname mirrorImg
 #' @export
 setMethod("mirrorImg", "SpatRasterImage",
-          function(x, direction = c("vertical", "horizontal"), filename = "", ...) {
+          function(x, direction = c("vertical", "horizontal"), filename = "",
+                   maxcell = NULL, ...) {
+              # Add option to convert to BioFormatsImage if not in memory
               direction <- match.arg(direction)
+              if (!is.null(maxcell)) x@image <- .resample_spat(x@image, maxcell)
               x@image <- terra::flip(imgRaster(x), direction = direction,
                                      filename = filename)
               x
@@ -911,11 +1025,9 @@ setMethod("mirrorImg", "SpatRasterImage",
 #' @rdname mirrorImg
 #' @export
 setMethod("mirrorImg", "BioFormatsImage",
-          function(x, direction = c("vertical", "horizontal"),
-                   resolution = 4L, ...) {
+          function(x, direction = c("vertical", "horizontal"), ...) {
               direction <- match.arg(direction)
-              x <- toEBImage(x, resolution)
-              mirrorImg(x, direction)
+              .combine_transforms(x, list(name = "mirror", direction = direction))
           })
 
 #' @rdname mirrorImg
@@ -939,12 +1051,8 @@ setMethod("mirrorImg", "EBImage",
 #' degrees.
 #'
 #' @inheritParams transposeImg
-#' @param degrees How many degrees to rotate, must be multiples of 90. Positive
+#' @param degrees How many degrees to rotate. Positive
 #'   number means clockwise and negative number means counterclockwise.
-#' @param maxcell Max number of pixels to load \code{SpatRasterImage} into
-#'   memory. The default 1e7 is chosen because this is the approximate number of
-#'   pixels in the medium resolution image at \code{resolution = 4L} in Xenium
-#'   OME-TIFF to make different methods of this function consistent.
 #' @return An \code{EBImage} object. Both \code{SpatRasterImage} and
 #'   \code{BioFormatsImage} will be loaded into memory as \code{EBImage} before
 #'   rotating.
@@ -960,10 +1068,7 @@ NULL
 setMethod("rotateImg", "SpatRasterImage", # Deal with rotating SpatRaster?
           function(x, degrees, maxcell = 1e7, ...) {
               # Not sure what exactly to do. I think convert to EBImage as well.
-              stopifnot(
-                  length(degrees) == 1,
-                  is.numeric(degrees),
-                  degrees %% 90 == 0)
+              # Covert to BioFormatsImage if it's not in memory
               x <- toEBImage(x, maxcell)
               rotateImg(x, degrees)
           })
@@ -971,37 +1076,17 @@ setMethod("rotateImg", "SpatRasterImage", # Deal with rotating SpatRaster?
 #' @rdname rotateImg
 #' @export
 setMethod("rotateImg", "BioFormatsImage",
-          function(x, degrees, resolution = 4L, ...) {
-              # Only allow multiples of 90 degrees, deal with extent
-              stopifnot(
-                  length(degrees) == 1,
-                  is.numeric(degrees),
-                  degrees %% 90 == 0)
-              x <- toEBImage(x, resolution)
-              rotateImg(x, degrees)
+          function(x, degrees, ...) {
+              .combine_transforms(x, list(name = "rotate", degrees = degrees))
           })
 
 #' @rdname rotateImg
 #' @export
 setMethod("rotateImg", "EBImage",
           function(x, degrees, ...) {
-              stopifnot(
-                  length(degrees) == 1,
-                  is.numeric(degrees),
-                  degrees %% 90 == 0)
               x@image <- EBImage::rotate(x@image, degrees)
-              # Deal with extent
-              if (degrees %% 180 > 0) {
-                  ext_old <- ext(x)
-                  center <- bbox_center(ext_old)
-                  x_dist <- ext_old[["xmax"]] - center[1]
-                  y_dist <- ext_old[["ymax"]] - center[2]
-                  ext_new <- c(xmin = center[1] - y_dist,
-                               xmax = center[1] + y_dist,
-                               ymin = center[2] - x_dist,
-                               ymax = center[2] + x_dist)
-                  ext(x) <- ext_new
-              }
+              # Extent
+              ext(x) <- .transform_bbox(ext(x), list(name="rotate", degrees=degrees))
               x
           })
 
@@ -1023,7 +1108,7 @@ NULL
 
 #' @rdname translateImg
 #' @export
-setMethod("translateImg", "SpatRasterImage", function(x, v) {
+setMethod("translateImg", "SpatRasterImage", function(x, v, ...) {
     img <- imgRaster(x)
     img <- shift(img, dx = v[1], dy = v[2])
     x@image <- img
@@ -1032,7 +1117,7 @@ setMethod("translateImg", "SpatRasterImage", function(x, v) {
 
 #' @rdname translateImg
 #' @export
-setMethod("translateImg", "BioFormatsImage", function(x, v) {
+setMethod("translateImg", "BioFormatsImage", function(x, v, ...) {
     ext(x) <- .shift_ext(ext(x), v)
     origin(x) <- origin(x) + v
     x
@@ -1040,10 +1125,49 @@ setMethod("translateImg", "BioFormatsImage", function(x, v) {
 
 #' @rdname translateImg
 #' @export
-setMethod("translateImg", "EBImage", function(x, v) {
+setMethod("translateImg", "EBImage", function(x, v, ...) {
     ext(x) <- .shift_ext(ext(x), v)
     x
 })
+
+# Scale------------------
+
+#' Scale image
+#'
+#' This function scales the image about its center. After scaleing, the center
+#' of the image is not shifted.
+#'
+#' @inheritParams transposeImg
+#' @param factor Numeric, scaling factor.
+#' @return A \code{*Image} object of the same class that has been scaled.
+#' @aliases scaleImg
+#' @name scaleImg
+#' @export
+NULL
+
+.scale_ext <- function(x, factor, ...) {
+    ext(x) <- .transform_bbox(ext(x), list(name="scale", factor=factor))
+    x
+}
+
+#' @rdname scaleImg
+#' @export
+setMethod("scaleImg", "SpatRasterImage", .scale_ext)
+
+#' @rdname scaleImg
+#' @export
+setMethod("scaleImg", "BioFormatsImage", .scale_ext)
+
+#' @rdname scaleImg
+#' @export
+setMethod("scaleImg", "EBImage", .scale_ext)
+
+# Affine ------------
+
+#' Affine transformation of images
+#'
+#' This function performs affine transformation on images.
+#'
 
 # Crop---------------
 

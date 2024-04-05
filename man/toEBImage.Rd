@@ -8,7 +8,7 @@
 \usage{
 \S4method{toEBImage}{BioFormatsImage}(x, resolution = 4L, channel = NULL)
 
-\S4method{toEBImage}{SpatRasterImage}(x, maxcell = 1e+07)
+\S4method{toEBImage}{SpatRasterImage}(x, maxcell = 1e+07, channel = NULL)
 }
 \arguments{
 \item{x}{Either a \code{BioFormatsImage} or \code{SpatRasterImage} object.}

@@ -34,7 +34,7 @@ sample(s) of interest.}
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 
-\item{degrees}{How many degrees to rotate, must be multiples of 90. Positive
+\item{degrees}{How many degrees to rotate. Positive
 number means clockwise and negative number means counterclockwise.}
 
 \item{maxcell}{Rotating \code{SpatRasterImage} will convert it into

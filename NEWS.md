@@ -1,12 +1,18 @@
 # Version 1.5.3
 * Changed defaults from sample_id = NULL to sample_id = 1L when dealing with 1 sample or "all" when dealing with multiple samples
 * dim method for BioFormatsImage that doesn't load the image into memory
+* Deal with univariate spatial results in featureData in cbind and changeSampleID
+* Fixed super embarrassing bug in cbind that fails when combining more than 2 SFE objects
+* Updated readXenium for XOA v2
 
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)
 * Added BioFormatsImage and EBImage classes to deal with Xenium OME-TIFF
-* Conversion bewteen SpatRasterImage, BioFormatsImage, and EBImage
+* Conversion between SpatRasterImage, BioFormatsImage, and EBImage
 * Overhaul of geometry operation functions for images and SFE objects for the new image classes, including bbox, crop, and affine transforms
+* Don't throw error when there are no rows or columns left after [ subsetting
+* cbind for multiple samples that have rowGeometry
+* Rewrote df2df with the much faster sfheaders, deprecating the less efficient BPPARAM argument
 
 # Version 1.5.1 (02/02/2024)
 * Added support for rowGeometry and transcript spots
