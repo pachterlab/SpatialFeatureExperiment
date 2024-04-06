@@ -5,7 +5,7 @@
 \alias{cropImg,SpatRasterImage-method}
 \alias{cropImg,BioFormatsImage-method}
 \alias{cropImg,EBImage-method}
-\title{Affine transformation of images}
+\title{Crop images}
 \usage{
 \S4method{cropImg}{SpatRasterImage}(x, bbox, filename = "")
 
@@ -27,11 +27,6 @@ Image of the same class as input but cropped. For
   extent is changed.
 }
 \description{
-This function performs affine transformation on images.
-}
-\details{
-Crop images
-
 Crop images of class \code{*Image} in this package with a bounding box.
 }
 \seealso{

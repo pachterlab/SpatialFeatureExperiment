@@ -29,9 +29,8 @@ same \code{lapply} in the method for SFE objects. Some methods have extra
 arguments.}
 }
 \value{
-An \code{EBImage} object. Both \code{SpatRasterImage} and
-  \code{BioFormatsImage} will be loaded into memory as \code{EBImage} before
-  rotating.
+\code{SpatRasterImage} will be converted to \code{EBImage}. Otherwise
+\code{*Image} object of the same class.
 }
 \description{
 As in \code{SpatialExperiment}, rotation here must be a multiple of 90

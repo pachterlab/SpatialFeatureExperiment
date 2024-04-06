@@ -11,7 +11,7 @@ BioFormatsImage(
   ext = NULL,
   isFull = TRUE,
   origin = c(0, 0),
-  transformation = NULL
+  transformation = list()
 )
 }
 \arguments{

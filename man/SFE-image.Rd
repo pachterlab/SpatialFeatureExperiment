@@ -23,7 +23,7 @@
   x,
   sample_id = 1L,
   image_id = NULL,
-  resolution = 4L,
+  maxcell = 1e+07,
   filename = ""
 )
 
@@ -32,18 +32,11 @@
   sample_id = 1L,
   image_id = NULL,
   direction = "vertical",
-  resolution = 4L,
+  maxcell = 1e+07,
   filename = ""
 )
 
-\S4method{rotateImg}{SpatialFeatureExperiment}(
-  x,
-  sample_id = 1L,
-  image_id = NULL,
-  degrees,
-  resolution = 4L,
-  maxcell = 1e+07
-)
+\S4method{rotateImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, degrees, maxcell = 1e+07)
 
 \S4method{translateImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, v)
 }
@@ -68,17 +61,17 @@ different resolution. \code{extent} takes precedence over \code{scale_fct}.}
 
 \item{file}{File from which to read the image.}
 
+\item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
+memory. The default 1e7 is chosen because this is the approximate number of
+pixels in the medium resolution image at \code{resolution = 4L} in Xenium
+OME-TIFF to make different methods of this function consistent.}
+
 \item{filename}{character. Output filename}
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 
 \item{degrees}{How many degrees to rotate. Positive
 number means clockwise and negative number means counterclockwise.}
-
-\item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
-memory. The default 1e7 is chosen because this is the approximate number of
-pixels in the medium resolution image at \code{resolution = 4L} in Xenium
-OME-TIFF to make different methods of this function consistent.}
 
 \item{v}{A numeric vector of length 2 specifying the vector in the xy plane
 to translate the SFE object.}

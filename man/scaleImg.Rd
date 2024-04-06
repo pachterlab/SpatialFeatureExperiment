@@ -23,9 +23,11 @@ same \code{lapply} in the method for SFE objects. Some methods have extra
 arguments.}
 }
 \value{
-A \code{*Image} object of the same class that has been scaled.
+A \code{*Image} object of the same class that has been scaled. Behind
+the scene, it's only the extent that has been changed and the images are not
+changed. The center of the image is unchanged.
 }
 \description{
-This function scales the image about its center. After scaleing, the center
+This function scales the image about its center. After scaling, the center
 of the image is not shifted.
 }

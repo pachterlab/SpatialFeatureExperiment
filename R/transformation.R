@@ -1,7 +1,7 @@
 # Affine transformations for both images and geometries
 .transform_bbox <- function(bbox, tr) {
     if (!length(tr)) return(bbox)
-    if ("name" %in% names(tr)) tr <- do.call(.get_affine_mat, c(tr, bbox = bbox))
+    if ("name" %in% names(tr)) tr <- do.call(.get_affine_mat, c(tr, list(bbox = bbox)))
     M <- tr$M; v <- tr$v
     bbox_sf <- st_bbox(bbox) |> st_as_sfc()
     bbox_sf <- bbox_sf * t(M) + v
@@ -27,7 +27,9 @@
 
 .transpose <- function(bbox) {
     M <- matrix(c(0,-1,-1,0), ncol = 2)
-    .center_mv(bbox, M)
+    v <- c(((bbox["ymax"] - bbox["ymin"])/2 + bbox["ymin"])*2,
+           ((bbox["xmax"] - bbox["xmin"])/2 + bbox["xmin"])*2)
+    list(M = M, v = v)
 }
 
 .mirror <- function(bbox, direction = c("vertical", "horizontal")) {
@@ -156,14 +158,13 @@
     # abs because sf doesn't switch ymin and ymax after reflection
     # Then the v here should be the center of the image
     center_new <- dim_new_px/2
-    center_old <- dim(img)/2
+    center_old <- dim(img)[1:2]/2
     # Since it's cbind(px, 1)%*%m and y is flipped
     # Here the origin is the top left, adding positive number increases px inds
-    M2 <- t(matrix(c(1,0,0,-1), nrow = 2) %*% M)
-    v <- center_new - M2 %*% center_old
-    out <- EBImage::affine(imgRaster(img), t(cbind(M2, v)),
+    v <- center_new - t(M) %*% center_old
+    out <- EBImage::affine(imgRaster(img), rbind(M, t(v)),
                            output.dim = dim_new_px)
-    EBImage(img = out, ext = bbox_new) |> translateImg(v)
+    EBImage(img = out, ext = bbox_new)
 }
 
 .transform <- function(sfe, sample_id, bbox, geometry_fun, img_fun,

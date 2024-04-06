@@ -172,7 +172,7 @@ setValidity("BioFormatsImage", function(object) {
 .get_fullres_scale_factor <- function(file) {
     ps <- .get_pixel_size(file)
     psx <- ps[1]; psy <- ps[2]
-    if (!length(psx) && !length(psy)) {
+    if (!length(ps)) {
         warning("Physical pixel size absent from image metadata, using pixel space.")
         sfx <- sfy <- 1
     } else {
@@ -217,30 +217,34 @@ setMethod("show", "BioFormatsImage", function(object) {
 #' @rdname BioFormatsImage
 #' @export
 BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
-                            transformation = NULL) {
+                            transformation = list()) {
     if (is.null(ext)) {
-        ext <- .get_full_ext(path)
+        if (isFull) ext <- .get_full_ext(path)
+        else stop("Extent must be specified when isFull = FALSE")
     }
-    new("BioFormatsImage", path = path, ext = ext, isFull = isFull, origin = origin)
+    new("BioFormatsImage", path = path, ext = ext, isFull = isFull,
+        origin = origin, transformation = transformation)
 }
 
 # Combine transformations
 .get_mv <- function(tr, bbox) {
     if ("name" %in% names(tr))
-        do.call(.get_affine_mat, c(tr, bbox = bbox))
+        do.call(.get_affine_mat, c(tr, list(bbox = bbox)))
     else tr
 }
 .combine_transforms <- function(bfi, new) {
     old <- transformation(bfi)
-    if (!length(old)) return(new)
-    old <- .get_mv(old, ext(bfi))
-    new <- .get_mv(new, ext(bfi))
-    out <- list(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
-    if (isTRUE(all.equal(out$M, diag(nrow = 2))) &&
-        isTRUE(all.equal(out$v, c(0,0)))) {
-        out <- list()
+    if (!length(old)) transformation(bfi) <- new
+    else {
+        old <- .get_mv(old, ext(bfi))
+        new <- .get_mv(new, ext(bfi))
+        out <- list(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
+        if (isTRUE(all.equal(out$M, diag(nrow = 2))) &&
+            isTRUE(all.equal(as.vector(out$v), c(0,0)))) {
+            out <- list()
+        }
+        transformation(bfi) <- out
     }
-    transformation(bfi) <- out
     bfi
 }
 
@@ -432,8 +436,8 @@ EBImage <- function(img, ext = NULL) {
     if (length(transformation(x))) {
         tr <- transformation(x)
         if (!"name" %in% names(tr)) tr$name <- "affine"
-        trans_fun <- .transform_img_fun(tr$name)
-        out <- do.call(trans_fun, c(img = out, bbox = ext(out), tr))
+        trans_fun <- .get_img_fun(tr$name)
+        out <- do.call(trans_fun, c(x = out, list(bbox = ext(out)), tr))
     }
     out
 }
@@ -630,7 +634,8 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #' @param x A \code{\link{BioFormatsImage}} object.
 #' @return An integer vector of length 5 showing the number of rows and columns
 #'   in the full resolution image. The 5 dimensions are in the order of XYCZT:
-#'   x, y, channel, z, and time.
+#'   x, y, channel, z, and time. This is not changed by transformations. Use
+#'   \code{\link{ext}} to see the extent after transformation.
 #' @export
 setMethod("dim", "BioFormatsImage", function(x) {
     check_installed("RBioFormats")
@@ -771,13 +776,13 @@ setMethod("addImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("transposeImg", "SpatialFeatureExperiment",
           function(x, sample_id = 1L, image_id = NULL,
-                   resolution = 4L, filename = "") {
+                   maxcell = 1e7, filename = "") {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  new <- lapply(old, transposeImg, resolution = resolution,
+                  new <- lapply(old, transposeImg, maxcell = maxcell,
                                 filename = filename)
                   imgData(x)$data[idx] <- new
               }
@@ -788,13 +793,13 @@ setMethod("transposeImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("mirrorImg", "SpatialFeatureExperiment",
           function(x, sample_id = 1L, image_id = NULL, direction = "vertical",
-                   resolution = 4L, filename = "") {
+                   maxcell = 1e7, filename = "") {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  new <- lapply(old, mirrorImg, resolution = resolution,
+                  new <- lapply(old, mirrorImg, maxcell = maxcell,
                                 direction = direction, filename = filename)
                   imgData(x)$data[idx] <- new
               }
@@ -805,14 +810,13 @@ setMethod("mirrorImg", "SpatialFeatureExperiment",
 #' @export
 setMethod("rotateImg", "SpatialFeatureExperiment",
           function(x, sample_id = 1L, image_id = NULL, degrees,
-                   resolution = 4L, maxcell = 1e7) {
+                   maxcell = 1e7) {
               sample_id <- .check_sample_id(x, sample_id, one = TRUE)
               old <- getImg(x, sample_id, image_id)
               if (!is.null(old)) {
                   if (!is.list(old)) old <- list(old)
                   idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
-                  new <- lapply(old, rotateImg, resolution = resolution,
-                                maxcell = maxcell,
+                  new <- lapply(old, rotateImg, maxcell = maxcell,
                                 degrees = degrees)
                   imgData(x)$data[idx] <- new
               }
@@ -960,9 +964,8 @@ NULL
 #' @export
 setMethod("transposeImg", "SpatRasterImage",
           function(x, filename = "", maxcell = NULL, ...) {
-              # Option to convert to BioFormatsImage if not in memory
               if (!is.null(maxcell)) x@image <- .resample_spat(x@image, maxcell)
-              x@image <- terra::trans(imgRaster(x), filename = "")
+              x@image <- terra::trans(imgRaster(x), filename = filename)
               # What terra does to extent: swap xmin and xmax with ymin and ymax
               x
           })
@@ -998,10 +1001,7 @@ setMethod("transposeImg", "EBImage",
 #'
 #' @inheritParams terra::flip
 #' @inheritParams transposeImg
-#' @return For \code{SpatRasterImage} and \code{EBImage}, object of the same
-#'   class. For \code{BioFormatsImage}, the image of the specified resolution is
-#'   read into memory and then the \code{EBImage} method is called, returning
-#'   \code{EBImage}. The extent is not changed.
+#' @return \code{*Image} object of the same class.
 #' @name mirrorImg
 #' @aliases mirrorImg
 #' @concept Image and raster
@@ -1053,9 +1053,8 @@ setMethod("mirrorImg", "EBImage",
 #' @inheritParams transposeImg
 #' @param degrees How many degrees to rotate. Positive
 #'   number means clockwise and negative number means counterclockwise.
-#' @return An \code{EBImage} object. Both \code{SpatRasterImage} and
-#'   \code{BioFormatsImage} will be loaded into memory as \code{EBImage} before
-#'   rotating.
+#' @return \code{SpatRasterImage} will be converted to \code{EBImage}. Otherwise
+#' \code{*Image} object of the same class.
 #' @name rotateImg
 #' @aliases rotateImg
 #' @concept Image and raster
@@ -1134,12 +1133,14 @@ setMethod("translateImg", "EBImage", function(x, v, ...) {
 
 #' Scale image
 #'
-#' This function scales the image about its center. After scaleing, the center
+#' This function scales the image about its center. After scaling, the center
 #' of the image is not shifted.
 #'
 #' @inheritParams transposeImg
 #' @param factor Numeric, scaling factor.
-#' @return A \code{*Image} object of the same class that has been scaled.
+#' @return A \code{*Image} object of the same class that has been scaled. Behind
+#' the scene, it's only the extent that has been changed and the images are not
+#' changed. The center of the image is unchanged.
 #' @aliases scaleImg
 #' @name scaleImg
 #' @export
@@ -1166,8 +1167,43 @@ setMethod("scaleImg", "EBImage", .scale_ext)
 
 #' Affine transformation of images
 #'
-#' This function performs affine transformation on images.
+#' This function performs affine transformation on images, with any matrix and
+#' translation vector.
 #'
+#' @inheritParams transposeImg
+#' @param M A 2x2 numeric matrix for the linear transformation in the xy plane.
+#' @param v A numeric vector of length 2 for translation in the xy plane.
+#' @return \code{SpatRasterImage} will be converted to \code{EBImage}. Otherwise
+#' \code{*Image} object of the same class. For \code{BioFormatsImage}, the
+#' transformation info is stored and will be applied when the image is loaded
+#' into memory as \code{EBImage}.
+#' @name affineImg
+#' @aliases affineImg
+#' @export
+
+#' @rdname affineImg
+#' @export
+setMethod("affineImg", "SpatRasterImage", # Deal with rotating SpatRaster?
+          function(x, M, v, maxcell = 1e7, ...) {
+              # Not sure what exactly to do. I think convert to EBImage as well.
+              # Covert to BioFormatsImage if it's not in memory
+              x <- toEBImage(x, maxcell)
+              affineImg(x, M, v)
+          })
+
+#' @rdname affineImg
+#' @export
+setMethod("affineImg", "BioFormatsImage",
+          function(x, M, v, ...) {
+              .combine_transforms(x, list(M=M, v=v))
+          })
+
+#' @rdname affineImg
+#' @export
+setMethod("affineImg", "EBImage",
+          function(x, M, v, ...) {
+              .affine_ebi(x, ext(x), M, v)
+          })
 
 # Crop---------------
 
