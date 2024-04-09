@@ -20,7 +20,7 @@
 #'   \code{SpatialFeatureExperiment} object.
 #' @param image_scalefactors # A \code{character}, choose between "lowres" or "hires".
 #'  Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.
-#' @param unit_use # Default unit is \code{"micron"}. However for Visium one can choose 
+#' @param unit # Default unit is \code{"micron"}. However for Visium one can choose 
 #'  between \code{"micron"} or \code{"full_res_image_pixel"}.
 #' @param BPPARAM Deprecated when coercing from \code{SpatialExperiment},
 #'  but is used when coercing from \code{Seurat} object.
@@ -156,13 +156,14 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 #' @importFrom SummarizedExperiment assays
 #' @importFrom methods slot
 #' @importFrom SingleCellExperiment SingleCellExperiment mainExpName altExp altExpNames
+#' @importFrom data.table rbindlist
 #' @importFrom BiocParallel bplapply
 .seu_to_sfe <- 
   function(seurat_obj = NULL,
            add_molecules = TRUE,
            flip = c("geometry", "image", "none"),
-           image_scalefactors = "lowres",
-           unit_use = NULL,
+           image_scalefactors = c("lowres", "hires"),
+           unit = NULL,
            BPPARAM = SerialParam()) 
   { # issue message for packages that need to be installed a priori
     pkgs <- c("tidyverse", "sf", "sp", "BiocParallel", 
@@ -222,7 +223,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       # loop for multiple FOVs/tissue sections ----
       obj_list <-
         lapply(Images(seurat_obj) |> seq(), function(fov_section) {
-          message(">>> Seurat Assays found: ", paste0(assays_name, ", "), "\n",
+          message(">>> Seurat Assays found: ", paste0(assays_name, collapse = ", "), "\n",
                   ">>> ", DefaultAssay(seurat_obj), " -> will be used as 'Main Experiment'")
           # Make `sf` df geometries
           # get FOVs names
@@ -241,7 +242,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             message(">>> Seurat spatial object found: ", is_Visium, "\n",
                     ">>> 'full_res_image_pixel' units will be used ->", "\n",
                     "ie 'imagerow' & 'imagecol' without scaling factors", "\n",
-                    ">>> set `unit_use = 'micron'` to convert spot coordinates to micron space")
+                    ">>> set `unit = 'micron'` to convert spot coordinates to micron space")
             # get image/spots info
             meta_df_image <- 
               slot(seurat_obj, name = "images")[[fov_section]] |> 
@@ -250,24 +251,18 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             # NOTE: Seurat "spot_diameter_fullres" from `scalefactors_json.json`
             # -> https://github.com/satijalab/seurat/blob/develop/R/preprocessing.R#L1175
             spots <-
-              meta_df_image |>
               # select coords
-              
-              # TODO: replace dplyr functions: ----
-            
-              dplyr::transmute(pxl_col_in_fullres = imagecol,
-                               pxl_row_in_fullres = imagerow) |>
+              meta_df_image[,grep("image", names(meta_df_image))] |>
               as.matrix()
+            colnames(spots)[grep("row", colnames(spots))] <- "pxl_row_in_fullres"
+            colnames(spots)[grep("col", colnames(spots))] <- "pxl_col_in_fullres"
             # keep additional metadata
             meta_df_image <- 
-              meta_df_image |>
-              dplyr::transmute(in_tissue = case_when(tissue == 1 ~ TRUE, 
-                                                     tissue != 1 ~ FALSE),
-                               array_row = row, 
-                               array_col = col)
-            
-            
-            
+              meta_df_image[,grep("tissue|^row|^col", names(meta_df_image))]
+            colnames(meta_df_image)[grep("row", colnames(meta_df_image))] <- "array_row"
+            colnames(meta_df_image)[grep("col", colnames(meta_df_image))] <- "array_col"
+            meta_df_image$in_tissue <- ifelse(meta_df_image$tissue == 1, TRUE, FALSE)
+            meta_df_image$tissue <- NULL
             spot_diameter <-
               slot(seurat_obj, name = "images")[[fov_section]] |> 
               slot("scale.factors") |> _$spot
@@ -287,7 +282,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # Get centroids
           if (any(geoms == "centroids")) {
             cents <- 
-              seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("centroids", geoms, value = TRUE)]] |> 
+              seurat_obj[[Images(seurat_obj)[fov_section]]][["centroids"]] |> 
               as(object = _, "sf")
             rownames(cents) <- cell_ids_fov
           } else { cents <- NULL }
@@ -295,13 +290,13 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # Get cell polygon geometries
           if (any(geoms == "segmentation")) {
             polys <- 
-              seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("segmentation", geoms, value = TRUE)]] |>
+              seurat_obj[[Images(seurat_obj)[fov_section]]][["segmentation"]] |>
               slot(name = "polygons")
           } else if (!any(geoms == "segmentation") &&
                      any(geoms == "boxes")) {
             # if no segs, use boxes if present
             polys <- 
-              seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("boxes", geoms, value = TRUE)]] |>
+              seurat_obj[[Images(seurat_obj)[fov_section]]][["boxes"]] |>
               slot(name = "polygons")
           } else { polys <- NULL }
           if (!is.null(polys)) {
@@ -312,22 +307,21 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                         slot(polys[[i]], "Polygons")[[1]] |> 
                         slot("coords") |> list() |> 
                         st_polygon() |> st_geometry())
-              }, BPPARAM = BPPARAM) |>
-              do.call(bind_rows, args = _)
+              }, BPPARAM = BPPARAM
+              ) |> rbindlist() |> st_as_sf()
             # add cell ids
             rownames(polys) <- polys$ID
           }
           
           # Get molecules if provided
           if (add_molecules && any(geoms == "molecules")) {
-            mols <- seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("molecules", geoms, value = TRUE)]]
+            mols <- seurat_obj[[Images(seurat_obj)[fov_section]]][["molecules"]]
             mols <- 
               lapply(mols |> seq(), function(i) {
                 st_sf(geometry =
                         slot(mols[[i]], "coords") |> 
                         st_multipoint() |> st_geometry())}
-                ) |> 
-              do.call(bind_rows, args = _)
+                ) |> rbindlist() |> st_as_sf()
             # add transcript names
             mols$ID <- names(mols)
             } else { mols <- NULL }
@@ -365,19 +359,19 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                             if (!is.null(cents))
                                               # use centroids POINT here
                                               list(centroids = cents) 
-                                          else if (!length(is_Visium) == 0)
-                                            # spot centroids for Visium
-                                            list("spotPoly" = 
-                                                   .sc2cg(spots, 
-                                                          spotDiameter = spot_diameter)),
+                                            else if (!length(is_Visium) == 0)
+                                              # spot centroids for Visium
+                                              list("spotPoly" = 
+                                                     .sc2cg(spots, 
+                                                            spotDiameter = spot_diameter)),
                                           unit = 
-                                            if (!is.null(unit_use) &&
-                                                is.character(unit_use)) 
-                                              unit_use
-                                          #..for Visium only
-                                          else if (is.null(unit_use) &&
-                                                   !length(is_Visium) == 0)
-                                            "full_res_image_pixel" else "micron",
+                                            if (!is.null(unit) &&
+                                                is.character(unit)) 
+                                              unit
+                                            #..for Visium only
+                                            else if (is.null(unit) && 
+                                                     !length(is_Visium) == 0)
+                                              "full_res_image_pixel" else "micron",
                                           mainExpName = DefaultAssay(seurat_obj))
           # add sample_id to centroids
           colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
@@ -411,14 +405,12 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             spotPoly(sfe) <- cg
             spotPoly(sfe)$sample_id <- sampleIDs(sfe)
             
-            # TODO: add Images to SFE from Seurat or custom path ----
+            # TODO (under construction): add Images to SFE from Seurat or custom path ----
             # for now if Seurat is Visium
             # optionally image path could be provided and image added, eg for Xenium, Vizgen
-            #..under construction
             if (FALSE) {
-              
               # Scale factors for images
-              # TODO: scale_imgs is a value in, eg @scale.factors$lowres ----
+              # note, scale_imgs is a value in, eg @scale.factors$lowres
               scale_imgs <- 
                 slot(seurat_obj, name = "images")[[fov_section]] |> 
                 slot(name = "scale.factors") |> _[image_scalefactors]
@@ -474,27 +466,8 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             }
           }
           
-          # TODO: if multiple Assays are present ----
-          # Add as Alternative Experiment
-          # unless it's Xenium data with these assays:
-          # 'Gene Expression''Negative Control Probe''Negative Control Codeword''Unassigned Codeword'
-          # then all Assays gene will go into 1 assay with all the genes
-          
-          # eg --->>>  
-          # rowData(sfe, 2) |> str
-          # Formal class 'DFrame' [package "S4Vectors"] with 6 slots
-          #..@ rownames       : chr [1:541] "ABCC9" "ADAM17" "ADAMTS12" "ADAMTS16" ...
-          #..@ nrows          : int 541
-          #..@ elementType    : chr "ANY"
-          #..@ elementMetadata: NULL
-          #..@ metadata       : list()
-          #..@ listData       :List of 3
-          #.. ..$ ID    : chr [1:541] "ENSG00000069431" "ENSG00000151694" "ENSG00000151388" "ENSG00000145536" ...
-          #.. ..$ Symbol: chr [1:541] "ABCC9" "ADAM17" "ADAMTS12" "ADAMTS16" ...
-          #.. ..$ Type  : chr [1:541] "Gene Expression" "Gene Expression" "Gene Expression" "Gene Expression" ...
-          # eg <<<---
-          
-          # Currently adding as Alternative Experiment
+          # TODO (alternatively): use `MultiAssayExperiment` instead? ----
+          # Currently using `altExp` if > 1 Seurat Assays are present ----
           if (length(assays_name) > 1) {
             # keep assays minus default one
             assays_name <- setdiff(assays_name, DefaultAssay(seurat_obj))
@@ -537,7 +510,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
         message(">>> Combining ", length(obj_list), 
                 " SFE object(s) with unique `sample_id`")
         
-        # TODO: cbind SFEs and altExp ----
+        # TODO: cbind SFEs and altExps ----
         # extract altExp list -> lapply, add sample_id to each altExp
         # cbind SFEs without altExps
         # cbind altExps
@@ -562,13 +535,13 @@ setMethod("toSpatialFeatureExperiment", "Seurat",
             function(x,
                      add_molecules = TRUE,
                      flip = c("geometry", "image", "none"),
-                     image_scalefactors = "lowres",
-                     unit_use = NULL,
+                     image_scalefactors = c("lowres", "hires"),
+                     unit = NULL,
                      BPPARAM = SerialParam()) {
               .seu_to_sfe(seurat_obj = x,
                           add_molecules = add_molecules,
                           flip = flip,
                           image_scalefactors = image_scalefactors,
-                          unit_use = unit_use,
+                          unit = unit,
                           BPPARAM = BPPARAM)
             })

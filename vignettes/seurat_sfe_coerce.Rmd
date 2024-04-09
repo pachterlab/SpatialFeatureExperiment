@@ -47,23 +47,24 @@ BPPARAM <- BiocParallel::MulticoreParam(3,
 ```{r load_libs}
 suppressPackageStartupMessages({
     library(ggplot2)
-    library(SingleCellExperiment)
+    #library(SingleCellExperiment)
     library(scater)
+    library(scuttle)
     library(Seurat)
-    library(SeuratData)
-    library(dplyr)
+    #library(SeuratData)
+    #library(dplyr)
     library(magrittr)
-    library(scales)    
+    #library(scales)    
     #library(spatstat)
     library(patchwork)
-    library(Matrix)
-    library(SpatialExperiment)
+    #library(Matrix)
+    #library(SpatialExperiment)
     library(Voyager)   
     library(SpatialFeatureExperiment)
     library(SFEData)
-    library(terra)
+    #library(terra)
     library(BiocParallel)
-    library(sf)    
+    #library(sf)    
     })
 ```
 
@@ -85,7 +86,7 @@ showMethods("toSpatialFeatureExperiment")
 sfe_conv_vis <-
   toSpatialFeatureExperiment(x = obj_vis, 
                              image_scalefactors = "lowres",
-                             #unit_use = "micron",
+                             unit = "micron",
                              BPPARAM = BPPARAM)
 sfe_conv_vis
 getMeta(sfe_conv_vis) %>% str
@@ -104,7 +105,7 @@ plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
 ```
 
 ## Load Visium Seurat object (real data)
-Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`) and added to `./inst/extdata/`. Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
+Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`. Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
 ```{r}
 obj_vis_2 <- readRDS(file.path(dir_root, "inst/extdata/seu_anterior1_visium.rds"))
 obj_vis_2
@@ -118,7 +119,7 @@ SpatialFeaturePlot(obj_vis_2, features = rownames(obj_vis_2)[1])
 sfe_conv_vis_2 <-
   toSpatialFeatureExperiment(x = obj_vis_2, 
                              image_scalefactors = "lowres",
-                             #unit_use = "micron",
+                             unit = "micron",
                              BPPARAM = BPPARAM)
 sfe_conv_vis_2
 getMeta(sfe_conv_vis_2) %>% str
@@ -146,7 +147,7 @@ sfe_conv_xen <-
   toSpatialFeatureExperiment(x = obj_xen_slim,
                              add_molecules = TRUE,
                              flip = "geometry",
-                             unit_use = "micron",
+                             unit = "micron",
                              BPPARAM = BPPARAM
                              )
 sfe_conv_xen
@@ -175,7 +176,7 @@ sfe_conv_vz <-
                              
                              # TODO: test flip = "image" or "none" ----
                              flip = "geometry",
-                             unit_use = "micron",
+                             unit = "micron",
                              BPPARAM = BPPARAM)
 sfe_conv_vz
 getMeta(sfe_conv_vz) %>% str
@@ -200,7 +201,7 @@ sfe_conv_xen2 <-
   toSpatialFeatureExperiment(x = obj_xen,
                              add_molecules = TRUE,
                              flip = "geometry",
-                             unit_use = "micron",
+                             unit = "micron",
                              BPPARAM = BPPARAM
                              )
 sfe_conv_xen2
