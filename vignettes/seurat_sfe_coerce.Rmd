@@ -172,6 +172,8 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
 sfe_conv_vz <-
   toSpatialFeatureExperiment(x = obj_vz,
                              add_molecules = TRUE,
+                             
+                             # TODO: test flip = "image" or "none" ----
                              flip = "geometry",
                              unit_use = "micron",
                              BPPARAM = BPPARAM)

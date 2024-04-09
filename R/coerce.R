@@ -15,10 +15,16 @@
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams SpatialExperiment::toSpatialExperiment
-#' @param x A \code{SpatialExperiment} object to be coerced to a
+#' @inheritParams readVizgen
+#' @param x A \code{SpatialExperiment} or \code{Seurat} object to be coerced to a
 #'   \code{SpatialFeatureExperiment} object.
-#' @param BPPARAM Deprecated.
-#' @return An SFE object
+#' @param image_scalefactors # A \code{character}, choose between "lowres" or "hires".
+#'  Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.
+#' @param unit_use # Default unit is \code{"micron"}. However for Visium one can choose 
+#'  between \code{"micron"} or \code{"full_res_image_pixel"}.
+#' @param BPPARAM Deprecated when coercing from \code{SpatialExperiment},
+#'  but is used when coercing from \code{Seurat} object.
+#' @return A \code{SpatialFeatureExperiment} object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
 #' @name SpatialFeatureExperiment-coercion
@@ -31,6 +37,7 @@
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)
 #' sfe <- toSpatialFeatureExperiment(spe)
+#' # For coercing Seurat to SFE see this -> ./vignettes/seurat_sfe_coerce.Rmd
 NULL
 
 .sc2cg <- function(coords_use, spotDiameter = NA) {
@@ -144,28 +151,12 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                          unit = unit)
           })
 
-#' Coerce from Seurat to SpatialFeatureExperiment
-#' This function converts \code{Seurat} (v4 & v5) object to \code{SpatialFeatureExperiment} object
-#' @inheritParams readVizgen
-#' @param seurat_obj A \code{Seurat} object.
-#' @param image_scalefactors # A \code{character}, choose between "lowres" or "hires".
-#'  Only for 10X Visium, image scaling factors are from `scalefactors_json.json`.
-#' @param unit_use # Default unit is \code{"micron"}. However for Visium one can choose 
-#'  between \code{"micron"} or \code{"full_res_image_pixel"}.
-#' @return A \code{SpatialFeatureExperiment} object
-#' @export
+# Converter function from Seurat (v4 & v5) object to SpatialFeatureExperiment
+#' @importFrom sf st_sf st_geometry st_polygon st_multipoint
 #' @importFrom SummarizedExperiment assays
 #' @importFrom methods slot
 #' @importFrom SingleCellExperiment SingleCellExperiment mainExpName altExp altExpNames
 #' @importFrom BiocParallel bplapply
-#' 
-#' @examples 
-#' # TODO 
-#' # see ./vignettes/seurat_sfe_coerce.Rmd
-#' 
-
-# TODO, change dplyr functions, eg mutate, to base ----
-
 .seu_to_sfe <- 
   function(seurat_obj = NULL,
            add_molecules = TRUE,
@@ -261,6 +252,9 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             spots <-
               meta_df_image |>
               # select coords
+              
+              # TODO: replace dplyr functions: ----
+            
               dplyr::transmute(pxl_col_in_fullres = imagecol,
                                pxl_row_in_fullres = imagerow) |>
               as.matrix()
@@ -271,6 +265,9 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                                      tissue != 1 ~ FALSE),
                                array_row = row, 
                                array_col = col)
+            
+            
+            
             spot_diameter <-
               slot(seurat_obj, name = "images")[[fov_section]] |> 
               slot("scale.factors") |> _$spot
@@ -311,12 +308,13 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             polys <- 
               bplapply(polys |> seq(), function(i) {
                 st_sf(ID = names(polys)[i],
-                      geometry = polys[[i]] |> 
-                        list() |>
-                        sp::SpatialPolygons(Srl = _) |> 
-                        as(object = _, "sf") |> st_geometry())
+                      geometry = 
+                        slot(polys[[i]], "Polygons")[[1]] |> 
+                        slot("coords") |> list() |> 
+                        st_polygon() |> st_geometry())
               }, BPPARAM = BPPARAM) |>
               do.call(bind_rows, args = _)
+            # add cell ids
             rownames(polys) <- polys$ID
           }
           
@@ -325,13 +323,14 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             mols <- seurat_obj[[Images(seurat_obj)[fov_section]]][[grep("molecules", geoms, value = TRUE)]]
             mols <- 
               lapply(mols |> seq(), function(i) {
-                st_sf(geometry = mols[[i]] |>
-                        list() |>
-                        sp::SpatialMultiPoints(coords = _) |>
-                        as(object = _, "sf")) |>
-                  mutate(ID = names(mols)[i])}) |> 
+                st_sf(geometry =
+                        slot(mols[[i]], "coords") |> 
+                        st_multipoint() |> st_geometry())}
+                ) |> 
               do.call(bind_rows, args = _)
-          } else { mols <- NULL }
+            # add transcript names
+            mols$ID <- names(mols)
+            } else { mols <- NULL }
           
           # Get sparse count matrices
           # prepare assays
@@ -343,7 +342,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                  scaledata = .GetCounts(seurat_obj, "scale.data",
                                         assay = DefaultAssay(seurat_obj)))
           # remove empty elements, if eg "scale.data" is not present
-          # alternative pass it |> purrr::compact(.)
           assays_sfe <- assays_sfe[lapply(assays_sfe, length) > 0] 
           # # using cell IDs from FOV/tissue section cell_ids_fov
           assays_sfe <- 
@@ -521,8 +519,8 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                 # keep names
                 setNames(object = _, names(assays_add))
               altExp(sfe, assays_name[a]) <- 
-                SingleCellExperiment::SingleCellExperiment(assays = assays_add) |> 
-                SpatialExperiment::toSpatialExperiment(sample_id = gsub("_|-|[.]", "", 
+                SingleCellExperiment(assays = assays_add) |> 
+                toSpatialExperiment(sample_id = gsub("_|-|[.]", "", 
                                                                         x = Images(seurat_obj)[fov_section])) |>
                 toSpatialFeatureExperiment(x = _,
                                            spatialCoordsNames = c("x", "y"), 
@@ -556,7 +554,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
     }
   }
 
-#' Set formal method for Seurat to SFE
+# Set formal method for Seurat to SFE
 #' @rdname SpatialFeatureExperiment-coercion
 #' @export
 setMethod("toSpatialFeatureExperiment", "Seurat",
