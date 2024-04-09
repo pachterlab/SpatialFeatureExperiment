@@ -76,7 +76,7 @@ Suggests:
     RBioFormats,
     rhdf5,
     rmarkdown,
-    SFEData,
+    SFEData (>= 1.5.3),
     testthat (>= 3.0.0),
     Voyager,
     xml2,

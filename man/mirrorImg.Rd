@@ -34,10 +34,7 @@ OME-TIFF to make different methods of this function consistent.}
 \item{...}{additional arguments for writing files as in \code{\link[terra]{writeRaster}}}
 }
 \value{
-For \code{SpatRasterImage} and \code{EBImage}, object of the same
-  class. For \code{BioFormatsImage}, the image of the specified resolution is
-  read into memory and then the \code{EBImage} method is called, returning
-  \code{EBImage}. The extent is not changed.
+\code{*Image} object of the same class.
 }
 \description{
 Flip images along the middle horizontal or vertical axis.
