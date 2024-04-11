@@ -226,11 +226,17 @@ setGeneric("unit", function(x) standardGeneric("unit"))
 #' @export
 setGeneric("transposeImg", function(x, ...) standardGeneric("transposeImg"))
 
-#' @export
-setGeneric("translateImg", function(x, v, ...) standardGeneric("translateImg"))
+setGeneric(".transpose_img", function(x, bbox_all, ...) standardGeneric(".transpose_img"))
+
+setGeneric(".mirror_img", function(x, direction, bbox_all, ...) standardGeneric(".mirror_img"))
+
+setGeneric(".rotate_img", function(x, degrees, bbox_all, ...) standardGeneric(".rotate_img"))
 
 #' @export
 setGeneric("scaleImg", function(x, factor, ...) standardGeneric("scaleImg"))
+
+#' @export
+setGeneric("translateImg", function(x, v, ...) standardGeneric("translateImg"))
 
 #' @export
 setGeneric("affineImg", function(x, M, v, ...) standardGeneric("affineImg"))

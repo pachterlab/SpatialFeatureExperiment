@@ -16,8 +16,8 @@
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
 
-\item{degrees}{How many degrees to rotate. Positive
-number means clockwise and negative number means counterclockwise.}
+\item{degrees}{How many degrees to rotate. Positive number means clockwise
+and negative number means counterclockwise.}
 
 \item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
 memory. The default 1e7 is chosen because this is the approximate number of
@@ -29,8 +29,8 @@ same \code{lapply} in the method for SFE objects. Some methods have extra
 arguments.}
 }
 \value{
-\code{SpatRasterImage} will be converted to \code{EBImage}. Otherwise
-\code{*Image} object of the same class.
+\code{SpatRasterImage} will be loaded into memory and converted to
+  \code{EBImage}. Otherwise \code{*Image} object of the same class.
 }
 \description{
 As in \code{SpatialExperiment}, rotation here must be a multiple of 90

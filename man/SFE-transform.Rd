@@ -6,43 +6,49 @@
 \alias{mirror}
 \alias{rotate}
 \alias{translate}
+\alias{scale}
+\alias{affine}
 \title{Affine transfortaion of SFE object in histological space}
 \usage{
-transpose(sfe, sample_id = "all", resolution = 4L)
+transpose(sfe, sample_id = "all", maxcell = NULL, filename = "")
 
 mirror(
   sfe,
   sample_id = "all",
   direction = c("vertical", "horizontal"),
-  resolution = 4L
+  maxcell = NULL,
+  filename = ""
 )
 
-rotate(sfe, sample_id = "all", degrees, resolution = 4L, maxcell = 1e+07)
+rotate(sfe, sample_id = "all", degrees, maxcell = 1e+07)
 
 translate(sfe, sample_id = "all", v)
+
+scale(sfe, sample_id = "all", factor)
+
+affine(sfe, sample_id = "all", M, v, maxcell = 1e+07)
 }
 \arguments{
 \item{sfe}{An SFE object.}
 
 \item{sample_id}{Sample(s) to transform.}
 
-\item{resolution}{Transposing, mirroring, and rotating \code{BioFormatsImage}
-will convert it into \code{EBImage}, loading the image into memory. This
-argument specifies the resolution of image in the OME-TIFF pyramid to load.
-Ignored if no image of class \code{BioFormatsImage} is present in the
-sample(s) of interest.}
-
-\item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
-
-\item{degrees}{How many degrees to rotate. Positive
-number means clockwise and negative number means counterclockwise.}
-
 \item{maxcell}{Rotating \code{SpatRasterImage} will convert it into
 \code{EBImage}, loading the image into memory. This argument specifies the
 maximum number of pixels in the image loaded into memory. The image will be
 down sampled to approximately this number of pixels.}
 
+\item{filename}{character. Output filename}
+
+\item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
+
 \item{v}{Vector to spatially translate the SFE object.}
+
+\item{resolution}{Transposing, mirroring, and rotating \code{BioFormatsImage}
+will convert it into \code{EBImage}, loading the image into memory. This
+argument specifies the resolution of image in the OME-TIFF pyramid to load.
+Ignored if no image of class \code{BioFormatsImage} is present in the
+sample(s) of interest.}
 }
 \value{
 An SFE object with the sample(s) transformed.

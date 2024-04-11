@@ -629,7 +629,7 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 #' will load \code{BioFormatsImage} into memory.
 #'
 #' @inheritParams terra::flip
-#' @inheritParams rotateImg
+#' @inheritParams transposeImg
 #' @param sfe An SFE object.
 #' @param sample_id Sample(s) to transform.
 #' @param resolution Transposing, mirroring, and rotating \code{BioFormatsImage}
@@ -655,39 +655,49 @@ NULL
 
 #' @rdname SFE-transform
 #' @export
-transpose <- function(sfe, sample_id = "all", resolution = 4L) {
+transpose <- function(sfe, sample_id = "all", maxcell = NULL, filename = "") {
     .transform_samples(sfe, sample_id, geometry_fun = .transpose_geometry,
-                       img_fun = .transpose_img, resolution = resolution)
+                       img_fun = .transpose_img, maxcell = maxcell,
+                       filename = filename)
 }
 
 #' @rdname SFE-transform
 #' @export
 mirror <- function(sfe, sample_id = "all",
-                   direction = c("vertical", "horizontal"),
-                   resolution = 4L) {
+                   direction = c("vertical", "horizontal"), maxcell = NULL,
+                   filename = "") {
     .transform_samples(sfe, sample_id, geometry_fun = .mirror_geometry,
-                       img_fun = .mirror_img, resolution = resolution,
-                       direction = direction)
+                       img_fun = .mirror_img, maxcell = maxcell,
+                       filename = filename, direction = direction)
 }
 
 #' @rdname SFE-transform
 #' @export
-rotate <- function(sfe, sample_id = "all", degrees,
-                   resolution = 4L, maxcell = 1e7) {
-    stopifnot(
-        length(degrees) == 1,
-        is.numeric(degrees),
-        degrees %% 90 == 0)
+rotate <- function(sfe, sample_id = "all", degrees, maxcell = 1e7) {
     .transform_samples(sfe, sample_id, geometry_fun = .rotate_geometry,
-                       img_fun = .rotate_img, resolution = resolution,
-                       maxcell = maxcell, degrees = degrees)
+                       img_fun = .rotate_img, maxcell = maxcell, degrees = degrees)
 }
 
 #' @rdname SFE-transform
 #' @export
 translate <- function(sfe, sample_id = "all", v) {
     .transform_samples(sfe, sample_id, geometry_fun = .translate_geometry,
-                       img_fun = .translate_img, v = v)
+                       img_fun = translateImg, v = v, use_bbox = FALSE)
+}
+
+#' @rdname SFE-transform
+#' @export
+scale <- function(sfe, sample_id = "all", factor) {
+    .transform_samples(sfe, sample_id, geometry_fun = .scale_geometry,
+                       img_fun = .scale_ext, factor = factor)
+}
+
+#' @rdname SFE-transform
+#' @export
+affine <- function(sfe, sample_id = "all", M, v, maxcell = 1e7) {
+    .transform_samples(sfe, sample_id, geometry_fun = .affine_geometry,
+                       img_fun = affineImg, M = M, v = v, maxcell = maxcell,
+                       use_bbox = FALSE)
 }
 
 #' Remove empty space
