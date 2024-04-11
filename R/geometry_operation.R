@@ -688,14 +688,14 @@ translate <- function(sfe, sample_id = "all", v) {
 #' @rdname SFE-transform
 #' @export
 scale <- function(sfe, sample_id = "all", factor) {
-    .transform_samples(sfe, sample_id, geometry_fun = .translate_geometry,
+    .transform_samples(sfe, sample_id, geometry_fun = .scale_geometry,
                        img_fun = .scale_ext, factor = factor)
 }
 
 #' @rdname SFE-transform
 #' @export
 affine <- function(sfe, sample_id = "all", M, v, maxcell = 1e7) {
-    .transform_samples(sfe, sample_id, geometry_fun = .translate_geometry,
+    .transform_samples(sfe, sample_id, geometry_fun = .affine_geometry,
                        img_fun = affineImg, M = M, v = v, maxcell = maxcell,
                        use_bbox = FALSE)
 }

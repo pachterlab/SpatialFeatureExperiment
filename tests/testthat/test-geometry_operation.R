@@ -253,11 +253,11 @@ test_that("Error when other spatial operations are specified", {
 })
 
 test_that("Crop 3D geometry", {
-    dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
-    dir.create("cosmx")
-    file.copy(list.files(dir_use, full.names = TRUE), "cosmx")
+    dir_use <- CosMXOutput()
+    dir.create("cosmx_test")
+    file.copy(dir_use, "cosmx_test", recursive = TRUE)
 
-    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+    sfe <- readCosMX("cosmx_test/cosmx", z = "all", add_molecules = TRUE,
                      z_option = "3d")
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
     sfe_cropped <- crop(sfe, bbox1)
@@ -269,7 +269,7 @@ test_that("Crop 3D geometry", {
                               sparse = FALSE))
     expect_equal(unclass(st_z_range(rg)), c(zmin = 0, zmax = 1),
                  ignore_attr = "crs")
-    unlink("cosmx", recursive = TRUE)
+    unlink("cosmx_test", recursive = TRUE)
 })
 
 # annotPred and annotOp===========
@@ -654,10 +654,10 @@ test_that("Mirror SFE object with image after cropping", {
     bbox_img_sf <- bbox_img |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_cg_sf, bbox_img_sf, sparse = FALSE))
     expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
-                 bbox_cg[["ymin"]] - bbox_img[["ymin"]])
+                 st_bbox(bbox_cg_sf)[["ymin"]] - bbox_img[["ymin"]])
 
     bbox_rg <- st_bbox(rowGeometry(sfe2)) |> st_as_sfc()
-    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    expect_true(st_covers(bbox_cg_sf, bbox_rg, sparse = FALSE))
     # For ag, can get indices of intersection
     int1 <- st_intersects(ag, spotPoly(sfe))
     int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
@@ -728,20 +728,111 @@ test_that("Rotate SFE object with image after cropping", {
 })
 
 test_that("Scale SFE object with image", {
+    sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2) |> imgRaster()
 
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+
+    # Also see if spotPoly is aligned
+    v2 <- terra::extract(terra::mean(img), st_centroid(spotPoly(sfe2)))
+    expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
+
+    int1 <- st_intersects(rg, spotPoly(sfe))
+    int2 <- st_intersects(rowGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Scale SFE object with image after cropping", {
+    sfe <- sfe[,sfe$in_tissue]
+    sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2) |> imgRaster()
+
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+
+    # Also see if spotPoly is aligned
+    v2 <- terra::extract(terra::mean(img), st_centroid(spotPoly(sfe2)))
+    expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
+
+    int1 <- st_intersects(rg, spotPoly(sfe))
+    int2 <- st_intersects(rowGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
 })
 
 test_that("General affine transformation of SFE object with image", {
+    M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
+    v <- c(0, 300)
+    sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
 
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+
+    # Also see if spotPoly is aligned
+    v2 <- terra::extract(terra::mean(img), st_centroid(spotPoly(sfe2)))
+    expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
+
+    int1 <- st_intersects(rg, spotPoly(sfe))
+    int2 <- st_intersects(rowGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Affine transformation of SFE object with image, after cropping", {
+    M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
+    v <- c(0, 300)
+    sfe <- sfe[,sfe$in_tissue]
+    sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
+    cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+
+    v <- terra::extract(terra::mean(img), cg)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    expect_true(abs(cor(nCounts, v$mean)) > 0.4)
+
+    # Also see if spotPoly is aligned
+    v2 <- terra::extract(terra::mean(img), st_centroid(spotPoly(sfe2)))
+    expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
+
+    int1 <- st_intersects(rg, spotPoly(sfe))
+    int2 <- st_intersects(rowGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
+
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, spotPoly(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
+    expect_equal(int1, int2)
 })
 
 test_that("Transformation when there's 3D geometry", {
     dir_use <- CosMXOutput()
-    file.copy(list.files(dir_use, full.names = TRUE), "cosmx_test")
+    dir.create("cosmx_test")
+    file.copy(dir_use, "cosmx_test", recursive = TRUE)
 
-    sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE,
+    sfe <- readCosMX("cosmx_test/cosmx", z = "all", add_molecules = TRUE,
                      z_option = "3d")
-    sfe2 <- rotate(sfe, degrees = 90)
+    sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 90)
     ints <- st_intersects(cellSeg(sfe), txSpots(sfe))
     ints2 <- st_intersects(cellSeg(sfe2), txSpots(sfe2))
     expect_equal(ints, ints2)

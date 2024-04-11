@@ -22,7 +22,7 @@
 # then move it back to its original center
 .center_mv <- function(bbox, M) {
     center <- bbox_center(bbox)
-    v <- center - M %*% center
+    v <- as.vector(center - M %*% center)
     list(M = M, v = v)
 }
 
@@ -79,6 +79,7 @@
         # Consider getting the coordinates, do matrix multiplication, then use sfheaders
         g$geometry <- g$geometry * mult + add
     } else {
+        # Somehow it drops Z when add is a 2x1 matrix but not when it's a vector
         g$geometry <- g$geometry * mult_3d + add
     }
     g
