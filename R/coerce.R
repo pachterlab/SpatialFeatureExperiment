@@ -313,6 +313,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           if (add_molecules && any(geoms == "molecules")) {
             mols <- seurat_obj[[Images(seurat_obj)[fov_section]]][["molecules"]]
             mols <- 
+              # TODO (optional): use bplapply here too? ----
               lapply(mols |> seq(), function(i) {
                 st_sf(ID = names(mols)[i],
                       geometry =

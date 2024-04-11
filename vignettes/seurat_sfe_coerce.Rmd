@@ -156,13 +156,13 @@ getMeta(sfe_conv_xen) %>% str
 getMeta(obj_xen) %>% str
 ```
 ```{r}
+# manual check
 ggplot() &
-    geom_sf(data = cellSeg(sfe_conv_xen)) #&
-    #geom_sf(data = rowGeometry(sfe_conv_xen, "txSpots"), size = 0.5)
-
-
+    geom_sf(data = cellSeg(sfe_conv_xen)) &
+    geom_sf(data = 
+              rowGeometry(sfe_conv_xen, "txSpots") %>% 
+              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
 ```
-
 
 ## Plot converted Seurat to SFE - Xenium
 ```{r}
@@ -197,11 +197,10 @@ getMeta(obj_vz) %>% str
 ```
 
 ```{r}
+# manual check
 ggplot() & 
     geom_sf(data = cellSeg(sfe_conv_vz)) &
     geom_sf(data = rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5)
-
-
 ```
 
 ## Plot converted Seurat to SFE - Vizgen
