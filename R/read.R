@@ -490,7 +490,7 @@ readVizgen <- function(data_dir,
                         paste0("\n", ">>> processed hdf5 files will be used") })
             fn <- parq
             # read file and filter to keep selected single z section as they're the same anyway
-            polys <- st_read(fn, int64_as_string = TRUE)
+            polys <- st_read(fn, int64_as_string = TRUE, crs = NA, quiet = TRUE)
             # Can use any z-plane since they're all the same
             # This way so this part still works when the parquet file is written after
             # reading in HDF5 the first time. Only writing one z-plane to save disk space.
@@ -740,7 +740,9 @@ readVizgen <- function(data_dir,
             if (!return) return(file_dir)
             out <- lapply(fns, function(x) {
                 q <- .make_sql_query(x, gene_select, gene_col)
-                st_read(x, query = q, int64_as_string = TRUE, quiet = TRUE)
+                out <- st_read(x, query = q, int64_as_string = TRUE, quiet = TRUE,
+                               crs = NA)
+                out
             })
             # add names to a list
             names(out) <- gsub(".parquet", "",
@@ -756,7 +758,7 @@ readVizgen <- function(data_dir,
     } else if (file.exists(file_out) && !dir.exists(file_dir)) {
         if (!return) return(file_out)
         out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col),
-                       int64_as_string = TRUE, quiet = TRUE)
+                       int64_as_string = TRUE, quiet = TRUE, crs = NA)
         rownames(out) <- out[[gene_col]]
         return(out)
     }
@@ -1072,7 +1074,8 @@ addTxSpots <- function(sfe, file, sample_id = 1L, gene_select = NULL,
                 # genes/features that are removed
                 genes_rm <- rownames(sfe)[-gene_indx]
                 message(">>> Total of ", length(genes_rm),
-                        " features/genes with `min_phred` < ", min_phred, " are removed from SFE object",
+                        " features/genes with no transcript detected or `min_phred` < ",
+                        min_phred, " are removed from SFE object",
                         "\n", ">>> To keep all features -> set `min_phred = NULL`")
                 sfe <- sfe[gene_indx,]
             }
@@ -1147,7 +1150,7 @@ readCosMX <- function(data_dir,
     poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
     if (file.exists(poly_sf_fn)) {
         message(">>> File cell_boundaries_sf.parquet found")
-        polys <- st_read(poly_sf_fn, int64_as_string = TRUE, quiet = TRUE)
+        polys <- st_read(poly_sf_fn, int64_as_string = TRUE, quiet = TRUE, crs = NA)
         rownames(polys) <- polys$cellID
     } else {
         message(">>> Constructing cell polygons")
@@ -1360,7 +1363,8 @@ readXenium <- function(data_dir,
                     ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
                     " segmentations")
             # add cell id to rownames
-            polys <- lapply(fn_segs, st_read, quiet = TRUE, int64_as_string = TRUE)
+            polys <- lapply(fn_segs, st_read, quiet = TRUE, int64_as_string = TRUE,
+                            crs = NA)
         } else {
             if (no_raw_bytes) {
                 if (any(grep("..parquet", fn_segs))) {
