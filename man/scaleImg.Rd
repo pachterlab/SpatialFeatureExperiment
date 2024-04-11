@@ -2,16 +2,9 @@
 % Please edit documentation in R/image.R
 \name{scaleImg}
 \alias{scaleImg}
-\alias{scaleImg,SpatRasterImage-method}
-\alias{scaleImg,BioFormatsImage-method}
-\alias{scaleImg,EBImage-method}
 \title{Scale image}
 \usage{
-\S4method{scaleImg}{SpatRasterImage}(x, factor, ...)
-
-\S4method{scaleImg}{BioFormatsImage}(x, factor, ...)
-
-\S4method{scaleImg}{EBImage}(x, factor, ...)
+\S4method{scaleImg}{AlignedSpatialImage}(x, factor, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}

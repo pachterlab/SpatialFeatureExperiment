@@ -7,6 +7,8 @@
 \alias{mirrorImg,SpatialFeatureExperiment-method}
 \alias{rotateImg,SpatialFeatureExperiment-method}
 \alias{translateImg,SpatialFeatureExperiment-method}
+\alias{scaleImg,SpatialFeatureExperiment-method}
+\alias{affineImg,SpatialFeatureExperiment-method}
 \title{Methods for handling image-related data}
 \usage{
 \S4method{addImg}{SpatialFeatureExperiment}(
@@ -39,6 +41,10 @@
 \S4method{rotateImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, degrees, maxcell = 1e+07)
 
 \S4method{translateImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, v)
+
+\S4method{scaleImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, factor)
+
+\S4method{affineImg}{SpatialFeatureExperiment}(x, sample_id = 1L, image_id = NULL, M, v)
 }
 \arguments{
 \item{x}{A SFE object.}
@@ -70,8 +76,8 @@ OME-TIFF to make different methods of this function consistent.}
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 
-\item{degrees}{How many degrees to rotate. Positive
-number means clockwise and negative number means counterclockwise.}
+\item{degrees}{How many degrees to rotate. Positive number means clockwise
+and negative number means counterclockwise.}
 
 \item{v}{A numeric vector of length 2 specifying the vector in the xy plane
 to translate the SFE object.}

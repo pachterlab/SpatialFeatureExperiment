@@ -1,7 +1,8 @@
 # Affine transformations for both images and geometries
-.transform_bbox <- function(bbox, tr) {
+.transform_bbox <- function(bbox, tr, bbox_all = bbox) {
     if (!length(tr)) return(bbox)
-    if ("name" %in% names(tr)) tr <- do.call(.get_affine_mat, c(tr, list(bbox = bbox)))
+    # .get_affine_mat to mainly get the v to fix the center when necessary
+    if ("name" %in% names(tr)) tr <- do.call(.get_affine_mat, c(tr, list(bbox = bbox_all)))
     M <- tr$M; v <- tr$v
     bbox_sf <- st_bbox(bbox) |> st_as_sfc()
     bbox_sf <- bbox_sf * t(M) + v
@@ -26,6 +27,7 @@
 }
 
 .transpose <- function(bbox) {
+    # Should use bbox of the geometry rather than overall bbox of the sample
     M <- matrix(c(0,-1,-1,0), ncol = 2)
     v <- c(((bbox["ymax"] - bbox["ymin"])/2 + bbox["ymin"])*2,
            ((bbox["xmax"] - bbox["xmin"])/2 + bbox["xmin"])*2)
@@ -68,6 +70,7 @@
 .transform_geometry <- function(g, mult, add) UseMethod(".transform_geometry")
 
 .transform_geometry.sf <- function(g, mult, add) {
+    mult <- t(mult) # Because of g %*% mult rather than mult %*% g
     # z will not be affected if present
     mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
     # It's fine to put it here since I don't expect more than a handful of geometries
@@ -107,38 +110,25 @@
 .get_img_fun <- function(name) {
     switch(name,
            translate = translateImg,
-           transpose = transposeImg,
-           mirror = mirrorImg,
-           rotate = rotateImg,
+           transpose = .transpose_img,
+           mirror = .mirror_img,
+           rotate = .rotate_img,
            scale = scaleImg,
            affine = affineImg
     )
 }
 
-.translate_geometry <- .get_img_fun("translate")
-
-.translate_img <- .get_img_fun("translate")
+.translate_geometry <- .transform_geometry_fun("translate")
 
 .transpose_geometry <- .transform_geometry_fun("transpose")
 
-.transpose_img <- .get_img_fun("transpose")
-
 .mirror_geometry <- .transform_geometry_fun("mirror")
-# The internal .*_img functions here also shifts the image so its relative
-# position within the larger bbox of the entire sample remains the same. In
-# contrast, in the exported *Img functions, the mirroring and rotation are
-# performed wrt the center of the individual image.
-.mirror_img <- .get_img_fun("mirror")
 
 .rotate_geometry <- .transform_geometry_fun("rotate")
 
 .scale_geometry <- .transform_geometry_fun("scale")
 
 .affine_geometry <- .transform_geometry_fun("affine")
-
-.rotate_img <- .get_img_fun("rotate")
-
-.scale_img <- .get_img_fun("scale")
 
 # From EBImage: affine returns the affine transformation of x, where pixels
 # coordinates, denoted by the matrix px, are transformed to cbind(px, 1)%*%m.
@@ -168,21 +158,28 @@
 }
 
 .transform <- function(sfe, sample_id, bbox, geometry_fun, img_fun,
-                       resolution = 4L, maxcell = 1e7, ...) {
+                       use_bbox = TRUE, ...) {
     # For one sample, bbox is different for each sample
     inds <- colData(sfe)$sample_id == sample_id
-    spatialCoords(sfe)[inds,] <- geometry_fun(spatialCoords(sfe)[inds,], bbox = bbox, ...)
+    sc <- spatialCoords(sfe)[inds,]
+    bbox_sc <- if (use_bbox)
+        bbox %||% c(xmin = min(sc[,1]), xmax = max(sc[,1]),
+                    ymin = min(sc[,2]), ymax = max(sc[,2]))
+    else bbox
+    spatialCoords(sfe)[inds,] <- geometry_fun(sc, bbox = bbox_sc, ...)
     # colGeometries
     for (n in colGeometryNames(sfe)) {
         cg <- colGeometry(sfe, n, sample_id = sample_id)
-        cg <- geometry_fun(cg, bbox = bbox, ...)
+        bbox_cg <- if (use_bbox) bbox %||% st_bbox(cg) else bbox
+        cg <- geometry_fun(cg, bbox = bbox_cg, ...)
         colGeometry(sfe, n, sample_id = sample_id) <- cg
     }
     # annotGeometries
     if (!is.null(annotGeometries(sfe))) {
         for (n in annotGeometryNames(sfe)) {
             ag <- annotGeometry(sfe, n, sample_id = sample_id)
-            ag <- geometry_fun(ag, bbox = bbox, ...)
+            bbox_ag <- if (use_bbox) bbox %||% st_bbox(ag) else bbox
+            ag <- geometry_fun(ag, bbox = bbox_ag, ...)
             annotGeometry(sfe, n, sample_id = sample_id) <- ag
         }
     }
@@ -195,7 +192,8 @@
     if (length(rg_sample)) {
         for (n in rg_sample) {
             rg <- rowGeometry(sfe, n, sample_id = sample_id)
-            rg <- geometry_fun(rg, bbox = bbox, ...)
+            bbox_rg <- if (use_bbox) bbox %||% st_bbox(rg) else bbox
+            rg <- geometry_fun(rg, bbox = bbox_rg, ...)
             rowGeometry(sfe, n, sample_id = sample_id) <- rg
         }
     }
@@ -204,22 +202,30 @@
         inds <- imgData(sfe)$sample_id == sample_id
         new_imgs <- lapply(imgData(sfe)$data[inds], function(img) {
             # img_fun should use the overall bbox of the sample including images
-            img_new <- img_fun(img, bbox = bbox, resolution = resolution,
-                               maxcell = maxcell,...)
+            # when applicable.
+            # When not applicable, e.g. in transpose and translate, the bbox_all
+            # is ignored.
+            img_new <- img_fun(img, bbox_all = bbox, ...)
         })
         imgData(sfe)$data[inds] <- I(new_imgs)
     }
     sfe
 }
 .transform_samples <- function(sfe, sample_id, geometry_fun, img_fun,
-                               resolution = 4L, maxcell = 1e7, ...) {
+                               use_bbox = TRUE, ...) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-    bboxes <- bbox(sfe, sample_id, include_images = TRUE)
-    if (is.vector(bboxes)) bboxes <- matrix(bboxes, ncol = 1,
-                                            dimnames = list(names(bboxes), sample_id))
-    for (s in sample_id) {
-        sfe <- .transform(sfe, s, bboxes[,s], geometry_fun, img_fun,
-                          resolution, maxcell, ...)
+    if (use_bbox) {
+        bboxes <- bbox(sfe, sample_id, include_images = TRUE)
+        if (is.vector(bboxes)) bboxes <- matrix(bboxes, ncol = 1,
+                                                dimnames = list(names(bboxes), sample_id))
+        for (s in sample_id) {
+            sfe <- .transform(sfe, s, bboxes[,s], geometry_fun, img_fun, ...)
+        }
+    } else {
+        for (s in sample_id) {
+            sfe <- .transform(sfe, s, bbox = NULL, geometry_fun = geometry_fun,
+                              img_fun = img_fun, use_bbox = use_bbox, ...)
+        }
     }
     sfe
 }
