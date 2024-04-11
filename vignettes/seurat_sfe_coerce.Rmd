@@ -8,7 +8,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -105,14 +105,15 @@ plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
 ```
 
 ## Load Visium Seurat object (real data)
-Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`. Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
+Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`.
+Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
 ```{r}
 obj_vis_2 <- readRDS(file.path(dir_root, "inst/extdata/seu_anterior1_visium.rds"))
 obj_vis_2
 # plot it
 SpatialFeaturePlot(obj_vis_2, features = rownames(obj_vis_2)[1])
-```
 
+```
 ## Convert Seurat -> SFE - Visium (real data)
 ```{r}
 # real Visium data
@@ -147,17 +148,31 @@ sfe_conv_xen <-
   toSpatialFeatureExperiment(x = obj_xen_slim,
                              add_molecules = TRUE,
                              flip = "geometry",
-                             unit = "micron",
+                             #unit = "micron",
                              BPPARAM = BPPARAM
                              )
 sfe_conv_xen
 getMeta(sfe_conv_xen) %>% str
 getMeta(obj_xen) %>% str
 ```
+```{r}
+ggplot() &
+    geom_sf(data = cellSeg(sfe_conv_xen)) #&
+    #geom_sf(data = rowGeometry(sfe_conv_xen, "txSpots"), size = 0.5)
+
+
+```
+
 
 ## Plot converted Seurat to SFE - Xenium
 ```{r}
-#options(repr.plot.height = 5, repr.plot.width = 10)
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "centroids", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  )
 plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
                    features = rownames(sfe_conv_xen)[1],
                    size = 1, colGeometryName = "cellSeg", 
@@ -173,14 +188,20 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
 sfe_conv_vz <-
   toSpatialFeatureExperiment(x = obj_vz,
                              add_molecules = TRUE,
-                             
-                             # TODO: test flip = "image" or "none" ----
                              flip = "geometry",
-                             unit = "micron",
+                             #unit = "micron",
                              BPPARAM = BPPARAM)
 sfe_conv_vz
 getMeta(sfe_conv_vz) %>% str
 getMeta(obj_vz) %>% str
+```
+
+```{r}
+ggplot() & 
+    geom_sf(data = cellSeg(sfe_conv_vz)) &
+    geom_sf(data = rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5)
+
+
 ```
 
 ## Plot converted Seurat to SFE - Vizgen
@@ -188,10 +209,10 @@ getMeta(obj_vz) %>% str
 #options(repr.plot.height = 5, repr.plot.width = 10)
 plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
                    features = rownames(sfe_conv_vz)[1],
-                   size = 1, colGeometryName = "cellSeg", 
+                   size = 4, colGeometryName = "cellSeg", 
                    dark = TRUE,
                    #sample_id = "",
-                   scattermore = FALSE # will plot only centroids!
+                   scattermore = F # will plot only centroids!
                   )
 ```
 
@@ -208,6 +229,7 @@ sfe_conv_xen2
 getMeta(sfe_conv_xen2) %>% str
 getMeta(obj_xen) %>% str
 ```
+
 ## Plot converted Seurat to SFE with several `altExp` - Xenium
 ```{r}
 plotSpatialFeature(sfe_conv_xen2, exprs_values = "counts",
@@ -230,7 +252,8 @@ plotSpatialFeature(altExp(sfe_conv_xen2, 1), exprs_values = "counts",
 )
 ```
 
-## TODO: Test when Seurat object has > 1 Assay - Vizgen + SCT Assays
+## TODO: Test when Seurat object has > 1 Assay - Vizgen
+eg including SCT Assays
 ```{r}
 
 
@@ -256,7 +279,14 @@ NOTE, the function will automatically check how many FOVs Seurat object has and 
 
 ```
 
-## TODO quick analysis using Voyager
+## TODO: Test when multiple samples/FOVs and > 1 Assays are present in Seurat object
+```{r}
+
+
+```
+
+
+## TODO: quick analysis using Voyager
 ```{r}
 # 
 

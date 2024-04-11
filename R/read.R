@@ -519,6 +519,9 @@ readVizgen <- function(data_dir,
                               # use mid z section
                               MoreArgs = list(z = ifelse(z == "all", 3L, z)))
             polys <- if (length(polys) == 1L) polys[[1]] else rbindlist(polys) |> st_as_sf()
+            # recalculate bbox since rbindlist() takes the 1st polygon's bbox
+            # see this -> https://github.com/Rdatatable/data.table/issues/4681
+            polys <- polys[1:nrow(polys),]
             polys$Type <- "cell"
             parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
             if (!file.exists(parq_file)) {

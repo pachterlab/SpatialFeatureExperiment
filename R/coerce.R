@@ -152,7 +152,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           })
 
 # Converter function from Seurat (v4 & v5) object to SpatialFeatureExperiment
-#' @importFrom sf st_sf st_geometry st_polygon st_multipoint
+#' @importFrom sf st_sf st_as_sf st_geometry st_polygon st_multipoint
 #' @importFrom SummarizedExperiment assays
 #' @importFrom methods slot
 #' @importFrom SingleCellExperiment SingleCellExperiment mainExpName altExp altExpNames
@@ -196,23 +196,15 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       }
     }
     
-    #### ===== Convert from Seurat to SFE ===== ####
+    # Convert from Seurat to SFE ===== ####
     # TODO (optional) support non-spatial Seurat to SFE as well? ----
     
     if (!is.null(seurat_obj)) {
+      flip <- match.arg(flip)
       # use existing Assays
       assays_name <- SeuratObject::Assays(seurat_obj)
       
       # TODO: add support when Seurat has multiple FOVs/tissue sections ----
-      # loop/lapply
-      # seurat_obj[[Images(seurat_obj)[1]]] # coords or FOVs of 1st section
-      # implement:
-      # extract FOVs
-      # subset single cell object (no FOVs) using cell id from "centoirds" fov
-      # similar for Visium -> slot(seurat_obj, name = "images")[[1]] or seurat_obj[[Images(seurat_obj)[1]]]
-      # add sample_id <- "" another value to cbind the objs, same for for altExp
-      # or, return the list() of objects
-      
       # check FOVs
       if (Images(seurat_obj) |> length() > 1) {
         message(">>> ", Images(seurat_obj) |> length(), 
@@ -305,10 +297,14 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                 st_sf(ID = names(polys)[i],
                       geometry = 
                         slot(polys[[i]], "Polygons")[[1]] |> 
-                        slot("coords") |> list() |> 
+                        slot("coords") |> list() |>
+                        # TODO (optional): use POLYGON or MULTIPOLYGON? ----
                         st_polygon() |> st_geometry())
-              }, BPPARAM = BPPARAM
-              ) |> rbindlist() |> st_as_sf()
+                }, BPPARAM = BPPARAM
+                ) |> rbindlist() |> st_as_sf()
+            # this recalculates bbox since rbindlist() takes the 1st polygon's bbox
+            # see this -> https://github.com/Rdatatable/data.table/issues/4681
+            polys <- polys[1:nrow(polys),]
             # add cell ids
             rownames(polys) <- polys$ID
           }
@@ -318,12 +314,12 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             mols <- seurat_obj[[Images(seurat_obj)[fov_section]]][["molecules"]]
             mols <- 
               lapply(mols |> seq(), function(i) {
-                st_sf(geometry =
+                st_sf(ID = names(mols)[i],
+                      geometry =
                         slot(mols[[i]], "coords") |> 
                         st_multipoint() |> st_geometry())}
                 ) |> rbindlist() |> st_as_sf()
-            # add transcript names
-            mols$ID <- names(mols)
+            mols <- mols[1:nrow(mols),]
             } else { mols <- NULL }
           
           # Get sparse count matrices
@@ -377,21 +373,25 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
           
           sfe_out <<- sfe
-          polys_out <<- polys
+          
+          # flip geometry both for col & row geoms ----
+          if (flip == "geometry") {
+            # flip the coordinates
+            mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
+            if (!is.null(polys))
+                st_geometry(polys) <- st_geometry(polys) * mat_flip
+            if (!is.null(mols))
+              st_geometry(mols) <- st_geometry(mols) * mat_flip
+            if (!is.null(cents))
+              st_geometry(colGeometry(sfe , "centroids")) <-
+                st_geometry(colGeometry(sfe , "centroids")) * mat_flip
+            }
           mols_out <<- mols
-          if (!length(is_Visium) == 0)
-            spots_out <<- spots
           
           # add polygon geometries ----
           if (!is.null(polys)) {
             # sanity on geometries
             polys <- .check_st_valid(polys)
-            # flip geometry
-            if (flip == "geometry" && !is.null(polys)) {
-              # Flip the coordinates
-              mat_flip <- matrix(c(1,0,0,-1), ncol = 2)
-              st_geometry(polys) <- st_geometry(polys) * mat_flip
-            }
             cellSeg(sfe) <- polys
             cellSeg(sfe)$sample_id <- sampleIDs(sfe)
           }
@@ -405,10 +405,10 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             spotPoly(sfe) <- cg
             spotPoly(sfe)$sample_id <- sampleIDs(sfe)
             
-            # TODO (under construction): add Images to SFE from Seurat or custom path ----
-            # for now if Seurat is Visium
-            # optionally image path could be provided and image added, eg for Xenium, Vizgen
+            # TODO (under construction): add Images to SFE from Seurat or from custom path ----
+            # optionally make arg to provide image path to add image, ie for Xenium, Vizgen &| Visium
             if (FALSE) {
+              # if Seurat is Visium
               # Scale factors for images
               # note, scale_imgs is a value in, eg @scale.factors$lowres
               scale_imgs <- 
@@ -455,11 +455,10 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
               # subset sfe
               sfe <- sfe[gene_indx,]
               # subset transcripts keep on
-              mols <- mols_out[mols$ID %in% rownames(sfe),]
+              mols <- mols[mols$ID %in% rownames(sfe),]
             }
             if (is(mols, "sf")) {
               rownames(mols) <- unique(mols$ID)
-              mols_out <<- mols
               txSpots(sfe, withDimnames = TRUE) <- mols
               # add sample id
               txSpots(sfe)$sample_id <- sampleIDs(sfe)
@@ -524,7 +523,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
         message("\n", ">>> `SFE` object is ready!")
         return(obj_list[[1]])
       }
-    }
+    } else { stop("No Seurat object in `x` is provided") }
   }
 
 # Set formal method for Seurat to SFE
