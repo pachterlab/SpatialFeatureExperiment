@@ -13,6 +13,7 @@ df2sf(
   group_col = "group",
   id_col = "ID",
   subid_col = "subID",
+  check = TRUE,
   BPPARAM = deprecated()
 )
 }
@@ -32,14 +33,19 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 If the geometry in \code{df} is de facto points, then this argument will be
 ignored and the returned \code{sf} will have geometry type POINT.}
 
-\item{group_col}{Column to indicate which coordinates for which MULTI geometry,
-such as to identify which MULTIPOLYGON or MULTIPOINT.}
+\item{group_col}{Column to indicate which coordinates for which MULTI
+geometry, such as to identify which MULTIPOLYGON or MULTIPOINT.}
 
 \item{id_col}{Column to indicate coordinates for which geometry, within a
 MULTI geometry if applicable, such as to identify which POLYGON or which
 polygon within a MULTIPOLYGON.}
 
 \item{subid_col}{Column to indicate coordinates for holes in polygons.}
+
+\item{check}{Logical, whether to check the input data frame for issues
+related to constructing the geometry of interese such as number of vertices
+per geometry. If \code{FALSE}, it will save a bit of time, which is useful
+when the input is already known to be good.}
 
 \item{BPPARAM}{Deprecated. The `sfheaders` package is used in
 \code{\link{df2sf}} for much better performance.}

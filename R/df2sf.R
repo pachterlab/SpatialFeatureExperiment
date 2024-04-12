@@ -9,6 +9,7 @@
     if (grepl("MULTI", geometryType) && !group_col %in% names(df)) {
         stop("Column", group_col, " to identify MULTI geometries is abesent.")
     }
+    df <- unique(df)
     n_vertices <- table(df[[id_col]])
     ids <- names(n_vertices)
     min_vertices <- switch(geometryType,
@@ -63,7 +64,7 @@
 }
 
 .df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi,
-                         group_col = "group") {
+                         group_col = "group", check = TRUE) {
     # Case 1: centroids, use POINT
     if (!is.na(spotDiameter)) {
         if (spotDiameter <= 0) {
@@ -71,8 +72,8 @@
         }
     }
     if (multi) {
-        df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
-                           group_col = group_col)
+        if (check) df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
+                                      group_col = group_col)
         if (!is.data.table(df)) ..group_col <- group_col
         df <- df[order(df[,..group_col]),]
         out <- sf_multipoint(df, x = spatialCoordsNames[1],
@@ -93,10 +94,11 @@
 }
 
 .df2sf_polygon <- function(df, spatialCoordsNames, multi,
-                           group_col = "group", id_col, subid_col) {
+                           group_col = "group", id_col, subid_col,
+                           check = TRUE) {
     gt <- if (multi) "MULTIPOLYGON" else "POLYGON"
-    df <- .df2sf_check(df, spatialCoordsNames, gt,
-                       group_col, id_col, subid_col)
+    if (check) df <- .df2sf_check(df, spatialCoordsNames, gt,
+                                  group_col, id_col, subid_col)
     if (multi) {
         out <- sf_multipolygon(df, x = spatialCoordsNames[1],
                                y = spatialCoordsNames[2],
@@ -119,10 +121,10 @@
 }
 
 .df2sf_linestring <- function(df, spatialCoordsNames, multi,
-                              group_col = "group", id_col) {
+                              group_col = "group", id_col, check = TRUE) {
     gt <- if (multi) "MULTILINESTRING" else "LINESTRING"
-    df <- .df2sf_check(df, spatialCoordsNames, gt,
-                       group_col, id_col)
+    if (check) df <- .df2sf_check(df, spatialCoordsNames, gt,
+                                  group_col, id_col)
     if (multi) {
         out <- sf_multilinestring(df, x = spatialCoordsNames[1],
                                   y = spatialCoordsNames[2],
@@ -157,24 +159,28 @@
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams BiocParallel::bplapply
 #' @param df An ordinary data frame, i.e. not \code{sf}. Or a matrix that can be
-#' converted to a data frame.
+#'   converted to a data frame.
 #' @param spatialCoordsNames Column names in \code{df} that specify spatial
-#' coordinates.
+#'   coordinates.
 #' @param geometryType Type of geometry to convert the ordinary data frame to.
-#' If the geometry in \code{df} is de facto points, then this argument will be
-#' ignored and the returned \code{sf} will have geometry type POINT.
-#' @param group_col Column to indicate which coordinates for which MULTI geometry,
-#' such as to identify which MULTIPOLYGON or MULTIPOINT.
+#'   If the geometry in \code{df} is de facto points, then this argument will be
+#'   ignored and the returned \code{sf} will have geometry type POINT.
+#' @param group_col Column to indicate which coordinates for which MULTI
+#'   geometry, such as to identify which MULTIPOLYGON or MULTIPOINT.
 #' @param id_col Column to indicate coordinates for which geometry, within a
-#' MULTI geometry if applicable, such as to identify which POLYGON or which
-#' polygon within a MULTIPOLYGON.
+#'   MULTI geometry if applicable, such as to identify which POLYGON or which
+#'   polygon within a MULTIPOLYGON.
+#' @param check Logical, whether to check the input data frame for issues
+#'   related to constructing the geometry of interese such as number of vertices
+#'   per geometry. If \code{FALSE}, it will save a bit of time, which is useful
+#'   when the input is already known to be good.
 #' @param subid_col Column to indicate coordinates for holes in polygons.
 #' @return An \code{sf} object.
 #' @export
 #' @concept Utilities
 #' @importFrom BiocParallel bplapply SerialParam
 #' @importFrom sfheaders sf_multipoint sf_polygon sf_multipolygon sf_linestring
-#' sf_multilinestring
+#'   sf_multilinestring
 #' @examples
 #' # Points, use spotDiameter to convert to circle polygons
 #' # This is done to Visium spots
@@ -216,7 +222,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                   ),
                   group_col = "group",
                   id_col = "ID",
-                  subid_col = "subID", BPPARAM = deprecated()) {
+                  subid_col = "subID", check = TRUE,
+                  BPPARAM = deprecated()) {
     if (is_present(BPPARAM)) {
         deprecate_warn("1.6.0", "df2sf(BPPARAM = )",
                        details = "The sfheaders package is now used instead for much better performance")
@@ -235,16 +242,17 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     out <- switch(geometryType,
         POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE),
         MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE,
-                                  group_col = group_col),
+                                  group_col = group_col, check = check),
         LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE,
-                                       id_col = id_col),
+                                       id_col = id_col, check = check),
         MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE,
-                                            group_col = group_col, id_col = id_col),
+                                            group_col = group_col, id_col = id_col,
+                                            check = check),
         POLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = FALSE,
-                                 id_col = id_col, subid_col = subid_col),
+                                 id_col = id_col, subid_col = subid_col, check = check),
         MULTIPOLYGON = .df2sf_polygon(df, spatialCoordsNames, multi = TRUE,
                                       group_col = group_col, id_col = id_col,
-                                      subid_col = subid_col)
+                                      subid_col = subid_col, check = check)
     )
     out
 }
@@ -252,7 +260,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
 # Call in SFE constructor and *Geometries replacement methods
 .df2sf_in_list <- function(x, spatialCoordsNames = c("x", "y"),
                            spotDiameter = NA, geometryType = "POLYGON",
-                           group_col = "group", id_col = "ID", subid_col = "subID") {
+                           group_col = "group", id_col = "ID", subid_col = "subID",
+                           check = TRUE) {
     if (!is.null(x) && !is(x, "sf") && !is.data.frame(x) && !is.matrix(x)) {
         stop(
             "Each element of the list for *Geometry must be an ",
@@ -263,13 +272,14 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
         return(x)
     } else if (is.data.frame(x) || is.matrix(x)) {
         return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType,
-                     group_col, id_col, subid_col))
+                     group_col, id_col, subid_col, check = check))
     }
 }
 
 .df2sf_list <- function(x, spatialCoordsNames = c("x", "y"),
                         spotDiameter = NA, geometryType = "POLYGON",
-                        group_col = "group", id_col = "ID", subid_col = "subID") {
+                        group_col = "group", id_col = "ID", subid_col = "subID",
+                        check = TRUE) {
     x_is_sf <- vapply(x, function(t) is(t, "sf"), FUN.VALUE = logical(1))
     if (all(x_is_sf)) {
         return(x)
@@ -287,7 +297,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
         MoreArgs = list(
             spatialCoordsNames = spatialCoordsNames,
             spotDiameter = spotDiameter,
-            group_col = group_col, id_col = id_col, subid_col = subid_col
+            group_col = group_col, id_col = id_col, subid_col = subid_col,
+            check = check
         ),
         SIMPLIFY = FALSE
     )

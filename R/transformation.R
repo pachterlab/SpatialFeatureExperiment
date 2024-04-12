@@ -98,7 +98,8 @@
     subid_col <- paste0("L", nd - 1L)
     g2 <- df2sf(as.data.frame(coords), coord_names,
                 geometryType = gt,
-                group_col = group_col, id_col = id_col, subid_col = subid_col)
+                group_col = group_col, id_col = id_col, subid_col = subid_col,
+                check = FALSE)
     st_geometry(g) <- st_geometry(g2)
     g
 }
