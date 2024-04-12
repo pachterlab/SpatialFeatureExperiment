@@ -94,7 +94,6 @@
 
 .df2sf_polygon <- function(df, spatialCoordsNames, multi,
                            group_col = "group", id_col, subid_col) {
-    df <- unique(df)
     gt <- if (multi) "MULTIPOLYGON" else "POLYGON"
     df <- .df2sf_check(df, spatialCoordsNames, gt,
                        group_col, id_col, subid_col)
@@ -121,7 +120,6 @@
 
 .df2sf_linestring <- function(df, spatialCoordsNames, multi,
                               group_col = "group", id_col) {
-    df <- unique(df)
     gt <- if (multi) "MULTILINESTRING" else "LINESTRING"
     df <- .df2sf_check(df, spatialCoordsNames, gt,
                        group_col, id_col)
