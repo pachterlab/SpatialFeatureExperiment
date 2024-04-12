@@ -79,7 +79,9 @@ Suggests:
     SFEData (>= 1.5.3),
     testthat (>= 3.0.0),
     Voyager,
-    xml2
+    xml2,
+    Seurat,
+    SeuratObject
 SystemRequirements: GDAL (>= 3.8.0)
 Config/testthat/edition: 3
 Depends: 
