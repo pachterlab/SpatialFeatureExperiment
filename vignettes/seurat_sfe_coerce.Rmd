@@ -63,7 +63,7 @@ suppressPackageStartupMessages({
     library(SpatialFeatureExperiment)
     library(SFEData)
     #library(terra)
-    library(BiocParallel)
+    #library(BiocParallel)
     #library(sf)    
     })
 ```
@@ -108,28 +108,28 @@ plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
 Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`.
 Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
 ```{r}
-obj_vis_2 <- readRDS(file.path(dir_root, "inst/extdata/seu_anterior1_visium.rds"))
-obj_vis_2
+obj_vis2 <- readRDS(file.path(dir_root, "inst/extdata/seu_anterior1_visium.rds"))
+obj_vis2
 # plot it
-SpatialFeaturePlot(obj_vis_2, features = rownames(obj_vis_2)[1])
+SpatialFeaturePlot(obj_vis2, features = rownames(obj_vis2)[1])
 
 ```
 ## Convert Seurat -> SFE - Visium (real data)
 ```{r}
 # real Visium data
-sfe_conv_vis_2 <-
-  toSpatialFeatureExperiment(x = obj_vis_2, 
+sfe_conv_vis2 <-
+  toSpatialFeatureExperiment(x = obj_vis2, 
                              image_scalefactors = "lowres",
                              unit = "micron",
                              BPPARAM = BPPARAM)
-sfe_conv_vis_2
-getMeta(sfe_conv_vis_2) %>% str
+sfe_conv_vis2
+getMeta(sfe_conv_vis2) %>% str
 ```
 
 ## Plot converted Seurat to SFE - Visium
 ```{r}
-plotSpatialFeature(sfe_conv_vis_2, exprs_values = "counts",
-                   features = rownames(sfe_conv_vis_2)[1], 
+plotSpatialFeature(sfe_conv_vis2, exprs_values = "counts",
+                   features = rownames(sfe_conv_vis2)[1], 
                    #size = 1, colGeometryName = "spotPoly",
                    dark = TRUE,
                    show_axes = TRUE,
@@ -180,6 +180,16 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
                    #sample_id = "",
                    scattermore = FALSE # will plot only centroids!
                   )
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  ) & # add molecules
+  geom_sf(data = 
+              rowGeometry(sfe_conv_xen, "txSpots") %>% 
+              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
 ```
 
 ## Convert Seurat -> SFE - Vizgen
@@ -212,7 +222,9 @@ plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
                    dark = TRUE,
                    #sample_id = "",
                    scattermore = F # will plot only centroids!
-                  )
+                  ) & # add molecules
+  geom_sf(data = 
+            rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5, color = "red")
 ```
 
 ## Test when Seurat object has > 1 Assay - Xenium
@@ -251,20 +263,29 @@ plotSpatialFeature(altExp(sfe_conv_xen2, 1), exprs_values = "counts",
 )
 ```
 
-## TODO: Test when Seurat object has > 1 Assay - Vizgen
-eg including SCT Assays
+## Test when Seurat object has > 1 Assay - Vizgen
+eg including SCT Assays, as well as PCA, UMAP embedding etc..
 ```{r}
-
-
-
-
-
+# normalize data
+obj_vz %<>% 
+    SCTransform(assay = DefaultAssay(obj_vz), verbose = F) %>%
+    RunPCA(npcs = 5, verbose = F) %>% 
+    RunUMAP(dims = 1:5, verbose = F)
+obj_vz
+sfe_conv_vz2 <-
+  toSpatialFeatureExperiment(x = obj_vz,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             unit = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_vz2
+getMeta(sfe_conv_vz2) %>% str
 ```
-
 
 ## Load Seurat objects with several samples/FOVs
 ```{r}
-
+obj
 
 
 
@@ -283,7 +304,6 @@ NOTE, the function will automatically check how many FOVs Seurat object has and 
 
 
 ```
-
 
 ## TODO: quick analysis using Voyager
 ```{r}

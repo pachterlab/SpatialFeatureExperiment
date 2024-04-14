@@ -38,6 +38,8 @@ callMeta <- function(object = NULL) {
   }
 }
 
+
+# TODO: update input paths using SFEData ----
 # save objects in this dir
 dir_out <- "./inst/extdata/"
 

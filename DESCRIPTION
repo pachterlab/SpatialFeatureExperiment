@@ -81,7 +81,9 @@ Suggests:
     Voyager,
     xml2,
     Seurat,
-    SeuratObject
+    SeuratObject,
+    dplyr,
+    tidyr
 SystemRequirements: GDAL (>= 3.8.0)
 Config/testthat/edition: 3
 Depends: 
