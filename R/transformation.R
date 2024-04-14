@@ -69,7 +69,7 @@
 
 .transform_geometry <- function(g, mult, add) UseMethod(".transform_geometry")
 
-.transform_geometry.sf <- function(g, mult, add) {
+.transform_geometry_sf <- function(g, mult, add) {
     mult <- t(mult) # Because of g %*% mult rather than mult %*% g
     # z will not be affected if present
     mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
@@ -85,10 +85,30 @@
     g
 }
 
+.transform_geometry.sf <- function(g, mult, add) {
+    gt <- st_geometry_type(g, FALSE) |> as.character()
+    if (gt == "GEOMETRY") return(.transform_geometry_sf(g, mult, add))
+    coords <- st_coordinates(g)
+    coords[,c("X","Y")] <- .transform_geometry(coords[,c("X","Y")], mult, add)
+    coord_names <- if (is.null(st_z_range(g))) c("X","Y") else c("X","Y","Z")
+    # Since it came out of st_coordinates it should already be sorted
+    nd <- if (grepl("POINT", gt)) 0L else if (grepl("LINESTRING", gt)) 1L else 2L
+    group_col <- paste0("L", nd + 1L)
+    id_col <- paste0("L", nd)
+    subid_col <- paste0("L", nd - 1L)
+    g2 <- df2sf(as.data.frame(coords), coord_names,
+                geometryType = gt,
+                group_col = group_col, id_col = id_col, subid_col = subid_col,
+                check = FALSE)
+    st_geometry(g) <- st_geometry(g2)
+    g
+}
+
 .transform_geometry.matrix <- function(g, mult, add) {
     mult <- t(mult) # Because of g %*% mult rather than mult %*% g
     mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
     add_3d <- c(add, 0)
+    orig_names <- colnames(g)
     if (dim(g)[2] == 2L) {
         g <- g %*% mult
         g <- sweep(g, 2, add, FUN = "+")
@@ -96,6 +116,7 @@
         g <- g %*% mult_3d
         g <- sweep(g, 2, add_3d, FUN = "+")
     }
+    colnames(g) <- orig_names
     g
 }
 
@@ -179,6 +200,7 @@
     if (!is.null(annotGeometries(sfe))) {
         for (n in annotGeometryNames(sfe)) {
             ag <- annotGeometry(sfe, n, sample_id = sample_id)
+            if (!nrow(ag)) next
             bbox_ag <- if (use_bbox) bbox %||% st_bbox(ag) else bbox
             ag <- geometry_fun(ag, bbox = bbox_ag, ...)
             annotGeometry(sfe, n, sample_id = sample_id) <- ag
