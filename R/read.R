@@ -338,7 +338,7 @@ read10xVisiumSFE <- function(samples = "",
 #'   any combination of them.
 #' @param min_area Minimum cell area in square microns. Anything smaller will be
 #'   considered artifact or debris and removed.
-#' @param filter_counts Keep cells with counts \code{> 0}.
+#' @param filter_counts Logical, whether to keep cells with counts \code{> 0}.
 #' @param add_molecules Logical, whether to add transcripts coordinates to an
 #'   object.
 #' @param use_bboxes If no segmentation output is present, use
@@ -1218,8 +1218,6 @@ readCosMX <- function(data_dir,
 #'   and Vimentin. So this argument is ignored for XOA v2.
 #' @param segmentations Which segmentation outputs to read, can be "cell",
 #'   "nucleus", or both.
-#' @param image_threshold Integer value, below which threshold is to set values
-#'   to `NA`, default is to `30L`, this removes some background artifacts.
 #' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
 #'   symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 #'   appended to disambiguate in case the same symbol corresponds to multiple
@@ -1259,12 +1257,6 @@ readCosMX <- function(data_dir,
 #'  sample_id = "test_xenium",
 #'  image = c("morphology_focus", "morphology_mip"),
 #'  segmentations = c("cell", "nucleus"),
-#'  read.image_args = # list of arguments to passed to RBioFormats::read.image
-#'  list("resolution" = 4L,
-#'  "filter.metadata" = TRUE,
-#'  "read.metadata" = FALSE,
-#'  "normalize" = FALSE),
-#'  image_threshold = 30,
 #'  flip = "geometry",
 #'  filter_counts = TRUE,
 #'  add_molecules = TRUE,
@@ -1276,7 +1268,6 @@ readXenium <- function(data_dir,
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
                        row.names = c("id", "symbol"),
-                       image_threshold = NULL,
                        flip = c("geometry", "image", "none"),
                        max_flip = "50 MB",
                        filter_counts = FALSE,
