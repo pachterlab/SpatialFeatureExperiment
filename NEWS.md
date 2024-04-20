@@ -4,6 +4,10 @@
 * Deal with univariate spatial results in featureData in cbind and changeSampleID
 * Fixed super embarrassing bug in cbind that fails when combining more than 2 SFE objects
 * Updated readXenium for XOA v2
+* Updated BioFormatsImage to store affine transform info rather than converting to EBImage after transform
+* Speed up affine transformation of sf geometries with sfheaders
+* Coercion from Seurat to SFE
+* SpatRasterImage and EBImage directly inherit from SpatRaster and Image respectively so the user no longer needs to call imgRaster every time they plots or operates on the image, which I find really annoying.
 
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)

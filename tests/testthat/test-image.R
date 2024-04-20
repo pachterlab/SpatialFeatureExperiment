@@ -157,18 +157,6 @@ test_that("translateImg method, SFE", {
 })
 
 # SpatRasterImage-------------
-test_that("ext when the image is wrapped", {
-    fn <- system.file(file.path("extdata", "sample01", "outs", "spatial",
-                                "tissue_hires_image.png"),
-                      package = "SpatialFeatureExperiment")
-    ext_use <- c(xmin = 0, xmax = 45, ymin = 0, ymax = 77)
-    suppressWarnings(r <- rast(fn))
-    rr <- wrap(r)
-    spi <- SpatRasterImage(rr)
-    ext1 <- ext(spi)
-    expect_equal(ext1, ext_use)
-})
-
 test_that("show for SpatRasterImage", {
     img <- SpatRasterImage(suppressWarnings(rast(img_path)))
     expect_output(show(img), "14 x 23 x 3 \\(width x height x channels\\) SpatRasterImage")

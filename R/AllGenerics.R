@@ -264,3 +264,5 @@ setGeneric("origin<-", function(x, value) standardGeneric("origin<-"))
 setGeneric("transformation", function(x) standardGeneric("transformation"))
 
 setGeneric("transformation<-", function(x, value) standardGeneric("transformation<-"))
+
+if (!isGeneric("unwrap")) {setGeneric("unwrap", function(x, ...) standardGeneric("unwrap"))}
