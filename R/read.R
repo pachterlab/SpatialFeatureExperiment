@@ -293,11 +293,14 @@ read10xVisiumSFE <- function(samples = "",
 # sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
 .check_st_valid <- function(sf_df = NULL) {
-    invalid_inds <- lapply(st_geometry(sf_df), function(x) which(!st_is_valid(x)))
-    for (i in seq_along(sf_df)) {
-        if (!length(invalid_inds[[i]])) next
-        geoms <- st_geometry(sf_df[[i]])[invalid_inds[[i]]]
-        st_geometry(sf_df[[i]])[invalid_inds[[i]]] <- st_buffer(geoms, dist = 0)
+    # sf_df is a single sf data frame, not a list of sf data frames
+    invalid_inds <- which(!st_is_valid(sf_df))
+    if (length(invalid_inds)) {
+        geoms_new <- st_buffer(st_geometry(sf_df)[invalid_inds], dist = 0)
+        # [.sfc<- is slow for st_GEOMETRY when buffer created MULTIPOLYGONs
+        # due to a vapply somewhere to recompute bbox in an R loop
+        # But not too bad, I don't think worse than st_cast
+        st_geometry(sf_df)[invalid_inds] <- geoms_new
     }
     return(sf_df)
 }
@@ -1218,8 +1221,6 @@ readCosMX <- function(data_dir,
 #'   and Vimentin. So this argument is ignored for XOA v2.
 #' @param segmentations Which segmentation outputs to read, can be "cell",
 #'   "nucleus", or both.
-#' @param image_threshold Integer value, below which threshold is to set values
-#'   to `NA`, default is to `30L`, this removes some background artifacts.
 #' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
 #'   symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 #'   appended to disambiguate in case the same symbol corresponds to multiple
@@ -1259,16 +1260,9 @@ readCosMX <- function(data_dir,
 #'  sample_id = "test_xenium",
 #'  image = c("morphology_focus", "morphology_mip"),
 #'  segmentations = c("cell", "nucleus"),
-#'  read.image_args = # list of arguments to passed to RBioFormats::read.image
-#'  list("resolution" = 4L,
-#'  "filter.metadata" = TRUE,
-#'  "read.metadata" = FALSE,
-#'  "normalize" = FALSE),
-#'  image_threshold = 30,
 #'  flip = "geometry",
 #'  filter_counts = TRUE,
 #'  add_molecules = TRUE,
-#'  BPPARAM = BiocParallel::MulticoreParam(14, tasks = 80L, force.GC = FALSE, progressbar = TRUE),
 #'  file_out = NULL)
 #'
 readXenium <- function(data_dir,
@@ -1276,7 +1270,6 @@ readXenium <- function(data_dir,
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
                        row.names = c("id", "symbol"),
-                       image_threshold = NULL,
                        flip = c("geometry", "image", "none"),
                        max_flip = "50 MB",
                        filter_counts = FALSE,
@@ -1291,8 +1284,9 @@ readXenium <- function(data_dir,
         message(">>> Must use gene symbols as row names when adding transcript spots.")
         row.names <- "symbol"
     }
-    xoa_version <- fromJSON(file = file.path(data_dir, "experiment.xenium"),
-                            simplify = TRUE)$analysis_sw_version
+    experiment <- fromJSON(file = file.path(data_dir, "experiment.xenium"),
+                           simplify = TRUE)
+    xoa_version <- experiment$analysis_sw_version
     major_version <- substr(xoa_version, 8, 8) |> as.integer()
     minor_version <- substr(xoa_version, 10, 10) |> as.integer()
 
@@ -1409,7 +1403,8 @@ readXenium <- function(data_dir,
                     p
                 })
             }
-            if (major_version == 2L) {
+            instrument_version <- experiment$instrument_sw_version
+            if (major_version == 2L && instrument_version != "Development") {
                 if ("nucleus" %in% names(polys)) {
                     message(">>> Making MULTIPOLYGON nuclei geometries")
                     polys[["nucleus"]] <- df2sf(polys[["nucleus"]],
@@ -1504,20 +1499,14 @@ readXenium <- function(data_dir,
         }}
     # filtering segmentations
     if (!is.null(polys)) {
-        if (is(polys, "list")) {
-            for (i in seq(polys)) {
-                # filter geometries
-                matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> stats::na.omit()
-                message(">>> filtering ", names(polys)[i],
-                        " geometries to match ",
-                        length(matched.cells), " cells with counts > 0")
-                polys[[i]] <- polys[[i]][matched.cells, , drop = FALSE] }
-        } else if (is(polys, "sf")) {
-            matched.cells <- match(colnames(sce), polys$cell_id) |> stats::na.omit()
-            message(">>> filtering ", if (!is.null(segmentations) || exists("segmentations")) segmentations,
-                    " geometries to match ", length(matched.cells), " cells with counts > 0")
-            polys <- polys[matched.cells, , drop = FALSE]
-        }
+        # polys should always be a list, even if it's length 1
+        for (i in seq(polys)) {
+            # filter geometries
+            matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> stats::na.omit()
+            message(">>> filtering ", names(polys)[i],
+                    " geometries to match ",
+                    length(matched.cells), " cells with counts > 0")
+            polys[[i]] <- polys[[i]][matched.cells, , drop = FALSE] }
     }
     metadata <- as.data.frame(metadata) |> as("DataFrame")
     rownames(metadata) <- metadata$cell_id
@@ -1534,6 +1523,7 @@ readXenium <- function(data_dir,
 
     # add segmentation geometries
     if (!is.null(polys)) {
+        message(">>> Checking polygon validity")
         # sanity on geometries
         polys <- lapply(polys, .check_st_valid)
         polys <-
