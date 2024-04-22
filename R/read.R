@@ -1499,22 +1499,6 @@ readXenium <- function(data_dir,
         }}
     # filtering segmentations
     if (!is.null(polys)) {
-<<<<<<< HEAD
-        if (is(polys, "list")) {
-            for (i in seq(polys)) {
-                # filter geometries
-                matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> na.omit()
-                message(">>> filtering ", names(polys)[i],
-                        " geometries to match ",
-                        length(matched.cells), " cells with counts > 0")
-                polys[[i]] <- polys[[i]][matched.cells, , drop = FALSE] }
-        } else if (is(polys, "sf")) {
-            matched.cells <- match(colnames(sce), polys$cell_id) |> na.omit()
-            message(">>> filtering ", if (!is.null(segmentations) || exists("segmentations")) segmentations,
-                    " geometries to match ", length(matched.cells), " cells with counts > 0")
-            polys <- polys[matched.cells, , drop = FALSE]
-        }
-=======
         # polys should always be a list, even if it's length 1
         for (i in seq(polys)) {
             # filter geometries
@@ -1523,7 +1507,6 @@ readXenium <- function(data_dir,
                     " geometries to match ",
                     length(matched.cells), " cells with counts > 0")
             polys[[i]] <- polys[[i]][matched.cells, , drop = FALSE] }
->>>>>>> cbd53e0664d51a8b99d9dbfbd210a8e515e87f34
     }
     metadata <- as.data.frame(metadata) |> as("DataFrame")
     rownames(metadata) <- metadata$cell_id
