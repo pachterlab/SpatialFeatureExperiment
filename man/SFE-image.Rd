@@ -97,6 +97,13 @@ images that are not loaded into memory, \code{rotateImg} will load
 \code{SpatRasterImage} into memory and all image operations except translate
 will load \code{BioFormatsImage} into memory.
 }
+\note{
+If the image is already a GeoTIFF file that already has an extent, then
+the extent associated with the file will be honored and the \code{extent} and
+\code{scale_fct} arguments are ignored. Transposing the image is just like
+transposing a matrix. It's flipped about the line going from the top left to
+the bottom right.
+}
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData("small")

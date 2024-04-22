@@ -31,12 +31,30 @@ setMethod("saveRDS", "SpatialFeatureExperiment",
               else {
                   for (i in seq_len(nrow(imgData(object)))) {
                       img <- int_metadata(object)$imgData$data[[i]]
-                      if (is(img@image, "SpatRaster"))
-                          img@image <- wrap(img@image)
+                      if (is(img, "SpatRasterImage"))
+                          img <- new("PackedRasterImage", wrap(img))
                       int_metadata(object)$imgData$data[[i]] <- img
                   }
                   base::saveRDS(object, file = file, ascii = ascii,
                                 version = version, compress = compress,
                                 refhook = refhook)
               }
+          })
+# From terra
+setMethod("readRDS", signature(file="character"),
+          function (file = "", refhook = NULL) {
+              x <- base::readRDS(file=file, refhook=refhook)
+              unwrap(x)
+          }
+)
+
+setMethod("unwrap", "SpatialFeatureExperiment",
+          function(x) {
+              for (i in seq_len(nrow(imgData(x)))) {
+                  img <- int_metadata(x)$imgData$data[[i]]
+                  if (is(img, "PackedSpatRaster"))
+                      img <- SpatRasterImage(unwrap(img))
+                  int_metadata(x)$imgData$data[[i]] <- img
+              }
+              x
           })

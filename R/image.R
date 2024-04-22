@@ -11,16 +11,13 @@ setClass("AlignedSpatialImage", contains = c("VirtualSpatialImage", "VIRTUAL"))
 #' with \code{\link{rast}} and represented as \code{SpatRaster}, so the image is
 #' not entirely loaded into memory unless necessary. Plotting will not load a
 #' large image into memory; rather the image will be downsampled and the
-#' downsampled version is plotted.
+#' downsampled version is plotted. A \code{SpatRasterImage} object (as of Bioc
+#' 3.19 or SFE version 1.6 and above) is a \code{SpatRaster} object but also
+#' inheriting from \code{VirtualSpatialImage} as required by
+#' \code{SpatialExperiment}.
 #'
 #' @param img A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.
-#' @note If the image is already a GeoTIFF file that already has an extent, then
-#'   the extent associated with the file will be honored and the \code{extent}
-#'   and \code{scale_fct} arguments are ignored. Also, when the image is
-#'   transposed, it is flipped about the axis going from top left to bottom
-#'   right.
-#' @return Methods for \code{SpatRasterImage} return a modified
-#'   \code{SpatRasterImage}, and methods for SFE return a modified SFE object.
+#' @return A \code{SpatRasterImage} or \code{PackedRasterImage} object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
 #' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster
 #'   imgSource getImg rotateImg rmvImg
@@ -45,21 +42,16 @@ setClass("PackedSpatRaster",
              attributes = list()
          )
 )
-# TODO: do multiple inheritance instead of wrapper since it's really annoying
-# to have to call imgRaster every time one wants to plot the image. Same thing
-# for EBImage.
-setClassUnion("GeneralizedSpatRaster", members = c("SpatRaster", "PackedSpatRaster"))
 
 #' @rdname SpatRasterImage
 #' @export
-setClass("SpatRasterImage", contains="AlignedSpatialImage",
-         slots=c(image="GeneralizedSpatRaster"))
+setClass("SpatRasterImage", contains=c("AlignedSpatialImage", "SpatRaster"))
 
 #' @rdname SpatRasterImage
 #' @export
-SpatRasterImage <- function(img) {
-    new("SpatRasterImage", image = img)
-}
+SpatRasterImage <- function(img) new("SpatRasterImage", img)
+
+setClass("PackedRasterImage", contains=c("AlignedSpatialImage", "PackedSpatRaster"))
 
 setMethod("show", "SpatRasterImage", function(object) {
     d <- dim(object)
@@ -310,8 +302,8 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 #' @aliases EBImage-class
 #' @exportClass EBImage
 #' @concept Image and raster
-setClass("EBImage", contains = "AlignedSpatialImage",
-         slots = c(image = "Image", ext = "numeric"))
+setClass("EBImage", contains = c("AlignedSpatialImage", "Image"),
+         slots = c(ext = "numeric"))
 
 setValidity("EBImage", function(object) {
     out <- tryCatch(.check_bbox(object@ext), error = function(e) e$message)
@@ -326,20 +318,13 @@ setMethod("show", "EBImage", function(object) {
     else if (length(d) == 3L)
         str <- paste0(dim, " (width x height x channels) ", class(object), "\n")
     cat(str)
-    str <- imgSource(object)
-    if (!is.na(str)) {
-        if (nchar(str) > 80) {
-            str <- strwrap(str, width = 80)
-        }
-        cat("imgSource():\n ", str, "\n")
-    }
 })
 
 #' @rdname EBImage
 #' @export
 EBImage <- function(img, ext = NULL) {
     if (is.null(ext)) stop("Extent must be specified for EBImage.")
-    new("EBImage", image = img, ext = ext)
+    new("EBImage", img, ext = ext)
 }
 
 .shift_ext <- function(x, v) {
@@ -443,7 +428,7 @@ EBImage <- function(img, ext = NULL) {
         if (!"name" %in% names(tr)) tr$name <- "affine"
         trans_fun <- .get_img_fun(tr$name)
         name_param <- setdiff(names(tr), "name")
-        out <- do.call(trans_fun, c(x = out, list(bbox_all = ext(out)), tr[name_param]))
+        out <- do.call(trans_fun, c(list(x = out), list(bbox_all = ext(out)), tr[name_param]))
     }
     out
 }
@@ -463,7 +448,6 @@ EBImage <- function(img, ext = NULL) {
 
 .toEBImage2 <- function(x, maxcell = 1e7, channel = NULL) {
     # 1e7 comes from the number of pixels in resolution = 4L in the ome.tiff
-    x <- x@image
     if (dim(x)[3] == 3L) {
         names(x) <- c("r", "g", "b")
         # Remove RGB settings, better plot without it
@@ -478,7 +462,7 @@ EBImage <- function(img, ext = NULL) {
         out <- terra::as.array(x) |> aperm(c(2,1,3)) |> Image(colormode = "Color")
     else
         out <- terra::as.array(x)[,,1] |> t() |> Image(colormode = "Grayscale")
-    EBImage(out, ext(x) |> as.vector())
+    EBImage(out, ext(x))
 }
 
 #' Convert images to EBImage
@@ -610,7 +594,7 @@ setMethod("ext", "EBImage", function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
 
 #' @rdname ext
 #' @export
-setMethod("ext", "SpatRasterImage", function(x) ext(unwrap(x@image)) |> as.vector())
+setMethod("ext", "SpatRasterImage", function(x) ext(as(x, "SpatRaster")) |> as.vector())
 
 .set_ext <- function(x, value) {
     x@ext <- value[c("xmin", "xmax", "ymin", "ymax")]
@@ -630,8 +614,9 @@ setReplaceMethod("ext", c("EBImage", "numeric"), .set_ext)
 #' @export
 setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
                  function(x, value) {
-                     ext(x@image) <- value[c("xmin", "xmax", "ymin", "ymax")]
-                     x
+                     x <- as(x, "SpatRaster")
+                     ext(x) <- value[c("xmin", "xmax", "ymin", "ymax")]
+                     SpatRasterImage(x)
                  })
 # dim - BioFormatsImage----------
 
@@ -686,6 +671,11 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #'   different resolution. \code{extent} takes precedence over \code{scale_fct}.
 #' @param v A numeric vector of length 2 specifying the vector in the xy plane
 #'   to translate the SFE object.
+#' @note If the image is already a GeoTIFF file that already has an extent, then
+#' the extent associated with the file will be honored and the \code{extent} and
+#' \code{scale_fct} arguments are ignored. Transposing the image is just like
+#' transposing a matrix. It's flipped about the line going from the top left to
+#' the bottom right.
 #' @name SFE-image
 #' @concept Image and raster
 #' @family image methods
@@ -770,7 +760,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
                 img <- w
                 flip <- FALSE
             }
-            spi <- new("SpatRasterImage", image = img)
+            spi <- new("SpatRasterImage", img)
             if (flip) spi <- mirrorImg(spi, direction = "vertical")
         }
     }
@@ -881,10 +871,7 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 NULL
 
 #' @export
-setMethod("imgRaster", "SpatRasterImage", function(x) {
-    if (is(x@image, "PackedSpatRaster")) unwrap(x@image)
-    else x@image
-})
+setMethod("imgRaster", "SpatRasterImage", function(x) as(x, "SpatRaster"))
 
 #' @export
 setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
@@ -892,7 +879,7 @@ setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
 })
 
 #' @export
-setMethod("imgRaster", "EBImage", function(x) x@image)
+setMethod("imgRaster", "EBImage", function(x) as(x, "Image"))
 
 # TODO: imgRaster setter function since here I want to allow image processing
 # like adjusting brightness and contrast, blurring, sharpening, opening, closing, and so on
@@ -975,9 +962,9 @@ NULL
 
 setMethod(".transpose_img", "SpatRasterImage",
           function(x, bbox_all = ext(x), filename = "", maxcell = NULL) {
-              if (!is.null(maxcell)) x@image <- .resample_spat(x@image, maxcell)
+              if (!is.null(maxcell)) x <- .resample_spat(x, maxcell)
               ext_orig <- ext(x)
-              x@image <- terra::trans(imgRaster(x), filename = filename)
+              x <- terra::trans(x, filename = filename)
               # Shift extent for overall bbox
               ext(x) <- .transform_bbox(ext_orig, tr = list(name = "transpose"),
                                         bbox_all = bbox_all)
@@ -993,7 +980,7 @@ setMethod("transposeImg", "SpatRasterImage",
           })
 
 setMethod(".transpose_img", "BioFormatsImage",
-          function(x, bbox_all = ext(x)) {
+          function(x, bbox_all = ext(x), ...) {
               .combine_transforms(x, list(name = "transpose"), bbox = bbox_all)
           })
 
@@ -1005,8 +992,8 @@ setMethod("transposeImg", "BioFormatsImage",
           })
 
 setMethod(".transpose_img", "EBImage",
-          function(x, bbox_all = ext(x)) {
-              x@image <- EBImage::transpose(x@image)
+          function(x, bbox_all = ext(x), ...) {
+              x <- EBImage::transpose(x)
               # Extent
               ext(x) <- .transform_bbox(ext(x), list(name="transpose"),
                                         bbox_all = bbox_all)
@@ -1040,9 +1027,9 @@ setMethod(".mirror_img", "SpatRasterImage",
           function(x, direction = c("vertical", "horizontal"),
                    bbox_all = NULL, filename = "", maxcell = NULL) {
               direction <- match.arg(direction)
-              if (!is.null(maxcell)) x@image <- .resample_spat(x@image, maxcell)
-              x@image <- terra::flip(imgRaster(x), direction = direction,
-                                     filename = filename)
+              if (!is.null(maxcell)) x <- .resample_spat(x, maxcell)
+              x <- terra::flip(imgRaster(x), direction = direction,
+                                     filename = filename) |> SpatRasterImage()
               # Shift extent for overall bbox
               if (!is.null(bbox_all)) {
                   ext(x) <- .transform_bbox(ext(x),
@@ -1082,7 +1069,7 @@ setMethod(".mirror_img", "EBImage",
                    bbox_all = NULL) {
               direction <- match.arg(direction)
               fun <- if (direction == "vertical") EBImage::flip else EBImage::flop
-              x@image <- fun(x@image)
+              x <- fun(x)
               # Shift extent for overall bbox
               if (!is.null(bbox_all)) {
                   ext(x) <- .transform_bbox(ext(x),
@@ -1153,8 +1140,7 @@ setMethod("rotateImg", "BioFormatsImage",
 
 setMethod(".rotate_img", "EBImage",
           function(x, degrees, bbox_all = ext(x)) {
-              x@image <- EBImage::rotate(x@image, degrees)
-              # Extent
+              x <- EBImage::rotate(x, degrees)
               ext(x) <- .transform_bbox(ext(x), list(name="rotate", degrees=degrees),
                                         bbox_all = bbox_all)
               x
@@ -1187,8 +1173,8 @@ NULL
 #' @export
 setMethod("translateImg", "SpatRasterImage", function(x, v, ...) {
     img <- imgRaster(x)
-    img <- shift(img, dx = v[1], dy = v[2])
-    x@image <- img
+    img <- shift(img, dx = v[1], dy = v[2]) |> SpatRasterImage()
+    x <- img
     x
 })
 
@@ -1293,7 +1279,7 @@ NULL
 #' @rdname cropImg
 #' @export
 setMethod("cropImg", "SpatRasterImage", function(x, bbox, filename = "") {
-    x@image <- terra::crop(x@image, bbox, snap = "out", filename = filename)
+    x <- terra::crop(x, bbox, snap = "out", filename = filename)
     x
 })
 
@@ -1317,7 +1303,7 @@ setMethod("cropImg", "BioFormatsImage", function(x, bbox) {
 setMethod("cropImg", "EBImage", function(x, bbox) {
     # Convert bbox to pixel range based on ext(x)
     bbox_old <- ext(x)
-    dim_old <- dim(x@image)
+    dim_old <- dim(x)
     sfx <- dim_old[1]/(bbox_old["xmax"] - bbox_old["xmin"])
     sfy <- dim_old[2]/(bbox_old["ymax"] - bbox_old["ymin"])
     bbox_use <- bbox
@@ -1327,10 +1313,10 @@ setMethod("cropImg", "EBImage", function(x, bbox) {
     bbox_use[c("xmax", "ymax")] <- ceiling(bbox_use[c("xmax", "ymax")])
 
     if (length(dim_old) == 3L)
-        x@image <- x@image[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
+        x <- x[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
                            seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L),]
     else
-        x@image <- x@image[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
+        x <- x[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
                            seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L)]
 
     bbox_new <- bbox_use

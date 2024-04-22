@@ -12,8 +12,7 @@ SpatRasterImage(img)
 \item{img}{A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.}
 }
 \value{
-Methods for \code{SpatRasterImage} return a modified
-  \code{SpatRasterImage}, and methods for SFE return a modified SFE object.
+A \code{SpatRasterImage} or \code{PackedRasterImage} object.
 }
 \description{
 \code{SpatialFeatureExperiment} and the \code{Voyager} package work with
@@ -22,14 +21,10 @@ images differently from \code{SpatialExperiment}. In SFE and
 with \code{\link{rast}} and represented as \code{SpatRaster}, so the image is
 not entirely loaded into memory unless necessary. Plotting will not load a
 large image into memory; rather the image will be downsampled and the
-downsampled version is plotted.
-}
-\note{
-If the image is already a GeoTIFF file that already has an extent, then
-  the extent associated with the file will be honored and the \code{extent}
-  and \code{scale_fct} arguments are ignored. Also, when the image is
-  transposed, it is flipped about the axis going from top left to bottom
-  right.
+downsampled version is plotted. A \code{SpatRasterImage} object (as of Bioc
+3.19 or SFE version 1.6 and above) is a \code{SpatRaster} object but also
+inheriting from \code{VirtualSpatialImage} as required by
+\code{SpatialExperiment}.
 }
 \examples{
 # Example code

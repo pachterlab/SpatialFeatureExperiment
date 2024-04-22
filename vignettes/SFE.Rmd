@@ -369,8 +369,7 @@ class(imgRaster(getImg(sfe3)))
 The commercialized MERFISH from Vizgen has a standard output format, that can be read into SFE with `readVizgen()`. Because the cell segmentation from each field of view (FOV) has a separate HDF5 file and a MERFISH dataset can have hundreds of FOVs, we strongly recommend reading the MERFISH output on a server with a large number of CPU cores. Alternatively, some but not all MERFISH datasets store cell segmentation in a `parquet` file, which can be more easily read into R. Here we read a toy dataset which is the first FOV from a real dataset:
 
 ```{r}
-dir_use <- system.file(file.path("extdata", "vizgen_cellbound"), 
-                       package = "SpatialFeatureExperiment")
+dir_use <- VizgenOutput(file_path = ".")
 ```
 
 ```{r}

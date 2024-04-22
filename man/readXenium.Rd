@@ -10,7 +10,6 @@ readXenium(
   image = c("morphology_focus", "morphology_mip"),
   segmentations = c("cell", "nucleus"),
   row.names = c("id", "symbol"),
-  image_threshold = NULL,
   flip = c("geometry", "image", "none"),
   max_flip = "50 MB",
   filter_counts = FALSE,
@@ -45,9 +44,6 @@ symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 appended to disambiguate in case the same symbol corresponds to multiple
 Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
 symbols are used in the transcript spot files.}
-
-\item{image_threshold}{Integer value, below which threshold is to set values
-to `NA`, default is to `30L`, this removes some background artifacts.}
 
 \item{flip}{To flip the image, geometry coordinates, or none. Because the
 image has the origin at the top left while the geometry has origin at the
@@ -125,16 +121,9 @@ sfe <-
  sample_id = "test_xenium",
  image = c("morphology_focus", "morphology_mip"),
  segmentations = c("cell", "nucleus"),
- read.image_args = # list of arguments to passed to RBioFormats::read.image
- list("resolution" = 4L,
- "filter.metadata" = TRUE,
- "read.metadata" = FALSE,
- "normalize" = FALSE),
- image_threshold = 30,
  flip = "geometry",
  filter_counts = TRUE,
  add_molecules = TRUE,
- BPPARAM = BiocParallel::MulticoreParam(14, tasks = 80L, force.GC = FALSE, progressbar = TRUE),
  file_out = NULL)
 
 }

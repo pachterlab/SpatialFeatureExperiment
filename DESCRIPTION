@@ -84,7 +84,7 @@ Suggests:
     SeuratObject,
     dplyr,
     tidyr
-SystemRequirements: GDAL (>= 3.8.0)
+SystemRequirements: GDAL (>= 3.5.0)
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

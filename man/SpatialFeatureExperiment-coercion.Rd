@@ -5,6 +5,7 @@
 \alias{toSpatialFeatureExperiment}
 \alias{toSpatialFeatureExperiment,SpatialExperiment-method}
 \alias{toSpatialFeatureExperiment,SingleCellExperiment-method}
+\alias{toSpatialFeatureExperiment,Seurat-method}
 \title{SpatialFeatureExperiment coercion methods}
 \usage{
 \S4method{toSpatialFeatureExperiment}{SpatialExperiment}(
@@ -39,9 +40,18 @@
   unit = NULL,
   BPPARAM = deprecated()
 )
+
+\S4method{toSpatialFeatureExperiment}{Seurat}(
+  x,
+  add_molecules = TRUE,
+  flip = c("geometry", "image", "none"),
+  image_scalefactors = c("lowres", "hires"),
+  unit = NULL,
+  BPPARAM = SerialParam()
+)
 }
 \arguments{
-\item{x}{A \code{SpatialExperiment} object to be coerced to a
+\item{x}{A \code{SpatialExperiment} or \code{Seurat} object to be coerced to a
 \code{SpatialFeatureExperiment} object.}
 
 \item{colGeometries}{Geometry of the entities that correspond to the columns
@@ -104,10 +114,11 @@ fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
-\item{unit}{Unit the coordinates are in, either microns or pixels in full
-resolution image.}
+\item{unit}{# Default unit is \code{"micron"}. However for Visium one can choose 
+between \code{"micron"} or \code{"full_res_image_pixel"}.}
 
-\item{BPPARAM}{Deprecated.}
+\item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment},
+but is used when coercing from \code{Seurat} object.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -140,9 +151,21 @@ Default = \code{FALSE}.}
 \item{imgData}{Optional \code{\link{DataFrame}} containing the image data.
 Alternatively, this can be built from the arguments \code{imageSources} and
 \code{image_id} (see Details).}
+
+\item{add_molecules}{Logical, whether to add transcripts coordinates to an
+object.}
+
+\item{flip}{To flip the image, geometry coordinates, or none. Because the
+image has the origin at the top left while the geometry has origin at the
+bottom left, one of them needs to be flipped for them to match. If one of
+them is already flipped, then use "none". The image will not be flipped if
+it's GeoTIFF.}
+
+\item{image_scalefactors}{# A \code{character}, choose between "lowres" or "hires".
+Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.}
 }
 \value{
-An SFE object
+A \code{SpatialFeatureExperiment} object
 }
 \description{
 The \code{SpatialFeatureExperiment} class inherits from
@@ -165,5 +188,6 @@ example(read10xVisium)
 colnames(spe) <- make.unique(colnames(spe), sep = "-")
 rownames(spatialCoords(spe)) <- colnames(spe)
 sfe <- toSpatialFeatureExperiment(spe)
+# For coercing Seurat to SFE see this -> ./vignettes/seurat_sfe_coerce.Rmd
 }
 \concept{SpatialFeatureExperiment class}
