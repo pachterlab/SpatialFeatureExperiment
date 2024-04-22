@@ -559,7 +559,7 @@ readVizgen <- function(data_dir,
     if (!is.null(polys)) {
         # remove NAs when matching
         metadata <-
-            metadata[match(polys$ID, metadata[[1]]) |> stats::na.omit(),]
+            metadata[match(polys$ID, metadata[[1]]) |> na.omit(),]
     }
     rownames(metadata) <- metadata[[1]]
     metadata[,1] <- NULL
@@ -588,7 +588,7 @@ readVizgen <- function(data_dir,
     if (!is.null(polys) &&
         !identical(polys$ID, rns)) {
         # filter geometries
-        matched.cells <- match(rns, polys$ID) |> stats::na.omit()
+        matched.cells <- match(rns, polys$ID) |> na.omit()
         message(">>> filtering geometries to match ", length(matched.cells),
                 " cells with counts > 0")
         polys <- polys[matched.cells, , drop = FALSE]
@@ -1088,7 +1088,7 @@ addTxSpots <- function(sfe, file, sample_id = 1L, gene_select = NULL,
             if (!all(rownames(sfe) %in% rowGeometry(sfe)[[gene_col]])) {
                 # match gene names from rowGeometry removing NAs
                 gene_indx <-
-                    which(rownames(sfe) %in% rowGeometry(sfe)[[gene_col]] |> stats::na.omit())
+                    which(rownames(sfe) %in% rowGeometry(sfe)[[gene_col]] |> na.omit())
                 genes_rm <- rownames(sfe)[-gene_indx]
                 message(">>> Total of ", length(genes_rm),
                         " features/genes with `min_phred` < ", min_phred, " are removed from SFE object",
@@ -1485,7 +1485,7 @@ readXenium <- function(data_dir,
     if (any(names(metadata) == "transcript_counts") && filter_counts) {
         message(">>> ..filtering cell metadata - keep cells with `transcript_counts` > 0")
         metadata <- metadata[metadata$transcript_count > 0,]
-        sce <- sce[,match(metadata$cell_id, colnames(sce)) |> stats::na.omit()]
+        sce <- sce[,match(metadata$cell_id, colnames(sce)) |> na.omit()]
     } else {
         # if metadata isn't already filtered
         if (!"transcript_counts" %in% names(metadata) && filter_counts) {
@@ -1498,13 +1498,13 @@ readXenium <- function(data_dir,
         if (is(polys, "list")) {
             for (i in seq(polys)) {
                 # filter geometries
-                matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> stats::na.omit()
+                matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> na.omit()
                 message(">>> filtering ", names(polys)[i],
                         " geometries to match ",
                         length(matched.cells), " cells with counts > 0")
                 polys[[i]] <- polys[[i]][matched.cells, , drop = FALSE] }
         } else if (is(polys, "sf")) {
-            matched.cells <- match(colnames(sce), polys$cell_id) |> stats::na.omit()
+            matched.cells <- match(colnames(sce), polys$cell_id) |> na.omit()
             message(">>> filtering ", if (!is.null(segmentations) || exists("segmentations")) segmentations,
                     " geometries to match ", length(matched.cells), " cells with counts > 0")
             polys <- polys[matched.cells, , drop = FALSE]

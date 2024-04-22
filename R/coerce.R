@@ -204,6 +204,8 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       }
       
       # loop for multiple FOVs/tissue sections ----
+      # TODO: (enhancement) consider bplapply ---- 
+      #..ie, when looping over FOVs with large number of cells and molecules
       obj_list <-
         lapply(.Images(seu_obj) |> seq(), function(fov_section) {
           message(">>> Seurat Assays found: ", paste0(assays_name, collapse = ", "), "\n",
@@ -256,9 +258,10 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             stop(">>> Spatial data is not found, ", "neither FOVs nor `@images` (for Visium)", "\n", 
                  ">>> Check input argument for Seurat object -> `seu_obj` ")
           }
-          message(">>> Seurat spatial FOVs found: ", paste0("\n", geoms), "\n",
-                  ">>> Generating `sf` geometries")
+          if (!is.null(geoms) && length(is_Visium) == 0)
+            message(">>> Seurat spatial FOVs found: ", paste0("\n", geoms))
           
+          message(">>> Generating `sf` geometries")
           # Set cell IDs for each FOV/tissue section
           cell_ids_fov <- 
             SeuratObject::Cells(seu_obj[[.Images(seu_obj)[fov_section]]])
@@ -302,13 +305,14 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           
           # Get sparse count matrices
           # prepare assays
+          slot_names <- SeuratObject::Layers(seu_obj)
           assays_sfe <- 
-            list(counts = .GetCounts(seu_obj, "counts",
-                                     assay = DefaultAssay(seu_obj)),
-                 logcounts = .GetCounts(seu_obj, "data",
-                                        assay = DefaultAssay(seu_obj)),
-                 scaledata = .GetCounts(seu_obj, "scale.data",
-                                        assay = DefaultAssay(seu_obj)))
+            lapply(seq(slot_names), function(i) {
+              .GetCounts(seu_obj,
+                         cells = cell_ids_fov,
+                         slot_names[i],
+                         assay = DefaultAssay(seu_obj))
+            }) |> setNames(slot_names)
           # remove empty elements, if eg "scale.data" is not present
           assays_sfe <- assays_sfe[lapply(assays_sfe, length) > 0] 
           # # using cell IDs from FOV/tissue section cell_ids_fov
@@ -351,15 +355,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
           
           sfe_out <<- sfe
-          
-          # TODO: add reducedDim ----
-          dimRed <- slot(seu_obj, "reductions") |> names()
-          message(">>> Adding Dimensionality Reduction: ", paste0(dimRed, collapse = ", "))
-          for (i in seq(dimRed))
-            reducedDim(x = sfe, 
-                       type = toupper(dimRed[i])) <- SeuratObject::Embeddings(sfe, reduction = dimRed[i])
-          # add variance and other parts?
-          
 
           # flip geometry both for col & row geoms ----
           if (flip == "geometry") {
@@ -436,8 +431,8 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
               # genes/features that are removed
               genes_rm <- rownames(sfe)[-gene_indx]
               warning(">>> Total number of genes in SFE object does NOT overlap with `transcript` coordinates genes", "\n",
-                      ">>> Subsetting object and `transcript` coordinates to keep only matching genes", "Total of ", length(genes_rm),
-                      " genes are removed")
+                      ">>> Subsetting object and `transcript` coordinates to keep only matching genes", "\n", 
+                      "Total of ", length(genes_rm), " genes are removed")
               # subset sfe
               sfe <- sfe[gene_indx,]
               # subset transcripts keep on
@@ -451,6 +446,36 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             }
           }
           
+          # add dimensionality reduction if present ----
+          dimRed_names <- slot(seu_obj, "reductions") |> names()
+          if (!is.null(dimRed_names)) {
+            message(">>> Adding Dimensionality Reduction: ", paste0(dimRed_names, collapse = ", "))
+            dimRed <- slot(seu_obj, name = "reductions")
+            # sanity, make sure cell ids match between dim. reductions and sfe object
+            if (any(!rownames(dimRed[[1]]) %in% colnames(sfe)))
+              dimRed <-
+                sapply(names(dimRed), 
+                       function(i) base::subset(dimRed[[i]], colnames(sfe)))
+            for (i in seq(dimRed_names))
+              reducedDim(x = sfe, type = toupper(dimRed_names[i])) <- 
+                dimRed[[dimRed_names[i]]] |> slot(name = "cell.embeddings")
+            # PCA specifics
+            if (grep("PCA", reducedDimNames(sfe)))
+              # change naming, eg PC_1 to PC1
+              for (i in c("cell.embeddings", "feature.loadings"))
+                attr(slot(dimRed[["pca"]], i), "dimnames")[[2]] <- 
+                  gsub("_", replacement = "", dimnames(dimRed[["pca"]])[[2]])
+              # add PC variance
+              tot.var <- slot(dimRed[["pca"]], name = "misc") |> unlist()
+              varExplained <- slot(dimRed[["pca"]], name = "stdev")^2
+              percentVar <- (varExplained / tot.var) * 100
+              attr(reducedDim(sfe, type = "PCA"), "varExplained") <- varExplained
+              attr(reducedDim(sfe, type = "PCA"), "percentVar") <- percentVar
+              # add PC loadings
+              attr(reducedDim(sfe, type = "PCA"), "rotation") <-
+              dimRed[["pca"]] |> slot(name = "feature.loadings")
+          }
+          
           # TODO (alternatively): use `MultiAssayExperiment` instead? ----
           # Currently using `altExp` if > 1 Seurat Assays are present ----
           if (length(assays_name) > 1) {
@@ -462,13 +487,15 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             for (a in seq(assays_name)) {
               # prepare assays
               assays_add <- 
-                list(counts = .GetCounts(seu_obj, "counts",
+                list(counts = .GetCounts(seu_obj, 
+                                         SeuratObject::Layers(seu_obj)[1],
                                          assay = assays_name[a]),
-                     logcounts = .GetCounts(seu_obj, "data",
+                     logcounts = .GetCounts(seu_obj, 
+                                            SeuratObject::Layers(seu_obj)[2],
                                             assay = assays_name[a]),
                      scaledata = .GetCounts(seu_obj, "scale.data",
                                             assay = assays_name[a]))
-              # remove empty elements, if eg "scale.data" 
+              # remove empty elements, if eg "scale.data"
               assays_add <- assays_add[lapply(assays_add, length) > 0]
               
               # subset to keep cells only for selected FOV/tissue section
@@ -494,13 +521,14 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
         message(">>> Combining ", length(obj_list), 
                 " SFE object(s) with unique `sample_id`")
         
-        # TODO: cbind SFEs and altExps ----
+        # TODO: cbind SFEs and altExps when present ----
         # extract altExp list -> lapply, add sample_id to each altExp
         # cbind SFEs without altExps
         # cbind altExps
         # add combined altExps to combined SFEs
         
-        
+        sfe <- do.call(cbind, obj_list)
+        return(sfe)
         
         # TODO: return single combined object (when multiple samples/FOVs) ----
         #return(obj_list)

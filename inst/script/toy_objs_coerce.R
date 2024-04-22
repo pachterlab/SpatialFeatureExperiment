@@ -39,7 +39,7 @@ callMeta <- function(object = NULL) {
 }
 
 
-# TODO: update input paths using SFEData ----
+# TODO: update input paths using data SFEData ----
 # save objects in this dir
 dir_out <- "./inst/extdata/"
 
@@ -230,4 +230,38 @@ saveRDS(obj_vis_list[[1]], file.path(dir_out, "seu_vis_toy.rds"))
 # ..2 samples
 saveRDS(obj_vis, file.path(dir_out, "seu_vis_toy_multi.rds"))
 
+
+# TODO load data - Seurat -- Visium HD ----
+# NOTE: 
+# one needs SeuratObject "5.0.1.9008"
+#remotes::install_github(repo = "satijalab/seurat-object", ref = "develop")
+# Seurat "visium-hd" branch "5.0.3.9909"
+#remotes::install_github(repo = "satijalab/seurat", ref = "visium-hd")
+# path to Visium HD directory
+dir_use <- "~/Downloads/Visium_HD_Mouse_Brain/" 
+# it must contain these dirs:
+#../Visium_HD_Mouse_Brain
+#  └── binned_outputs
+#  ├── square_008um
+#  └── square_016um
+# see this for details 
+# https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/output-overview#hd-outputs
+# dataset used is -> https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
+
+# example is -> https://satijalab.org/seurat/articles/visiumhd_commands_intro#load-visium-hd-data
+# loading 2 spatially binned resolutions 8 and 16um
+obj_hd <- Load10X_Spatial(data.dir = dir_use, bin.size = c(8, 16))
+# results in 2 assays and 2 samples
+obj_hd
+# plot counts 
+SpatialFeaturePlot(obj_hd, features = "nCount_Spatial.008um", pt.size.factor = 4)
+
+# subset object to keep only first 50 genes
+obj_hd %<>% subset(features = rownames(obj_hd)[1:50])
+DefaultAssay(obj_hd) <- "Spatial.008um"
+# log Normalize data to set "data" layer or slot
+obj_hd %<>% NormalizeData()
+
+# save object with 2 FOVs
+saveRDS(obj_hd, file.path(dir_out, "seu_vishd_multi.rds"))
 
