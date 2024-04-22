@@ -27,7 +27,6 @@
 }
 
 .transpose <- function(bbox) {
-    # Should use bbox of the geometry rather than overall bbox of the sample
     M <- matrix(c(0,-1,-1,0), ncol = 2)
     v <- c(((bbox["ymax"] - bbox["ymin"])/2 + bbox["ymin"])*2,
            ((bbox["xmax"] - bbox["xmin"])/2 + bbox["xmin"])*2)
