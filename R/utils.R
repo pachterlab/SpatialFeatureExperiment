@@ -173,3 +173,74 @@ bbox_center <- function(bbox) {
     c(mean(bbox[c("xmin", "xmax")]),
       mean(bbox[c("ymin", "ymax")]))
 }
+
+#' Get physical size of pixels
+#'
+#' This function gets physical size of pixels in each resolution of a OME-TIFF
+#' pyramid in \code{\link{BioFormatsImage}}.
+#'
+#' @param file Path to an OME-TIFF file.
+#' @param resolution Which resolution to query; 1 means the highest resolution.
+#' The pixels will be larger for the lower resolutions.
+#' @return Numeric vector of length 2 of pixel size in x and y. Usually they're
+#' the same.
+#' @export
+getPixelSize <- function(file, resolution = 1L) {
+    check_installed(c("xml2", "RBioFormats"))
+    xml_meta <- RBioFormats::read.omexml(file) |>
+        xml2::read_xml() |> xml2::as_list()
+    psx <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeX") |> as.numeric()
+    psy <- attr(xml_meta$OME$Image$Pixels, "PhysicalSizeY") |> as.numeric()
+    if (resolution == 1L) return(c(psx, psy))
+    else {
+        m <- RBioFormats::read.metadata(file)
+        coreMetadata <- RBioFormats::coreMetadata
+        meta <- coreMetadata(m, series = resolution)
+        meta1 <- coreMetadata(m, series = 1L)
+        sizeX_full <- meta1$sizeX
+        sizeY_full <- meta1$sizeY
+        fct_x <- sizeX_full/meta$sizeX
+        fct_y <- sizeY_full/meta$sizeY
+        fct_round <- round(fct_x) # Should be the same for x and y
+        fctx2 <- fct_x/fct_round
+        fcty2 <- fct_y/fct_round
+
+        sfx2 <- meta$sizeX*fctx2/sizeX_full # Multiply to get from full res pixel to low res pixel
+        sfy2 <- meta$sizeY*fcty2/sizeY_full
+        psx_out <- psx/sfx2
+        psy_out <- psy/sfy2
+        return(c(psx_out, psy_out))
+    }
+}
+
+#' Aggregate bounding boxes
+#'
+#' To find the bounding box of multiple bounding boxes.
+#'
+#' @param bboxes Either a matrix with 4 rows whose columns are the different
+#' bounding boxes, with row names "xmin", "xmax", "ymin", and "ymax" in any order,
+#' or a list of bounding boxes which are named numeric vectors.
+#' @return A named numeric vector for the total bounding box.
+#' @export
+aggBboxes <- function(bboxes) {
+    if (is.list(bboxes)) {
+        bboxes <- lapply(bboxes, function(x) x[c("xmin", "ymin", "xmax", "ymax")])
+        bboxes <- do.call(rbind, bboxes)
+    }
+    c(
+        xmin = min(bboxes[, "xmin"], na.rm = TRUE),
+        ymin = min(bboxes[, "ymin"], na.rm = TRUE),
+        xmax = max(bboxes[, "xmax"], na.rm = TRUE),
+        ymax = max(bboxes[, "ymax"], na.rm = TRUE)
+    )
+}
+
+#' Show all image_ids in the SFE object
+#'
+#' The title is self-explanatory. Some functions require \code{image_id} to get
+#' or set images.
+#'
+#' @inheritParams sampleIDs
+#' @return A character vector of \code{image_ids}.
+#' @export
+imageIDs <- function(sfe) imageData(sfe)$image_id

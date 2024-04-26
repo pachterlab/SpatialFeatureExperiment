@@ -1,5 +1,8 @@
 # Superclass for *Image with extent
+#' @importFrom S4Vectors showAsCell
 setClass("AlignedSpatialImage", contains = c("VirtualSpatialImage", "VIRTUAL"))
+setMethod("NROW", "AlignedSpatialImage", function(x) 1L)
+setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 
 # SpatRasterImage====================
 
@@ -65,6 +68,10 @@ setMethod("show", "SpatRasterImage", function(object) {
         }
         cat("imgSource():\n ", str, "\n")
     }
+})
+
+setMethod("showAsCell", "SpatRasterImage", function(object) {
+    paste(paste(d[c(2,1,3)], collapse=" x "), "SpatRasterImage")
 })
 
 # BioFormatsImage====================
@@ -165,7 +172,7 @@ setValidity("BioFormatsImage", function(object) {
 })
 
 .get_fullres_scale_factor <- function(file) {
-    ps <- .get_pixel_size(file)
+    ps <- getPixelSize(file)
     psx <- ps[1]; psy <- ps[2]
     if (!length(ps)) {
         warning("Physical pixel size absent from image metadata, using pixel space.")
@@ -207,6 +214,9 @@ setMethod("show", "BioFormatsImage", function(object) {
         }
         cat("imgSource():\n ", str, "\n")
     }
+})
+setMethod("showAsCell", "BioFormatsImage", function(object) {
+    paste(paste(dim(object)[1:3], collapse = " x "), "BioFormatsImage")
 })
 
 #' @rdname BioFormatsImage
@@ -318,6 +328,11 @@ setMethod("show", "EBImage", function(object) {
     else if (length(d) == 3L)
         str <- paste0(dim, " (width x height x channels) ", class(object), "\n")
     cat(str)
+})
+
+setMethod("showAsCell", "EBImage", function(object) {
+    dim <- paste(dim(object), collapse=" x ")
+    paste(dim, "ExtImage")
 })
 
 #' @rdname EBImage
@@ -736,7 +751,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
                          scale_fct = 1, flip = FALSE) {
     # EBImage
     if (is(img, "Image")) {
-        spi <- EBImage(img, extent)
+        if (is(img, "EBImage")) spi <- img else spi <- EBImage(img, extent)
     } else {
         if (!.path_valid2(img))
             stop("img is not a valid file path.")
