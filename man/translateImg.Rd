@@ -4,14 +4,14 @@
 \alias{translateImg}
 \alias{translateImg,SpatRasterImage-method}
 \alias{translateImg,BioFormatsImage-method}
-\alias{translateImg,EBImage-method}
+\alias{translateImg,ExtImage-method}
 \title{Translate/shift image in space}
 \usage{
 \S4method{translateImg}{SpatRasterImage}(x, v, ...)
 
 \S4method{translateImg}{BioFormatsImage}(x, v, ...)
 
-\S4method{translateImg}{EBImage}(x, v, ...)
+\S4method{translateImg}{ExtImage}(x, v, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}

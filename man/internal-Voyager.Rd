@@ -8,7 +8,6 @@
 \alias{.symbol2id}
 \alias{.check_sample_id}
 \alias{.rm_empty_geometries}
-\alias{.get_pixel_size}
 \title{Internal functions also used in Voyager}
 \usage{
 .value2df(value, use_geometry, feature = NULL)
@@ -22,8 +21,6 @@
 .check_sample_id(x, sample_id, one = TRUE)
 
 .rm_empty_geometries(g, MARGIN)
-
-.get_pixel_size(file, resolution = 1L)
 }
 \value{
 Internal

@@ -4,14 +4,14 @@
 \alias{transposeImg}
 \alias{transposeImg,SpatRasterImage-method}
 \alias{transposeImg,BioFormatsImage-method}
-\alias{transposeImg,EBImage-method}
+\alias{transposeImg,ExtImage-method}
 \title{Transpose images}
 \usage{
 \S4method{transposeImg}{SpatRasterImage}(x, filename = "", maxcell = NULL, ...)
 
 \S4method{transposeImg}{BioFormatsImage}(x, ...)
 
-\S4method{transposeImg}{EBImage}(x, ...)
+\S4method{transposeImg}{ExtImage}(x, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
@@ -28,10 +28,10 @@ same \code{lapply} in the method for SFE objects. Some methods have extra
 arguments.}
 }
 \value{
-For \code{SpatRasterImage} and \code{EBImage}, object of the same
+For \code{SpatRasterImage} and \code{ExtImage}, object of the same
   class. For \code{BioFormatsImage}, the image of the specified resolution is
-  read into memory and then the \code{EBImage} method is called, returning
-  \code{EBImage}. For the extent: xmin and xmax are switched with ymin and
+  read into memory and then the \code{ExtImage} method is called, returning
+  \code{ExtImage}. For the extent: xmin and xmax are switched with ymin and
   ymax.
 }
 \description{

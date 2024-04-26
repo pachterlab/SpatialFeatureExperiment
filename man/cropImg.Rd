@@ -4,14 +4,14 @@
 \alias{cropImg}
 \alias{cropImg,SpatRasterImage-method}
 \alias{cropImg,BioFormatsImage-method}
-\alias{cropImg,EBImage-method}
+\alias{cropImg,ExtImage-method}
 \title{Crop images}
 \usage{
 \S4method{cropImg}{SpatRasterImage}(x, bbox, filename = "")
 
 \S4method{cropImg}{BioFormatsImage}(x, bbox)
 
-\S4method{cropImg}{EBImage}(x, bbox)
+\S4method{cropImg}{ExtImage}(x, bbox)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}

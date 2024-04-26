@@ -3,22 +3,22 @@
 \name{ext}
 \alias{ext}
 \alias{ext,BioFormatsImage-method}
-\alias{ext,EBImage-method}
+\alias{ext,ExtImage-method}
 \alias{ext,SpatRasterImage-method}
 \alias{ext<-,BioFormatsImage,numeric-method}
-\alias{ext<-,EBImage,numeric-method}
+\alias{ext<-,ExtImage,numeric-method}
 \alias{ext<-,SpatRasterImage,numeric-method}
 \title{Get and set extent of image objects}
 \usage{
 \S4method{ext}{BioFormatsImage}(x)
 
-\S4method{ext}{EBImage}(x)
+\S4method{ext}{ExtImage}(x)
 
 \S4method{ext}{SpatRasterImage}(x)
 
 \S4method{ext}{BioFormatsImage,numeric}(x) <- value
 
-\S4method{ext}{EBImage,numeric}(x) <- value
+\S4method{ext}{ExtImage,numeric}(x) <- value
 
 \S4method{ext}{SpatRasterImage,numeric}(x) <- value
 }

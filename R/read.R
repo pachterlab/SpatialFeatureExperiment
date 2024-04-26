@@ -301,7 +301,15 @@ read10xVisiumSFE <- function(samples = "",
         geoms_new <- st_buffer(st_geometry(sf_df)[invalid_inds], dist = 0)
         # [.sfc<- is slow for st_GEOMETRY when buffer created MULTIPOLYGONs
         # due to a vapply somewhere to recompute bbox in an R loop
-        # But not too bad, I don't think worse than st_cast
+        new_type <- st_geometry_type(geoms_new, by_geometry = FALSE)
+        if (new_type == "GEOMETRY") {
+            geoms_new <- st_cast(geoms_new)
+            new_type <- st_geometry_type(geoms_new, by_geometry = FALSE)
+        }
+        old_type <- st_geometry_type(sf_df, by_geometry = FALSE)
+        if (new_type != old_type && new_type != "GEOMETRY") {
+            sf_df <- st_cast(sf_df, as.character(new_type))
+        }
         st_geometry(sf_df)[invalid_inds] <- geoms_new
     }
     return(sf_df)
@@ -387,6 +395,7 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom rlang check_installed
 #' @importFrom SpatialExperiment imgData<-
 #' @importFrom data.table fread merge.data.table rbindlist is.data.table
+#' @importFrom stats na.omit
 #' @examples
 #' dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
 #' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
@@ -407,7 +416,9 @@ readVizgen <- function(data_dir,
                        use_bboxes = FALSE,
                        use_cellpose = TRUE,
                        BPPARAM = SerialParam(),
-                       file_out = file.path(data_dir, "detected_transcripts.parquet"), ...) {
+                       file_out = file.path(data_dir, "detected_transcripts.parquet"),
+                       ...) {
+    check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
     image <- match.arg(image, several.ok = TRUE)
@@ -478,7 +489,7 @@ readVizgen <- function(data_dir,
                     paste0("\n", parq))
             parq <- parq_clean
             if (any(grepl("cell_boundaries.parquet", parq))) {
-                # use default segmentaion file
+                # use default segmentation file
                 parq <- grep("cell_boundaries.parquet", parq, value = TRUE)
             } else if (any(grepl("hdf5s_micron", parq))) {
                 # use previously processed/saved `hdf5` files
@@ -495,7 +506,7 @@ readVizgen <- function(data_dir,
                         paste0("\n", ">>> processed hdf5 files will be used") })
             fn <- parq
             # read file and filter to keep selected single z section as they're the same anyway
-            polys <- st_read(fn, int64_as_string = TRUE, crs = NA, quiet = TRUE)
+            polys <- sfarrow::st_read_parquet(fn)
             # Can use any z-plane since they're all the same
             # This way so this part still works when the parquet file is written after
             # reading in HDF5 the first time. Only writing one z-plane to save disk space.
@@ -530,7 +541,7 @@ readVizgen <- function(data_dir,
             polys$Type <- "cell"
             parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
             if (!file.exists(parq_file)) {
-                st_write(polys, dsn = parq_file, driver = "Parquet")
+                sfarrow::st_write_parquet(polys, dsn = parq_file)
             }
         } else if (length(fns) == 0) {
             warning("No '.hdf5' files present, check input directory -> `data_dir`")
@@ -728,6 +739,11 @@ readVizgen <- function(data_dir,
 
 .read_tx_output <- function(file_out, z, z_option, gene_col, return,
                             gene_select = NULL) {
+    if (!is.null(gene_select) && !"Parquet" %in% rownames(sf::st_drivers())) {
+        check_installed("sfarrow")
+        warning("GDAL Parquet driver is required to selectively read genes. Reading all genes.")
+        gene_select <- NULL
+    }
     file_out <- normalizePath(file_out, mustWork = FALSE)
     file_dir <- file_path_sans_ext(file_out)
     # File or dir already exists, skip processing
@@ -747,9 +763,13 @@ readVizgen <- function(data_dir,
         if (length(fns)) {
             if (!return) return(file_dir)
             out <- lapply(fns, function(x) {
-                q <- .make_sql_query(x, gene_select, gene_col)
-                out <- st_read(x, query = q, int64_as_string = TRUE, quiet = TRUE,
-                               crs = NA)
+                if (is.null(gene_select))
+                    out <- sfarrow::st_read_parquet(x)
+                else {
+                    q <- .make_sql_query(x, gene_select, gene_col)
+                    out <- st_read(x, query = q, int64_as_string = TRUE, quiet = TRUE,
+                                   crs = NA)
+                }
                 out
             })
             # add names to a list
@@ -765,8 +785,11 @@ readVizgen <- function(data_dir,
         # read transcripts from detected_transcripts.parquet
     } else if (file.exists(file_out) && !dir.exists(file_dir)) {
         if (!return) return(file_out)
-        out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col),
-                       int64_as_string = TRUE, quiet = TRUE, crs = NA)
+        if (is.null(gene_select))
+            out <- sfarrow::st_read_parquet(x)
+        else
+            out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col),
+                           int64_as_string = TRUE, quiet = TRUE, crs = NA)
         rownames(out) <- out[[gene_col]]
         return(out)
     }
@@ -1013,15 +1036,14 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
         if (is(mols, "sf")) {
-            st_write(mols, file_out, driver = "Parquet", quiet = TRUE)
+            sfarrow::st_write_parquet(mols, file_out)
             if (!return) return(file_out)
         } else {
             if (!dir.exists(file_dir)) dir.create(file_dir)
             suppressWarnings({
                 bplapply(names(mols), function(n) {
                     name_use <- gsub("/", ".", n)
-                    st_write(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet")),
-                             driver = "Parquet")
+                    sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet")))
                 }, BPPARAM = SerialParam(progressbar = TRUE))
             })
             if (!return) return(file_dir)
@@ -1134,6 +1156,7 @@ readCosMX <- function(data_dir,
                       split_cell_comps = FALSE,
                       BPPARAM = SerialParam(),
                       file_out = file.path(data_dir, "tx_spots.parquet"), ...) {
+    check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     fns <- list.files(data_dir, pattern = "\\.csv$", full.names = TRUE)
     fn_metadata <- grep("metadata", fns, value = TRUE)
@@ -1158,7 +1181,7 @@ readCosMX <- function(data_dir,
     poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
     if (file.exists(poly_sf_fn)) {
         message(">>> File cell_boundaries_sf.parquet found")
-        polys <- st_read(poly_sf_fn, int64_as_string = TRUE, quiet = TRUE, crs = NA)
+        polys <- sfarrow::st_read_parquet(poly_sf_fn)
         rownames(polys) <- polys$cellID
     } else {
         message(">>> Constructing cell polygons")
@@ -1166,7 +1189,7 @@ readCosMX <- function(data_dir,
                        geometryType = "POLYGON",
                        id_col = "cellID")
         polys <- polys[match(meta$cell_ID, polys$cellID),]
-        st_write(polys, poly_sf_fn, driver = "Parquet")
+        sfarrow::st_write_parquet(polys, poly_sf_fn)
     }
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
@@ -1244,7 +1267,7 @@ readCosMX <- function(data_dir,
 #' time.
 #' @export
 #'
-#' @importFrom sf st_area st_geometry<- st_as_sf st_write
+#' @importFrom sf st_area st_geometry<- st_as_sf
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply
 #' @importFrom rlang check_installed
@@ -1278,6 +1301,7 @@ readXenium <- function(data_dir,
                        add_molecules = FALSE,
                        BPPARAM = SerialParam(),
                        file_out = file.path(data_dir, "tx_spots.parquet"), ...) {
+    check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
     image <- match.arg(image, several.ok = TRUE)
@@ -1362,8 +1386,7 @@ readXenium <- function(data_dir,
                     ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
                     " segmentations")
             # add cell id to rownames
-            polys <- lapply(fn_segs, st_read, quiet = TRUE, int64_as_string = TRUE,
-                            crs = NA)
+            polys <- lapply(fn_segs, sfarrow::st_read_parquet)
         } else {
             if (no_raw_bytes) {
                 if (any(grep("..parquet", fn_segs))) {
@@ -1429,6 +1452,9 @@ readXenium <- function(data_dir,
                         df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
                               geometryType = "POLYGON") })
             }
+            message(">>> Checking polygon validity")
+            # sanity on geometries
+            polys <- lapply(polys, .check_st_valid)
 
             fn_out <- c(cell = "cell_boundaries_sf.parquet",
                         nucleus = "nucleus_boundaries_sf.parquet")
@@ -1436,7 +1462,7 @@ readXenium <- function(data_dir,
             fn_out <- file.path(data_dir, fn_out)
             message(">>> Saving geometries to parquet files")
             for (i in seq_along(polys)) {
-                st_write(polys[[i]], fn_out[[i]], driver = "Parquet", quiet = TRUE)
+                sfarrow::st_write_parquet(polys[[i]], fn_out[[i]])
             }
         }
         # add names to polys list
@@ -1525,9 +1551,6 @@ readXenium <- function(data_dir,
 
     # add segmentation geometries
     if (!is.null(polys)) {
-        message(">>> Checking polygon validity")
-        # sanity on geometries
-        polys <- lapply(polys, .check_st_valid)
         polys <-
             lapply(polys, function(i) {
                 rownames(i) <- i$cell_id

@@ -4,14 +4,14 @@
 \alias{imgSource}
 \alias{imgSource,SpatRasterImage-method}
 \alias{imgSource,BioFormatsImage-method}
-\alias{imgSource,EBImage-method}
+\alias{imgSource,ExtImage-method}
 \title{Source of images that are on disk}
 \usage{
 \S4method{imgSource}{SpatRasterImage}(x)
 
 \S4method{imgSource}{BioFormatsImage}(x)
 
-\S4method{imgSource}{EBImage}(x)
+\S4method{imgSource}{ExtImage}(x)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}

@@ -484,7 +484,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                 cgs <- as.list(int_colData(out)[["colGeometries"]][sample_index, ,
                                                                    drop = FALSE
                 ])
-                lapply(cgs, st_bbox) |> .agg_bboxes()
+                lapply(cgs, st_bbox) |> aggBboxes()
             })
             y <- do.call(cbind, y)
             colnames(y) <- samples_use
@@ -506,32 +506,24 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         for (s in samples_use) {
             rgs <- rowGeometries(out, sample_id = s)
             rowGeometries(out, sample_id = s) <-
-                lapply(rgs, .crop_geometry, y = y, op = op, sample_col = s,
-                       samples_use = s)
+                lapply(rgs, function(r) {
+                    r <- .crop_geometry(r, y = y, op = op, sample_col = s,
+                                        samples_use = s)
+                    if (st_geometry_type(r, FALSE) == "GEOMETRY")
+                        st_cast(r, "MULTIPOINT")
+                    else r
+                })
         }
     }
     out <- .crop_imgs(out, bbox(out, sample_id = samples_use, include_image = FALSE))
     out
 }
 
-.agg_bboxes <- function(bboxes) {
-    if (is.list(bboxes)) {
-        bboxes <- lapply(bboxes, function(x) x[c("xmin", "ymin", "xmax", "ymax")])
-        bboxes <- do.call(rbind, bboxes)
-    }
-    c(
-        xmin = min(bboxes[, "xmin"], na.rm = TRUE),
-        ymin = min(bboxes[, "ymin"], na.rm = TRUE),
-        xmax = max(bboxes[, "xmax"], na.rm = TRUE),
-        ymax = max(bboxes[, "ymax"], na.rm = TRUE)
-    )
-}
-
 .bbox_sample_g <- function(gs) {
     # Assume that it's already properly subsetted for the sample
     # For one sample_id, multiple geometries
     bboxes <- lapply(gs, st_bbox)
-    .agg_bboxes(bboxes)
+    aggBboxes(bboxes)
 }
 
 .bbox_sample <- function(sfe, sample_id, include_images = FALSE,
@@ -563,7 +555,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         img_exts <- lapply(imgData(sfe)$data, ext)
     } else img_exts <- NULL
     all_bboxes <- c(cgs_bboxes, ags_bboxes, rgs_bboxes, img_exts)
-    .agg_bboxes(all_bboxes)
+    aggBboxes(all_bboxes)
 }
 
 #' Find bounding box of SFE objects
@@ -633,12 +625,12 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 #' @param sfe An SFE object.
 #' @param sample_id Sample(s) to transform.
 #' @param resolution Transposing, mirroring, and rotating \code{BioFormatsImage}
-#'   will convert it into \code{EBImage}, loading the image into memory. This
+#'   will convert it into \code{ExtImage}, loading the image into memory. This
 #'   argument specifies the resolution of image in the OME-TIFF pyramid to load.
 #'   Ignored if no image of class \code{BioFormatsImage} is present in the
 #'   sample(s) of interest.
 #' @param maxcell Rotating \code{SpatRasterImage} will convert it into
-#'   \code{EBImage}, loading the image into memory. This argument specifies the
+#'   \code{ExtImage}, loading the image into memory. This argument specifies the
 #'   maximum number of pixels in the image loaded into memory. The image will be
 #'   down sampled to approximately this number of pixels.
 #' @param v Vector to spatially translate the SFE object.

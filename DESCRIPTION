@@ -76,6 +76,7 @@ Suggests:
     RBioFormats,
     rhdf5,
     rmarkdown,
+    sfarrow,
     SFEData (>= 1.5.3),
     testthat (>= 3.0.0),
     Voyager,
@@ -84,7 +85,6 @@ Suggests:
     SeuratObject,
     dplyr,
     tidyr
-SystemRequirements: GDAL (>= 3.5.0)
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

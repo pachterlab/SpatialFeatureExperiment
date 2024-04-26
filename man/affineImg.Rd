@@ -3,14 +3,14 @@
 \name{affineImg}
 \alias{affineImg}
 \alias{affineImg,BioFormatsImage-method}
-\alias{affineImg,EBImage-method}
+\alias{affineImg,ExtImage-method}
 \title{Affine transformation of images}
 \usage{
 \S4method{affineImg}{SpatRasterImage}(x, M, v, maxcell = 1e+07, ...)
 
 \S4method{affineImg}{BioFormatsImage}(x, M, v, ...)
 
-\S4method{affineImg}{EBImage}(x, M, v, ...)
+\S4method{affineImg}{ExtImage}(x, M, v, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
@@ -29,10 +29,10 @@ same \code{lapply} in the method for SFE objects. Some methods have extra
 arguments.}
 }
 \value{
-\code{SpatRasterImage} will be converted to \code{EBImage}. Otherwise
+\code{SpatRasterImage} will be converted to \code{ExtImage}. Otherwise
 \code{*Image} object of the same class. For \code{BioFormatsImage}, the
 transformation info is stored and will be applied when the image is loaded
-into memory as \code{EBImage}.
+into memory as \code{ExtImage}.
 }
 \description{
 This function performs affine transformation on images, with any matrix and

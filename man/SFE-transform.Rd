@@ -34,7 +34,7 @@ affine(sfe, sample_id = "all", M, v, maxcell = 1e+07)
 \item{sample_id}{Sample(s) to transform.}
 
 \item{maxcell}{Rotating \code{SpatRasterImage} will convert it into
-\code{EBImage}, loading the image into memory. This argument specifies the
+\code{ExtImage}, loading the image into memory. This argument specifies the
 maximum number of pixels in the image loaded into memory. The image will be
 down sampled to approximately this number of pixels.}
 
@@ -45,7 +45,7 @@ down sampled to approximately this number of pixels.}
 \item{v}{Vector to spatially translate the SFE object.}
 
 \item{resolution}{Transposing, mirroring, and rotating \code{BioFormatsImage}
-will convert it into \code{EBImage}, loading the image into memory. This
+will convert it into \code{ExtImage}, loading the image into memory. This
 argument specifies the resolution of image in the OME-TIFF pyramid to load.
 Ignored if no image of class \code{BioFormatsImage} is present in the
 sample(s) of interest.}

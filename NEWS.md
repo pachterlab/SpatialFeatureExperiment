@@ -8,6 +8,7 @@
 * Speed up affine transformation of sf geometries with sfheaders
 * Coercion from Seurat to SFE
 * SpatRasterImage and EBImage directly inherit from SpatRaster and Image respectively so the user no longer needs to call imgRaster every time they plots or operates on the image, which I find really annoying.
+* Changed name EBImage to ExtImage to reduce confusion
 
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)

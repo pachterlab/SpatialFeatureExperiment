@@ -4,7 +4,7 @@
 \alias{mirrorImg}
 \alias{mirrorImg,SpatRasterImage-method}
 \alias{mirrorImg,BioFormatsImage-method}
-\alias{mirrorImg,EBImage-method}
+\alias{mirrorImg,ExtImage-method}
 \title{Mirror/flip images}
 \usage{
 \S4method{mirrorImg}{SpatRasterImage}(
@@ -17,7 +17,7 @@
 
 \S4method{mirrorImg}{BioFormatsImage}(x, direction = c("vertical", "horizontal"), ...)
 
-\S4method{mirrorImg}{EBImage}(x, direction = c("vertical", "horizontal"), ...)
+\S4method{mirrorImg}{ExtImage}(x, direction = c("vertical", "horizontal"), ...)
 }
 \arguments{
 \item{x}{SpatRaster or SpatVector}

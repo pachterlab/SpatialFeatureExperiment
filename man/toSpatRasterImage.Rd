@@ -2,11 +2,11 @@
 % Please edit documentation in R/image.R
 \name{toSpatRasterImage}
 \alias{toSpatRasterImage}
-\alias{toSpatRasterImage,EBImage-method}
+\alias{toSpatRasterImage,ExtImage-method}
 \alias{toSpatRasterImage,BioFormatsImage-method}
 \title{Convert images to SpatRasterImage}
 \usage{
-\S4method{toSpatRasterImage}{EBImage}(
+\S4method{toSpatRasterImage}{ExtImage}(
   x,
   save_geotiff = TRUE,
   file_out = "img.tiff",
@@ -48,6 +48,6 @@ have the same file name as the input file except without the \code{ome} in
 the extension.
 }
 \seealso{
-toEBImage
+toExtImage
 }
 \concept{Image and raster}
