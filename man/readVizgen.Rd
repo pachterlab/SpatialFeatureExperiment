@@ -52,7 +52,7 @@ it's GeoTIFF.}
 the image will be loaded into memory to be flipped. If the image is larger
 than this size then the coordinates will be flipped instead.}
 
-\item{filter_counts}{Keep cells with counts \code{> 0}.}
+\item{filter_counts}{Logical, whether to keep cells with counts \code{> 0}.}
 
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
 object.}
