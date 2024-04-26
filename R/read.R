@@ -299,7 +299,15 @@ read10xVisiumSFE <- function(samples = "",
         geoms_new <- st_buffer(st_geometry(sf_df)[invalid_inds], dist = 0)
         # [.sfc<- is slow for st_GEOMETRY when buffer created MULTIPOLYGONs
         # due to a vapply somewhere to recompute bbox in an R loop
-        # But not too bad, I don't think worse than st_cast
+        new_type <- st_geometry_type(geoms_new, by_geometry = FALSE)
+        if (new_type == "GEOMETRY") {
+            geoms_new <- st_cast(geoms_new)
+            new_type <- st_geometry_type(geoms_new, by_geometry = FALSE)
+        }
+        old_type <- st_geometry_type(sf_df, by_geometry = FALSE)
+        if (new_type != old_type && new_type != "GEOMETRY") {
+            sf_df <- st_cast(sf_df, as.character(new_type))
+        }
         st_geometry(sf_df)[invalid_inds] <- geoms_new
     }
     return(sf_df)
@@ -1427,6 +1435,9 @@ readXenium <- function(data_dir,
                         df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
                               geometryType = "POLYGON") })
             }
+            message(">>> Checking polygon validity")
+            # sanity on geometries
+            polys <- lapply(polys, .check_st_valid)
 
             fn_out <- c(cell = "cell_boundaries_sf.parquet",
                         nucleus = "nucleus_boundaries_sf.parquet")
@@ -1523,9 +1534,6 @@ readXenium <- function(data_dir,
 
     # add segmentation geometries
     if (!is.null(polys)) {
-        message(">>> Checking polygon validity")
-        # sanity on geometries
-        polys <- lapply(polys, .check_st_valid)
         polys <-
             lapply(polys, function(i) {
                 rownames(i) <- i$cell_id

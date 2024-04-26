@@ -506,8 +506,13 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         for (s in samples_use) {
             rgs <- rowGeometries(out, sample_id = s)
             rowGeometries(out, sample_id = s) <-
-                lapply(rgs, .crop_geometry, y = y, op = op, sample_col = s,
-                       samples_use = s)
+                lapply(rgs, function(r) {
+                    r <- .crop_geometry(r, y = y, op = op, sample_col = s,
+                                        samples_use = s)
+                    if (st_geometry_type(r, FALSE) == "GEOMETRY")
+                        st_cast(r, "MULTIPOINT")
+                    else r
+                })
         }
     }
     out <- .crop_imgs(out, bbox(out, sample_id = samples_use, include_image = FALSE))
