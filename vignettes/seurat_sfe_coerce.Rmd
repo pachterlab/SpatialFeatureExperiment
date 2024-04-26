@@ -77,6 +77,8 @@ obj_xen <- readRDS(file.path(dir_extdata, "seu_xen_toy.rds"))
 obj_xen
 obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
 obj_vis
+obj_vishd <- readRDS(file.path(dir_extdata, "seu_vishd_8um.rds")) # Visium HD
+obj_vishd
 ```
 
 ## Convert Seurat -> SFE - Visium (toy data)
@@ -135,6 +137,37 @@ plotSpatialFeature(sfe_conv_vis2, exprs_values = "counts",
                    show_axes = TRUE,
                    #sample_id = "",
                    scattermore = FALSE # will plot only centroids!
+                  )
+```
+
+## Convert Seurat -> SFE - Visium HD
+```{r}
+sfe_vishd <-
+  toSpatialFeatureExperiment(x = obj_vishd, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vishd
+getMeta(sfe_vishd) %>% str
+```
+
+##  Plot converted Seurat to SFE - Visium HD
+```{r}
+plotSpatialFeature(sfe_vishd, exprs_values = "counts",
+                   features = rownames(sfe_vishd)[1], 
+                   size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = TRUE
+                  )
+plotSpatialFeature(sfe_vishd, exprs_values = "counts",
+                   features = rownames(sfe_vishd)[1], 
+                   size = 0, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE
                   )
 ```
 
@@ -300,7 +333,7 @@ obj_vishd_multi <- readRDS(file.path(dir_extdata, "seu_vishd_multi.rds")) # Visi
 obj_vishd_multi
 ```
 
-## TODO: Convert multiple samples/FOVs - Visium
+## Convert multiple samples/FOVs - Visium
 NOTE, the function will automatically check how many FOVs Seurat object has and combine those samples in a single SFE object
 ```{r}
 # toy Visium data
@@ -327,7 +360,6 @@ plotSpatialFeature(sfe_vis_multi, exprs_values = "counts",
 
 ## TODO: Convert multiple samples/FOVs - Visium HD
 ```{r}
-# toy Visium data
 sfe_vishd_multi <-
   toSpatialFeatureExperiment(x = obj_vishd_multi, 
                              image_scalefactors = "lowres",
@@ -393,7 +425,7 @@ plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
                   )
 ```
 
-## TODO: Convert multiple samples/FOVs - Vizgen
+## Convert multiple samples/FOVs - Vizgen
 ```{r}
 sfe_vz_multi <-
   toSpatialFeatureExperiment(x = obj_vz_multi,

@@ -249,6 +249,19 @@ dir_use <- "~/Downloads/Visium_HD_Mouse_Brain/"
 # dataset used is -> https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
 
 # example is -> https://satijalab.org/seurat/articles/visiumhd_commands_intro#load-visium-hd-data
+
+# loading single binning resolution - 8
+obj_hd_8 <- Load10X_Spatial(data.dir = dir_use, bin.size = c(8))
+obj_hd_8 %<>% subset(features = rownames(obj_hd_8)[1:50])
+obj_hd_8 %<>% UpdateSeuratObject()
+DefaultAssay(obj_hd_8) <- "Spatial.008um"
+# log Normalize data to set "data" layer or slot
+obj_hd_8 %<>% NormalizeData()
+obj_hd_8
+
+# save object with 1 FOV
+saveRDS(obj_hd_8, file.path(dir_out, "seu_vishd_8um.rds"))
+
 # loading 2 spatially binned resolutions 8 and 16um
 obj_hd <- Load10X_Spatial(data.dir = dir_use, bin.size = c(8, 16))
 # results in 2 assays and 2 samples

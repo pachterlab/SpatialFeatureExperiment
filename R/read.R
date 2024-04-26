@@ -73,7 +73,9 @@ read10xVisiumSFE <- function(samples = "",
         lowres="tissue_lowres_image.png",
         hires="tissue_hires_image.png")
     img_fns <- img_fns[images]
+    
     # Read one sample at a time, in order to get spot diameter one sample at a time
+    # TODO: need support for VisiumHD ----
     sfes <- lapply(seq_along(samples), function(i) {
         o <- read10xVisium(dirs[i], sample_id[i], type, data, images, load = FALSE)
         imgData(o) <- NULL
@@ -623,7 +625,7 @@ readVizgen <- function(data_dir,
     # NOTE: might take some time to run
     if (use_bboxes && is.null(polys)) {
         message(">>> Creating bounding boxes from `cell_metadata`")
-        # TODO: rewrite to use the now much faster df2sf
+        # TODO: rewrite to use the now much faster df2sf ----
         bboxes_sfc <-
             bplapply(seq_len(nrow(metadata)),
                      function(i) {
@@ -1070,7 +1072,7 @@ addTxSpots <- function(sfe, file, sample_id = 1L, gene_select = NULL,
             gene_names <-
                 lapply(rowGeometries(sfe), function(i) {
                     gene_indx <-
-                        which(rownames(sfe) %in% stats::na.omit(i[[gene_col]]))
+                        which(rownames(sfe) %in% na.omit(i[[gene_col]]))
                     gene_name <- rownames(sfe[gene_indx,])
                     return(gene_name)
                 }) |> unlist() |> unique()
@@ -1502,7 +1504,7 @@ readXenium <- function(data_dir,
         # polys should always be a list, even if it's length 1
         for (i in seq(polys)) {
             # filter geometries
-            matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> stats::na.omit()
+            matched.cells <- match(colnames(sce), polys[[i]]$cell_id) |> na.omit()
             message(">>> filtering ", names(polys)[i],
                     " geometries to match ",
                     length(matched.cells), " cells with counts > 0")

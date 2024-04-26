@@ -64,7 +64,7 @@
 }
 
 .df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi,
-                         group_col = "group", check = TRUE) {
+                         group_col = "group", check = TRUE, ...) {
     # Case 1: centroids, use POINT
     if (!is.na(spotDiameter)) {
         if (spotDiameter <= 0) {
@@ -88,7 +88,7 @@
                             row.names = rns) # in this case faster than sf_point
     }
     if (!is.na(spotDiameter)) {
-        st_geometry(out) <- st_buffer(st_geometry(out), spotDiameter / 2)
+      st_geometry(out) <- st_buffer(st_geometry(out), spotDiameter / 2, ...)
     }
     out
 }
@@ -175,6 +175,8 @@
 #'   per geometry. If \code{FALSE}, it will save a bit of time, which is useful
 #'   when the input is already known to be good.
 #' @param subid_col Column to indicate coordinates for holes in polygons.
+#' @param ... Other arguments passed to `sf::st_buffer`, mainly to make polygon shapes,
+#'  eg Visium spot `endCapStyle = "ROUND"` and VisiumHD bin `endCapStyle = "SQUARE"`
 #' @return An \code{sf} object.
 #' @export
 #' @concept Utilities
@@ -223,7 +225,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                   group_col = "group",
                   id_col = "ID",
                   subid_col = "subID", check = TRUE,
-                  BPPARAM = deprecated()) {
+                  BPPARAM = deprecated(), ...) {
     if (is_present(BPPARAM)) {
         deprecate_warn("1.6.0", "df2sf(BPPARAM = )",
                        details = "The sfheaders package is now used instead for much better performance")
@@ -240,9 +242,9 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     if (.is_de_facto_point(df, group_col, id_col)) geometryType <- "POINT"
     geometryType <- match.arg(geometryType)
     out <- switch(geometryType,
-        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE),
+        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE, ...),
         MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE,
-                                  group_col = group_col, check = check),
+                                  group_col = group_col, check = check, ...),
         LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE,
                                        id_col = id_col, check = check),
         MULTILINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = TRUE,
