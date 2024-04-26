@@ -625,12 +625,12 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 #' @param sfe An SFE object.
 #' @param sample_id Sample(s) to transform.
 #' @param resolution Transposing, mirroring, and rotating \code{BioFormatsImage}
-#'   will convert it into \code{EBImage}, loading the image into memory. This
+#'   will convert it into \code{ExtImage}, loading the image into memory. This
 #'   argument specifies the resolution of image in the OME-TIFF pyramid to load.
 #'   Ignored if no image of class \code{BioFormatsImage} is present in the
 #'   sample(s) of interest.
 #' @param maxcell Rotating \code{SpatRasterImage} will convert it into
-#'   \code{EBImage}, loading the image into memory. This argument specifies the
+#'   \code{ExtImage}, loading the image into memory. This argument specifies the
 #'   maximum number of pixels in the image loaded into memory. The image will be
 #'   down sampled to approximately this number of pixels.
 #' @param v Vector to spatially translate the SFE object.

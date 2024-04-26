@@ -4,7 +4,7 @@
 \alias{imgRaster}
 \alias{imgRaster,SpatRasterImage-method}
 \alias{imgRaster,BioFormatsImage-method}
-\alias{imgRaster,EBImage-method}
+\alias{imgRaster,ExtImage-method}
 \title{Get the image from *Image class}
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
@@ -14,7 +14,7 @@ is a medium resolution in Xenium.}
 }
 \value{
 \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-  \code{EBImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
+  \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
   image of the specified resolution will be read into memory as
   \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
 }
@@ -24,7 +24,7 @@ implemented to make these image classes compatible with
 \code{SpatialExperiment}. The \code{imgRaster} methods in SFE are meant to
 extract the original image from the \code{*Image} classes, such as
 \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-\code{EBImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
+\code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
 image of the specified resolution will be read into memory as
 \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
 }

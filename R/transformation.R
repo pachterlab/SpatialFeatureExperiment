@@ -173,7 +173,7 @@
     v <- center_new - t(M) %*% center_old
     out <- EBImage::affine(imgRaster(img), rbind(M, t(v)),
                            output.dim = dim_new_px)
-    EBImage(img = out, ext = bbox_new)
+    ExtImage(img = out, ext = bbox_new)
 }
 
 .transform <- function(sfe, sample_id, bbox, geometry_fun, img_fun,

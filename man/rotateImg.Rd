@@ -4,14 +4,14 @@
 \alias{rotateImg}
 \alias{rotateImg,SpatRasterImage-method}
 \alias{rotateImg,BioFormatsImage-method}
-\alias{rotateImg,EBImage-method}
+\alias{rotateImg,ExtImage-method}
 \title{Rotate image}
 \usage{
 \S4method{rotateImg}{SpatRasterImage}(x, degrees, maxcell = 1e+07, ...)
 
 \S4method{rotateImg}{BioFormatsImage}(x, degrees, ...)
 
-\S4method{rotateImg}{EBImage}(x, degrees, ...)
+\S4method{rotateImg}{ExtImage}(x, degrees, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
@@ -30,7 +30,7 @@ arguments.}
 }
 \value{
 \code{SpatRasterImage} will be loaded into memory and converted to
-  \code{EBImage}. Otherwise \code{*Image} object of the same class.
+  \code{ExtImage}. Otherwise \code{*Image} object of the same class.
 }
 \description{
 As in \code{SpatialExperiment}, rotation here must be a multiple of 90
