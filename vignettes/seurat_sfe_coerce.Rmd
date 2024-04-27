@@ -33,8 +33,7 @@ getMeta <-
     }
 
 # set root dir
-dir_root <- "~/Desktop/github_projects/SpatialFeatureExperiment/"
-dir_extdata <- file.path(dir_root, "inst/extdata/")
+dir_extdata <- system.file("extdata", package = "SpatialFeatureExperiment")
 
 # set BPPARAM
 BPPARAM <- BiocParallel::MulticoreParam(3,
@@ -71,13 +70,13 @@ suppressPackageStartupMessages({
 ## Load Seurat v5 objects - 1 sample
 Note, these object were generated a priori, object names with (eg `*_vis` for Visium) correspond to specific spatial tech
 ```{r}
-obj_vz <- readRDS(file.path(dir_extdata, "seu_vz_toy.rds"))
+obj_vz <- SeuratTestData("Vizgen")
 obj_vz
-obj_xen <- readRDS(file.path(dir_extdata, "seu_xen_toy.rds"))
+obj_xen <- SeuratTestData("Xenium")
 obj_xen
 obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
 obj_vis
-obj_vishd <- readRDS(file.path(dir_extdata, "seu_vishd_8um.rds")) # Visium HD
+obj_vishd <- SeuratTestData("VisiumHD8") # Visium HD
 obj_vishd
 ```
 
@@ -110,7 +109,7 @@ plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
 Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`.
 Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
 ```{r}
-obj_vis2 <- readRDS(file.path(dir_root, "inst/extdata/seu_anterior1_visium.rds"))
+obj_vis2 <- SeuratTestData("Visium")
 obj_vis2
 # plot it
 SpatialFeaturePlot(obj_vis2, features = rownames(obj_vis2)[1])
@@ -188,6 +187,7 @@ sfe_conv_xen
 getMeta(sfe_conv_xen) %>% str
 getMeta(obj_xen) %>% str
 ```
+
 ```{r}
 # manual check
 ggplot() &
@@ -323,13 +323,13 @@ plotDimLoadings(sfe_conv_vz2, dims = 1:5, nfeatures = 5, reduction = "PCA")
 
 ## Load Seurat objects with several samples/FOVs
 ```{r}
-obj_vz_multi <- readRDS(file.path(dir_extdata, "seu_vz_toy_multi.rds")) # Vizgen
+obj_vz_multi <- SeuratTestData("VizgenMulti") # Vizgen
 obj_vz_multi
-obj_xen_multi <- readRDS(file.path(dir_extdata, "seu_xen_toy_multi.rds")) # Xenium
+obj_xen_multi <- SeuratTestData("XeniumMulti") # Xenium
 obj_xen_multi
 obj_vis_multi <- readRDS(file.path(dir_extdata, "seu_vis_toy_multi.rds")) # Visium
 obj_vis_multi
-obj_vishd_multi <- readRDS(file.path(dir_extdata, "seu_vishd_multi.rds")) # Visium HD
+obj_vishd_multi <- SeuratTestData("VisiumHDmulti") # Visium HD
 obj_vishd_multi
 ```
 
@@ -393,7 +393,7 @@ plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
 ## Convert multiple samples/FOVs - Xenium
 ```{r}
 # slim down Xenium obj to keep only 1 Assay
-if (!exists("obj_xen_slim"))
+if (!exists("obj_xen_multi.slim"))
   obj_xen_multi.slim <- DietSeurat(obj_xen_multi, assays = "Xenium")
 #real data subset
 sfe_xen_multi <-
