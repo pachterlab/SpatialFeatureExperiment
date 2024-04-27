@@ -405,9 +405,10 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # remove empty elements, if eg "scale.data" is not present
           assays_sfe <- assays_sfe[lapply(assays_sfe, length) > 0]
           
+          # remove this afterwards
           assays_sfe_out <<- assays_sfe
           
-          # Make SFE from default assay of Seurat ----
+          # Make SFE from Seurat ----
           message("\n", ">>> Creating `SFE` object -> ", fov_names[fov_section])
           sfe <- SpatialFeatureExperiment(assays = assays_sfe,
                                           colData = 
@@ -438,6 +439,8 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                           )
           # add sample_id to centroids
           colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
+          
+          # remove this afterwards
           sfe_out <<- sfe
 
           # flip geometry both for col & row geoms ----
@@ -619,6 +622,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           return(sfe)
         })
       
+      # remove this afterwards
       obj_list_test <<- obj_list
       
       if (length(obj_list) > 1) {

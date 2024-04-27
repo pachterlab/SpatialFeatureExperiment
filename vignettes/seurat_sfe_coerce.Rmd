@@ -357,6 +357,23 @@ plotSpatialFeature(sfe_vis_multi, exprs_values = "counts",
                    scattermore = FALSE
                   )
 ```
+## TODO: Convert multiple samples/FOVs - Visium HD (only "counts" present in both samples)
+```{r}
+# slim down Visium HD to keep only "counts" for all FOVs/samples
+if (!exists("obj_vishd_multi_slim"))
+  obj_vishd_multi_slim <- 
+    DietSeurat(obj_vishd_multi, layers = "counts", assays = Assays(obj_vishd_multi)) %>% 
+    UpdateSeuratObject()
+sfe_vishd_multi <-
+  toSpatialFeatureExperiment(x = obj_vishd_multi_slim, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vishd_multi
+getMeta(sfe_vishd_multi) %>% str
+```
+
+
 
 ## TODO: Convert multiple samples/FOVs - Visium HD
 ```{r}
