@@ -73,7 +73,7 @@ read10xVisiumSFE <- function(samples = "",
         lowres="tissue_lowres_image.png",
         hires="tissue_hires_image.png")
     img_fns <- img_fns[images]
-    
+
     # Read one sample at a time, in order to get spot diameter one sample at a time
     # TODO: need support for VisiumHD ----
     sfes <- lapply(seq_along(samples), function(i) {
@@ -541,7 +541,7 @@ readVizgen <- function(data_dir,
             polys$Type <- "cell"
             parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
             if (!file.exists(parq_file)) {
-                sfarrow::st_write_parquet(polys, dsn = parq_file)
+                suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
             }
         } else if (length(fns) == 0) {
             warning("No '.hdf5' files present, check input directory -> `data_dir`")
@@ -1036,14 +1036,14 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
         if (is(mols, "sf")) {
-            sfarrow::st_write_parquet(mols, file_out)
+            suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
             if (!return) return(file_out)
         } else {
             if (!dir.exists(file_dir)) dir.create(file_dir)
             suppressWarnings({
                 bplapply(names(mols), function(n) {
                     name_use <- gsub("/", ".", n)
-                    sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet")))
+                    suppressWarnings(sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet"))))
                 }, BPPARAM = SerialParam(progressbar = TRUE))
             })
             if (!return) return(file_dir)
@@ -1189,7 +1189,7 @@ readCosMX <- function(data_dir,
                        geometryType = "POLYGON",
                        id_col = "cellID")
         polys <- polys[match(meta$cell_ID, polys$cellID),]
-        sfarrow::st_write_parquet(polys, poly_sf_fn)
+        suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
     }
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
@@ -1462,7 +1462,7 @@ readXenium <- function(data_dir,
             fn_out <- file.path(data_dir, fn_out)
             message(">>> Saving geometries to parquet files")
             for (i in seq_along(polys)) {
-                sfarrow::st_write_parquet(polys[[i]], fn_out[[i]])
+                suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
             }
         }
         # add names to polys list
