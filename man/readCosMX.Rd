@@ -78,8 +78,7 @@ This function reads the standard CosMX output into an SFE object, as in
 "Basic Data Files" on the Nanostring website.
 }
 \examples{
-dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
-file.copy(dir_use, ".", recursive = TRUE)
+dir_use <- SFEData::CosMXOutput()
 sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
 # Clean up
 unlink("cosmx", recursive = TRUE)

@@ -397,13 +397,15 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom data.table fread merge.data.table rbindlist is.data.table
 #' @importFrom stats na.omit
 #' @examples
-#' dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+#' dir_use <- SFEData::VizgenOutput()
 #' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 #' flip = "geometry")
 #'
 #' ## Filtering of counts, and addition of molecule coordinates..
 #' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
 #' add_molecules = TRUE, flip = "geometry")
+#'
+#' unlink("vizgen_cellbound", recursive = TRUE)
 readVizgen <- function(data_dir,
                        z = 3L,
                        sample_id = "sample01", # How often do people read in multiple samples?
@@ -893,18 +895,21 @@ readVizgen <- function(data_dir,
 #' @rdname formatTxSpots
 #' @examples
 #' # Default arguments are for MERFISH
-#' dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+#' dir_use <- SFEData::VizgenOutput()
 #' g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 #'
 #' # For CosMX, note the colnames, also dest = "colGeometry"
 #' # Results are written to the tx_spots directory
-#' dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+#' dir_use <- SFEData::CosMXOutput()
 #' cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 #' dest = "colGeometry", z = "all",
 #' cell_col = c("cell_ID", "fov"),
 #' gene_col = "target", not_in_cell_id = "0",
 #' spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
 #' file_out = "tx_spots")
+#' # Cleanup
+#' unlink("vizgen_cellbound", recursive = TRUE)
+#' unlink("cosmx", recursive = TRUE)
 formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
                           gene_col = "gene", cell_col = "cell_id", z = "all",
@@ -1144,8 +1149,7 @@ addTxSpots <- function(sfe, file, sample_id = 1L, gene_select = NULL,
 #'   `tx_spots.parquet` in the same directory as the rest of the data.
 #' @export
 #' @examples
-#' dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
-#' file.copy(dir_use, ".", recursive = TRUE)
+#' dir_use <- SFEData::CosMXOutput()
 #' sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
 #' # Clean up
 #' unlink("cosmx", recursive = TRUE)

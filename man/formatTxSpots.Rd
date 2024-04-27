@@ -158,16 +158,19 @@ When `dest = "colGeometry"`, the geometries are always written to disk
 }
 \examples{
 # Default arguments are for MERFISH
-dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+dir_use <- SFEData::VizgenOutput()
 g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 
 # For CosMX, note the colnames, also dest = "colGeometry"
 # Results are written to the tx_spots directory
-dir_use <- system.file("extdata/cosmx", package = "SpatialFeatureExperiment")
+dir_use <- SFEData::CosMXOutput()
 cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 dest = "colGeometry", z = "all",
 cell_col = c("cell_ID", "fov"),
 gene_col = "target", not_in_cell_id = "0",
 spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
 file_out = "tx_spots")
+# Cleanup
+unlink("vizgen_cellbound", recursive = TRUE)
+unlink("cosmx", recursive = TRUE)
 }

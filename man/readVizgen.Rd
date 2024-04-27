@@ -120,12 +120,14 @@ Since the transcript spots file is often very large, we recommend only
   file, and later selectively load genes of interest.
 }
 \examples{
-dir_use <- system.file("extdata/vizgen_cellbound", package = "SpatialFeatureExperiment")
+dir_use <- SFEData::VizgenOutput()
 sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 flip = "geometry")
 
 ## Filtering of counts, and addition of molecule coordinates..
 sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
 add_molecules = TRUE, flip = "geometry")
+
+unlink("vizgen_cellbound", recursive = TRUE)
 }
 \concept{Read data into SFE}
