@@ -788,7 +788,7 @@ readVizgen <- function(data_dir,
     } else if (file.exists(file_out) && !dir.exists(file_dir)) {
         if (!return) return(file_out)
         if (is.null(gene_select))
-            out <- sfarrow::st_read_parquet(x)
+            out <- sfarrow::st_read_parquet(file_out)
         else
             out <- st_read(file_out, query = .make_sql_query(file_out, gene_select, gene_col),
                            int64_as_string = TRUE, quiet = TRUE, crs = NA)

@@ -617,7 +617,6 @@ test_that("Transpose SFE object with image, after cropping image", {
     int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
     expect_equal(int1, int2)
 })
-# Also need to do the test for BioFormatsImage, use Xenium data
 
 test_that("Mirror SFE object with image, vertical", {
     sfe2 <- mirror(sfe, direction = "vertical")
@@ -864,3 +863,154 @@ test_that("Translate SFE object with image", {
     int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
     expect_equal(int1, int2)
 })
+
+# Affine transform of entire SFE object, for BioFormatsImage and ExtImage=========
+library(RBioFormats)
+library(EBImage)
+dir.create("xenium_test")
+xenium_path <- XeniumOutput(file_path = "xenium_test")
+tryCatch(sfe <- readXenium(xenium_path))
+sfe <- readXenium(xenium_path, add_molecules = TRUE)
+set.seed(29)
+annotGeometry(sfe, "foo") <- ag <-
+    st_sf(
+        geometry = st_sample(st_bbox(cellSeg(sfe)), 50) |>
+            st_buffer(30),
+        sample_id = "sample01")
+# TODO: Convert the image to ExtImage and add it to sfe, do the same testing.
+test_that("Transpose SFE object with BioFormatsImage", {
+    sfe2 <- SpatialFeatureExperiment::transpose(sfe)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
+    # Create image mask
+    mask <- img > 500
+    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    # Due to the way XOA v1 segmentation works, the cell centroid is often
+    # outside the nucleus. So I use nuclei centroids
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
+    expect_true(mean(v$lyr.1) > 0.9)
+
+    bbox_cg_orig <- st_bbox(cellSeg(sfe))
+    bbox_img_orig <- ext(getImg(sfe))
+    bbox_cg <- st_bbox(cellSeg(sfe2))
+    bbox_img <- ext(getImg(sfe2))
+    expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
+                 bbox_cg[["xmin"]] - bbox_img[["xmin"]])
+
+    bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, cellSeg(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Mirror SFE object with BFI, vertical", {
+    sfe2 <- mirror(sfe, direction = "vertical")
+    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    mask <- img > 500
+    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
+    expect_true(mean(v$lyr.1) > 0.9)
+
+    bbox_cg_orig <- st_bbox(cellSeg(sfe))
+    bbox_img_orig <- ext(getImg(sfe))
+    bbox_cg <- st_bbox(cellSeg(sfe2))
+    bbox_img <- ext(getImg(sfe2))
+    expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
+                 bbox_cg[["ymin"]] - bbox_img[["ymin"]])
+
+    bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
+    bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, cellSeg(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Mirror SFE object with BFI, horizontal", {
+    sfe2 <- mirror(sfe, direction = "horizontal")
+    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    mask <- img > 500
+    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
+    expect_true(mean(v$lyr.1) > 0.9)
+
+    bbox_cg_orig <- st_bbox(cellSeg(sfe))
+    bbox_img_orig <- ext(getImg(sfe))
+    bbox_cg <- st_bbox(cellSeg(sfe2))
+    bbox_img <- ext(getImg(sfe2))
+    expect_equal(bbox_img_orig[["xmax"]] - bbox_cg_orig[["xmax"]],
+                 bbox_cg[["xmin"]] - bbox_img[["xmin"]])
+
+    bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, cellSeg(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Rotate SFE object with BFI", {
+    sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
+    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    mask <- img > 500
+    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
+    expect_true(mean(v$lyr.1) > 0.9)
+
+    bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, cellSeg(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("Scale SFE object with BFI", {
+    sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
+    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    mask <- img > 500
+    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
+    expect_true(mean(v$lyr.1) > 0.9)
+
+    bbox_cg_orig <- st_bbox(cellSeg(sfe))
+    bbox_img_orig <- ext(getImg(sfe))
+    bbox_cg <- st_bbox(cellSeg(sfe2))
+    bbox_img <- ext(getImg(sfe2))
+    expect_equal((bbox_cg_orig[["xmax"]] - bbox_img_orig[["xmax"]])*1.5,
+                 bbox_cg[["xmax"]] - bbox_img[["xmax"]])
+
+    bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, cellSeg(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
+    expect_equal(int1, int2)
+})
+
+test_that("General affine transformation of SFE object with BFI", {
+    M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
+    v <- c(0, 300)
+    sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
+    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    mask <- img > 500
+    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
+    expect_true(mean(v$lyr.1) > 0.9)
+
+    bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+    # For ag, can get indices of intersection
+    int1 <- st_intersects(ag, cellSeg(sfe))
+    int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
+    expect_equal(int1, int2)
+})
+
+unlink("xenium_test", recursive = TRUE)

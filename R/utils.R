@@ -243,4 +243,4 @@ aggBboxes <- function(bboxes) {
 #' @inheritParams sampleIDs
 #' @return A character vector of \code{image_ids}.
 #' @export
-imageIDs <- function(sfe) imageData(sfe)$image_id
+imageIDs <- function(sfe) imgData(sfe)$image_id

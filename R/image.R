@@ -241,8 +241,13 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
 # bbox of the entire SFE object
 .combine_transforms <- function(bfi, new, bbox = ext(bfi)) {
     old <- transformation(bfi)
-    if (!length(old)) transformation(bfi) <- new
-    else {
+    if (!length(old)) {
+        nms <- c("xmin", "xmax", "ymin", "ymax")
+        if (!isTRUE(all.equal(bbox[nms], ext(bfi)[nms]))) {
+            new <- .get_mv(new, bbox)
+        }
+        transformation(bfi) <- new
+    }else {
         old <- .get_mv(old, bbox)
         new <- .get_mv(new, bbox)
         out <- list(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
@@ -349,6 +354,21 @@ ExtImage <- function(img, ext = NULL) {
 }
 
 # Coercion of Image classes===================
+.get_subset <- function(bbox_use, sizeY, channel = NULL) {
+    ymin_px <- sizeY - bbox_use["ymax"]
+    ymax_px <- sizeY - bbox_use["ymin"]
+    bbox_img <- bbox_use
+    bbox_img["ymin"] <- ymin_px; bbox_img["ymax"] <- ymax_px
+    min_nms <- c("xmin", "ymin")
+    max_nms <- c("xmax", "ymax")
+    bbox_img[min_nms] <- floor(bbox_img[min_nms])
+    bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
+    # For instance, say xmin = 0. Then it should start with pixel 1.
+    list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
+         y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L),
+         c = channel)
+}
+
 .toExtImage <- function(x, resolution = 4L, channel = NULL) {
     check_installed("RBioFormats")
     # PhysicalSizeX seems to be a standard field
@@ -410,18 +430,9 @@ ExtImage <- function(img, ext = NULL) {
         } else sfx2 <- sfy2 <- 1
         # ext(x) has origin at the bottom left, while image indices have
         # origin at the top left. Need to convert the y indices.
-        ymin_px <- meta$sizeY - bbox_use["ymax"]
-        ymax_px <- meta$sizeY - bbox_use["ymin"]
-        bbox_img <- bbox_use
-        bbox_img["ymin"] <- ymin_px; bbox_img["ymax"] <- ymax_px
+        subset_use <- .get_subset(bbox_use, meta$sizeY, channel)
         bbox_use[min_nms] <- floor(bbox_use[min_nms])
         bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
-        bbox_img[min_nms] <- floor(bbox_img[min_nms])
-        bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
-        # For instance, say xmin = 0. Then it should start with pixel 1.
-        subset_use <- list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
-                           y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L),
-                           c = channel)
         # Extent should account for the pixels
         ext_use <- bbox_use
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
@@ -1066,7 +1077,7 @@ setMethod("mirrorImg", "SpatRasterImage",
 
 setMethod(".mirror_img", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
-                   bbox_all = ext(x)) {
+                   bbox_all = ext(x), ...) {
               direction <- match.arg(direction)
               .combine_transforms(x, list(name = "mirror", direction = direction),
                                   bbox = bbox_all)
@@ -1081,7 +1092,7 @@ setMethod("mirrorImg", "BioFormatsImage",
 
 setMethod(".mirror_img", "ExtImage",
           function(x, direction = c("vertical", "horizontal"),
-                   bbox_all = NULL) {
+                   bbox_all = NULL, ...) {
               direction <- match.arg(direction)
               fun <- if (direction == "vertical") EBImage::flip else EBImage::flop
               x <- fun(x)
@@ -1141,7 +1152,7 @@ setMethod("rotateImg", "SpatRasterImage",
           })
 
 setMethod(".rotate_img", "BioFormatsImage",
-          function(x, degrees, bbox_all = ext(x)) {
+          function(x, degrees, bbox_all = ext(x), ...) {
               .combine_transforms(x, list(name = "rotate", degrees = degrees),
                                   bbox = bbox_all)
           })
@@ -1154,7 +1165,7 @@ setMethod("rotateImg", "BioFormatsImage",
           })
 
 setMethod(".rotate_img", "ExtImage",
-          function(x, degrees, bbox_all = ext(x)) {
+          function(x, degrees, bbox_all = ext(x), ...) {
               x <- EBImage::rotate(x, degrees)
               ext(x) <- .transform_bbox(ext(x), list(name="rotate", degrees=degrees),
                                         bbox_all = bbox_all)
@@ -1318,26 +1329,30 @@ setMethod("cropImg", "BioFormatsImage", function(x, bbox) {
 setMethod("cropImg", "ExtImage", function(x, bbox) {
     # Convert bbox to pixel range based on ext(x)
     bbox_old <- ext(x)
+    origin <- bbox_old[c("xmin", "ymin")]
+    bbox <- .shift_ext(bbox, -origin)
     dim_old <- dim(x)
     sfx <- dim_old[1]/(bbox_old["xmax"] - bbox_old["xmin"])
     sfy <- dim_old[2]/(bbox_old["ymax"] - bbox_old["ymin"])
     bbox_use <- bbox
     bbox_use[c("xmin", "xmax")] <- bbox_use[c("xmin", "xmax")] * sfx
     bbox_use[c("ymin", "ymax")] <- bbox_use[c("ymin", "ymax")] * sfy
-    bbox_use[c("xmin", "ymin")] <- floor(bbox_use[c("xmin", "ymin")])
-    bbox_use[c("xmax", "ymax")] <- ceiling(bbox_use[c("xmax", "ymax")])
+    min_nms <- c("xmin", "ymin")
+    max_nms <- c("xmax", "ymax")
+
+    subset_use <- .get_subset(bbox_use, dim_old[2])
+    bbox_use[min_nms] <- floor(bbox_use[min_nms])
+    bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
 
     if (length(dim_old) == 3L)
-        x <- x[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
-                           seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L),]
+        x <- x[subset_use[[1]], subset_use[[2]],]
     else
-        x <- x[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
-                           seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L)]
+        x <- x[subset_use[[1]], subset_use[[2]]]
 
     bbox_new <- bbox_use
     bbox_new[c("xmin", "xmax")] <- bbox_new[c("xmin", "xmax")] / sfx
     bbox_new[c("ymin", "ymax")] <- bbox_new[c("ymin", "ymax")] / sfy
-    ext(x) <- bbox_new
+    ext(x) <- .shift_ext(bbox_new, origin)
     x
 })
 
