@@ -4,11 +4,16 @@
 \name{ExtImage}
 \alias{ExtImage}
 \alias{ExtImage-class}
+\alias{show,ExtImage-method}
 \title{Representation of ExtImage images in SFE objects}
 \usage{
+\S4method{show}{ExtImage}(object)
+
 ExtImage(img, ext = NULL)
 }
 \arguments{
+\item{object}{An \code{ExtImage} object.}
+
 \item{img}{An \code{Image} object or anything that inherits from \code{Image}
 such as \code{AnnotatedImage} in \code{RBioFormats}.}
 

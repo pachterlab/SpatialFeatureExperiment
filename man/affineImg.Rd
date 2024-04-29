@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{affineImg}
 \alias{affineImg}
+\alias{affineImg,SpatRasterImage-method}
 \alias{affineImg,BioFormatsImage-method}
 \alias{affineImg,ExtImage-method}
 \title{Affine transformation of images}

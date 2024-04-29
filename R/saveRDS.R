@@ -20,7 +20,8 @@
 #' samples <- file.path(outdir, paste0("sample0", 1:2))
 #' sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
 #' saveRDS(sfe, "foo.rds")
-#'
+#' # Clean up
+#' file.remove("foo.rds")
 setMethod("saveRDS", "SpatialFeatureExperiment",
           function(object, file = "", ascii = FALSE, version = NULL,
                    compress = TRUE, refhook = NULL) {

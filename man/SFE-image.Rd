@@ -81,6 +81,10 @@ and negative number means counterclockwise.}
 
 \item{v}{A numeric vector of length 2 specifying the vector in the xy plane
 to translate the SFE object.}
+
+\item{factor}{Numeric, scaling factor.}
+
+\item{M}{A 2x2 numeric matrix for the linear transformation in the xy plane.}
 }
 \description{
 Generics of these functions are defined in \code{SpatialExperiment}, except

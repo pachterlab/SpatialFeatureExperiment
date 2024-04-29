@@ -81,6 +81,7 @@ Suggests:
     testthat (>= 3.0.0),
     Voyager,
     xml2,
+    scater,
     Seurat,
     SeuratObject,
     dplyr,

@@ -39,6 +39,7 @@ the users to more directly access these results.
 library(SpatialFeatureExperiment)
 library(SingleCellExperiment)
 library(SFEData)
+library(Voyager)
 sfe <- McKellarMuscleData("small")
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 # Moran's I for colData

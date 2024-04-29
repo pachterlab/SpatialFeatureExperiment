@@ -4,15 +4,20 @@
 \name{SpatRasterImage}
 \alias{SpatRasterImage}
 \alias{SpatRasterImage-class}
+\alias{show,SpatRasterImage-method}
 \title{SpatRaster representation of images in SFE objects}
 \usage{
 SpatRasterImage(img)
+
+\S4method{show}{SpatRasterImage}(object)
 }
 \arguments{
 \item{img}{A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.}
+
+\item{object}{A \code{SpatRasterImage} object.}
 }
 \value{
-A \code{SpatRasterImage} or \code{PackedRasterImage} object.
+A \code{SpatRasterImage} object.
 }
 \description{
 \code{SpatialFeatureExperiment} and the \code{Voyager} package work with

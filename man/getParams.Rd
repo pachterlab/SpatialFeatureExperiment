@@ -45,6 +45,7 @@ compute the results that may be stored in \code{\link{colFeatureData}}.
 \examples{
 library(SFEData)
 library(scater)
+library(Voyager)
 sfe <- McKellarMuscleData("small")
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 sfe <- colDataMoransI(sfe, "nCounts")

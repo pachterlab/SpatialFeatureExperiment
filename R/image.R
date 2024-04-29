@@ -20,7 +20,8 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' \code{SpatialExperiment}.
 #'
 #' @param img A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.
-#' @return A \code{SpatRasterImage} or \code{PackedRasterImage} object.
+#' @param object A \code{SpatRasterImage} object.
+#' @return A \code{SpatRasterImage} object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
 #' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster
 #'   imgSource getImg rotateImg rmvImg
@@ -56,6 +57,8 @@ SpatRasterImage <- function(img) new("SpatRasterImage", img)
 
 setClass("PackedRasterImage", contains=c("AlignedSpatialImage", "PackedSpatRaster"))
 
+#' @rdname SpatRasterImage
+#' @export
 setMethod("show", "SpatRasterImage", function(object) {
     d <- dim(object)
     dim <- paste(d[c(2,1,3)], collapse=" x ")
@@ -105,6 +108,7 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #' is specified. If the subsequent transformation happens to restore the image
 #' to its original place, then transformation specifications will be removed.
 #'
+#' @param object A \code{BioFormatsImage} object.
 #' @param path Path to an OME-TIFF image file.
 #' @param ext Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
 #'   microns indicating the spatial extent covered by the image. If \code{NULL},
@@ -201,7 +205,8 @@ setValidity("BioFormatsImage", function(object) {
     sizeX_full <- size_full[1]; sizeY_full <- size_full[2]
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
-
+#' @rdname BioFormatsImage
+#' @export
 setMethod("show", "BioFormatsImage", function(object) {
     d <- dim(object)
     dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
@@ -308,6 +313,7 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 #' images) and plotting with \code{Voyager}.
 #'
 #' @inheritParams BioFormatsImage
+#' @param object An \code{ExtImage} object.
 #' @param img An \code{Image} object or anything that inherits from \code{Image}
 #'   such as \code{AnnotatedImage} in \code{RBioFormats}.
 #' @return An \code{ExtImage} object.
@@ -325,6 +331,8 @@ setValidity("ExtImage", function(object) {
     if (length(out)) return(out) else TRUE
 })
 
+#' @rdname ExtImage
+#' @export
 setMethod("show", "ExtImage", function(object) {
     d <- dim(object)
     dim <- paste(dim(object), collapse=" x ")
@@ -683,6 +691,8 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #'
 #' @inheritParams mirrorImg
 #' @inheritParams rotateImg
+#' @inheritParams scaleImg
+#' @inheritParams affineImg
 #' @inheritParams SpatialExperiment::addImg
 #' @param x A SFE object.
 #' @param sample_id Which sample the image is associated with. Use
@@ -1238,6 +1248,10 @@ setMethod("translateImg", "ExtImage", function(x, v, ...) {
 #' @aliases scaleImg
 #' @name scaleImg
 #' @export
+NULL
+
+#' @rdname scaleImg
+#' @export
 setMethod("scaleImg", "AlignedSpatialImage",
           function(x, factor, ...) .scale_ext(x, factor))
 
@@ -1258,6 +1272,7 @@ setMethod("scaleImg", "AlignedSpatialImage",
 #' @name affineImg
 #' @aliases affineImg
 #' @export
+NULL
 
 #' @rdname affineImg
 #' @export

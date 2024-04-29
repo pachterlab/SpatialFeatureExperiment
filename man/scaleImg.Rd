@@ -2,6 +2,7 @@
 % Please edit documentation in R/image.R
 \name{scaleImg}
 \alias{scaleImg}
+\alias{scaleImg,AlignedSpatialImage-method}
 \title{Scale image}
 \usage{
 \S4method{scaleImg}{AlignedSpatialImage}(x, factor, ...)

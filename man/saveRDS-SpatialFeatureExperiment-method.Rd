@@ -52,6 +52,7 @@ outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
 samples <- file.path(outdir, paste0("sample0", 1:2))
 sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
 saveRDS(sfe, "foo.rds")
-
+# Clean up
+file.remove("foo.rds")
 }
 \concept{SpatialFeatureExperiment class}
