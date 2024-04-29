@@ -11,7 +11,7 @@
     dimData <- switch(MARGIN, rowData, colData)
     if (is.null(value)) fd <- metadata(dimData(x))[[fd_name]] else fd <- value
     if (!is.null(fd)) {
-        fd <- fd[intersect(rownames(fd), colnames(dimData(x))),]
+        fd <- fd[intersect(rownames(fd), colnames(dimData(x))),, drop = FALSE]
         empty <- .initDF(dimData(x))
         fd <- combineCols(empty, fd)
     }
