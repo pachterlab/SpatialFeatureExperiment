@@ -239,7 +239,7 @@ SpatialFeatureExperiment <- function(assays,
         inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
         new_imgs <- new_imgs[inds]
         new_imgs <- lapply(new_imgs, function(im) {
-            new("SpatRasterImage", image = im)
+            new("SpatRasterImage", im)
         })
         imgData(spe) <- imgData(spe)[inds,]
         if (length(new_imgs)) imgData(spe)$data <- new_imgs

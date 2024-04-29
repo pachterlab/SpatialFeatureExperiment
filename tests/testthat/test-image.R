@@ -45,7 +45,7 @@ test_that("addImg, BioFormatsImage", {
 })
 
 test_that("addImg, ExtImage", {
-    img <- readImage(system.file('images', 'nuclei.tif', package='ExtImage'))
+    img <- readImage(system.file('images', 'nuclei.tif', package="EBImage"))
     ext_img <- c(xmin = 0, xmax = dim(img)[1], ymin = 0, ymax = dim(img)[2])
     sfe <- addImg(sfe, img, sample_id = "Vis5A", image_id = "ebi", extent = ext_img)
     expect_s4_class(getImg(sfe, image_id = "ebi"), "ExtImage")
@@ -70,7 +70,7 @@ test_that("transposeImg, SFE method, BioFormatsImage", {
 })
 
 test_that("transposeImg, SFE method, ExtImage", {
-    img <- readImage(system.file('images', 'nuclei.tif', package='ExtImage'))
+    img <- readImage(system.file('images', 'nuclei.tif', package="EBImage"))
     ext_img <- c(xmin = 0, xmax = dim(img)[1], ymin = 0, ymax = dim(img)[2])
     sfe <- addImg(sfe, img, sample_id = "Vis5A", image_id = "ebi", extent = ext_img)
     img <- getImg(sfe, image_id = "ebi")
@@ -181,6 +181,7 @@ test_that("transposeImg, SpatRasterImage method", {
     expect_equal(imgSource(img_t3), "foo.tif")
     expect_true(file.exists("foo.tif"))
     file.remove("foo.tif")
+    file.remove("foo.tif.aux.xml")
 })
 
 test_that("mirrorImg, SpatRasterImage method", {
@@ -202,6 +203,7 @@ test_that("mirrorImg, SpatRasterImage method", {
     expect_equal(imgSource(img_m3), "foo.tif")
     expect_true(file.exists("foo.tif"))
     file.remove("foo.tif")
+    file.remove("foo.tif.aux.xml")
 })
 
 test_that("Rotate method for SpatRasterImage which converts to ExtImage", {
@@ -617,7 +619,7 @@ test_that("Crop BioFormatsImage", {
 # ExtImage====================
 
 test_that("ExtImage constructor", {
-    img <- readImage(system.file('images', 'nuclei.tif', package='ExtImage'))
+    img <- readImage(system.file('images', 'nuclei.tif', package="EBImage"))
     expect_error(ExtImage(img, ext = NULL),
                  "Extent must be specified")
 })

@@ -253,9 +253,7 @@ test_that("Error when other spatial operations are specified", {
 })
 
 test_that("Crop 3D geometry", {
-    dir_use <- CosMXOutput()
-    dir.create("cosmx_test")
-    file.copy(dir_use, "cosmx_test", recursive = TRUE)
+    dir_use <- CosMXOutput(file_path = "cosmx_test")
 
     sfe <- readCosMX("cosmx_test/cosmx", z = "all", add_molecules = TRUE,
                      z_option = "3d")
@@ -869,7 +867,7 @@ library(RBioFormats)
 library(EBImage)
 dir.create("xenium_test")
 xenium_path <- XeniumOutput(file_path = "xenium_test")
-tryCatch(sfe <- readXenium(xenium_path))
+try(sfe <- readXenium(xenium_path))
 sfe <- readXenium(xenium_path, add_molecules = TRUE)
 set.seed(29)
 annotGeometry(sfe, "foo") <- ag <-

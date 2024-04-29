@@ -931,7 +931,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         stop("The file must be one of csv, gz, tsv, txt, or parquet")
     }
     if (!is.null(file_out) && (file.exists(file_out) ||
-        dir.exists(basename(file_out) |> file_path_sans_ext()))) {
+        dir.exists(file_path_sans_ext(file_out)))) {
         out <- .read_tx_output(file_out, z, z_option, gene_col, return)
         return(out)
     }

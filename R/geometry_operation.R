@@ -509,9 +509,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                 lapply(rgs, function(r) {
                     r <- .crop_geometry(r, y = y, op = op, sample_col = s,
                                         samples_use = s)
-                    if (st_geometry_type(r, FALSE) == "GEOMETRY")
-                        st_cast(r, "MULTIPOINT")
-                    else r
                 })
         }
     }
