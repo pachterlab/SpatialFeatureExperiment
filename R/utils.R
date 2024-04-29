@@ -138,22 +138,6 @@ changeSampleIDs <- function(sfe, replacement) {
     value
 }
 
-#' Call metadata of an object
-#'
-#' @param object A \code{SpatialFeatureExperiment}, \code{SpatialExperiment}, or \code{SummarizedExperiment} object.
-#' @return A \code{data.frame} object
-#' @export
-#' @importFrom SummarizedExperiment colData colData<- rowData
-#' @examples
-#' library(SFEData)
-#' sfe <- McKellarMuscleData(dataset = "small")
-#' sfe |> callMeta() |> str()
-callMeta <- function(object = NULL) {
-    return(colData(object) |>
-         methods::slot(name = "listData") |>
-         as.data.frame.list())
-}
-
 .path_valid2 <- function(x) {
     all(c(length(x) == 1, is.character(x), file.exists(x)))
 }

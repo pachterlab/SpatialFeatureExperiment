@@ -215,8 +215,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
         return(slot(object, "meta.data"))
       } else {
         return(colData(object) |>
-                 slot("listData") |>
-                 as.data.frame.list())
+                 as.data.frame())
         }
       }
 
