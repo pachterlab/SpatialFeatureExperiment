@@ -1,4 +1,4 @@
-# Version 1.5.3
+# Version 1.6.0 (04/29/2024)
 * Changed defaults from sample_id = NULL to sample_id = 1L when dealing with 1 sample or "all" when dealing with multiple samples
 * dim method for BioFormatsImage that doesn't load the image into memory
 * Deal with univariate spatial results in featureData in cbind and changeSampleID
@@ -9,6 +9,8 @@
 * Coercion from Seurat to SFE
 * SpatRasterImage and EBImage directly inherit from SpatRaster and Image respectively so the user no longer needs to call imgRaster every time they plots or operates on the image, which I find really annoying.
 * Changed name EBImage to ExtImage to reduce confusion
+* Bug fixes on image affine transformation
+* Exporting some util functions: aggBboxes, getPixelSize, and imageIDs
 
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)
