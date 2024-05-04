@@ -1,5 +1,7 @@
 library(SFEData)
 library(sfarrow)
+library(S4Vectors)
+# Read Visium=============
 outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
 bc_flou1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial",
                                "barcode_fluorescence_intensity.csv"))
@@ -132,7 +134,7 @@ test_that("Micron spot spacing works when there're singletons", {
     sfe <- read10xVisiumSFE("kidney", unit = "micron", zero.policy = TRUE)
     expect_equal(unit(sfe), "micron")
 })
-
+# Read Vizgen MERFISH==============
 test_that("readVizgen flip geometry, use cellpose", {
     dir_use <- VizgenOutput("hdf5", file_path = "vizgen_test")
     expect_message(sfe <- readVizgen(dir_use, z = 3L, use_cellpose = TRUE,
@@ -385,6 +387,18 @@ test_that("Error message when multiple parquet files are found in readVizgen", {
     unlink("vizgen_test", recursive = TRUE)
 })
 
+test_that("Make cell bounding boxes when segmentation is absent", {
+    dir_use <- VizgenOutput("cellpose", file_path = "vizgen_test")
+    file.remove(file.path(dir_use, "Cellpose", "cellpose_micron_space.parquet"))
+    expect_message(
+        expect_warning(sfe <- readVizgen(dir_use, use_bboxes = TRUE),
+                       "No '.hdf5' files present"),
+        "Creating bounding boxes")
+    expect_equal(colGeometryNames(sfe), c("centroids", "cell_bboxes"))
+    unlink("vizgen_test", recursive = TRUE)
+})
+
+# Format transcript spots===================
 test_that("Read MERFISH transcript spots into rowGeometries", {
     dir_use <- VizgenOutput("hdf5", file_path = "test_spots")
     sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", add_molecules = TRUE)
@@ -466,6 +480,7 @@ test_that("Error messages in formatTxSpots", {
     unlink("cg_vizgen", recursive = TRUE)
 })
 
+# Read CosMX===================
 test_that("readCosMX, not reading transcript spots", {
     dir_use <- CosMXOutput(file_path = "cosmx_test")
     sfe <- readCosMX(dir_use, z = 1L)
@@ -608,34 +623,222 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
     unlink(dir_use, recursive = TRUE)
 })
 
-unlink("cosmx_test", recursive = TRUE)
-unlink("vizgen_test", recursive = TRUE)
+test_that("addTxSpots add a subset of spots", {
+    skip()
+    skip_if_not(gdalParquetAvailable())
+    fn <- XeniumOutput("v2", file_path = "xenium_test")
+    sfe <- readXenium(fn)
+    tx_fn <- formatTxSpots(file.path(fn, "transcripts.parquet"),
+                           gene_col = "feature_name",
+                           spatialCoordsNames = c("x_location", "y_location", "z_location"),
+                           z_option = "3d", file_out = "txSpots.parquet",
+                           return = FALSE)
+    expect_error({
+        tx <- formatTxSpots(file.path(fn, "transcripts.parquet"),
+                            gene_col = "feature_name",
+                            gene_select = rownames(sfe)[1:5],
+                            return = FALSE)
+    }, "file_out for the reformatted transcript spots must be specified")
+    # TODO: New function to selectively read genes from existing GeoParquet file
+    # Shouldn't require the original file name. Also add the swap_rownames
+    # argument.
+    sfe <- addTxSpots(sfe, gene_col = "feature_name",
+                      gene_select = rowData(sfe)$Symbol[1:5],
+                      file_out = "txSpots.parquet")
+})
 
-# Check for alignment of cell and nuclei segmentation after flipping
-# Alignment of segmentations with images
-# Alignment of txSpots with segmentations and images
-# Read segmentations from parquet file
-# Only read one of cell or nuclei segmentation
-# Save sf parquet files
-# When images are absent
-# When geometries are absent
-# Construct cell bboxes
-# Read cell metadata from parquet file
-# Second time reading, read the _sf.parquet
-# Flip image
-test_that("readXenium", {
-    skip_on_bioc()
-    # TODO: Make small dataset and copy the entire directory
-    library(RBioFormats)
-    fn <- XeniumOutput(file_path = "xenium_test")
-    # Weirdly the first time I get the null pointer error
-    try(m <- read.omexml(file.path(fn, "morphology_focus.ome.tif")))
-    sfe <- readXenium(fn, add_molecules = TRUE)
+test_that("add subset of spots, multiple files in tx spots output", {
 
 })
 
-test_that("addTxSpots add a subset of spots", {
-    # Again, different scenarios in like splitting cell compartments
+unlink("cosmx_test", recursive = TRUE)
+unlink("vizgen_test", recursive = TRUE)
+
+# Read Xenium XOA v1================
+# Flip image
+test_that("readXenium, XOA v1", {
+    library(RBioFormats)
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    # Weirdly the first time I get the null pointer error
+    try(m <- read.omexml(file.path(fn, "morphology_focus.ome.tif")))
+    sfe <- readXenium(fn, add_molecules = TRUE)
+    # Basic stuff
+    expect_s4_class(sfe, "SpatialFeatureExperiment")
+    expect_equal(colGeometryNames(sfe), c("centroids", "cellSeg", "nucSeg"))
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    expect_equal(as.character(st_geometry_type(centroids(sfe), FALSE)), "POINT")
+    expect_equal(as.character(st_geometry_type(cellSeg(sfe), FALSE)), "POLYGON")
+    expect_equal(as.character(st_geometry_type(txSpots(sfe), FALSE)), "MULTIPOINT")
+    expect_equal(imageIDs(sfe), c("morphology_focus", "morphology_mip"))
+    expect_s4_class(getImg(sfe, image_id = "morphology_focus"), "BioFormatsImage")
+    expect_s4_class(getImg(sfe, image_id = "morphology_mip"), "BioFormatsImage")
+    expect_equal(dim(getImg(sfe, image_id = "morphology_focus"))["C"], 1L)
+
+    # That things are aligned
+    bbox_rg <- st_bbox(txSpots(sfe)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+
+    img <- toExtImage(getImg(sfe), resolution = 1L)
+    mask <- img > 500
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
+    expect_true(mean(v$lyr.1) > 0.9)
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v1, image not found", {
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    file.remove(file.path(fn, "morphology_focus.ome.tif"))
+    expect_warning(sfe <- readXenium(fn, add_molecules = TRUE),
+                   "or have non-standard file name")
+    expect_equal(imageIDs(sfe), "morphology_mip")
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v1, use parquet files, with annoying arrow raw bytes", {
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    file.remove(file.path(fn, "cell_boundaries.csv.gz"))
+    file.remove(file.path(fn, "nucleus_boundaries.csv.gz"))
+    file.rename(file.path(fn, "cell_boundaries_binary.parquet"),
+                file.path(fn, "cell_boundaries.parquet"))
+    file.rename(file.path(fn, "nucleus_boundaries_binary.parquet"),
+                file.path(fn, "nucleus_boundaries.parquet"))
+    file.remove(list.files(fn, pattern = "nobinary.parquet", full.names = TRUE))
+    expect_message(sfe <- readXenium(fn), "Converting columns with raw bytes")
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v1 when only cell but not nuclei segmentation is available", {
+    # Since the `polys` object should be a list even if there's only one of cell or nuclei
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    file.remove(list.files(fn, "cell_boundaries\\.*", full.names = TRUE))
+    expect_warning(sfe <- readXenium(fn), 'No `cell_boundaries` file is available')
+    expect_equal(colGeometryNames(sfe), c("centroids", "nucSeg"))
+    expect_warnings(sfe2 <- readXenium(fn, segmentations = "cell"),
+                    'No `cell_boundaries` file is available')
+    expect_equal(colGeometryNames(sfe2), "centroids")
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v1 read the output _sf.parquet next time", {
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    sfe <- readXenium(fn)
+    expect_true(file.exists(file.path(fn, "cell_boundaries_sf.parquet")))
+    expect_true(file.exists(file.path(fn, "nucleus_boundaries_sf.parquet")))
+    time_note <- Sys.time()
+    sfe <- readXenium(fn)
+    time_check <- file.info(file.path(fn, "cell_boundaries_sf.parquet"))$mtime
+    expect_true(time_note > time_check)
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v1 read cell metadata parquet when csv is absent", {
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    file.remove(file.path(fn, "cells.csv.gz"))
+    expect_message(sfe <- readXenium(fn), ">>> Reading cell metadata -> `cells.parquet`")
+    unlink("xenium_test", recursive = TRUE)
+}) # Would be nice though to use csv if arrow is not installed in case the user
+# has trouble installing arrow. I suppose that's the original purpose of having
+# both parquet and csv. If so then I should also write GeoJSON when arrow is not
+# installed. But you have to use arrow for newer versions of Vizgen in order to
+# read the segmentations.
+
+test_that("readXenium XOA v1 flip image", {
+
+})
+
+unlink("xenium_test", recursive = TRUE)
+
+# Read Xenium XOA v2===================
+test_that("readXenium XOA v2, normal stuff", {
+    fn <- XeniumOutput("v2", file_path = "xenium_test")
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn, add_molecules = TRUE)
+    # Basic stuff
+    expect_s4_class(sfe, "SpatialFeatureExperiment")
+    expect_equal(colGeometryNames(sfe), c("centroids", "cellSeg", "nucSeg"))
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    expect_equal(as.character(st_geometry_type(SpatialFeatureExperiment::centroids(sfe), FALSE)), "POINT")
+    expect_equal(as.character(st_geometry_type(nucSeg(sfe), FALSE)), "MULTIPOLYGON")
+    expect_equal(as.character(st_geometry_type(txSpots(sfe), FALSE)), "MULTIPOINT")
+    expect_equal(imageIDs(sfe), "morphology_focus")
+    expect_s4_class(getImg(sfe, image_id = "morphology_focus"), "BioFormatsImage")
+    expect_equal(dim(getImg(sfe, image_id = "morphology_focus"))[["C"]], 4L)
+
+    # That things are aligned
+    bbox_rg <- st_bbox(txSpots(sfe)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+
+    img <- toExtImage(getImg(sfe), resolution = 1L)
+    mask <- img[,,1] > 500
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
+    # About 1% of cells detected don't have nuclei here
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v2, somes images not found", {
+    fn <- XeniumOutput("v2", file_path = "xenium_test")
+    unlink(file.path(fn, "morphology_focus"), recursive = TRUE)
+    expect_warning(sfe <- readXenium(fn), "morphology_focus images not found")
+    expect_true(isEmpty(imgData(sfe)))
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium XOA v2, use csv files", {
+    fn <- XeniumOutput("v2", file_path = "xenium_test")
+    file.remove(list.files(fn, pattern = "*.parquet$", full.names = TRUE))
+    expect_message(sfe <- readXenium(fn, add_molecules = TRUE),
+                   ">>> Cell segmentations are found in `.csv` file")
+    # Basic stuff
+    expect_s4_class(sfe, "SpatialFeatureExperiment")
+    expect_equal(colGeometryNames(sfe), c("centroids", "cellSeg", "nucSeg"))
+    expect_equal(rowGeometryNames(sfe), "txSpots")
+    expect_equal(as.character(st_geometry_type(SpatialFeatureExperiment::centroids(sfe), FALSE)), "POINT")
+    expect_equal(as.character(st_geometry_type(nucSeg(sfe), FALSE)), "MULTIPOLYGON")
+    expect_equal(as.character(st_geometry_type(txSpots(sfe), FALSE)), "MULTIPOINT")
+    expect_equal(imageIDs(sfe), "morphology_focus")
+    expect_s4_class(getImg(sfe, image_id = "morphology_focus"), "BioFormatsImage")
+    expect_equal(dim(getImg(sfe, image_id = "morphology_focus"))[["C"]], 4L)
+
+    # That things are aligned
+    bbox_rg <- st_bbox(txSpots(sfe)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+
+    img <- toExtImage(getImg(sfe), resolution = 1L)
+    mask <- img[,,1] > 500
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
+    # About 1% of cells detected don't have nuclei here
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
+    unlink("xenium_test", recursive = TRUE)
+})
+
+test_that("readXenium, flip image", {
+    fn <- XeniumOutput("v2", file_path = "xenium_test")
+    sfe <- readXenium(fn, add_molecules = TRUE, flip = "image")
+    sfe0 <- readXenium(fn)
+
+    # That things are aligned
+    bbox_rg <- st_bbox(txSpots(sfe)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
+
+    img <- toExtImage(getImg(sfe), resolution = 1L)
+    mask <- img[,,1] > 500
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
+    # About 1% of cells detected don't have nuclei here
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
+
+    # That the image was actually flipped
+    bfi <- getImg(sfe)
+    expect_equal(transformation(bfi), list(name = "mirror", direction = "vertical"))
+    unlink("xenium_test", recursive = TRUE)
 })
 
 unlink("xenium_test", recursive = TRUE)
