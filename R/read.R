@@ -1338,17 +1338,18 @@ readXenium <- function(data_dir,
     } else { # For now there's only v2. We'll see what v3 will be like
         img_fn <- paste0("morphology_focus_000", 0:3, ".ome.tif")
         img_fn <- file.path(data_dir, "morphology_focus", img_fn)
-        if_exists <- vapply(img_fn, file.exists, FUN.VALUE = logical(1))
-        if (!all(if_exists)) {
-            warning("Image file(s) ", paste0(img_fn[!if_exists], collapse = ", "),
-                    " not found")
+        # When any of the images indicated in the XML metadata is absent RBioFormats
+        # will throw an error so no need for another warning here
+        if_exists <- dir.exists(file.path(data_dir, "morphology_focus"))
+        if (!if_exists) {
+            warning("morphology_focus images not found")
         }
     }
     use_imgs <- any(if_exists)
     do_flip <- .if_flip_img(img_fn, max_flip)
     if (!length(img_fn)) {
         flip <- "none"
-    } else if (!any(do_flip) && flip == "image") { flip <- "geometry" }
+    } else if (!all(do_flip) && flip == "image") { flip <- "geometry" }
     if (use_imgs) {
         # Set up ImgData
         if (major_version == 1L) {
