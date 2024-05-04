@@ -21,7 +21,9 @@ jobs:
         uses: grimbough/bioc-actions/setup-bioc@v1
         with:
           bioc-version: devel
-
+      - name: Install Voyager from GitHub
+        run: install.packages("remotes"); remotes::install_github("pachterlab/Voyager")
+        shell: Rscript {0}
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr
