@@ -74,6 +74,7 @@ setMethod("show", "SpatRasterImage", function(object) {
 })
 
 setMethod("showAsCell", "SpatRasterImage", function(object) {
+    d <- dim(object)
     paste(paste(d[c(2,1,3)], collapse=" x "), "SpatRasterImage")
 })
 
