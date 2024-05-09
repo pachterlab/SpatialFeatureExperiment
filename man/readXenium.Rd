@@ -14,9 +14,9 @@ readXenium(
   max_flip = "50 MB",
   filter_counts = FALSE,
   add_molecules = FALSE,
+  min_phred = 20,
   BPPARAM = SerialParam(),
-  file_out = file.path(data_dir, "tx_spots.parquet"),
-  ...
+  file_out = file.path(data_dir, "tx_spots.parquet")
 )
 }
 \arguments{
@@ -60,6 +60,10 @@ than this size then the coordinates will be flipped instead.}
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
 object.}
 
+\item{min_phred}{Minimum Phred score to keep spot. By default 20, the
+conventional threshold indicating "acceptable", meaning that there's 1%
+chance that the spot was decoded in error.}
+
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
   \enumerate{ \item To load cell segmentation from HDF5 files from different
@@ -78,17 +82,6 @@ everything into memory. If this file (or directory for multiple files)
 already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
-
-\item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
-and add the transcript spots data to the SFE object, except that extent is
-read from `manifest.json` and that `dest = "rowGeometry"` because the spot
-coordinates are in micron space and are not discrete so converting the
-transcript spots to raster won't work. A default is set for `file_out` to
-save the reformatted transcript spots to disk by default since reloading
-the reformatted form is much more efficient. Reading the original detected
-transcripts csv file can take up a lot of memory. Expect at least twice the
-size of that csv file, even more if using multiple threads. So we STRONGLY
-recommend saving the reformatted results to disk.}
 }
 \value{
 An SFE object. If reading segmentations, the cell or nuclei

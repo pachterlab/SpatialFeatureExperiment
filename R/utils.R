@@ -228,3 +228,77 @@ aggBboxes <- function(bboxes) {
 #' @return A character vector of \code{image_ids}.
 #' @export
 imageIDs <- function(sfe) imgData(sfe)$image_id
+
+#' Check if Parquet GDAL driver is available
+#'
+#' The GeoParquet files for geometries are typically written and read with the
+#' \code{sfarrow} package, but to add only a select few genes to the SFE object
+#' say for visualization purposes, the Parquet GDAL driver is required in order
+#' to use GDAL's SQL to query the GeoParquet file to only load the few genes
+#' requested. The transcript spots from a large dataset can take up a lot of
+#' memory if all loaded.
+#'
+#' The Parquet driver has been supported since GDAL 3.5.0. The \code{arrow} C++
+#' library must be installed in order to make the Parquet driver available. When
+#' arrow is installed, newer versions of GDAL installed from Homebrew (Mac)
+#' should have the Parquet driver. For Linux, the binary from \code{apt-get}'s
+#' default repo is 3.4.1 (as of April 2024). To use the Parquet driver, GDAL may
+#' need to be installed from source. See script from the \href{https://github.com/rocker-org/rocker-versioned2/blob/master/scripts/experimental/install_dev_osgeo.sh}{geospatial rocker}.
+#' A Voyager docker container with the Parquet driver will soon be provided.
+#'
+#' @return Logical, indicating whether the Parquet driver is present.
+#' @export
+gdalParquetAvailable <- function() {
+    "Parquet" %in% rownames(sf::st_drivers())
+}
+
+.get_XOA_version <- function(data_dir) {
+    experiment <- fromJSON(file = file.path(data_dir, "experiment.xenium"),
+                           simplify = TRUE)
+    xoa_version <- experiment$analysis_sw_version
+    major_version <- substr(xoa_version, 8, 8) |> as.integer()
+    minor_version <- substr(xoa_version, 10, 10) |> as.integer()
+    instrument_version <- experiment$instrument_sw_version
+    c(xoa = xoa_version, major = major_version, minor = minor_version,
+      instrument = instrument_version)
+}
+
+.no_raw_bytes <- function(data_dir) {
+    c(xoa_version, major_version, minor_version, instrument_version) %<-%
+        .get_XOA_version(data_dir)
+    (major_version == 1L && minor_version > 4L) || major_version == 2L
+}
+
+.get_tech_tx_fields <- function(tech, data_dir) {
+    spatialCoordsNames <- switch(
+        tech,
+        Vizgen = c("global_x", "global_y", "global_z"),
+        Xenium = c("x_location", "y_location", "z_location"),
+        CosMX = c("x_global_px", "y_global_px", "z")
+    )
+    gene_col <- switch(
+        tech,
+        CosMX = "target",
+        Xenium = "feature_name",
+        Vizgen = "gene"
+    )
+    cell_col <- switch(
+        tech,
+        Vizgen = "barcode_id",
+        Xenium = "cell_id",
+        CosMX = "cell_ID"
+    )
+    fn <- switch(
+        tech,
+        Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
+        CosMX = grep("tx_file.csv",
+                     list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
+                     value = TRUE),
+        Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
+    )
+    list(spatialCoordsNames = spatialCoordsNames,
+         gene_col = gene_col,
+         cell_col = cell_col,
+         fn = fn)
+}
+

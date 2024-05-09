@@ -18,7 +18,7 @@
 
 .symbol2id(x, features, swap_rownames)
 
-.check_sample_id(x, sample_id, one = TRUE)
+.check_sample_id(x, sample_id, one = TRUE, mustWork = TRUE)
 
 .rm_empty_geometries(g, MARGIN)
 }

@@ -6,7 +6,7 @@
 \usage{
 readVizgen(
   data_dir,
-  z = 3L,
+  z = "all",
   sample_id = "sample01",
   min_area = 15,
   image = c("DAPI", "PolyT", "Cellbound"),
@@ -18,7 +18,7 @@ readVizgen(
   use_cellpose = TRUE,
   BPPARAM = SerialParam(),
   file_out = file.path(data_dir, "detected_transcripts.parquet"),
-  ...
+  z_option = c("3d", "split")
 )
 }
 \arguments{
@@ -27,9 +27,10 @@ directories \code{cell_boundaries} and \code{images}, and files
 \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
 \code{detected_transcripts.csv}.}
 
-\item{z}{Integer, z index to read, only affecting images read since cell
-segmentation for all z-planes are the same and cell centroids are only
-provided in 2 dimensions.}
+\item{z}{Integer, z index to read, or "all", indicating z-planes of the
+images and transcript spots to read. While cell segmentation seems to have
+multiple z-planes, the segmentation in all z-planes are the same so in
+effect the cell segmentatio is only in 2D.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -83,16 +84,13 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
-and add the transcript spots data to the SFE object, except that extent is
-read from `manifest.json` and that `dest = "rowGeometry"` because the spot
-coordinates are in micron space and are not discrete so converting the
-transcript spots to raster won't work. A default is set for `file_out` to
-save the reformatted transcript spots to disk by default since reloading
-the reformatted form is much more efficient. Reading the original detected
-transcripts csv file can take up a lot of memory. Expect at least twice the
-size of that csv file, even more if using multiple threads. So we STRONGLY
-recommend saving the reformatted results to disk.}
+\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
+geometries. "split" is to create a separate 2D geometry for each z-plane so
+geometric operations are fully supported but some data wrangling is
+required to perform 3D analyses. When the z coordinates are not integers,
+3D geometries will always be constructed since there are no z-planes to
+speak of. This argument does not apply when `spatialCoordsNames` has length
+2.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.
@@ -115,9 +113,12 @@ while to convert the spots to MULTIPOINT geometries.
 Since the transcript spots file is often very large, we recommend only
   using \code{add_molecules = TRUE} on servers with a lot of memory. If
   reading all z-planes, conversion of transcript spot geometry to parquet
-  file might fail. In this case, call \code{formatTxSpots} separately, use
-  \code{split_genes = TRUE} to save spots of each gene to a separate parquet
-  file, and later selectively load genes of interest.
+  file might fail due to arrow data length limit. In a future version, when
+  the transcript spot geometry is large, it will be written to multiple
+  separate parquet files which are then concatenated with DuckDB. Also, in a
+  future version, the transcript spot processing function might be rewritten
+  in C++ to stream the original CSV file so it's not entirely loaded into
+  memory.
 }
 \examples{
 dir_use <- SFEData::VizgenOutput()

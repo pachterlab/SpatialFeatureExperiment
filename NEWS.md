@@ -11,6 +11,7 @@
 * Changed name EBImage to ExtImage to reduce confusion
 * Bug fixes on image affine transformation
 * Exporting some util functions: aggBboxes, getPixelSize, and imageIDs
+* Read select genes as rowGeometry and add to existing rowGeometry without erasing existing genes in the same rowGeometry
 
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)
