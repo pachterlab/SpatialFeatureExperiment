@@ -5,20 +5,13 @@
 \alias{addSelectTx}
 \title{Read transcript spots of select genes}
 \usage{
-readSelectTx(
-  file,
-  gene_select,
-  gene_col = "gene",
-  z = "all",
-  z_option = c("3d", "split")
-)
+readSelectTx(file, gene_select, z = "all", z_option = c("3d", "split"))
 
 addSelectTx(
   sfe,
   file,
   gene_select,
   sample_id = 1L,
-  gene_col = "gene",
   z = "all",
   z_option = c("3d", "split"),
   swap_rownames = NULL
@@ -26,15 +19,13 @@ addSelectTx(
 }
 \arguments{
 \item{file}{File path of a GeoParquet file (e.g. already reformatted with the
-\code{\link{formatTxSpots}} or \code{\link{addTxSpots}} function).}
+\code{\link{formatTxSpots}} or \code{\link{addTxSpots}} function, should
+have already flipped to match image if necessary).}
 
-\item{gene_select}{Character vector of a subset of genes as appearing in the
-column \code{gene_col} and consistent with the row names of \code{sfe} to
-add. If \code{NULL}, then all genes that have transcript spots are added.
-Only relevant when reading data from formatted files on disk. If specified,
-then \code{return = TRUE}.}
-
-\item{gene_col}{Column name for genes.}
+\item{gene_select}{Character vector of a subset of genes. If \code{NULL},
+then all genes that have transcript spots are added. Only relevant when
+reading data from formatted files on disk. If specified, then \code{return
+= TRUE}.}
 
 \item{z}{Index of z plane to read. Can be "all" to read all z-planes into
 MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
@@ -52,12 +43,17 @@ speak of. This argument does not apply when `spatialCoordsNames` has length
 
 \item{sample_id}{Which sample in the SFE object the transcript spots should
 be added to.}
+
+\item{swap_rownames}{Name of a column in \code{rowData(sfe)} to use as gene
+identifiers in place of the actual row names. In some cases this may be
+needed to match each transcript spot MULTIPOINT geometry to rows of
+\code{sfe}.}
 }
 \value{
 When there are multipel parquet files to be read, a list of sf data
-frames with MULTIPOINT geometry for genes selected. When there is only one
-file, then one sf data frame. For \code{addSelectTx}, an SFE object with the
-transcript spots of the selected genes added.
+  frames with MULTIPOINT geometry for genes selected. When there is only one
+  file, then one sf data frame. For \code{addSelectTx}, an SFE object with
+  the transcript spots of the selected genes added.
 }
 \description{
 I speculate that in practice, the most common use of the transcript spots is
@@ -70,8 +66,10 @@ object.
 }
 \note{
 The GDAL Parquet driver is required for this function, though not for
-other functions that work with GeoParquet files. GDAL Parquet driver has been
-supported since GDAL 3.5.0, but is not part of the default installation.
+  other functions that work with GeoParquet files. GDAL Parquet driver has
+  been supported since GDAL 3.5.0, but is not part of the default
+  installation. The \code{z} and \code{z_option} arguments are there since
+  the file names contain z-plane information when relevant.
 See the \href{https://gdal.org/drivers/vector/parquet.html}{GDAL documentation
 page for the Parquet driver}.
 }

@@ -607,10 +607,22 @@ test_that("readXenium XOA v1 read cell metadata parquet when csv is absent", {
 # has trouble installing arrow. I suppose that's the original purpose of having
 # both parquet and csv. If so then I should also write GeoJSON when arrow is not
 # installed. But you have to use arrow for newer versions of Vizgen in order to
-# read the segmentations.
+# read the segmentations. You need GDAL to read GeoJSON.
 
 test_that("readXenium XOA v1 flip image", {
+    fn <- XeniumOutput("v1", file_path = "xenium_test")
+    sfe <- readXenium(fn, add_molecules = TRUE, flip = "image")
+    # That things are aligned
+    bbox_rg <- st_bbox(txSpots(sfe)) |> st_as_sfc()
+    bbox_cg <- st_bbox(cellSeg(sfe)) |> st_as_sfc()
+    expect_true(st_covers(bbox_cg, bbox_rg, sparse = FALSE))
 
+    img <- toExtImage(getImg(sfe), resolution = 1L)
+    mask <- img > 500
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
+    expect_true(mean(v$lyr.1) > 0.9)
+    unlink("xenium_test", recursive = TRUE)
 })
 
 unlink("xenium_test", recursive = TRUE)

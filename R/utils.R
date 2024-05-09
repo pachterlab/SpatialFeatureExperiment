@@ -302,3 +302,10 @@ gdalParquetAvailable <- function() {
          fn = fn)
 }
 
+.id2symbol <- function(x, ids, swap_rownames) {
+    if (!is.null(swap_rownames) && swap_rownames %in% names(rowData(x))) {
+        inds <- match(ids, rownames(x))
+        features <- rowData(x)[[swap_rownames]][inds]
+    } else features <- ids
+    features
+}

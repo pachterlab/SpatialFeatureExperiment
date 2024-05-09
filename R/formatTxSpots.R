@@ -95,31 +95,38 @@
 #' @inheritParams formatTxSpots
 #' @param sfe A `SpatialFeatureExperiment` object.
 #' @param file File path of a GeoParquet file (e.g. already reformatted with the
-#'   \code{\link{formatTxSpots}} or \code{\link{addTxSpots}} function).
-#' @param gene_select Character vector of a subset of genes as appearing in the
-#'   column \code{gene_col} and consistent with the row names of \code{sfe} to
-#'   add. If \code{NULL}, then all genes that have transcript spots are added.
-#'   Only relevant when reading data from formatted files on disk. If specified,
-#'   then \code{return = TRUE}.
+#'   \code{\link{formatTxSpots}} or \code{\link{addTxSpots}} function, should
+#'   have already flipped to match image if necessary).
+#' @param gene_select Character vector of a subset of genes. If \code{NULL},
+#'   then all genes that have transcript spots are added. Only relevant when
+#'   reading data from formatted files on disk. If specified, then \code{return
+#'   = TRUE}.
+#' @param swap_rownames Name of a column in \code{rowData(sfe)} to use as gene
+#'   identifiers in place of the actual row names. In some cases this may be
+#'   needed to match each transcript spot MULTIPOINT geometry to rows of
+#'   \code{sfe}.
 #' @note The GDAL Parquet driver is required for this function, though not for
-#' other functions that work with GeoParquet files. GDAL Parquet driver has been
-#' supported since GDAL 3.5.0, but is not part of the default installation.
+#'   other functions that work with GeoParquet files. GDAL Parquet driver has
+#'   been supported since GDAL 3.5.0, but is not part of the default
+#'   installation. The \code{z} and \code{z_option} arguments are there since
+#'   the file names contain z-plane information when relevant.
 #' See the \href{https://gdal.org/drivers/vector/parquet.html}{GDAL documentation
 #' page for the Parquet driver}.
 #' @return When there are multipel parquet files to be read, a list of sf data
-#' frames with MULTIPOINT geometry for genes selected. When there is only one
-#' file, then one sf data frame. For \code{addSelectTx}, an SFE object with the
-#' transcript spots of the selected genes added.
+#'   frames with MULTIPOINT geometry for genes selected. When there is only one
+#'   file, then one sf data frame. For \code{addSelectTx}, an SFE object with
+#'   the transcript spots of the selected genes added.
 #' @name readSelectTx
 #' @export
-readSelectTx <- function(file, gene_select, gene_col = "gene", z = "all",
+readSelectTx <- function(file, gene_select, z = "all",
                          z_option = c("3d", "split")) {
     if (!gdalParquetAvailable()) {
         stop("GDAL Parquet driver is required to selectively read genes.")
     }
     file <- normalizePath(file, mustWork = FALSE)
-    file_dir <- file_path_sans_ext(file_out)
+    file_dir <- file_path_sans_ext(file)
     z_option <- match.arg(z_option)
+    gene_col <- "gene"
     if (dir.exists(file_dir)) {
         # Multiple files
         pattern <- "\\.parquet$"
@@ -149,9 +156,9 @@ readSelectTx <- function(file, gene_select, gene_col = "gene", z = "all",
             return(out)
         }
         # read transcripts from detected_transcripts.parquet
-    } else if (file.exists(file_out) && !dir.exists(file_dir)) {
-        q <- .make_sql_query(x, gene_select, gene_col)
-        out <- st_read(x, query = q, int64_as_string = TRUE, quiet = TRUE,
+    } else if (file.exists(file) && !dir.exists(file_dir)) {
+        q <- .make_sql_query(file, gene_select, gene_col)
+        out <- st_read(file, query = q, int64_as_string = TRUE, quiet = TRUE,
                        crs = NA)
         rownames(out) <- out[[gene_col]]
         return(out)
@@ -161,13 +168,14 @@ readSelectTx <- function(file, gene_select, gene_col = "gene", z = "all",
 #' @rdname readSelectTx
 #' @export
 addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
-                        gene_col = "gene",
                         z = "all", z_option = c("3d", "split"),
                         swap_rownames = NULL) {
     sample_id <- .check_sample_id(sfe, sample_id)
     z_option <- match.arg(z_option)
-    mols <- readSelectTx(file, gene_select, gene_col, z, z_option)
-    if (is.list(mols)) {
+    gene_select <- .id2symbol(sfe, gene_select, swap_rownames)
+    mols <- readSelectTx(file, gene_select, z, z_option)
+    rownames(mols) <- .symbol2id(sfe, rownames(mols), swap_rownames)
+    if (!is(mols, "sf")) {
         rowGeometries(sfe, sample_id = sample_id, partial = TRUE) <- mols
     } else {
         txSpots(sfe, sample_id, partial = TRUE) <- mols
@@ -324,6 +332,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     } else {
         mols <- fread(file)
     }
+    names(mols)[names(mols) == gene_col] <- "gene"
+    gene_col <- "gene"
     ind <- !spatialCoordsNames[1:2] %in% names(mols)
     if (any(ind)) {
         col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
@@ -504,7 +514,10 @@ formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
         split_col <- "CellComp"
     else split_col <- NULL
     # TODO: check if z is valid here for all technologies. Need new internal function.
-    if (tech == "Xenium") z <- "all"; z_option <- "3d"
+    if (tech == "Xenium") {
+        z <- "all"
+        z_option <- "3d"
+    }
     formatTxSpots(fn, dest = dest, spatialCoordsNames = spatialCoordsNames,
                   gene_col = gene_col, cell_col = cell_col, z = z,
                   min_phred = min_phred, split_col = split_col,
