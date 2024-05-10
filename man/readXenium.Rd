@@ -20,10 +20,7 @@ readXenium(
 )
 }
 \arguments{
-\item{data_dir}{Top level directory of Vizgen output, which contains
-directories \code{cell_boundaries} and \code{images}, and files
-\code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
-\code{detected_transcripts.csv}.}
+\item{data_dir}{Top level output directory.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also

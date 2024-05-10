@@ -493,6 +493,9 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
 #' technology.
 #'
 #' @inheritParams formatTxSpots
+#' @inheritParams readVizgen
+#' @param tech Which technology whose output to read, must be one of "Vizgen",
+#' "Xenium", or "CosMX" though more technologies may be added later.
 #' @param z Which z-planes to read. Always "all" for Xenium where the z
 #'   coordinates are not discrete.
 #' @param split_cell_comps Only relevant to CosMX whose transcript spot file

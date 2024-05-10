@@ -16,10 +16,7 @@ readCosMX(
 )
 }
 \arguments{
-\item{data_dir}{Top level directory of Vizgen output, which contains
-directories \code{cell_boundaries} and \code{images}, and files
-\code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
-\code{detected_transcripts.csv}.}
+\item{data_dir}{Top level output directory.}
 
 \item{z}{Integer z index or "all" to indicate which z-planes to read for the
 transcript spots.}
@@ -76,7 +73,7 @@ This function reads the standard CosMX output into an SFE object, as in
 \examples{
 fp <- tempdir()
 dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
-sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
+sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
 # Clean up
 unlink(dir_use, recursive = TRUE)
 }

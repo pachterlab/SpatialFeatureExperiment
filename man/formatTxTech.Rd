@@ -34,6 +34,11 @@ addTxTech(
 )
 }
 \arguments{
+\item{data_dir}{Top level output directory.}
+
+\item{tech}{Which technology whose output to read, must be one of "Vizgen",
+"Xenium", or "CosMX" though more technologies may be added later.}
+
 \item{dest}{Where in the SFE object to store the spot geometries. This
 affects how the data is processed. Options: \describe{
 \item{rowGeometry}{All spots for each gene will be a `MULTIPOINT` geometry,

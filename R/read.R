@@ -332,10 +332,7 @@ read10xVisiumSFE <- function(samples = "",
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams formatTxSpots
-#' @param data_dir Top level directory of Vizgen output, which contains
-#'   directories \code{cell_boundaries} and \code{images}, and files
-#'   \code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
-#'   \code{detected_transcripts.csv}.
+#' @param data_dir Top level output directory.
 #' @param z Integer, z index to read, or "all", indicating z-planes of the
 #'   images and transcript spots to read. While cell segmentation seems to have
 #'   multiple z-planes, the segmentation in all z-planes are the same so in
@@ -558,9 +555,6 @@ readVizgen <- function(data_dir,
 
     # Column without colname is read as V1
     mat <- fread(mat_fn, colClasses = list(character = 1))
-    # TODO: write the sparse matrix to disk as hdf5 or mtx and check for the file
-    # next time, so the costly step using a lot of memory to read in the dense
-    # matrix can be avoided
     # get spatial metadata file---------
     meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
     metadata <- fread(meta_fn, colClasses = list(character = 1))
@@ -684,7 +678,7 @@ readVizgen <- function(data_dir,
 #' @examples
 #' fp <- tempdir()
 #' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
-#' sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
+#' sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
 #' # Clean up
 #' unlink(dir_use, recursive = TRUE)
 readCosMX <- function(data_dir,

@@ -22,10 +22,7 @@ readVizgen(
 )
 }
 \arguments{
-\item{data_dir}{Top level directory of Vizgen output, which contains
-directories \code{cell_boundaries} and \code{images}, and files
-\code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
-\code{detected_transcripts.csv}.}
+\item{data_dir}{Top level output directory.}
 
 \item{z}{Integer, z index to read, or "all", indicating z-planes of the
 images and transcript spots to read. While cell segmentation seems to have
