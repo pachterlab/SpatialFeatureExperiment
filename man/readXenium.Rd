@@ -14,16 +14,13 @@ readXenium(
   max_flip = "50 MB",
   filter_counts = FALSE,
   add_molecules = FALSE,
+  min_phred = 20,
   BPPARAM = SerialParam(),
-  file_out = file.path(data_dir, "tx_spots.parquet"),
-  ...
+  file_out = file.path(data_dir, "tx_spots.parquet")
 )
 }
 \arguments{
-\item{data_dir}{Top level directory of Vizgen output, which contains
-directories \code{cell_boundaries} and \code{images}, and files
-\code{cell_by_gene.csv}, \code{cell_metadata.csv}, and
-\code{detected_transcripts.csv}.}
+\item{data_dir}{Top level output directory.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -60,6 +57,10 @@ than this size then the coordinates will be flipped instead.}
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
 object.}
 
+\item{min_phred}{Minimum Phred score to keep spot. By default 20, the
+conventional threshold indicating "acceptable", meaning that there's 1%
+chance that the spot was decoded in error.}
+
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
   \enumerate{ \item To load cell segmentation from HDF5 files from different
@@ -78,17 +79,6 @@ everything into memory. If this file (or directory for multiple files)
 already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
-
-\item{...}{Other arguments passed to \code{\link{formatTxSpots}} to format
-and add the transcript spots data to the SFE object, except that extent is
-read from `manifest.json` and that `dest = "rowGeometry"` because the spot
-coordinates are in micron space and are not discrete so converting the
-transcript spots to raster won't work. A default is set for `file_out` to
-save the reformatted transcript spots to disk by default since reloading
-the reformatted form is much more efficient. Reading the original detected
-transcripts csv file can take up a lot of memory. Expect at least twice the
-size of that csv file, even more if using multiple threads. So we STRONGLY
-recommend saving the reformatted results to disk.}
 }
 \value{
 An SFE object. If reading segmentations, the cell or nuclei
@@ -112,18 +102,12 @@ Sometimes when reading images, you will see this error the first time:
 time.
 }
 \examples{
-# TODO: Example code for Xenium toy data
-
-# custom example run:
-if (FALSE)
-sfe <-
- readXenium(data_dir = data_dir,
- sample_id = "test_xenium",
- image = c("morphology_focus", "morphology_mip"),
- segmentations = c("cell", "nucleus"),
- flip = "geometry",
- filter_counts = TRUE,
- add_molecules = TRUE,
- file_out = NULL)
-
+library(SFEData)
+library(RBioFormats)
+fp <- tempdir()
+dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+# RBioFormats issue
+try(sfe <- readXenium(dir_use, add_molecules = TRUE))
+sfe <- readXenium(dir_use, add_molecules = TRUE)
+unlink(dir_use, recursive = TRUE)
 }

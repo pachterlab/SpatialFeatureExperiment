@@ -153,6 +153,42 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                          unit = unit)
           })
 
+#..to get slot or layer names of a selected Assay
+.GetSlotNames <- function(object_seu, assay_seu, fov_number) {
+    slot_n <-
+        Seurat::GetAssay(object_seu, assay_seu)
+    if (is(slot_n, "Assay")) {
+        # Seurat v4 based object
+        slot_n <- slotNames(x = slot_n)[1:2]
+    } else if (is(slot_n, "Assay5")) {
+        # Seurat v5 based object
+        slot_n <- slot(slot_n, name = slotNames(x = slot_n)[1]) |> names()
+    }
+    # sanity, check slot names, for cases like:
+    #c("counts.1", "counts.2", "data.1", "data.2")
+    ok_slots <- any(slot_n %in% c("counts", "data"))
+    if (!ok_slots) {
+        if (length(slot_n) > 2) {
+            slot_n <-
+                grep(as.character(fov_number), slot_n, value = TRUE)
+        } else if (length(slot_n) == 2) {
+            slot_n <- slot_n[fov_number]
+        }
+    }
+    return(list(slot_n = slot_n,
+                slots_ok = ok_slots))
+}
+
+# internal metadata getter for Seurat and SFE objects
+.getMeta <- function(object = NULL) {
+    if (is(object, "Seurat")) {
+        return(slot(object, "meta.data"))
+    } else {
+        return(colData(object) |>
+                   as.data.frame())
+    }
+}
+
 # Converter function from Seurat (v4 & v5) object to SpatialFeatureExperiment
 #' @importFrom SummarizedExperiment assays
 #' @importFrom methods slot slotNames
@@ -182,43 +218,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 
     #..to get default or main Assay
     .DefaultAssay <- SeuratObject::DefaultAssay
-
-    #..to get slot or layer names of a selected Assay
-    .GetSlotNames <- function(object_seu, assay_seu, fov_number) {
-      slot_n <-
-        Seurat::GetAssay(object_seu, assay_seu)
-      if (is(slot_n, "Assay")) {
-        # Seurat v4 based object
-        slot_n <- slotNames(x = slot_n)[1:2]
-      } else if (is(slot_n, "Assay5")) {
-        # Seurat v5 based object
-        slot_n <- slot(slot_n, name = slotNames(x = slot_n)[1]) |> names()
-      }
-      # sanity, check slot names, for cases like:
-      #c("counts.1", "counts.2", "data.1", "data.2")
-      ok_slots <- any(slot_n %in% c("counts", "data"))
-      if (!ok_slots) {
-        if (length(slot_n) > 2) {
-          slot_n <-
-            grep(as.character(fov_number), slot_n, value = TRUE)
-        } else if (length(slot_n) == 2) {
-          slot_n <- slot_n[fov_number]
-          }
-        }
-      return(list(slot_n = slot_n,
-                  slots_ok = ok_slots))
-      }
-
-    # internal metadata getter for Seurat and SFE objects
-    .getMeta <- function(object = NULL) {
-      if (is(object, "Seurat")) {
-        return(slot(object, "meta.data"))
-      } else {
-        return(colData(object) |>
-                 slot("listData") |>
-                 as.data.frame.list())
-        }
-      }
 
     # Convert from Seurat to SFE ===== ####
     # TODO (optional) support non-spatial Seurat to SFE as well? ----

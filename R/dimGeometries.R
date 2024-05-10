@@ -549,27 +549,26 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
 #' @export
 `rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
                               partial = FALSE, translate = TRUE, value) {
-    if (!identical(sample_id, "all") && length(sampleIDs(x)) > 1L) {
-        sample_id0 <- sample_id
-        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-        existing <- rowGeometries(x, sample_id = "all")
-        # Set to NULL
-        if (is.null(value)) {
-            rgns_rm <- .get_rg_multi(x, sample_id)
-            value <- existing[setdiff(names(existing), rgns_rm)]
-        } else {
-            names(value) <- .check_rg_multi_sample(names(value), sample_id)
-            partial_names <- intersect(names(value), names(existing))
-            if (partial && length(partial_names)) {
-                for (p in partial_names) {
-                    rowGeometry(x, type = p, sample_id = sample_id0,
-                                partial = TRUE, withDimnames = TRUE) <- value[[p]]
-                }
-                existing <- rowGeometries(x, sample_id = "all")
+    check_names <- !identical(sample_id, "all") && length(sampleIDs(x)) > 1L
+    sample_id0 <- sample_id
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE, mustWork = FALSE)
+    existing <- rowGeometries(x, sample_id = "all")
+    # Set to NULL
+    if (is.null(value) && check_names) {
+        rgns_rm <- .get_rg_multi(x, sample_id)
+        value <- existing[setdiff(names(existing), rgns_rm)]
+    } else if (!is.null(value)) {
+        if (check_names) names(value) <- .check_rg_multi_sample(names(value), sample_id)
+        partial_names <- intersect(names(value), names(existing))
+        if (partial && length(partial_names)) {
+            for (p in partial_names) {
+                rowGeometry(x, type = p, sample_id = sample_id0,
+                            partial = TRUE, withDimnames = TRUE) <- value[[p]]
             }
-            existing <- existing[setdiff(names(existing), names(value))]
-            value <- c(existing, value)
+            return(x)
         }
+        existing <- existing[setdiff(names(existing), names(value))]
+        value <- c(existing, value)
     }
     dimGeometries(x,
         MARGIN = 1, withDimnames = withDimnames,

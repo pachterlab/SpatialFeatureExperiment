@@ -1,3 +1,8 @@
+# Version 1.6.1
+* readRDS converts old style SpatRasterImage to the new style
+* readSelectTx and addSelectTx functions to read transcript spots from a few select genes from the parquet output of formatTxSpots or add them to an SFE object
+* Added formatTxTech and addTxTech functions, basically thin wrappers of formatTxSpots and addTxSpots with presets for Vizgen, Xenium, and CosMX
+
 # Version 1.6.0 (04/29/2024)
 * Changed defaults from sample_id = NULL to sample_id = 1L when dealing with 1 sample or "all" when dealing with multiple samples
 * dim method for BioFormatsImage that doesn't load the image into memory
@@ -11,6 +16,7 @@
 * Changed name EBImage to ExtImage to reduce confusion
 * Bug fixes on image affine transformation
 * Exporting some util functions: aggBboxes, getPixelSize, and imageIDs
+* Read select genes as rowGeometry and add to existing rowGeometry without erasing existing genes in the same rowGeometry
 
 # Version 1.5.2 (03/04/2024)
 * Added readXenium (for XOA v1)

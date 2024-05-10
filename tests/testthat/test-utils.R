@@ -52,8 +52,8 @@ test_that("bbox center", {
     bbox_use <- c(xmin = 10, xmax = 20, ymin = 5, ymax = 15)
     expect_equal(bbox_center(bbox_use), c(15, 10))
 })
-
-dir_use <- XeniumOutput("v1", file_path = "xenium_test")
+fp <- tempdir()
+dir_use <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
 test_that("Get pixel size", {
     library(RBioFormats)
     fn <- file.path(dir_use, "morphology_focus.ome.tif")
@@ -77,4 +77,4 @@ test_that("Image IDs", {
     expect_setequal(imageIDs(sfe), c("morphology_focus", "morphology_mip"))
 })
 
-unlink("xenium_test", recursive = TRUE)
+unlink(dir_use, recursive = TRUE)

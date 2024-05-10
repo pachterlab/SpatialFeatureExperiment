@@ -55,6 +55,14 @@ setMethod("unwrap", "SpatialFeatureExperiment",
                   img <- int_metadata(x)$imgData$data[[i]]
                   if (is(img, "PackedSpatRaster"))
                       img <- SpatRasterImage(unwrap(img))
+                  else if (is(img, "SpatRasterImage")) {
+                      old_slot <- tryCatch(img@image, error = function(e) NULL)
+                      if (!is.null(old_slot)) {
+                          if (is(old_slot, "SpatRaster")) img <- old_slot
+                          if (is(old_slot, "PackedSpatRaster")) img <- unwrap(old_slot)
+                          img <- SpatRasterImage(img)
+                      }
+                  }
                   int_metadata(x)$imgData$data[[i]] <- img
               }
               x

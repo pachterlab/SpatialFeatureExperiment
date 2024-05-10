@@ -132,8 +132,21 @@ test_that("rowGeometries setter, one sample", {
     expect_equal(rg, rg_toy)
 })
 
-test_that("rowGeometries setter, partial replace", {
+test_that("rowGeometries setter, one sample, partial replace", {
+    foo <- rg_toy[c("d", "j"),]
+    rownames(foo) <- c("d", "j")
+    rowGeometries(sfe) <- list(foo = foo)
+    expect_equal(st_equals(rowGeometry(sfe)[c("d","j"),], foo),
+                 list(1, 2), ignore_attr = TRUE)
+    expect_true(all(st_is_empty(rowGeometry(sfe)[c(1,3,5),])))
 
+    # The second time, adding more
+    bar <- rg_toy[c("v", "o"),]
+    rownames(bar) <- c("v", "o")
+    rowGeometries(sfe, partial = TRUE) <- list(foo = bar)
+    expect_equal(st_equals(rowGeometry(sfe)[2:5,], rg_toy[2:5,]),
+                 as.list(1:4), ignore_attr = TRUE)
+    expect_true(st_is_empty(rowGeometry(sfe)[1,]))
 })
 
 test_that("rowGeometries getter, one sample", {
@@ -154,7 +167,20 @@ test_that("rowGeometry setter, one sample", {
 })
 
 test_that("rowGeometry setter, partial replace", {
+    foo <- rg_toy[c("d", "j"),]
+    rownames(foo) <- c("d", "j")
+    rowGeometry(sfe, type = "foo", partial = TRUE) <- foo
+    expect_equal(st_equals(rowGeometry(sfe)[c("d","j"),], foo),
+                 list(1, 2), ignore_attr = TRUE)
+    expect_true(all(st_is_empty(rowGeometry(sfe)[c(1,3,5),])))
 
+    # The second time, adding more
+    bar <- rg_toy[c("v", "o"),]
+    rownames(bar) <- c("v", "o")
+    rowGeometry(sfe, type = "foo", partial = TRUE) <- bar
+    expect_equal(st_equals(rowGeometry(sfe)[2:5,], rg_toy[2:5,]),
+                 as.list(1:4), ignore_attr = TRUE)
+    expect_true(st_is_empty(rowGeometry(sfe)[1,]))
 })
 
 test_that("rowGeometry getter, one sample", {
@@ -194,6 +220,22 @@ test_that("rowGeometries setter, some not all of multiple samples", {
     expect_equal(rowGeometryNames(sfe_visium), c("foo_sample01", "bar_sample02"))
     expect_equal(int_elementMetadata(sfe_visium)$rowGeometries$foo_sample01, rg_toy1)
     expect_equal(int_elementMetadata(sfe_visium)$rowGeometries$bar_sample02, rg_toy2)
+})
+
+test_that("rowGeometries setter, partial replace, multiple samples", {
+    bar <- rg_toy1[1,,drop = FALSE]
+    rownames(bar) <- rownames(sfe_visium)[1]
+    baz <- rg_toy2[2,,drop = FALSE]
+    rownames(baz) <- rownames(sfe_visium)[2]
+    rowGeometries(sfe_visium) <- list(foo_sample01 = bar, foo_sample02 = baz)
+    # Second time, adding more
+    rowGeometries(sfe_visium, sample_id = "sample01",
+                  partial = TRUE) <- list(foo = baz)
+    expect_equal(rowGeometry(sfe_visium), rbind(bar, baz), ignore_attr = TRUE)
+    rowGeometries(sfe_visium, sample_id = "sample02",
+                  partial = TRUE) <- list(foo = bar)
+    expect_equal(rowGeometry(sfe_visium, sample_id = "sample02"),
+                 rbind(bar, baz), ignore_attr = TRUE)
 })
 
 test_that("Set rowGeometries to NULL", {
