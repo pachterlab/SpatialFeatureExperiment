@@ -20,3 +20,13 @@ test_that("Save SFE without images", {
     expect_equal(sfe, sfe2)
     unlink("bar.rds")
 })
+
+test_that("Backward compatibility with old version of SpatRasterImage", {
+    fp <- system.file(file.path("extdata", "sfe_old_spi.rds"),
+                      package = "SpatialFeatureExperiment")
+    sfe <- readRDS(fp)
+    img <- getImg(sfe)
+    expect_s4_class(img, "SpatRasterImage")
+    expect_error(img@image)
+    expect_s4_class(img, "SpatRaster")
+})
