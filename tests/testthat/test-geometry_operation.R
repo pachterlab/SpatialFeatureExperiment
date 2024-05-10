@@ -253,9 +253,9 @@ test_that("Error when other spatial operations are specified", {
 })
 
 test_that("Crop 3D geometry", {
-    dir_use <- CosMXOutput(file_path = "cosmx_test")
-
-    sfe <- readCosMX("cosmx_test/cosmx", z = "all", add_molecules = TRUE,
+    fp <- tempdir()
+    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
     sfe_cropped <- crop(sfe, bbox1)
@@ -267,7 +267,7 @@ test_that("Crop 3D geometry", {
                               sparse = FALSE))
     expect_equal(unclass(st_z_range(rg)), c(zmin = 0, zmax = 1),
                  ignore_attr = "crs")
-    unlink("cosmx_test", recursive = TRUE)
+    unlink(dir_use, recursive = TRUE)
 })
 
 # annotPred and annotOp===========
@@ -823,11 +823,10 @@ test_that("Affine transformation of SFE object with image, after cropping", {
 })
 
 test_that("Transformation when there's 3D geometry", {
-    dir_use <- CosMXOutput()
-    dir.create("cosmx_test")
-    file.copy(dir_use, "cosmx_test", recursive = TRUE)
+    fp <- tempdir()
+    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
 
-    sfe <- readCosMX("cosmx_test/cosmx", z = "all", add_molecules = TRUE,
+    sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 90)
     ints <- st_intersects(cellSeg(sfe), txSpots(sfe))
@@ -836,7 +835,7 @@ test_that("Transformation when there's 3D geometry", {
     rg <- txSpots(sfe2)
     expect_equal(unclass(st_z_range(rg)), c(zmin = 0, zmax = 1),
                  ignore_attr = "crs")
-    unlink("cosmx_test", recursive = TRUE)
+    unlink(dir_use, recursive = TRUE)
 })
 
 test_that("Translate SFE object with image", {
@@ -865,8 +864,8 @@ test_that("Translate SFE object with image", {
 # Affine transform of entire SFE object, for BioFormatsImage=========
 library(RBioFormats)
 library(EBImage)
-dir.create("xenium_test")
-xenium_path <- XeniumOutput(file_path = "xenium_test")
+fp <- tempdir()
+xenium_path <- XeniumOutput(file_path = file.path(fp, "xenium_test"))
 try(sfe <- readXenium(xenium_path))
 sfe <- readXenium(xenium_path, add_molecules = TRUE)
 set.seed(29)
@@ -1144,4 +1143,4 @@ test_that("General affine transformation of SFE object with ExtImage", {
     int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
     expect_equal(int1, int2)
 })
-unlink("xenium_test", recursive = TRUE)
+unlink(xenium_path, recursive = TRUE)

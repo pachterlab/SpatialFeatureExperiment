@@ -12,8 +12,8 @@ sfe <- McKellarMuscleData("small")
 img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
                                   "tissue_lowres_image.png"),
                         package = "SpatialFeatureExperiment")
-
-xenium_dir <- XeniumOutput("v1", file_path = "xenium_test")
+fp <- tempdir()
+xenium_dir <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
 xenium_fn <- file.path(xenium_dir, "morphology_mip.ome.tif")
 
 test_that("addImg, SpatRasterImage", {
@@ -293,7 +293,9 @@ test_that("Convert SpatRasterImage to ExtImage, RGB", {
     expect_equal(imgRaster(spi) |> terra::as.array(),
                  imgRaster(ebi) |> as.array() |> aperm(c(2,1,3)))
 })
-vizgen_dir <- VizgenOutput(file_path = "vizgen_test")
+
+fp <- tempdir()
+vizgen_dir <- VizgenOutput(file_path = file.path(fp, "vizgen_test"))
 fn <- file.path(vizgen_dir, "images", "mosaic_Cellbound1_z3.tif")
 
 test_that("Convert SpatRasterImage to ExtImage, grayscale", {
@@ -380,7 +382,6 @@ test_that("Convert BioFormatsImage to ExtImage, full extent", {
     dim_img <- dim(imgRaster(ebi))
     expect_equal(dim_img, c(sizeX_full, sizeY_full))
 })
-# TODO: make small subset from XOA v2 data, to test reading a subset of channels
 
 ext_use <- c(xmin = 1000, xmax = 2000, ymin = 600, ymax = 1600)
 test_that("Convert BioFormatsImage to ExtImage, not full extent", {
@@ -436,9 +437,9 @@ test_that("Ignore resolution in toExtImage when there's only 1 resolution", {
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
     library(RBioFormats)
-    dir.create("xt")
-    file.copy(xenium_dir, "xt", recursive = TRUE)
-    fn1 <- file.path("xt", "xenium_lr", "morphology_mip.ome.tif")
+    fp <- tempdir()
+    fn <- XeniumOutput(file_path = file.path(fp, "xenium_test"))
+    fn1 <- file.path(fn, "morphology_mip.ome.tif")
     bfi <- BioFormatsImage(fn1, ext_use, isFull = FALSE)
     expect_message(spi <- toSpatRasterImage(bfi, resolution = 1L), "non OME")
     fn <- file.path(dirname(fn1), "morphology_mip_res1.tiff")
@@ -448,7 +449,7 @@ test_that("Convert BioFormatsImage to SpatRasterImage", {
     ext_sf_spi <- st_bbox(ext(spi)) |> st_as_sfc()
     expect_true(st_covered_by(ext_sf_bfi, ext_sf_spi, sparse = FALSE))
     expect_true(st_area(ext_sf_spi) / st_area(ext_sf_bfi) < 1.005)
-    unlink("xt", recursive = TRUE)
+    unlink(fn, recursive = TRUE)
 })
 
 test_that("Convert BioFormatsImage to SpatRasterImage not saving geotiff", {
@@ -687,5 +688,5 @@ test_that("Crop ExtImage", {
     expect_equal(dim(imgRaster(ebi_sub)), round(dim_expect))
 })
 
-unlink("xenium_test", recursive = TRUE)
-unlink("vizgen_test", recursive = TRUE)
+unlink(xenium_dir, recursive = TRUE)
+unlink(vizgen_dir, recursive = TRUE)

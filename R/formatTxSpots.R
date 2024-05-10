@@ -276,12 +276,14 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' @rdname formatTxSpots
 #' @examples
 #' # Default arguments are for MERFISH
-#' dir_use <- SFEData::VizgenOutput()
+#' fp <- tempdir()
+#' dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
 #' g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
+#' unlink(dir_use, recursive = TRUE)
 #'
 #' # For CosMX, note the colnames, also dest = "colGeometry"
 #' # Results are written to the tx_spots directory
-#' dir_use <- SFEData::CosMXOutput()
+#' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
 #' cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 #' dest = "colGeometry", z = "all",
 #' cell_col = c("cell_ID", "fov"),
@@ -289,8 +291,7 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
 #' file_out = file.path(dir_use, "tx_spots"))
 #' # Cleanup
-#' unlink("vizgen_cellbound", recursive = TRUE)
-#' unlink("cosmx", recursive = TRUE)
+#' unlink(dir_use, recursive = TRUE)
 formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
                           gene_col = "gene", cell_col = "cell_id", z = "all",
@@ -313,7 +314,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     }
     if (!is.null(file_out) && (file.exists(file_out) ||
                                dir.exists(file_path_sans_ext(file_out)))) {
-        out <- .read_tx_output(file_out, z, z_option, gene_col, return)
+        out <- .read_tx_output(file_out, z, z_option, "gene", return)
         return(out)
     }
     if (!is.numeric(z) && z != "all") {
@@ -445,7 +446,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
 addTxSpots <- function(sfe, file, sample_id = 1L,
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
                        gene_col = "gene", z = "all",
-                       phred_col = "qv", min_phred = NULL, split_col = NULL,
+                       phred_col = "qv", min_phred = 20, split_col = NULL,
                        z_option = c("3d", "split"), flip = FALSE,
                        file_out = NULL, BPPARAM = SerialParam()) {
     sample_id <- .check_sample_id(sfe, sample_id)
@@ -465,6 +466,7 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
     # make sure that sfe and rowGeometries have the same features
     # NOTE, if `min_phred = NULL`, no filtering of features occur
     if (!is.null(min_phred)) {
+        gene_col <- "gene" # It's always "gene" from formatTxSpots
         gene_names <-
             lapply(rowGeometries(sfe), function(i) {
                 na.omit(i[[gene_col]])
@@ -544,7 +546,7 @@ addTxTech <- function(sfe, data_dir, sample_id = 1L,
     if (tech == "Xenium") {
         z <- "all"
         z_option <- "3d"
-    }
+    } else min_phred <- NULL # So far only Xenium has phred score
     addTxSpots(sfe, file = fn, sample_id = sample_id,
                spatialCoordsNames = spatialCoordsNames,
                gene_col = gene_col, z = z,

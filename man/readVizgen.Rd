@@ -121,7 +121,8 @@ Since the transcript spots file is often very large, we recommend only
   memory.
 }
 \examples{
-dir_use <- SFEData::VizgenOutput()
+fp <- tempdir()
+dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
 sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 flip = "geometry")
 
@@ -129,6 +130,6 @@ flip = "geometry")
 sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
 add_molecules = TRUE, flip = "geometry")
 
-unlink("vizgen_cellbound", recursive = TRUE)
+unlink(dir_use, recursive = TRUE)
 }
 \concept{Read data into SFE}

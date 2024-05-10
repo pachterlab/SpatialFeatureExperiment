@@ -31,7 +31,7 @@ addTxSpots(
   gene_col = "gene",
   z = "all",
   phred_col = "qv",
-  min_phred = NULL,
+  min_phred = 20,
   split_col = NULL,
   z_option = c("3d", "split"),
   flip = FALSE,
@@ -150,12 +150,14 @@ When `dest = "colGeometry"`, the geometries are always written to disk
 }
 \examples{
 # Default arguments are for MERFISH
-dir_use <- SFEData::VizgenOutput()
+fp <- tempdir()
+dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
 g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
+unlink(dir_use, recursive = TRUE)
 
 # For CosMX, note the colnames, also dest = "colGeometry"
 # Results are written to the tx_spots directory
-dir_use <- SFEData::CosMXOutput()
+dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
 cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 dest = "colGeometry", z = "all",
 cell_col = c("cell_ID", "fov"),
@@ -163,6 +165,5 @@ gene_col = "target", not_in_cell_id = "0",
 spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
 file_out = file.path(dir_use, "tx_spots"))
 # Cleanup
-unlink("vizgen_cellbound", recursive = TRUE)
-unlink("cosmx", recursive = TRUE)
+unlink(dir_use, recursive = TRUE)
 }

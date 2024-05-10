@@ -391,7 +391,8 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom data.table fread merge.data.table rbindlist is.data.table
 #' @importFrom stats na.omit
 #' @examples
-#' dir_use <- SFEData::VizgenOutput()
+#' fp <- tempdir()
+#' dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
 #' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 #' flip = "geometry")
 #'
@@ -399,7 +400,7 @@ read10xVisiumSFE <- function(samples = "",
 #' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
 #' add_molecules = TRUE, flip = "geometry")
 #'
-#' unlink("vizgen_cellbound", recursive = TRUE)
+#' unlink(dir_use, recursive = TRUE)
 readVizgen <- function(data_dir,
                        z = "all",
                        sample_id = "sample01", # How often do people read in multiple samples?
@@ -681,10 +682,11 @@ readVizgen <- function(data_dir,
 #'   `tx_spots.parquet` in the same directory as the rest of the data.
 #' @export
 #' @examples
-#' dir_use <- SFEData::CosMXOutput()
+#' fp <- tempdir()
+#' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
 #' sfe <- readCosMX("cosmx", z = "all", add_molecules = TRUE)
 #' # Clean up
-#' unlink("cosmx", recursive = TRUE)
+#' unlink(dir_use, recursive = TRUE)
 readCosMX <- function(data_dir,
                       z = "all",
                       sample_id = "sample01", # How often do people read in multiple samples?
