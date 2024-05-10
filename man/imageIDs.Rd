@@ -16,3 +16,9 @@ A character vector of \code{image_ids}.
 The title is self-explanatory. Some functions require \code{image_id} to get
 or set images.
 }
+\examples{
+fp <- system.file(file.path("extdata", "sample01"),
+package = "SpatialFeatureExperiment")
+sfe <- read10xVisiumSFE(fp, type = "sparse")
+imageIDs(sfe)
+}

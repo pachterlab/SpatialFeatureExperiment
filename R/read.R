@@ -832,20 +832,15 @@ readCosMX <- function(data_dir,
 #' @importFrom DropletUtils read10xCounts
 #' @importFrom zeallot %<-%
 #' @examples
-#' # TODO: Example code for Xenium toy data
-#'
-#' # custom example run:
-#' if (FALSE)
-#' sfe <-
-#'  readXenium(data_dir = data_dir,
-#'  sample_id = "test_xenium",
-#'  image = c("morphology_focus", "morphology_mip"),
-#'  segmentations = c("cell", "nucleus"),
-#'  flip = "geometry",
-#'  filter_counts = TRUE,
-#'  add_molecules = TRUE,
-#'  file_out = NULL)
-#'
+#' library(SFEData)
+#' library(RBioFormats)
+#' fp <- tempdir()
+#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' # RBioFormats issue
+#' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
+#' sfe <- readXenium(dir_use, add_molecules = TRUE)
+#' unlink(dir_use, recursive = TRUE)
+
 readXenium <- function(data_dir,
                        sample_id = "sample01",
                        image = c("morphology_focus", "morphology_mip"),

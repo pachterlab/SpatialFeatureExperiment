@@ -98,3 +98,11 @@ To preset parameters such as \code{spatialCoordsNames}, \code{gene_col},
 \code{cell_col}, and \code{phred_col} that are standard for the output of the
 technology.
 }
+\examples{
+library(SFEData)
+fp <- tempdir()
+dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
+                      file_out = file.path(dir_use, "tx_spots.parquet"))
+
+}

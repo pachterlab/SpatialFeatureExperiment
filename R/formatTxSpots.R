@@ -118,6 +118,18 @@
 #'   the transcript spots of the selected genes added.
 #' @name readSelectTx
 #' @export
+#' @examples
+#' library(SFEData)
+#' fp <- tempdir()
+#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
+#'                       file_out = file.path(dir_use, "tx_spots.parquet"))
+#' gene_select <- c("ACE2", "BMX")
+#' df <- readSelectTx(fn_tx, gene_select)
+#'
+#' sfe <- readXenium(dir_use)
+#' sfe <- addSelectTx(sfe, fn_tx, head(rownames(sfe), 5), swap_rownames = "Symbol")
+#' unlink(dir_use, recursive = TRUE)
 readSelectTx <- function(file, gene_select, z = "all",
                          z_option = c("3d", "split")) {
     if (!gdalParquetAvailable()) {
@@ -504,6 +516,13 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
 #'   `return = FALSE`.
 #' @name formatTxTech
 #' @export
+#' @examples
+#' library(SFEData)
+#' fp <- tempdir()
+#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
+#'                       file_out = file.path(dir_use, "tx_spots.parquet"))
+#'
 formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
                          dest = c("rowGeometry", "colGeometry"),
                          z = "all", min_phred = 20,

@@ -169,6 +169,12 @@ bbox_center <- function(bbox) {
 #' @return Numeric vector of length 2 of pixel size in x and y. Usually they're
 #' the same.
 #' @export
+#' @examples
+#' library(SFEData)
+#' fp <- tempdir()
+#' dir_use <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+#' getPixelSize(file.path(dir_use, "morphology_focus.ome.tif"))
+#' unlink(dir_use, recursive = TRUE)
 getPixelSize <- function(file, resolution = 1L) {
     check_installed(c("xml2", "RBioFormats"))
     xml_meta <- RBioFormats::read.omexml(file) |>
@@ -206,6 +212,10 @@ getPixelSize <- function(file, resolution = 1L) {
 #' or a list of bounding boxes which are named numeric vectors.
 #' @return A named numeric vector for the total bounding box.
 #' @export
+#' @examples
+#' bboxes <- list(c(xmin = 5, xmax = 10, ymin = 2, ymax = 20),
+#' c(xmin = 8, xmax = 18, ymin = 0, ymax = 15))
+#' bbox_all <- aggBboxes(bboxes)
 aggBboxes <- function(bboxes) {
     if (is.list(bboxes)) {
         bboxes <- lapply(bboxes, function(x) x[c("xmin", "ymin", "xmax", "ymax")])
@@ -227,6 +237,11 @@ aggBboxes <- function(bboxes) {
 #' @inheritParams sampleIDs
 #' @return A character vector of \code{image_ids}.
 #' @export
+#' @examples
+#' fp <- system.file(file.path("extdata", "sample01"),
+#' package = "SpatialFeatureExperiment")
+#' sfe <- read10xVisiumSFE(fp, type = "sparse")
+#' imageIDs(sfe)
 imageIDs <- function(sfe) imgData(sfe)$image_id
 
 #' Check if Parquet GDAL driver is available
@@ -248,6 +263,9 @@ imageIDs <- function(sfe) imgData(sfe)$image_id
 #'
 #' @return Logical, indicating whether the Parquet driver is present.
 #' @export
+#' @examples
+#' gdalParquetAvailable()
+#'
 gdalParquetAvailable <- function() {
     "Parquet" %in% rownames(sf::st_drivers())
 }

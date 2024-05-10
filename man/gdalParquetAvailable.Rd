@@ -26,3 +26,7 @@ default repo is 3.4.1 (as of April 2024). To use the Parquet driver, GDAL may
 need to be installed from source. See script from the \href{https://github.com/rocker-org/rocker-versioned2/blob/master/scripts/experimental/install_dev_osgeo.sh}{geospatial rocker}.
 A Voyager docker container with the Parquet driver will soon be provided.
 }
+\examples{
+gdalParquetAvailable()
+
+}
