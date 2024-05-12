@@ -21,6 +21,6 @@ objects.
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData(dataset = "small")
-unit(sfe)
+SpatialFeatureExperiment::unit(sfe)
 }
 \concept{SpatialFeatureExperiment class}

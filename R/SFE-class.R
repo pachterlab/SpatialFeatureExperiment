@@ -275,7 +275,7 @@ SpatialFeatureExperiment <- function(assays,
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
-#' unit(sfe)
+#' SpatialFeatureExperiment::unit(sfe)
 setMethod("unit", "SpatialFeatureExperiment",
           function(x) int_metadata(x)$unit)
 

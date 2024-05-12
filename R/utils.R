@@ -173,6 +173,8 @@ bbox_center <- function(bbox) {
 #' library(SFEData)
 #' fp <- tempdir()
 #' dir_use <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+#' # RBioFormats null pointer error
+#' try(getPixelSize(file.path(dir_use, "morphology_focus.ome.tif")))
 #' getPixelSize(file.path(dir_use, "morphology_focus.ome.tif"))
 #' unlink(dir_use, recursive = TRUE)
 getPixelSize <- function(file, resolution = 1L) {
