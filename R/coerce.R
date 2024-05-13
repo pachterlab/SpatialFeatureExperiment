@@ -405,7 +405,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           assays_sfe <- assays_sfe[lapply(assays_sfe, length) > 0]
 
           # remove this afterwards
-          assays_sfe_out <<- assays_sfe
+          #assays_sfe_out <<- assays_sfe
 
           # Make SFE from Seurat ----
           message("\n", ">>> Creating `SFE` object -> ", fov_names[fov_section])
@@ -440,7 +440,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           colGeometry(sfe, 1)$sample_id <- sampleIDs(sfe)
 
           # remove this afterwards
-          sfe_out <<- sfe
+          #sfe_out <<- sfe
 
           # flip geometry both for col & row geoms ----
           if (flip == "geometry") {
@@ -622,7 +622,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
         })
 
       # remove this afterwards
-      obj_list_test <<- obj_list
+      #obj_list_test <<- obj_list
 
       if (length(obj_list) > 1) {
         message(">>> Combining ", length(obj_list),
