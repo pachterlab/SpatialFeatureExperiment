@@ -123,12 +123,17 @@ sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 }
 \seealso{
 Other image methods: 
+\code{\link{affineImg}()},
 \code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},
 \code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
 \code{\link{transposeImg}()}
 }
-\concept{Image and raster}
+\concept{Image methods}
 \concept{image methods}

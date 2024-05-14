@@ -117,6 +117,7 @@
 #'   file, then one sf data frame. For \code{addSelectTx}, an SFE object with
 #'   the transcript spots of the selected genes added.
 #' @name readSelectTx
+#' @concept Transcript spots
 #' @export
 #' @examples
 #' library(SFEData)
@@ -285,6 +286,7 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom terra nlyr
 #' @export
+#' @concept Transcript spots
 #' @return The `sf` data frame, or path to file where geometries are written if
 #'   `return = FALSE`.
 #' @rdname formatTxSpots
@@ -517,6 +519,7 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
 #' @return The `sf` data frame, or path to file where geometries are written if
 #'   `return = FALSE`.
 #' @name formatTxTech
+#' @concept Transcript spots
 #' @export
 #' @examples
 #' library(SFEData)

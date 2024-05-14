@@ -110,4 +110,4 @@ spots <- spotPoly(sfe)
 \seealso{
 [dimGeometries()], [rowGeometries()]
 }
-\concept{Column or row geometries}
+\concept{Getters and setters}

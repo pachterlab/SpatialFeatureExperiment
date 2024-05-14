@@ -111,3 +111,4 @@ try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 sfe <- readXenium(dir_use, add_molecules = TRUE)
 unlink(dir_use, recursive = TRUE)
 }
+\concept{Read data into SFE}

@@ -32,4 +32,4 @@ sfe <- toSpatialFeatureExperiment(spe)
 # actual diameter in pixels in full resolution image.
 sfe <- addVisiumSpotPoly(sfe, spotDiameter = 80)
 }
-\concept{Column or row geometries}
+\concept{Geometric operations}

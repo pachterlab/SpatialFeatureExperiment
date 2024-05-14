@@ -106,3 +106,4 @@ fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
                       file_out = file.path(dir_use, "tx_spots.parquet"))
 
 }
+\concept{Transcript spots}

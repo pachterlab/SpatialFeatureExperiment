@@ -39,3 +39,19 @@ into memory as \code{ExtImage}.
 This function performs affine transformation on images, with any matrix and
 translation vector.
 }
+\seealso{
+Other image methods: 
+\code{\link{SFE-image}},
+\code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
+\code{\link{imgRaster}()},
+\code{\link{imgSource}()},
+\code{\link{mirrorImg}()},
+\code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
+\code{\link{transposeImg}()}
+}
+\concept{Image affine transformation}
+\concept{image methods}

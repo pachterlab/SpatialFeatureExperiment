@@ -39,7 +39,7 @@
 #' @return Getters for multiple geometries return a named list. Getters for names
 #'   return a character vector of the names. Getters for single geometries
 #'   return an \code{sf} data frame. Setters return an SFE object.
-#' @concept Column or row geometries
+#' @concept Getters and setters
 #' @name dimGeometries
 #' @seealso [colGeometries()], [rowGeometries()]
 #' @aliases dimGeometries<- dimGeometry dimGeometry<- dimGeometryNames
@@ -216,7 +216,7 @@ setReplaceMethod(
 #'
 #' @inheritParams dimGeometries
 #' @name colGeometries
-#' @concept Column or row geometries
+#' @concept Getters and setters
 #' @seealso [dimGeometries()], [rowGeometries()]
 #' @examples
 #' library(SFEData)
@@ -393,10 +393,21 @@ nucSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' @param partial In setters, if a \code{rowGeometry} of the same name exists,
 #'   whether to only replace the rows present in \code{value}.
 #' @name rowGeometries
-#' @concept Column or row geometries
+#' @concept Getters and setters
 #' @seealso [dimGeometries()], [colGeometries()]
 #' @examples
-#' # Use Xenium toy example
+#' library(SFEData)
+#' library(RBioFormats)
+#' fp <- tempdir()
+#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' # RBioFormats issue
+#' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
+#' sfe <- readXenium(dir_use, add_molecules = TRUE)
+#' rowGeometries(sfe)
+#' rowGeometryNames(sfe)
+#' tx <- rowGeometry(sfe, "txSpots")
+#' txSpots(sfe)
+#' unlink(dir_use, recursive = TRUE)
 NULL
 
 .check_rg_type <- function(type, x, sample_id) {
@@ -613,7 +624,7 @@ txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' @return A SFE object with a new colGeometry called spotPoly, which has
 #' polygons of the spots.
 #' @importFrom SpatialExperiment spatialCoordsNames
-#' @concept Column or row geometries
+#' @concept Geometric operations
 #' @export
 #' @examples
 #' library(SpatialExperiment)

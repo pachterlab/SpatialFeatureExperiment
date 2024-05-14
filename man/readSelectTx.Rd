@@ -88,3 +88,4 @@ if (gdalParquetAvailable()) {
     unlink(dir_use, recursive = TRUE)
 }
 }
+\concept{Transcript spots}

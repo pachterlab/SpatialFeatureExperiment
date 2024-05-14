@@ -144,4 +144,4 @@ foobar <- colGeometry(sfe_combined, "foobar", sample_id = "sample02")
 \seealso{
 [colGeometries()], [rowGeometries()]
 }
-\concept{Column or row geometries}
+\concept{Getters and setters}

@@ -50,4 +50,4 @@ the extension.
 \seealso{
 toExtImage
 }
-\concept{Image and raster}
+\concept{Image classes}

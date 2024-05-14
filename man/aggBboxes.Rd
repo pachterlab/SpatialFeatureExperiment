@@ -22,3 +22,4 @@ bboxes <- list(c(xmin = 5, xmax = 10, ymin = 2, ymax = 20),
 c(xmin = 8, xmax = 18, ymin = 0, ymax = 15))
 bbox_all <- aggBboxes(bboxes)
 }
+\concept{Utilities}

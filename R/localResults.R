@@ -1,4 +1,4 @@
-#' Organize results from local spatial statistics
+#' Get and set results from local spatial statistics
 #'
 #' Local spatial statics like local Moran's I, local Geary's C, Getis-Ord Gi*,
 #' and geographically weighted summary statistics return values at each spatial
@@ -48,7 +48,7 @@
 #'   the results are a vector.
 #' @docType methods
 #' @name localResults
-#' @concept Local spatial results
+#' @concept Getters and setters
 #' @examples
 #' # Toy example
 #' sfe <- readRDS(system.file("extdata/sfe_toy.rds",

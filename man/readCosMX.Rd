@@ -77,3 +77,4 @@ sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
 # Clean up
 unlink(dir_use, recursive = TRUE)
 }
+\concept{Read data into SFE}

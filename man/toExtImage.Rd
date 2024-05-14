@@ -37,4 +37,4 @@ image operations as implemented in the \code{ExtImage} package.
 \seealso{
 toSpatRasterImage
 }
-\concept{Image and raster}
+\concept{Image classes}

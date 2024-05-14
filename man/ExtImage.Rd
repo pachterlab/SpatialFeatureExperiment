@@ -4,16 +4,11 @@
 \name{ExtImage}
 \alias{ExtImage}
 \alias{ExtImage-class}
-\alias{show,ExtImage-method}
-\title{Representation of ExtImage images in SFE objects}
+\title{Use the EBImage \code{Image} class in SFE objects}
 \usage{
-\S4method{show}{ExtImage}(object)
-
 ExtImage(img, ext = NULL)
 }
 \arguments{
-\item{object}{An \code{ExtImage} object.}
-
 \item{img}{An \code{Image} object or anything that inherits from \code{Image}
 such as \code{AnnotatedImage} in \code{RBioFormats}.}
 
@@ -21,16 +16,18 @@ such as \code{AnnotatedImage} in \code{RBioFormats}.}
 microns indicating the spatial extent covered by the image. If \code{NULL},
 then the extent will be inferred from the metadata, from physical pixel
 size and the number of pixels.}
+
+\item{object}{An \code{ExtImage} object.}
 }
 \value{
 An \code{ExtImage} object.
 }
 \description{
 This is a thin wrapper around the \code{\link{Image}} class in the
-\code{ExtImage package} so it inherits from \code{VirtualSpatialImage} to be
+\code{EBImage} package so it inherits from \code{VirtualSpatialImage} to be
 compatible with \code{SpatialExperiment} from which SFE inherits. An
 \code{ext} field is added to specify the spatial extent of the image in
 microns to facilitate geometric operations on the SFE object (including the
 images) and plotting with \code{Voyager}.
 }
-\concept{Image and raster}
+\concept{Image classes}

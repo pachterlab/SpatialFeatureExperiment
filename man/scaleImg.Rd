@@ -25,3 +25,19 @@ changed. The center of the image is unchanged.
 This function scales the image about its center. After scaling, the center
 of the image is not shifted.
 }
+\seealso{
+Other image methods: 
+\code{\link{SFE-image}},
+\code{\link{affineImg}()},
+\code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
+\code{\link{imgRaster}()},
+\code{\link{imgSource}()},
+\code{\link{mirrorImg}()},
+\code{\link{rotateImg}()},
+\code{\link{translateImg}()},
+\code{\link{transposeImg}()}
+}
+\concept{Image affine transformation}
+\concept{image methods}

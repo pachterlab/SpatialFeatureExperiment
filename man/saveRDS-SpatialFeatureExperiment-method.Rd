@@ -55,4 +55,4 @@ saveRDS(sfe, "foo.rds")
 # Clean up
 file.remove("foo.rds")
 }
-\concept{SpatialFeatureExperiment class}
+\concept{Utilities}
