@@ -22,3 +22,4 @@ package = "SpatialFeatureExperiment")
 sfe <- read10xVisiumSFE(fp, type = "sparse")
 imageIDs(sfe)
 }
+\concept{Utilities}

@@ -29,3 +29,4 @@ try(getPixelSize(file.path(dir_use, "morphology_focus.ome.tif")))
 getPixelSize(file.path(dir_use, "morphology_focus.ome.tif"))
 unlink(dir_use, recursive = TRUE)
 }
+\concept{Utilities}

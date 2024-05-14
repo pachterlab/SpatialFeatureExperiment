@@ -18,7 +18,7 @@
 \alias{localResultAttrs,SpatialFeatureExperiment-method}
 \alias{localResult,SpatialFeatureExperiment-method}
 \alias{localResult<-,SpatialFeatureExperiment-method}
-\title{Organize results from local spatial statistics}
+\title{Get and set results from local spatial statistics}
 \usage{
 \S4method{localResults}{SpatialFeatureExperiment}(
   x,
@@ -206,4 +206,4 @@ localResult(sfe, "localmoran",
 # Get results for a feature in colGeometries
 lr <- localResult(sfe, "localmoran", "gene1", colGeometryName = "cg")
 }
-\concept{Local spatial results}
+\concept{Getters and setters}

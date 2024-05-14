@@ -89,7 +89,7 @@ Suggests:
     dplyr,
     tidyr
 Remotes:
-    github::pachterlab/voyager
+    Voyager=github::pachterlab/voyager
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

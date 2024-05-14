@@ -20,3 +20,4 @@ Get x-y coordinates of the center of any bounding box
 bbox <- c(xmin = 0, xmax = 100, ymin = 0, ymax = 80)
 bbox_center(bbox)
 }
+\concept{Utilities}

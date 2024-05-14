@@ -41,11 +41,16 @@ the diagonal running from top left to bottom right.
 \seealso{
 Other image methods: 
 \code{\link{SFE-image}},
+\code{\link{affineImg}()},
 \code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},
-\code{\link{rotateImg}()}
+\code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()}
 }
-\concept{Image and raster}
+\concept{Image affine transformation}
 \concept{image methods}

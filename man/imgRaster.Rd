@@ -16,7 +16,8 @@ is a medium resolution in Xenium.}
 \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
   \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
   image of the specified resolution will be read into memory as
-  \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
+  \code{AnnotatedImage} and \code{ExtImage}, which both inherit from
+  \code{EBImage::Image}.
 }
 \description{
 In SFE, S4 classes inheriting from \code{VirtualSpatialImage} have been
@@ -31,11 +32,16 @@ image of the specified resolution will be read into memory as
 \seealso{
 Other image methods: 
 \code{\link{SFE-image}},
+\code{\link{affineImg}()},
 \code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},
 \code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
 \code{\link{transposeImg}()}
 }
-\concept{Image and raster}
+\concept{Image methods}
 \concept{image methods}

@@ -14,7 +14,7 @@
 #' @return Invisibly \code{NULL}.
 #' @importFrom terra wrap unwrap
 #' @export
-#' @concept SpatialFeatureExperiment class
+#' @concept Utilities
 #' @examples
 #' outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
 #' samples <- file.path(outdir, paste0("sample0", 1:2))

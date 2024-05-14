@@ -18,7 +18,7 @@
     return(fd)
 }
 
-#' Get metadata of colData, rowData, and geometries
+#' Get global spatial analysis results and metadata of colData, rowData, and geometries
 #'
 #' Results of spatial analyses on columns in \code{colData}, \code{rowData}, and
 #' geometries are stored in their metadata, which can be accessed by the
@@ -31,7 +31,7 @@
 #'   annotGeometry. Defaults to 2, colGeometry.
 #' @param dimred Name of a dimension reduction, can be seen in
 #'   \code{\link{reducedDimNames}}.
-#' @concept Spatial analysis results
+#' @concept Getters and setters
 #' @return A \code{DataFrame}.
 #' @seealso getParams
 #' @export
@@ -108,7 +108,7 @@ reducedDimFeatureData <- function(sfe, dimred) {
 #'   \code{\link{reducedDimNames}}. \code{colGeometryName} and
 #'   \code{annotGeometryName} have precedence over \code{reducedDimName}.
 #' @return A named list showing the parameters
-#' @concept Spatial analysis results
+#' @concept Getters and setters
 #' @export
 #' @examples
 #' library(SFEData)

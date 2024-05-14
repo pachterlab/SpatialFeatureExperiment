@@ -149,6 +149,7 @@ changeSampleIDs <- function(sfe, replacement) {
 #' @param bbox A numeric vector of length 4 with names xmin, xmax, ymin, ymax,
 #' in any order.
 #' @return A numeric vector of length 2.
+#' @concept Utilities
 #' @examples
 #' bbox <- c(xmin = 0, xmax = 100, ymin = 0, ymax = 80)
 #' bbox_center(bbox)
@@ -169,6 +170,7 @@ bbox_center <- function(bbox) {
 #' @return Numeric vector of length 2 of pixel size in x and y. Usually they're
 #' the same.
 #' @export
+#' @concept Utilities
 #' @examples
 #' library(SFEData)
 #' fp <- tempdir()
@@ -214,6 +216,7 @@ getPixelSize <- function(file, resolution = 1L) {
 #' or a list of bounding boxes which are named numeric vectors.
 #' @return A named numeric vector for the total bounding box.
 #' @export
+#' @concept Utilities
 #' @examples
 #' bboxes <- list(c(xmin = 5, xmax = 10, ymin = 2, ymax = 20),
 #' c(xmin = 8, xmax = 18, ymin = 0, ymax = 15))
@@ -239,6 +242,7 @@ aggBboxes <- function(bboxes) {
 #' @inheritParams sampleIDs
 #' @return A character vector of \code{image_ids}.
 #' @export
+#' @concept Utilities
 #' @examples
 #' fp <- system.file(file.path("extdata", "sample01"),
 #' package = "SpatialFeatureExperiment")
@@ -265,6 +269,7 @@ imageIDs <- function(sfe) imgData(sfe)$image_id
 #'
 #' @return Logical, indicating whether the Parquet driver is present.
 #' @export
+#' @concept Utilities
 #' @examples
 #' gdalParquetAvailable()
 #'

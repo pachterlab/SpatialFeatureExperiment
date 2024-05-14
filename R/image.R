@@ -29,7 +29,7 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' @importClassesFrom terra SpatRaster
 #' @importClassesFrom EBImage Image
 #' @importFrom methods setClassUnion
-#' @concept Image and raster
+#' @concept Image classes
 #' @examples
 #' # Example code
 #' @name SpatRasterImage
@@ -133,7 +133,7 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
 #' @aliases BioFormatsImage-class
-#' @concept Image and raster
+#' @concept Image classes
 #' @seealso [isFull()], [origin()]
 #' @exportClass BioFormatsImage
 setClass("BioFormatsImage", contains = "AlignedSpatialImage",
@@ -206,8 +206,7 @@ setValidity("BioFormatsImage", function(object) {
     sizeX_full <- size_full[1]; sizeY_full <- size_full[2]
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
-#' @rdname BioFormatsImage
-#' @export
+
 setMethod("show", "BioFormatsImage", function(object) {
     d <- dim(object)
     dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
@@ -278,6 +277,7 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
 #'   For \code{transformation}, a list.
 #' @name BioFormatsImage-getters
 #' @aliases isFull origin transformation
+#' @concept Image classes
 NULL
 
 #' @rdname BioFormatsImage-getters
@@ -304,10 +304,10 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 
 # ExtImage==============
 
-#' Representation of ExtImage images in SFE objects
+#' Use the EBImage \code{Image} class in SFE objects
 #'
 #' This is a thin wrapper around the \code{\link{Image}} class in the
-#' \code{ExtImage package} so it inherits from \code{VirtualSpatialImage} to be
+#' \code{EBImage} package so it inherits from \code{VirtualSpatialImage} to be
 #' compatible with \code{SpatialExperiment} from which SFE inherits. An
 #' \code{ext} field is added to specify the spatial extent of the image in
 #' microns to facilitate geometric operations on the SFE object (including the
@@ -323,7 +323,7 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 #' @name ExtImage
 #' @aliases ExtImage-class
 #' @exportClass ExtImage
-#' @concept Image and raster
+#' @concept Image classes
 setClass("ExtImage", contains = c("AlignedSpatialImage", "Image"),
          slots = c(ext = "numeric"))
 
@@ -332,8 +332,6 @@ setValidity("ExtImage", function(object) {
     if (length(out)) return(out) else TRUE
 })
 
-#' @rdname ExtImage
-#' @export
 setMethod("show", "ExtImage", function(object) {
     d <- dim(object)
     dim <- paste(dim(object), collapse=" x ")
@@ -522,7 +520,7 @@ ExtImage <- function(img, ext = NULL) {
 #' @seealso toSpatRasterImage
 #' @aliases toExtImage
 #' @export
-#' @concept Image and raster
+#' @concept Image classes
 NULL
 
 #' @rdname toExtImage
@@ -551,7 +549,7 @@ setMethod("toExtImage", "SpatRasterImage", .toExtImage2)
 #' @name toSpatRasterImage
 #' @seealso toExtImage
 #' @export
-#' @concept Image and raster
+#' @concept Image classes
 NULL
 
 #' @rdname toSpatRasterImage
@@ -610,7 +608,8 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #' setter sets the pre-transformation extent.
 #' @name ext
 #' @aliases ext
-#' @concept Image and raster
+#' @concept Image methods
+#' @family image methods
 NULL
 
 .ext_ <- function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
@@ -666,6 +665,8 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #'   in the full resolution image. The 5 dimensions are in the order of XYCZT:
 #'   x, y, channel, z, and time. This is not changed by transformations. Use
 #'   \code{\link{ext}} to see the extent after transformation.
+#' @concept Image methods
+#' @family image methods
 #' @export
 setMethod("dim", "BioFormatsImage", function(x) {
     check_installed("RBioFormats")
@@ -714,7 +715,7 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #' transposing a matrix. It's flipped about the line going from the top left to
 #' the bottom right.
 #' @name SFE-image
-#' @concept Image and raster
+#' @concept Image methods
 #' @family image methods
 #' @examples
 #' library(SFEData)
@@ -897,13 +898,13 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 #' @return \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
 #'   \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
 #'   image of the specified resolution will be read into memory as
-#'   \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
+#'   \code{AnnotatedImage} and \code{ExtImage}, which both inherit from
+#'   \code{EBImage::Image}.
 #' @export
 #' @name imgRaster
-#' @aliases imgRaster,SpatRasterImage-method
-#' imgRaster,BioFormatsImage-method
-#' imgRaster,ExtImage-method
-#' @concept Image and raster
+#' @aliases imgRaster,SpatRasterImage-method imgRaster,BioFormatsImage-method
+#'   imgRaster,ExtImage-method
+#' @concept Image methods
 #' @family image methods
 NULL
 
@@ -935,7 +936,7 @@ setMethod("imgRaster", "ExtImage", function(x) as(x, "Image"))
 #'   \code{NULL}.
 #' @name imgSource
 #' @export
-#' @concept Image and raster
+#' @concept Image methods
 #' @importFrom terra sources
 #' @family image methods
 NULL
@@ -981,7 +982,7 @@ setMethod("imgSource", "ExtImage", function(x) NA_character_)
 #'   ymax.
 #' @name transposeImg
 #' @aliases transposeImg
-#' @concept Image and raster
+#' @concept Image affine transformation
 #' @export
 #' @family image methods
 NULL
@@ -1055,7 +1056,7 @@ setMethod("transposeImg", "ExtImage",
 #' @return \code{*Image} object of the same class.
 #' @name mirrorImg
 #' @aliases mirrorImg
-#' @concept Image and raster
+#' @concept Image affine transformation
 #' @export
 #' @family image methods
 NULL
@@ -1142,7 +1143,7 @@ setMethod("mirrorImg", "ExtImage",
 #'   \code{ExtImage}. Otherwise \code{*Image} object of the same class.
 #' @name rotateImg
 #' @aliases rotateImg
-#' @concept Image and raster
+#' @concept Image affine transformation
 #' @export
 #' @family image methods
 NULL
@@ -1203,6 +1204,8 @@ setMethod("rotateImg", "ExtImage",
 #' @name translateImg
 #' @aliases translateImg
 #' @importFrom terra shift
+#' @concept Image affine transformation
+#' @family image methods
 #' @export
 NULL
 
@@ -1248,6 +1251,8 @@ setMethod("translateImg", "ExtImage", function(x, v, ...) {
 #' changed. The center of the image is unchanged.
 #' @aliases scaleImg
 #' @name scaleImg
+#' @concept Image affine transformation
+#' @family image methods
 #' @export
 NULL
 
@@ -1272,6 +1277,8 @@ setMethod("scaleImg", "AlignedSpatialImage",
 #' into memory as \code{ExtImage}.
 #' @name affineImg
 #' @aliases affineImg
+#' @concept Image affine transformation
+#' @family image methods
 #' @export
 NULL
 
@@ -1313,7 +1320,7 @@ setMethod("affineImg", "ExtImage",
 #'   extent is changed.
 #' @name cropImg
 #' @aliases cropImg
-#' @concept Image and raster
+#' @concept Image methods
 #' @export
 #' @family image methods
 NULL

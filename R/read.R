@@ -675,6 +675,7 @@ readVizgen <- function(data_dir,
 #'   to file specified in the `file_out` argument, which is by default
 #'   `tx_spots.parquet` in the same directory as the rest of the data.
 #' @export
+#' @concept Read data into SFE
 #' @examples
 #' fp <- tempdir()
 #' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
@@ -821,7 +822,7 @@ readCosMX <- function(data_dir,
 #' "RBioFormats.reader" is null'. Rerun the code and it should work the second
 #' time.
 #' @export
-#'
+#' @concept Read data into SFE
 #' @importFrom sf st_area st_geometry<- st_as_sf
 #' @importFrom terra rast ext vect
 #' @importFrom BiocParallel bpmapply bplapply

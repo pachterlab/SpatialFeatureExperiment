@@ -51,4 +51,19 @@ For \code{BioFormatsImage}, internally only the pre-transform extent is
 stored. The \code{ext} getter will apply the transformation on the fly. The
 setter sets the pre-transformation extent.
 }
-\concept{Image and raster}
+\seealso{
+Other image methods: 
+\code{\link{SFE-image}},
+\code{\link{affineImg}()},
+\code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{imgRaster}()},
+\code{\link{imgSource}()},
+\code{\link{mirrorImg}()},
+\code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
+\code{\link{transposeImg}()}
+}
+\concept{Image methods}
+\concept{image methods}

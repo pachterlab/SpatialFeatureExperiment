@@ -29,3 +29,4 @@ For \code{isFull}: Logical scalar indicating whether the extent is
 \code{origin} gets the x-y coordinates of the origin of the image, i.e. the
 smallest possible x-y coordinate values within the full image.
 }
+\concept{Image classes}

@@ -42,11 +42,16 @@ Flip images along the middle horizontal or vertical axis.
 \seealso{
 Other image methods: 
 \code{\link{SFE-image}},
+\code{\link{affineImg}()},
 \code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},
 \code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
 \code{\link{transposeImg}()}
 }
-\concept{Image and raster}
+\concept{Image affine transformation}
 \concept{image methods}

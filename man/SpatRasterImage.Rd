@@ -34,4 +34,4 @@ inheriting from \code{VirtualSpatialImage} as required by
 \examples{
 # Example code
 }
-\concept{Image and raster}
+\concept{Image classes}
