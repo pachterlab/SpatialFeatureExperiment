@@ -130,7 +130,7 @@ test_that("Error message when Parquet driver is unavailable", {
     fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
     expect_error(fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
                                        file_out = file.path(fn, "tx_spots.parquet")),
-                 "GDAL Parquet driver is required to selectively read genes")
+                 "GDAL Parquet driver is required")
     unlink(fn, recursive = TRUE)
 })
 
@@ -152,6 +152,7 @@ test_that("Add a subset of spots", {
 })
 
 test_that("Add subset of spots, multiple files in tx spots output", {
+    skip_if_not(gdalParquetAvailable())
     fp <- tempdir()
     dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
 

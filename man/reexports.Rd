@@ -74,6 +74,11 @@ reducedDim(x, type, ...)
     An object of a class specified in the S4 method
     signature or as outlined in \sQuote{Details}.
   }
+
+\item{object}{A \code{SingleCellExperiment} object, which includes SFE.}
+
+\item{type}{Name or numeric index to indicate which \code{reducedDim} to get,
+such as "PCA". By default the first item in \code{reducedDims}.}
 }
 \description{
 These are some commonly used getters and setters of classes that SFE inherits
