@@ -128,8 +128,10 @@ test_that("Error message when Parquet driver is unavailable", {
     skip_if(gdalParquetAvailable())
     fp <- tempdir()
     fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
-    expect_error(fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
-                                       file_out = file.path(fn, "tx_spots.parquet")),
+    fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
+                          file_out = file.path(fn, "tx_spots.parquet"))
+    gene_select <- c("ACE2", "BMX")
+    expect_error(df <- readSelectTx(fn_tx, gene_select),
                  "GDAL Parquet driver is required")
     unlink(fn, recursive = TRUE)
 })
