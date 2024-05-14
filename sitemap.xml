@@ -22,10 +22,22 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/BioFormatsImage-getters.html</loc>
+  </url>
+  <url>
+    <loc>/reference/BioFormatsImage.html</loc>
+  </url>
+  <url>
+    <loc>/reference/ExtImage.html</loc>
+  </url>
+  <url>
     <loc>/reference/SFE-image.html</loc>
   </url>
   <url>
     <loc>/reference/SFE-transform.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SpatRasterImage.html</loc>
   </url>
   <url>
     <loc>/reference/SpatialFeatureExperiment-class.html</loc>
@@ -43,6 +55,12 @@
     <loc>/reference/addVisiumSpotPoly.html</loc>
   </url>
   <url>
+    <loc>/reference/affineImg.html</loc>
+  </url>
+  <url>
+    <loc>/reference/aggBboxes.html</loc>
+  </url>
+  <url>
     <loc>/reference/annotGeometries.html</loc>
   </url>
   <url>
@@ -58,25 +76,67 @@
     <loc>/reference/bbox-SpatialFeatureExperiment-method.html</loc>
   </url>
   <url>
+    <loc>/reference/bbox_center.html</loc>
+  </url>
+  <url>
     <loc>/reference/cbind-SpatialFeatureExperiment-method.html</loc>
   </url>
   <url>
     <loc>/reference/changeSampleIDs.html</loc>
   </url>
   <url>
+    <loc>/reference/colFeatureData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/colGeometries.html</loc>
+  </url>
+  <url>
     <loc>/reference/crop.html</loc>
+  </url>
+  <url>
+    <loc>/reference/cropImg.html</loc>
   </url>
   <url>
     <loc>/reference/df2sf.html</loc>
   </url>
   <url>
+    <loc>/reference/dim-BioFormatsImage-method.html</loc>
+  </url>
+  <url>
     <loc>/reference/dimGeometries.html</loc>
+  </url>
+  <url>
+    <loc>/reference/ext.html</loc>
   </url>
   <url>
     <loc>/reference/findSpatialNeighbors-SpatialFeatureExperiment-method.html</loc>
   </url>
   <url>
     <loc>/reference/findVisiumGraph.html</loc>
+  </url>
+  <url>
+    <loc>/reference/formatTxSpots.html</loc>
+  </url>
+  <url>
+    <loc>/reference/formatTxTech.html</loc>
+  </url>
+  <url>
+    <loc>/reference/gdalParquetAvailable.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getParams.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getPixelSize.html</loc>
+  </url>
+  <url>
+    <loc>/reference/imageIDs.html</loc>
+  </url>
+  <url>
+    <loc>/reference/imgRaster.html</loc>
+  </url>
+  <url>
+    <loc>/reference/imgSource.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
@@ -88,10 +148,22 @@
     <loc>/reference/localResults.html</loc>
   </url>
   <url>
+    <loc>/reference/mirrorImg.html</loc>
+  </url>
+  <url>
     <loc>/reference/read10xVisiumSFE.html</loc>
   </url>
   <url>
+    <loc>/reference/readCosMX.html</loc>
+  </url>
+  <url>
+    <loc>/reference/readSelectTx.html</loc>
+  </url>
+  <url>
     <loc>/reference/readVizgen.html</loc>
+  </url>
+  <url>
+    <loc>/reference/readXenium.html</loc>
   </url>
   <url>
     <loc>/reference/reexports.html</loc>
@@ -100,10 +172,19 @@
     <loc>/reference/removeEmptySpace.html</loc>
   </url>
   <url>
+    <loc>/reference/rotateImg.html</loc>
+  </url>
+  <url>
+    <loc>/reference/rowGeometries.html</loc>
+  </url>
+  <url>
     <loc>/reference/sampleIDs.html</loc>
   </url>
   <url>
     <loc>/reference/saveRDS-SpatialFeatureExperiment-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/scaleImg.html</loc>
   </url>
   <url>
     <loc>/reference/show-SpatialFeatureExperiment-method.html</loc>
@@ -113,6 +194,18 @@
   </url>
   <url>
     <loc>/reference/st_any_pred.html</loc>
+  </url>
+  <url>
+    <loc>/reference/toExtImage.html</loc>
+  </url>
+  <url>
+    <loc>/reference/toSpatRasterImage.html</loc>
+  </url>
+  <url>
+    <loc>/reference/translateImg.html</loc>
+  </url>
+  <url>
+    <loc>/reference/transposeImg.html</loc>
   </url>
   <url>
     <loc>/reference/unit-SpatialFeatureExperiment-method.html</loc>
