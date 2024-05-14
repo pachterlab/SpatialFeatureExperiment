@@ -27,6 +27,8 @@
 #' @return A \code{SpatialFeatureExperiment} object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
+#' @importFrom methods slot<-
+#' @importFrom SingleCellExperiment altExp<- reducedDim<-
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
 #' @concept SpatialFeatureExperiment class

@@ -207,6 +207,8 @@ setValidity("BioFormatsImage", function(object) {
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
 
+#' @rdname BioFormatsImage
+#' @export
 setMethod("show", "BioFormatsImage", function(object) {
     d <- dim(object)
     dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
@@ -332,6 +334,8 @@ setValidity("ExtImage", function(object) {
     if (length(out)) return(out) else TRUE
 })
 
+#' @rdname ExtImage
+#' @export
 setMethod("show", "ExtImage", function(object) {
     d <- dim(object)
     dim <- paste(dim(object), collapse=" x ")

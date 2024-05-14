@@ -4,6 +4,12 @@
 #' so you don't have to separately attach those packages to use these functions.
 #'
 #' @name reexports
+#' @inheritParams SummarizedExperiment::colData
+#' @inheritParams SingleCellExperiment::reducedDim
+#' @inheritParams SpatialExperiment::getImg
+#' @inheritParams SummarizedExperiment::`colData<-`
+#' @inheritParams SingleCellExperiment::counts
+#' @inheritParams SummarizedExperiment::rowData
 NULL
 
 #' @rdname reexports

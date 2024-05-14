@@ -688,5 +688,8 @@ test_that("Crop ExtImage", {
     expect_equal(dim(imgRaster(ebi_sub)), round(dim_expect))
 })
 
-unlink(xenium_dir, recursive = TRUE)
-unlink(vizgen_dir, recursive = TRUE)
+# Final cleanup in case failed test messed with cleanup
+fp <- tempdir()
+unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
+unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
+unlink(file.path(fp, "xenium_test"), recursive = TRUE)
