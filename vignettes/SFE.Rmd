@@ -54,6 +54,7 @@ library(SpatialExperiment)
 library(SFEData)
 library(sf)
 library(Matrix)
+library(RBioFormats)
 ```
 
 ```{r}
@@ -393,6 +394,8 @@ list.files(dir_use)
 ```
 
 ```{r}
+# RBioFormats issue: https://github.com/aoles/RBioFormats/issues/42
+try(sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
 (sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
 ```
 
