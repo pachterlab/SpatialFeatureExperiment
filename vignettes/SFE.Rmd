@@ -445,6 +445,7 @@ If images are present in the SPE object, they will be converted into `SpatRaster
 ## Coercion from `Seurat`
 Seurat objects canbe coerced into SFE objects though coercion from SFE to Seurat is not yet implemented.
 ```{r}
+dir_extdata <- system.file("extdata", package = "SpatialFeatureExperiment")
 obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
 ```
 
