@@ -83,12 +83,12 @@ test_that("Exact Bioc methods for dnearneigh return same results as spdep method
     for (d in dist_types) {
         s <- "W"
         cat("Testing dist_type", d, "style", s, "\n")
-        g1 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+        g1 <- findSpatialNeighbors(sfe, d1 = 50, d2 = 150, sample_id = "all", MARGIN = 3,
                                    dist_type = d, style = s,
                                    type = "myofiber_simplified",
                                    method = "dnearneigh",
                                    nn_method = "spdep", dmax = 200)
-        g2 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+        g2 <- findSpatialNeighbors(sfe, d1 = 50, d2 = 150, sample_id = "all", MARGIN = 3,
                                    dist_type = d, style = s,
                                    type = "myofiber_simplified",
                                    method = "dnearneigh",
@@ -99,18 +99,45 @@ test_that("Exact Bioc methods for dnearneigh return same results as spdep method
     for (s in styles) {
         d <- "idw"
         cat("Testing dist_type", d, "style", s, "\n")
-        g1 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+        g1 <- findSpatialNeighbors(sfe, d1 = 50, d2 = 150, sample_id = "all", MARGIN = 3,
                                    dist_type = d, style = s,
                                    type = "myofiber_simplified",
                                    method = "dnearneigh",
                                    nn_method = "spdep")
-        g2 <- findSpatialNeighbors(sfe, d2 = 150, sample_id = "all", MARGIN = 3,
+        g2 <- findSpatialNeighbors(sfe, d1 = 50, d2 = 150, sample_id = "all", MARGIN = 3,
                                    dist_type = d, style = s,
                                    type = "myofiber_simplified",
                                    method = "dnearneigh",
                                    nn_method = "bioc")
         expect_equal(g1, g2, ignore_attr = TRUE)
     }
+})
+
+test_that("Error when dmax is not specified for DPD", {
+    expect_error(g <- findSpatialNeighbors(sfe, dist_type = "dpd", d2 = 150,
+                                           sample_id = "all", MARGIN = 3,
+                                           type = "myofiber_simplified",
+                                           method = "dnearneigh",
+                                           nn_method = "bioc"),
+                 "DPD weights require a maximum distance threshold")
+    expect_error(g <- findSpatialNeighbors(sfe, dist_type = "dpd", d2 = 150,
+                                           sample_id = "all", MARGIN = 3,
+                                           type = "myofiber_simplified",
+                                           method = "dnearneigh",
+                                           nn_method = "bioc", dmax = -2),
+                 "DPD weights require a positive")
+    expect_error(g <- findSpatialNeighbors(sfe, dist_type = "dpd", k = 10,
+                                           sample_id = "all", MARGIN = 3,
+                                           type = "myofiber_simplified",
+                                           method = "knearneigh",
+                                           nn_method = "bioc"),
+                 "DPD weights require a maximum distance threshold")
+    expect_error(g <- findSpatialNeighbors(sfe, dist_type = "dpd", k = 10,
+                                           sample_id = "all", MARGIN = 3,
+                                           type = "myofiber_simplified",
+                                           method = "knearneigh",
+                                           nn_method = "bioc", dmax = -2),
+                 "DPD weights require a positive")
 })
 
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",

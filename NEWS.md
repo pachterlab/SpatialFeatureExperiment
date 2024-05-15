@@ -1,3 +1,6 @@
+# Version 1.6.2
+* Added image setter, Img<-
+
 # Version 1.6.1 (05/09/2024)
 * readRDS converts old style SpatRasterImage to the new style
 * readSelectTx and addSelectTx functions to read transcript spots from a few select genes from the parquet output of formatTxSpots or add them to an SFE object
