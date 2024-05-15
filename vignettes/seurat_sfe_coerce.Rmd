@@ -1,0 +1,488 @@
+---
+title: "Seurat_to_SFE"
+subtitle: "NOTE: supports Visium, Vizgen and Xenium"
+author: "Alik Huseynov"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setup
+```{r setup}
+# set R options, paths, object params, names, functions, etc..
+message("Setting options, paths and object params..")
+Sys.setenv(LANG = "en")
+
+# To get metadata df from SFE or Seurat object
+getMeta <- 
+  function(object = NULL) {
+    if (class(object) == "Seurat") {
+      #is(object, "Seurat")
+      # return Seurat metadata
+      return(methods::slot(object, name = "meta.data"))
+      } else {
+        return(colData(object) |> 
+                 methods::slot(name = "listData") |> 
+                 as.data.frame.list())
+      }
+    }
+
+# set root dir
+dir_extdata <- system.file("extdata", package = "SpatialFeatureExperiment")
+
+# set BPPARAM
+BPPARAM <- BiocParallel::MulticoreParam(3,
+                                        tasks = 2L,
+                                        force.GC = FALSE,
+                                        progressbar = TRUE)
+```
+
+## Load R packages
+```{r load_libs}
+suppressPackageStartupMessages({
+    library(ggplot2)
+    #library(SingleCellExperiment)
+    library(scater)
+    library(scuttle)
+    library(Seurat)
+    #library(SeuratData)
+    #library(dplyr)
+    library(magrittr)
+    #library(scales)    
+    #library(spatstat)
+    library(patchwork)
+    #library(Matrix)
+    #library(SpatialExperiment)
+    library(Voyager)   
+    library(SpatialFeatureExperiment)
+    library(SFEData)
+    #library(terra)
+    #library(BiocParallel)
+    #library(sf)    
+    })
+```
+
+## Load Seurat v5 objects - 1 sample
+Note, these object were generated a priori, object names with (eg `*_vis` for Visium) correspond to specific spatial tech
+```{r}
+obj_vz <- SeuratTestData("Vizgen")
+obj_vz
+obj_xen <- SeuratTestData("Xenium")
+obj_xen
+obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
+obj_vis
+obj_vishd <- SeuratTestData("VisiumHD8") # Visium HD
+obj_vishd
+```
+
+## Convert Seurat -> SFE - Visium (toy data)
+```{r}
+showMethods("toSpatialFeatureExperiment")
+# real Visium data
+sfe_conv_vis <-
+  toSpatialFeatureExperiment(x = obj_vis, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_conv_vis
+getMeta(sfe_conv_vis) %>% str
+```
+
+## Plot converted SFE Visium (toy data)
+```{r}
+plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
+                   features = rownames(sfe_conv_vis)[1], 
+                   size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  )
+```
+
+## Load Visium Seurat object (real data)
+Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`.
+Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
+```{r}
+obj_vis2 <- SeuratTestData("Visium")
+obj_vis2
+# plot it
+SpatialFeaturePlot(obj_vis2, features = rownames(obj_vis2)[1])
+
+```
+## Convert Seurat -> SFE - Visium (real data)
+```{r}
+# real Visium data
+sfe_conv_vis2 <-
+  toSpatialFeatureExperiment(x = obj_vis2, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_conv_vis2
+getMeta(sfe_conv_vis2) %>% str
+```
+
+## Plot converted Seurat to SFE - Visium
+```{r}
+plotSpatialFeature(sfe_conv_vis2, exprs_values = "counts",
+                   features = rownames(sfe_conv_vis2)[1], 
+                   #size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  )
+```
+
+## Convert Seurat -> SFE - Visium HD
+```{r}
+sfe_vishd <-
+  toSpatialFeatureExperiment(x = obj_vishd, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vishd
+getMeta(sfe_vishd) %>% str
+```
+
+##  Plot converted Seurat to SFE - Visium HD
+```{r}
+plotSpatialFeature(sfe_vishd, exprs_values = "counts",
+                   features = rownames(sfe_vishd)[1], 
+                   size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = TRUE
+                  )
+plotSpatialFeature(sfe_vishd, exprs_values = "counts",
+                   features = rownames(sfe_vishd)[1], 
+                   size = 0, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE
+                  )
+```
+
+## Convert Seurat -> SFE - Xenium
+```{r}
+# slim down Xenium obj to keep only 1 Assay
+if (!exists("obj_xen_slim"))
+  obj_xen_slim <- DietSeurat(obj_xen, assays = "Xenium")
+#real data subset
+sfe_conv_xen <-
+  toSpatialFeatureExperiment(x = obj_xen_slim,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             #unit = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_xen
+getMeta(sfe_conv_xen) %>% str
+getMeta(obj_xen) %>% str
+```
+
+```{r}
+# manual check
+ggplot() &
+    geom_sf(data = cellSeg(sfe_conv_xen)) &
+    geom_sf(data = 
+              rowGeometry(sfe_conv_xen, "txSpots") %>% 
+              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
+```
+
+## Plot converted Seurat to SFE - Xenium
+```{r}
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "centroids", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  )
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  )
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  ) & # add molecules
+  geom_sf(data = 
+              rowGeometry(sfe_conv_xen, "txSpots") %>% 
+              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
+```
+
+## Convert Seurat -> SFE - Vizgen
+```{r}
+sfe_conv_vz <-
+  toSpatialFeatureExperiment(x = obj_vz,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             #unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_conv_vz
+getMeta(sfe_conv_vz) %>% str
+getMeta(obj_vz) %>% str
+```
+
+```{r}
+# manual check
+ggplot() & 
+    geom_sf(data = cellSeg(sfe_conv_vz)) &
+    geom_sf(data = rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5)
+```
+
+## Plot converted Seurat to SFE - Vizgen
+```{r}
+#options(repr.plot.height = 5, repr.plot.width = 10)
+plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
+                   features = rownames(sfe_conv_vz)[1],
+                   size = 4, colGeometryName = "cellSeg", 
+                   dark = TRUE, #show_axes = T,
+                   #sample_id = "",
+                   scattermore = FALSE
+                  ) & # add molecules
+  geom_sf(data = 
+            rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5, color = "red", alpha = 0.4)
+```
+
+## Test when Seurat object has > 1 Assay - Xenium
+```{r}
+sfe_conv_xen2 <-
+  toSpatialFeatureExperiment(x = obj_xen,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             unit = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_xen2
+getMeta(sfe_conv_xen2) %>% str
+getMeta(obj_xen) %>% str
+```
+
+## Plot converted Seurat to SFE with several `altExp` - Xenium
+```{r}
+plotSpatialFeature(sfe_conv_xen2, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen2)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE
+                  )
+```
+
+## Plot one of the `altExp` - Xenium
+```{r}
+plotSpatialFeature(altExp(sfe_conv_xen2, 1), exprs_values = "counts",
+                   features = rownames(altExp(sfe_conv_xen2, 1))[1],
+                   size = 1, colGeometryName = "centroids", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+)
+```
+
+## Test when Seurat object has > 1 Assay - Vizgen
+eg including SCT Assays, as well as PCA, UMAP embedding etc..
+```{r}
+# normalize data
+obj_vz %<>% 
+    SCTransform(assay = DefaultAssay(obj_vz), verbose = F) %>%
+    RunPCA(npcs = 5, verbose = F) %>% 
+    RunUMAP(dims = 1:5, verbose = F)
+obj_vz
+sfe_conv_vz2 <-
+  toSpatialFeatureExperiment(x = obj_vz,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             unit = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_conv_vz2
+getMeta(sfe_conv_vz2) %>% str
+```
+
+### Check `reducedDim` 
+```{r}
+ElbowPlot(sfe_conv_vz2, ndims = 5)
+plotDimLoadings(sfe_conv_vz2, dims = 1:5, nfeatures = 5, reduction = "PCA")
+```
+
+## Load Seurat objects with several samples/FOVs
+```{r}
+obj_vz_multi <- SeuratTestData("VizgenMulti") # Vizgen
+obj_vz_multi
+obj_xen_multi <- SeuratTestData("XeniumMulti") # Xenium
+obj_xen_multi
+obj_vis_multi <- readRDS(file.path(dir_extdata, "seu_vis_toy_multi.rds")) # Visium
+obj_vis_multi
+obj_vishd_multi <- SeuratTestData("VisiumHDmulti") # Visium HD
+obj_vishd_multi
+```
+
+## Convert multiple samples/FOVs - Visium
+NOTE, the function will automatically check how many FOVs Seurat object has and combine those samples in a single SFE object
+```{r}
+# toy Visium data
+sfe_vis_multi <-
+  toSpatialFeatureExperiment(x = obj_vis_multi, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vis_multi
+getMeta(sfe_vis_multi) %>% str
+```
+
+## Plot several samples - Visium
+```{r}
+plotSpatialFeature(sfe_vis_multi, exprs_values = "counts",
+                   features = rownames(sfe_vis_multi)[1], 
+                   #size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE
+                  )
+```
+## TODO: Convert multiple samples/FOVs - Visium HD (only "counts" present in both samples)
+```{r}
+# slim down Visium HD to keep only "counts" for all FOVs/samples
+if (!exists("obj_vishd_multi_slim"))
+  obj_vishd_multi_slim <- 
+    DietSeurat(obj_vishd_multi, layers = "counts", assays = Assays(obj_vishd_multi)) %>% 
+    UpdateSeuratObject()
+sfe_vishd_multi <-
+  toSpatialFeatureExperiment(x = obj_vishd_multi_slim, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vishd_multi
+getMeta(sfe_vishd_multi) %>% str
+```
+
+
+
+## TODO: Convert multiple samples/FOVs - Visium HD
+```{r}
+sfe_vishd_multi <-
+  toSpatialFeatureExperiment(x = obj_vishd_multi, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vishd_multi
+getMeta(sfe_vishd_multi) %>% str
+```
+
+## Plot several samples - Visium HD
+```{r}
+plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
+                   features = rownames(sfe_vishd_multi)[1], 
+                   #size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   sample_id = sampleIDs(sfe_vishd_multi)[1],
+                   scattermore = FALSE
+                  )
+plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
+                   features = rownames(sfe_vishd_multi)[1], 
+                   #size = 1, colGeometryName = "spotPoly",
+                   dark = TRUE,
+                   show_axes = TRUE,
+                   sample_id = sampleIDs(sfe_vishd_multi)[2],
+                   scattermore = FALSE
+                  )
+
+```
+
+## Convert multiple samples/FOVs - Xenium
+```{r}
+# slim down Xenium obj to keep only 1 Assay
+if (!exists("obj_xen_multi.slim"))
+  obj_xen_multi.slim <- DietSeurat(obj_xen_multi, assays = "Xenium")
+#real data subset
+sfe_xen_multi <-
+  toSpatialFeatureExperiment(x = obj_xen_multi.slim,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             #unit = "micron",
+                             BPPARAM = BPPARAM
+                             )
+sfe_xen_multi
+getMeta(sfe_xen_multi) %>% str
+```
+
+## Plot several samples - Xenium
+```{r}
+plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
+                   features = rownames(sfe_xen_multi)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   sample_id = sampleIDs(sfe_xen_multi)[1],
+                   scattermore = FALSE
+                  )
+plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
+                   features = rownames(sfe_xen_multi)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   sample_id = sampleIDs(sfe_xen_multi)[2],
+                   scattermore = FALSE
+                  )
+```
+
+## Convert multiple samples/FOVs - Vizgen
+```{r}
+sfe_vz_multi <-
+  toSpatialFeatureExperiment(x = obj_vz_multi,
+                             add_molecules = TRUE,
+                             flip = "geometry",
+                             #unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_vz_multi
+getMeta(sfe_vz_multi) %>% str
+```
+
+## Plot several samples - Vizgen
+```{r}
+plotSpatialFeature(sfe_vz_multi, exprs_values = "counts",
+                   features = rownames(sfe_vz_multi)[1],
+                   size = 4, colGeometryName = "cellSeg", 
+                   dark = TRUE, #show_axes = T,
+                   #sample_id = "",
+                   scattermore = FALSE
+                  )
+```
+
+## TODO: Test when multiple samples/FOVs and > 1 Assays in Seurat object
+```{r}
+
+
+```
+
+## TODO: quick analysis using Voyager
+```{r}
+# 
+
+
+
+```
+
+
+
+
+
+
+
+
