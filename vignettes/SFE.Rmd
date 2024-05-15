@@ -439,6 +439,21 @@ rownames(spatialCoords(spe)) <- colnames(spe)
 
 If images are present in the SPE object, they will be converted into `SpatRaster` when the SPE object is converted into SFE. Plotting functions in the `Voyager` package relies on `SpatRaster` to plot the image behind the geometries. 
 
+## Coercion from `Seurat`
+Seurat objects canbe coerced into SFE objects though coercion from SFE to Seurat is not yet implemented.
+```{r}
+obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
+```
+
+```{r}
+sfe_conv_vis <-
+  toSpatialFeatureExperiment(x = obj_vis, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_conv_vis
+```
+
 # Operations
 ## Non-geometric
 SFE objects can be concatenated with `cbind`, as was done just now to create a toy example with 2 samples.
