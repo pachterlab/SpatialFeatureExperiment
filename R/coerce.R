@@ -204,8 +204,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
            BPPARAM = SerialParam())
   {
     # issue message for packages that need to be installed a priori
-    check_installed(c("tidyverse", "sf", "BiocParallel",
-                      "Matrix", "Seurat", "SeuratObject", "sfheaders"))
+    check_installed(c("dplyr", "tidyr", "Seurat", "SeuratObject"))
     # checks which Seurat version is present
     seu_version <-
       Biobase::package.version("Seurat") |>
