@@ -594,6 +594,13 @@ These are the limitations of the current version of SFE:
 5. Geometries for very large datasets can get very large. On disk operations of the geometries should be considered. The geospatial field already has on disk tools for both vector and raster data. So far, SFE has only been tested on data that fit into memory.
 6. Setting units of length in the SFE object and converting units. This can make geometries of different samples and datasets comparable, and helpful to plotting scale bars when plotting geometries.
 
+```{r}
+# Clean up
+unlink(file.path(fp, "vizgen"), recursive = TRUE)
+unlink(file.path(fp, "xenium"), recursive = TRUE)
+unlink(file.path(fp, "cosmx"), recursive = TRUE)
+```
+
 # Session info
 ```{r}
 sessionInfo()
