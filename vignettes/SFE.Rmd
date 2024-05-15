@@ -54,6 +54,7 @@ library(SpatialExperiment)
 library(SFEData)
 library(sf)
 library(Matrix)
+library(RBioFormats)
 ```
 
 ```{r}
@@ -366,17 +367,61 @@ class(imgRaster(getImg(sfe3)))
 ```
 
 ## Vizgen MERFISH output
-The commercialized MERFISH from Vizgen has a standard output format, that can be read into SFE with `readVizgen()`. Because the cell segmentation from each field of view (FOV) has a separate HDF5 file and a MERFISH dataset can have hundreds of FOVs, we strongly recommend reading the MERFISH output on a server with a large number of CPU cores. Alternatively, some but not all MERFISH datasets store cell segmentation in a `parquet` file, which can be more easily read into R. Here we read a toy dataset which is the first FOV from a real dataset:
+The commercialized MERFISH from Vizgen has a standard output format, that can be read into SFE with `readVizgen()`. Because the cell segmentation from each field of view (FOV) has a separate HDF5 file and a MERFISH dataset can have hundreds of FOVs, we strongly recommend reading the MERFISH output on a server with a large number of CPU cores. Alternatively, some but not all MERFISH datasets store cell segmentation in a `parquet` file, which can be more easily read into R. This requires the installation of `arrow`. Here we read a toy dataset which is the first FOV from a real dataset:
 
 ```{r}
-dir_use <- VizgenOutput(file_path = ".")
+fp <- tempdir()
+dir_use <- VizgenOutput(file_path = file.path(fp, "vizgen"))
+list.files(dir_use)
+```
+
+The optional `add_molecules` argument can be set to `TRUE` to read in the transcript spots
+```{r}
+(sfe_mer <- readVizgen(dir_use, z = 3L, image = "PolyT", add_molecules = TRUE))
+```
+
+The unit is always in microns. To make it easier and faster to read the data next time, the processed cell segmentation geometries and transcript spots are written to the same directory where the data resides:
+```{r}
+list.files(dir_use)
+```
+
+## 10X Xenium output
+SFE supports reading the output from Xenium Onboarding Analysis (XOA) v1 and v2 with the function `readXenium()`. Especially for XOA v2, `arrow` is strongly recommended. The cell and nuclei polygon vertices and transcript spot coordinates are in `parquet` files  Similar to `readVizgen()`, `readXenium()` makes `sf` data frames from the vertices and transcript spots and saves them as GeoParquet files.
+
+```{r}
+dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium"))
+list.files(dir_use)
 ```
 
 ```{r}
-(sfe_mer <- readVizgen(dir_use, z = 3L, image = "PolyT"))
+# RBioFormats issue: https://github.com/aoles/RBioFormats/issues/42
+try(sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
+(sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
 ```
 
-The unit is always in microns.
+```{r}
+list.files(dir_use)
+```
+
+
+## Nanostring CosMX output
+This is similar to `readVizgen()` and `readXenium()`, except that the output doesn't come with images.
+
+```{r}
+dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx"))
+list.files(dir_use)
+```
+
+```{r}
+(sfe_cosmx <- readCosMX(dir_use, add_molecules = TRUE))
+```
+
+```{r}
+list.files(dir_use)
+```
+
+## Other technologies
+A read function for Visium HD is in progress. Contribution for Akoya, Molecular Cartography, and Curio Seeker are welcome. See the [issues](https://github.com/pachterlab/SpatialFeatureExperiment/issues).
 
 ## Coercion from `SpatialExperiment`
 SPE objects can be coerced into SFE objects. If column geometries or spot diameter are not specified, then a column geometry called "centroids" will be created.
@@ -396,6 +441,22 @@ rownames(spatialCoords(spe)) <- colnames(spe)
 ```
 
 If images are present in the SPE object, they will be converted into `SpatRaster` when the SPE object is converted into SFE. Plotting functions in the `Voyager` package relies on `SpatRaster` to plot the image behind the geometries. 
+
+## Coercion from `Seurat`
+Seurat objects canbe coerced into SFE objects though coercion from SFE to Seurat is not yet implemented.
+```{r}
+dir_extdata <- system.file("extdata", package = "SpatialFeatureExperiment")
+obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
+```
+
+```{r}
+sfe_conv_vis <-
+  toSpatialFeatureExperiment(x = obj_vis, 
+                             image_scalefactors = "lowres",
+                             unit = "micron",
+                             BPPARAM = BPPARAM)
+sfe_conv_vis
+```
 
 # Operations
 ## Non-geometric
@@ -532,6 +593,13 @@ These are the limitations of the current version of SFE:
 4. Spatial point process analysis with the `spatstat` package may be relevant, such as in analyzing spatial distribution of nuclei or transcript spots. As `spatstat` predates `sf` by over a decade, `spatstat` does not play very nicely with `sf`. However, since analyses of nuclei and transcript spot localization don't center on the gene count matrix, whether `spatstat` analyses should be integrated into SFE (which is centered on the gene count matrix) is questionable. 
 5. Geometries for very large datasets can get very large. On disk operations of the geometries should be considered. The geospatial field already has on disk tools for both vector and raster data. So far, SFE has only been tested on data that fit into memory.
 6. Setting units of length in the SFE object and converting units. This can make geometries of different samples and datasets comparable, and helpful to plotting scale bars when plotting geometries.
+
+```{r}
+# Clean up
+unlink(file.path(fp, "vizgen"), recursive = TRUE)
+unlink(file.path(fp, "xenium"), recursive = TRUE)
+unlink(file.path(fp, "cosmx"), recursive = TRUE)
+```
 
 # Session info
 ```{r}

@@ -688,5 +688,41 @@ test_that("Crop ExtImage", {
     expect_equal(dim(imgRaster(ebi_sub)), round(dim_expect))
 })
 
-unlink(xenium_dir, recursive = TRUE)
-unlink(vizgen_dir, recursive = TRUE)
+# Image setter-------
+test_that("Image setter, the image isn't already there", {
+    fp <- tempdir()
+    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn)
+    img <- getImg(sfe) |> toExtImage(resolution = 1L)
+    img <- img > 500
+    Img(sfe, image_id = "mask") <- img
+    df <- imgData(sfe)
+    expect_true("mask" %in% imageIDs(sfe))
+    img2 <- getImg(sfe, image_id = "mask")
+    expect_equal(img2, img)
+    unlink(fn, recursive = TRUE)
+})
+
+test_that("Image setter, modify existing image", {
+    fp <- tempdir()
+    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn)
+    df_old <- imgData(sfe)
+    img <- getImg(sfe) |> toExtImage(resolution = 1L)
+    # Increase contrast
+    img <- img * 1.1
+    Img(sfe, image_id = "morphology_focus") <- img
+    img2 <- getImg(sfe, image_id = "morphology_focus")
+    expect_equal(img2, img)
+    df_new <- imgData(sfe)
+    expect_equal(nrow(df_new), nrow(df_old))
+    unlink(fn, recursive = TRUE)
+})
+
+# Final cleanup in case failed test messed with cleanup
+fp <- tempdir()
+unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
+unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
+unlink(file.path(fp, "xenium_test"), recursive = TRUE)

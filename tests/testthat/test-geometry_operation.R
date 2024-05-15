@@ -1143,4 +1143,8 @@ test_that("General affine transformation of SFE object with ExtImage", {
     int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
     expect_equal(int1, int2)
 })
-unlink(xenium_path, recursive = TRUE)
+# Final cleanup in case failed test messed with cleanup
+fp <- tempdir()
+unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
+unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
+unlink(file.path(fp, "xenium_test"), recursive = TRUE)

@@ -4,6 +4,11 @@
 #' so you don't have to separately attach those packages to use these functions.
 #'
 #' @name reexports
+#' @inheritParams SummarizedExperiment::`colData<-`
+#' @inheritParams SummarizedExperiment::rowData
+#' @param object A \code{SingleCellExperiment} object, which includes SFE.
+#' @param type Name or numeric index to indicate which \code{reducedDim} to get,
+#' such as "PCA". By default the first item in \code{reducedDims}.
 NULL
 
 #' @rdname reexports

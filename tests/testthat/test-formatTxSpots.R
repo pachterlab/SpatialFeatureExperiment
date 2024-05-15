@@ -47,7 +47,7 @@ test_that("Format MERFISH transcript spots for colGeometries", {
 
     # Check contents
     fn <- file.path(dir_check, fns_expect[1])
-    g <- st_read(fn)
+    g <- sfarrow::st_read_parquet(fn)
     expect_equal(as.character(st_geometry_type(g, FALSE)), "MULTIPOINT")
 
     # Second run
@@ -104,7 +104,7 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
     expect_true(all(fns %in% fns_expect))
 
     fn <- file.path(dir_use, "tx_spots", fns[1])
-    g <- st_read(fn)
+    g <- sfarrow::st_read_parquet(fn)
     expect_equal(st_geometry_type(g, FALSE) |> as.character(), "MULTIPOINT")
     unlink(dir_use, recursive = TRUE)
 })
@@ -128,10 +128,12 @@ test_that("Error message when Parquet driver is unavailable", {
     skip_if(gdalParquetAvailable())
     fp <- tempdir()
     fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
-    expect_error(fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
-                                       file_out = file.path(fn, "tx_spots.parquet")),
-                 "GDAL Parquet driver is required to selectively read genes.")
-    unlink(dir_use, recursive = TRUE)
+    fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
+                          file_out = file.path(fn, "tx_spots.parquet"))
+    gene_select <- c("ACE2", "BMX")
+    expect_error(df <- readSelectTx(fn_tx, gene_select),
+                 "GDAL Parquet driver is required")
+    unlink(fn, recursive = TRUE)
 })
 
 test_that("Add a subset of spots", {
@@ -152,6 +154,7 @@ test_that("Add a subset of spots", {
 })
 
 test_that("Add subset of spots, multiple files in tx spots output", {
+    skip_if_not(gdalParquetAvailable())
     fp <- tempdir()
     dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
 
@@ -172,3 +175,9 @@ test_that("Add subset of spots, multiple files in tx spots output", {
     expect_true(all(is_empty1[-(1:5)]))
     unlink(dir_use, recursive = TRUE)
 })
+
+# Final cleanup in case failed test messed with cleanup
+fp <- tempdir()
+unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
+unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
+unlink(file.path(fp, "xenium_test"), recursive = TRUE)

@@ -745,3 +745,9 @@ test_that("readXenium, flip image", {
     expect_equal(transformation(bfi), list(name = "mirror", direction = "vertical"))
     unlink(fn, recursive = TRUE)
 })
+
+# Final cleanup in case failed test messed with cleanup
+fp <- tempdir()
+unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
+unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
+unlink(file.path(fp, "xenium_test"), recursive = TRUE)

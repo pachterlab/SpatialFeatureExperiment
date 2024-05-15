@@ -207,6 +207,8 @@ setValidity("BioFormatsImage", function(object) {
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
 
+#' @rdname BioFormatsImage
+#' @export
 setMethod("show", "BioFormatsImage", function(object) {
     d <- dim(object)
     dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
@@ -332,6 +334,8 @@ setValidity("ExtImage", function(object) {
     if (length(out)) return(out) else TRUE
 })
 
+#' @rdname ExtImage
+#' @export
 setMethod("show", "ExtImage", function(object) {
     d <- dim(object)
     dim <- paste(dim(object), collapse=" x ")
@@ -675,6 +679,64 @@ setMethod("dim", "BioFormatsImage", function(x) {
         coreMetadata(series = 1L)
     c(X=meta$sizeX, Y=meta$sizeY, C=meta$sizeC, Z=meta$sizeZ, "T"=meta$sizeT)
 })
+
+#' Image setter
+#'
+#' Modify or replace images stored in a \code{SpatialExperiment} object. This is
+#' different from \code{\link{addImg}} which adds the image from files and can't
+#' replace existing images, which is there to be consistent with
+#' \code{SpatialExperiment}. This setter here can replace existing images with
+#' another object that inherits from \code{VirtualSpatialImage}, including
+#' \code{\link{SpatRasterImage}}, \code{\link{BioFormatsImage}}, and
+#' \code{\link{ExtImage}}.
+#'
+#' @inheritParams SFE-image
+#' @param x A \code{SpatialExperiment} object, which includes SFE.
+#' @param scale_fct Scale factor to convert pixels in lower resolution to those
+#'   in the full resolution. Only relevant to image classes implemented in
+#'   \code{SpatialExperiment} but not \code{SpatialFeatureExperiment} because
+#'   the spatial extent of images in SFE takes precedence.
+#' @param value New version of image to add, must inherit from
+#'   \code{VirtualSpatialImage}.
+#' @return SFE object with the new image added.
+#' @concept Image methods
+#' @export
+#' @importFrom methods signature
+#' @importFrom SpatialExperiment imgData<-
+#' @aliases Img<-
+#' @examples
+#' library(EBImage)
+#' library(SFEData)
+#' library(RBioFormats)
+#' fp <- tempdir()
+#' fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' # Weirdly the first time I get the null pointer error
+#' try(sfe <- readXenium(fn))
+#' sfe <- readXenium(fn)
+#' img <- getImg(sfe) |> toExtImage(resolution = 1L)
+#' img <- img[,,1] > 500
+#' Img(sfe, image_id = "mask") <- img
+#' imageIDs(sfe)
+#' unlink(fn, recursive = TRUE)
+#'
+setMethod("Img<-", signature = "SpatialExperiment",
+          function(x, sample_id = 1L, image_id, scale_fct = 1, value) {
+              sample_id <- .check_sample_id(x, sample_id)
+              df <- imgData(x)
+              ind <- which(df$sample_id == sample_id & df$image_id == image_id)
+              if (length(ind)) {
+                  df$data[[ind]] <- value
+              } else {
+                  df_new <- DataFrame(
+                      sample_id,
+                      image_id,
+                      data=I(list(value)),
+                      scaleFactor=scale_fct)
+                  df <- rbind(df, df_new)
+              }
+              imgData(x) <- df
+              x
+          })
 
 #' Methods for handling image-related data
 #'
