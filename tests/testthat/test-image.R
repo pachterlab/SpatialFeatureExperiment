@@ -12,8 +12,8 @@ sfe <- McKellarMuscleData("small")
 img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
                                   "tissue_lowres_image.png"),
                         package = "SpatialFeatureExperiment")
-fp <- tempdir()
-xenium_dir <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+fp <- tempfile()
+xenium_dir <- XeniumOutput("v1", file_path = fp)
 xenium_fn <- file.path(xenium_dir, "morphology_mip.ome.tif")
 
 test_that("addImg, SpatRasterImage", {
@@ -294,8 +294,8 @@ test_that("Convert SpatRasterImage to ExtImage, RGB", {
                  imgRaster(ebi) |> as.array() |> aperm(c(2,1,3)))
 })
 
-fp <- tempdir()
-vizgen_dir <- VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+fp <- tempfile()
+vizgen_dir <- VizgenOutput(file_path = fp)
 fn <- file.path(vizgen_dir, "images", "mosaic_Cellbound1_z3.tif")
 
 test_that("Convert SpatRasterImage to ExtImage, grayscale", {
@@ -437,8 +437,8 @@ test_that("Ignore resolution in toExtImage when there's only 1 resolution", {
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
     library(RBioFormats)
-    fp <- tempdir()
-    fn <- XeniumOutput(file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput(file_path = fp)
     fn1 <- file.path(fn, "morphology_mip.ome.tif")
     bfi <- BioFormatsImage(fn1, ext_use, isFull = FALSE)
     expect_message(spi <- toSpatRasterImage(bfi, resolution = 1L), "non OME")
@@ -690,8 +690,8 @@ test_that("Crop ExtImage", {
 
 # Image setter-------
 test_that("Image setter, the image isn't already there", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     # Weirdly the first time I get the null pointer error
     sfe <- readXenium(fn)
     img <- getImg(sfe) |> toExtImage(resolution = 1L)
@@ -705,8 +705,8 @@ test_that("Image setter, the image isn't already there", {
 })
 
 test_that("Image setter, modify existing image", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     # Weirdly the first time I get the null pointer error
     sfe <- readXenium(fn)
     df_old <- imgData(sfe)
@@ -720,9 +720,3 @@ test_that("Image setter, modify existing image", {
     expect_equal(nrow(df_new), nrow(df_old))
     unlink(fn, recursive = TRUE)
 })
-
-# Final cleanup in case failed test messed with cleanup
-fp <- tempdir()
-unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
-unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
-unlink(file.path(fp, "xenium_test"), recursive = TRUE)

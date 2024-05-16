@@ -732,3 +732,7 @@ removeEmptySpace <- function(sfe, sample_id = "all") {
     }
     sfe
 }
+
+#' Aggregate data in SFE using geometry
+#'
+#' Gene expression and

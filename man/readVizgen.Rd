@@ -118,8 +118,8 @@ Since the transcript spots file is often very large, we recommend only
   memory.
 }
 \examples{
-fp <- tempdir()
-dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+fp <- tempfile()
+dir_use <- SFEData::VizgenOutput(file_path = fp)
 sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 flip = "geometry")
 

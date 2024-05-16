@@ -122,13 +122,14 @@
 #' @examples
 #' library(SFEData)
 #' if (gdalParquetAvailable()) {
-#'     fp <- tempdir()
-#'     dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#'     fp <- tempfile()
+#'     dir_use <- XeniumOutput("v2", file_path = fp)
 #'     fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
 #'                           file_out = file.path(dir_use, "tx_spots.parquet"))
 #'     gene_select <- c("ACE2", "BMX")
 #'     df <- readSelectTx(fn_tx, gene_select)
-#'
+#'     # RBioFormats null pointer error the first time
+#'     try(sfe <- readXenium(dir_use))
 #'     sfe <- readXenium(dir_use)
 #'     sfe <- addSelectTx(sfe, fn_tx, head(rownames(sfe), 5), swap_rownames = "Symbol")
 #'     unlink(dir_use, recursive = TRUE)
@@ -292,14 +293,14 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' @rdname formatTxSpots
 #' @examples
 #' # Default arguments are for MERFISH
-#' fp <- tempdir()
-#' dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+#' fp <- tempfile()
+#' dir_use <- SFEData::VizgenOutput(file_path = fp)
 #' g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 #' unlink(dir_use, recursive = TRUE)
 #'
 #' # For CosMX, note the colnames, also dest = "colGeometry"
 #' # Results are written to the tx_spots directory
-#' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+#' dir_use <- SFEData::CosMXOutput(file_path = fp)
 #' cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 #' dest = "colGeometry", z = "all",
 #' cell_col = c("cell_ID", "fov"),
@@ -523,8 +524,8 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
 #' @export
 #' @examples
 #' library(SFEData)
-#' fp <- tempdir()
-#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v2", file_path = fp)
 #' fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
 #'                       file_out = file.path(dir_use, "tx_spots.parquet"))
 #'

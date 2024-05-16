@@ -388,8 +388,8 @@ read10xVisiumSFE <- function(samples = "",
 #' @importFrom data.table fread merge.data.table rbindlist is.data.table
 #' @importFrom stats na.omit
 #' @examples
-#' fp <- tempdir()
-#' dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+#' fp <- tempfile()
+#' dir_use <- SFEData::VizgenOutput(file_path = fp)
 #' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
 #' flip = "geometry")
 #'
@@ -677,8 +677,8 @@ readVizgen <- function(data_dir,
 #' @export
 #' @concept Read data into SFE
 #' @examples
-#' fp <- tempdir()
-#' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+#' fp <- tempfile()
+#' dir_use <- SFEData::CosMXOutput(file_path = fp)
 #' sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
 #' # Clean up
 #' unlink(dir_use, recursive = TRUE)
@@ -835,8 +835,8 @@ readCosMX <- function(data_dir,
 #' @examples
 #' library(SFEData)
 #' library(RBioFormats)
-#' fp <- tempdir()
-#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v2", file_path = fp)
 #' # RBioFormats issue
 #' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #' sfe <- readXenium(dir_use, add_molecules = TRUE)

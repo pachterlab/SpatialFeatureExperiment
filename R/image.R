@@ -708,8 +708,8 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #' library(EBImage)
 #' library(SFEData)
 #' library(RBioFormats)
-#' fp <- tempdir()
-#' fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' fn <- XeniumOutput("v2", file_path = fp)
 #' # Weirdly the first time I get the null pointer error
 #' try(sfe <- readXenium(fn))
 #' sfe <- readXenium(fn)

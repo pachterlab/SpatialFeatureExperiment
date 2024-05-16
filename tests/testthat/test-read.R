@@ -136,8 +136,8 @@ test_that("Micron spot spacing works when there're singletons", {
 })
 # Read Vizgen MERFISH==============
 test_that("readVizgen flip geometry, use cellpose", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     expect_message(sfe <- readVizgen(dir_use, z = 3L, use_cellpose = TRUE,
                                      flip = "geometry", min_area = 15),
                    "with area less than 15")
@@ -169,8 +169,8 @@ test_that("readVizgen flip geometry, use cellpose", {
 })
 
 test_that("readVizgen write parquet file after reading hdf5", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT")
     expect_true(file.exists(file.path(dir_use,"hdf5s_micron_space.parquet")))
@@ -181,8 +181,8 @@ test_that("readVizgen write parquet file after reading hdf5", {
 })
 
 test_that("readVizgen flip geometry, don't use cellpose", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "geometry")
     expect_equal(unit(sfe), "micron")
@@ -205,8 +205,8 @@ test_that("readVizgen flip geometry, don't use cellpose", {
 })
 
 test_that("readVizgen flip image", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     expect_equal(unit(sfe), "micron")
@@ -218,8 +218,8 @@ test_that("readVizgen flip image", {
 })
 
 test_that("readVizgen don't flip image when image is too large", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     expect_error(readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                             flip = "image", max_flip = "0.02 TB"),
                  "max_flip must be in either MB or GB")
@@ -236,8 +236,8 @@ test_that("readVizgen don't flip image when image is too large", {
 })
 
 test_that("Don't flip image if it's GeoTIFF", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     terra::writeRaster(imgRaster(getImg(sfe)),
@@ -250,8 +250,8 @@ test_that("Don't flip image if it's GeoTIFF", {
 })
 
 test_that("Errors and warnings in readVizgen", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     expect_warning(sfe <- readVizgen(dir_use, z = 1L, image = "PolyT"),
                    "don't exist")
     expect_equal(nrow(imgData(sfe)), 0L)
@@ -261,8 +261,8 @@ test_that("Errors and warnings in readVizgen", {
 })
 
 # Make toy examples of multiple pieces
-fp <- tempdir()
-dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+fp <- tempfile()
+dir_use <- VizgenOutput("hdf5", file_path = fp)
 parq <- st_read_parquet(file.path(dir_use, "cell_boundaries.parquet"))
 unlink(dir_use, recursive = TRUE)
 # One large piece and one small piece
@@ -283,11 +283,11 @@ small_small <- st_multipolygon(list(small, small2))
 large_large <- st_multipolygon(list(large, large2))
 
 test_that("Deal with multiple pieces, remove pieces that are too small", {
-    fp <- tempdir()
+    fp <- tempfile()
     parq2 <- parq[1:4,]
     new_geo <- st_sfc(large_g, large_small, small_small, large_large)
     parq2$Geometry <- new_geo
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "multi"))
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
     suppressWarnings(st_write_parquet(parq2, file.path(dir_use, "cell_boundaries.parquet")))
 
@@ -306,12 +306,12 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
 test_that("No polygons left", {
     # Like they're all too small, or when the polygon file is empty, unlikely
     # but otherwise we get a mysterious error
-    fp <- tempdir()
+    fp <- tempfile()
     parq2 <- parq[1:2,]
     small <- st_polygon(small)
     new_geo <- st_sfc(small, small)
     parq2$Geometry <- new_geo
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "small"))
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
 
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
     suppressWarnings(st_write_parquet(parq2, file.path(dir_use, "cell_boundaries.parquet")))
@@ -322,8 +322,8 @@ test_that("No polygons left", {
 })
 
 test_that("Image can be named polyT in older version", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "image"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
 
     file.rename(file.path(dir_use, "images", "mosaic_PolyT_z3.tif"),
                 file.path(dir_use, "images", "mosaic_polyT_z3.tif"))
@@ -332,8 +332,8 @@ test_that("Image can be named polyT in older version", {
 })
 
 test_that("Version with Cellpose directory", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("cellpose", file_path = file.path(fp, "cellpose"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("cellpose", file_path = fp)
     # Cropped geometry has 2 pieces in one cell
     suppressWarnings(sfe <- readVizgen(dir_use, z = 3L, use_cellpose = TRUE,
                                        flip = "geometry", min_area = 15))
@@ -365,8 +365,8 @@ test_that("Version with Cellpose directory", {
 })
 
 test_that("Message when removing empty polygons", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "empty"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
 
     parq <- st_read_parquet(file.path(dir_use, "cell_boundaries.parquet"))
     parq$Geometry[[1]] <- st_polygon()
@@ -379,17 +379,17 @@ test_that("Message when removing empty polygons", {
 })
 
 test_that("Read all z-planes for Vizgen", {
-    fp <- tempdir()
+    fp <- tempfile()
     # Only affecting images
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "all"))
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = "all", image = "DAPI")
     expect_equal(imgData(sfe)$image_id, paste0("DAPI_z", 1:3))
     unlink(dir_use, recursive = TRUE)
 })
 
 test_that("Error message when multiple parquet files are found in readVizgen", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     file.copy(file.path(dir_use, "cell_boundaries.parquet"),
               file.path(dir_use, "cellpose_micron_space.parquet"))
     m <- capture_messages(sfe <- readVizgen(dir_use, z = "all", image = "DAPI"))
@@ -404,8 +404,8 @@ test_that("Error message when multiple parquet files are found in readVizgen", {
 })
 
 test_that("Make cell bounding boxes when segmentation is absent", {
-    fp2 <- tempdir()
-    dir_use <- VizgenOutput("cellpose", file_path = file.path(fp, "vizgen_test"))
+    fp2 <- tempfile()
+    dir_use <- VizgenOutput("cellpose", file_path = fp)
     file.remove(file.path(dir_use, "Cellpose", "cellpose_micron_space.parquet"))
     expect_message(
         expect_warning(sfe <- readVizgen(dir_use, use_bboxes = TRUE),
@@ -417,8 +417,8 @@ test_that("Make cell bounding boxes when segmentation is absent", {
 
 # Read CosMX===================
 test_that("readCosMX, not reading transcript spots", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
     sfe <- readCosMX(dir_use, z = 1L)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(colGeometryNames(sfe), c("centroids", "cellSeg"))
@@ -436,8 +436,8 @@ test_that("readCosMX, not reading transcript spots", {
 })
 
 test_that("readCosMX, reading spots, 1 z-plane", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
     sfe <- readCosMX(dir_use, z = 1L, add_molecules = TRUE)
     fn <- file.path(dir_use, "tx_spots.parquet")
     expect_true(file.exists(fn))
@@ -459,8 +459,8 @@ test_that("readCosMX, reading spots, 1 z-plane", {
 })
 
 test_that("readCosMX, 2 z-planes, split z, not splitting by cell compartments", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
 
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "split")
@@ -490,8 +490,8 @@ test_that("readCosMX, 2 z-planes, split z, not splitting by cell compartments", 
 })
 
 test_that("readCosMX, don't split z, don't split cell compartments", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
 
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
@@ -505,8 +505,8 @@ test_that("readCosMX, don't split z, don't split cell compartments", {
 })
 
 test_that("readCosMX, split z, split cell compartments", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
 
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      split_cell_comps = TRUE, z_option = "split")
@@ -542,8 +542,8 @@ test_that("readCosMX, split z, split cell compartments", {
 # Flip image
 test_that("readXenium, XOA v1", {
     library(RBioFormats)
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     # Weirdly the first time I get the null pointer error
     try(m <- read.omexml(file.path(fn, "morphology_focus.ome.tif")))
     sfe <- readXenium(fn, add_molecules = TRUE)
@@ -573,8 +573,8 @@ test_that("readXenium, XOA v1", {
 })
 
 test_that("readXenium XOA v1, image not found", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     file.remove(file.path(fn, "morphology_focus.ome.tif"))
     expect_warning(sfe <- readXenium(fn, add_molecules = TRUE),
                    "or have non-standard file name")
@@ -583,8 +583,8 @@ test_that("readXenium XOA v1, image not found", {
 })
 
 test_that("readXenium XOA v1, use parquet files, with annoying arrow raw bytes", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     file.remove(file.path(fn, "cell_boundaries.csv.gz"))
     file.remove(file.path(fn, "nucleus_boundaries.csv.gz"))
     file.rename(file.path(fn, "cell_boundaries_binary.parquet"),
@@ -598,8 +598,8 @@ test_that("readXenium XOA v1, use parquet files, with annoying arrow raw bytes",
 
 test_that("readXenium XOA v1 when only cell but not nuclei segmentation is available", {
     # Since the `polys` object should be a list even if there's only one of cell or nuclei
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     file.remove(list.files(fn, "cell_boundaries\\.*", full.names = TRUE))
     expect_warning(sfe <- readXenium(fn), 'No `cell_boundaries` file is available')
     expect_equal(colGeometryNames(sfe), c("centroids", "nucSeg"))
@@ -610,8 +610,8 @@ test_that("readXenium XOA v1 when only cell but not nuclei segmentation is avail
 })
 
 test_that("readXenium XOA v1 read the output _sf.parquet next time", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     sfe <- readXenium(fn)
     expect_true(file.exists(file.path(fn, "cell_boundaries_sf.parquet")))
     expect_true(file.exists(file.path(fn, "nucleus_boundaries_sf.parquet")))
@@ -623,8 +623,8 @@ test_that("readXenium XOA v1 read the output _sf.parquet next time", {
 })
 
 test_that("readXenium XOA v1 read cell metadata parquet when csv is absent", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     file.remove(file.path(fn, "cells.csv.gz"))
     expect_message(sfe <- readXenium(fn), ">>> Reading cell metadata -> `cells.parquet`")
     unlink(fn, recursive = TRUE)
@@ -635,8 +635,8 @@ test_that("readXenium XOA v1 read cell metadata parquet when csv is absent", {
 # read the segmentations. You need GDAL to read GeoJSON.
 
 test_that("readXenium XOA v1 flip image", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v1", file_path = fp)
     sfe <- readXenium(fn, add_molecules = TRUE, flip = "image")
     # That things are aligned
     bbox_rg <- st_bbox(txSpots(sfe)) |> st_as_sfc()
@@ -653,8 +653,8 @@ test_that("readXenium XOA v1 flip image", {
 
 # Read Xenium XOA v2===================
 test_that("readXenium XOA v2, normal stuff", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     # Weirdly the first time I get the null pointer error
     sfe <- readXenium(fn, add_molecules = TRUE)
     # Basic stuff
@@ -683,8 +683,8 @@ test_that("readXenium XOA v2, normal stuff", {
 })
 
 test_that("readXenium XOA v2, somes images not found", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     unlink(file.path(fn, "morphology_focus"), recursive = TRUE)
     expect_warning(sfe <- readXenium(fn), "morphology_focus images not found")
     expect_true(isEmpty(imgData(sfe)))
@@ -692,8 +692,8 @@ test_that("readXenium XOA v2, somes images not found", {
 })
 
 test_that("readXenium XOA v2, use csv files", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     file.remove(list.files(fn, pattern = "*.parquet$", full.names = TRUE))
     expect_message(sfe <- readXenium(fn, add_molecules = TRUE),
                    ">>> Cell segmentations are found in `.csv` file")
@@ -723,8 +723,8 @@ test_that("readXenium XOA v2, use csv files", {
 })
 
 test_that("readXenium, flip image", {
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     sfe <- readXenium(fn, add_molecules = TRUE, flip = "image")
     sfe0 <- readXenium(fn)
 
@@ -745,9 +745,3 @@ test_that("readXenium, flip image", {
     expect_equal(transformation(bfi), list(name = "mirror", direction = "vertical"))
     unlink(fn, recursive = TRUE)
 })
-
-# Final cleanup in case failed test messed with cleanup
-fp <- tempdir()
-unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
-unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
-unlink(file.path(fp, "xenium_test"), recursive = TRUE)

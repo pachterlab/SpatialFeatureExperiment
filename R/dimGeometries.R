@@ -398,8 +398,8 @@ nucSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' @examples
 #' library(SFEData)
 #' library(RBioFormats)
-#' fp <- tempdir()
-#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v2", file_path = fp)
 #' # RBioFormats issue
 #' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #' sfe <- readXenium(dir_use, add_molecules = TRUE)

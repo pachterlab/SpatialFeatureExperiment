@@ -253,8 +253,8 @@ test_that("Error when other spatial operations are specified", {
 })
 
 test_that("Crop 3D geometry", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
@@ -823,8 +823,8 @@ test_that("Affine transformation of SFE object with image, after cropping", {
 })
 
 test_that("Transformation when there's 3D geometry", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
 
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
@@ -864,8 +864,8 @@ test_that("Translate SFE object with image", {
 # Affine transform of entire SFE object, for BioFormatsImage=========
 library(RBioFormats)
 library(EBImage)
-fp <- tempdir()
-xenium_path <- XeniumOutput(file_path = file.path(fp, "xenium_test"))
+fp <- tempfile()
+xenium_path <- XeniumOutput(file_path = fp)
 try(sfe <- readXenium(xenium_path))
 sfe <- readXenium(xenium_path, add_molecules = TRUE)
 set.seed(29)
@@ -1143,8 +1143,3 @@ test_that("General affine transformation of SFE object with ExtImage", {
     int2 <- st_intersects(annotGeometry(sfe2), cellSeg(sfe2))
     expect_equal(int1, int2)
 })
-# Final cleanup in case failed test messed with cleanup
-fp <- tempdir()
-unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
-unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
-unlink(file.path(fp, "xenium_test"), recursive = TRUE)
