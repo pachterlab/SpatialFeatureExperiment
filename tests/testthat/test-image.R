@@ -176,12 +176,13 @@ test_that("transposeImg, SpatRasterImage method", {
     expect_equal(d[2], 13)
 
     # Save to file
-    img_t3 <- transposeImg(img, filename = "foo.tif")
+    fn <- normalizePath(file.path(getwd(), "foo.tif"))
+    img_t3 <- transposeImg(img, filename = fn)
     expect_equal(dim(img)[1:2], dim(img_t3)[2:1])
-    expect_equal(imgSource(img_t3), "foo.tif")
-    expect_true(file.exists("foo.tif"))
-    file.remove("foo.tif")
-    file.remove("foo.tif.aux.xml")
+    expect_equal(imgSource(img_t3), fn)
+    expect_true(file.exists(fn))
+    file.remove(fn)
+    file.remove(paste0(fn, ".aux.xml"))
 })
 
 test_that("mirrorImg, SpatRasterImage method", {
@@ -199,11 +200,12 @@ test_that("mirrorImg, SpatRasterImage method", {
     expect_equal(imgRaster(img_m2)[10,3,2][[1]], 190)
 
     # Use filename
+    fn <- normalizePath(file.path(getwd(), "foo.tif"))
     img_m3 <- mirrorImg(img, filename = "foo.tif")
-    expect_equal(imgSource(img_m3), "foo.tif")
-    expect_true(file.exists("foo.tif"))
-    file.remove("foo.tif")
-    file.remove("foo.tif.aux.xml")
+    expect_equal(imgSource(img_m3), fn)
+    expect_true(file.exists(fn))
+    file.remove(fn)
+    file.remove(paste0(fn, ".aux.xml"))
 })
 
 test_that("Rotate method for SpatRasterImage which converts to ExtImage", {

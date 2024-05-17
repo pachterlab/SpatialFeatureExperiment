@@ -1008,7 +1008,7 @@ NULL
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              out <- sources(imgRaster(x))
+              out <- sources(imgRaster(x)) |> normalizePath()
               if (out == "") out <- NA_character_
               return(out)
           })
