@@ -367,15 +367,20 @@ test_that("Version with Cellpose directory", {
 test_that("Message when removing empty polygons", {
     fp <- tempfile()
     dir_use <- VizgenOutput("hdf5", file_path = fp)
+    files_copy <- list.files(dir_use, full.names = TRUE)
+    files_copy <- files_copy[!grepl("parquet$", files_copy)]
+    fp2 <- tempfile()
+    dir.create(fp2)
+    file.copy(files_copy, fp2, recursive = TRUE)
 
     parq <- st_read_parquet(file.path(dir_use, "cell_boundaries.parquet"))
     parq$Geometry[[1]] <- st_polygon()
-    file.remove(file.path(dir_use, "cell_boundaries.parquet"))
-    suppressWarnings(st_write_parquet(parq, file.path(dir_use, "cell_boundaries.parquet")))
+    suppressWarnings(st_write_parquet(parq, file.path(fp2, "cell_boundaries.parquet")))
 
-    expect_message(sfe <- readVizgen(dir_use, z = 3L, image = "PolyT"),
+    expect_message(sfe <- readVizgen(fp2, z = 3L, image = "PolyT"),
                    "..removing 1 empty polygons")
     unlink(dir_use, recursive = TRUE)
+    unlink(fp2, recursive = TRUE)
 })
 
 test_that("Read all z-planes for Vizgen", {
