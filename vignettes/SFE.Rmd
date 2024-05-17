@@ -295,10 +295,19 @@ rownames(mat) <- sample(LETTERS, 5)
 ```
 
 That should be sufficient to create an SPE object, and an SFE object, even though no `sf` data frame was constructed for the geometries. The constructor behaves similarly to the SPE constructor. The centroid coordinates of the Visium spots in the toy example can be converted into spot polygons with the `spotDiameter` argument. Spot diameter in pixels in full resolution image can be found in the `scalefactors_json.json` file in Space Ranger output.
+
 ```{r}
 sfe3 <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
                                 spatialCoordsNames = c("col", "row"),
                                 spotDiameter = 0.7)
+```
+
+When `colData` contains columns for the centroid coordinates, the `spatialCoordsNames` argument specifies which columns in `colData` are for the coordinates, in the same order as x, y, and z (if applicable). If the coordinates are not in `colData`, they can be specified separately in the `spatialCoords` argument:
+
+```{r}
+sfe3 <- SpatialFeatureExperiment(list(counts = mat), 
+                                 spatialCoords = as.matrix(coords1[, c("col", "row")]),
+                                 spotDiameter = 0.7)
 ```
 
 More geometries and spatial graphs can be added after calling the constructor.
