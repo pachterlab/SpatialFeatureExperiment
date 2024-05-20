@@ -509,9 +509,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                 lapply(rgs, function(r) {
                     r <- .crop_geometry(r, y = y, op = op, sample_col = s,
                                         samples_use = s)
-                    if (st_geometry_type(r, FALSE) == "GEOMETRY")
-                        st_cast(r, "MULTIPOINT")
-                    else r
                 })
         }
     }
@@ -622,13 +619,11 @@ setMethod("bbox", "SpatialFeatureExperiment", function(sfe, sample_id = "all",
 #'
 #' @inheritParams terra::flip
 #' @inheritParams transposeImg
+#' @inheritParams scaleImg
+#' @inheritParams affineImg
+#' @inheritParams rotateImg
 #' @param sfe An SFE object.
 #' @param sample_id Sample(s) to transform.
-#' @param resolution Transposing, mirroring, and rotating \code{BioFormatsImage}
-#'   will convert it into \code{ExtImage}, loading the image into memory. This
-#'   argument specifies the resolution of image in the OME-TIFF pyramid to load.
-#'   Ignored if no image of class \code{BioFormatsImage} is present in the
-#'   sample(s) of interest.
 #' @param maxcell Rotating \code{SpatRasterImage} will convert it into
 #'   \code{ExtImage}, loading the image into memory. This argument specifies the
 #'   maximum number of pixels in the image loaded into memory. The image will be
@@ -737,3 +732,7 @@ removeEmptySpace <- function(sfe, sample_id = "all") {
     }
     sfe
 }
+
+#' Aggregate data in SFE using geometry
+#'
+#' Gene expression and

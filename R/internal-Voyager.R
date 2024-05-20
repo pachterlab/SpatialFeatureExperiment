@@ -98,7 +98,7 @@ NULL
 
 #' @rdname internal-Voyager
 #' @export
-.check_sample_id <- function(x, sample_id, one = TRUE) {
+.check_sample_id <- function(x, sample_id, one = TRUE, mustWork = TRUE) {
     if (is.null(sample_id)) {
         sample_id <- sampleIDs(x)
         if (length(sample_id) > 1L) {
@@ -111,7 +111,7 @@ NULL
         sample_id <- sampleIDs(x)
     } else if (is.numeric(sample_id)) {
         sample_id <- sampleIDs(x)[sample_id]
-    } else if (!all(sample_id %in% sampleIDs(x))) {
+    } else if (!all(sample_id %in% sampleIDs(x)) && mustWork) {
         sample_use <- intersect(sample_id, sampleIDs(x))
         if (!length(sample_use)) {
             stop("None of the samples are present in the SFE object.")

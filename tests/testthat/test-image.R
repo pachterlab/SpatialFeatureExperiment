@@ -12,8 +12,8 @@ sfe <- McKellarMuscleData("small")
 img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
                                   "tissue_lowres_image.png"),
                         package = "SpatialFeatureExperiment")
-
-xenium_dir <- XeniumOutput("v1", file_path = "xenium_test")
+fp <- tempfile()
+xenium_dir <- XeniumOutput("v1", file_path = fp)
 xenium_fn <- file.path(xenium_dir, "morphology_mip.ome.tif")
 
 test_that("addImg, SpatRasterImage", {
@@ -45,7 +45,7 @@ test_that("addImg, BioFormatsImage", {
 })
 
 test_that("addImg, ExtImage", {
-    img <- readImage(system.file('images', 'nuclei.tif', package='ExtImage'))
+    img <- readImage(system.file('images', 'nuclei.tif', package="EBImage"))
     ext_img <- c(xmin = 0, xmax = dim(img)[1], ymin = 0, ymax = dim(img)[2])
     sfe <- addImg(sfe, img, sample_id = "Vis5A", image_id = "ebi", extent = ext_img)
     expect_s4_class(getImg(sfe, image_id = "ebi"), "ExtImage")
@@ -70,7 +70,7 @@ test_that("transposeImg, SFE method, BioFormatsImage", {
 })
 
 test_that("transposeImg, SFE method, ExtImage", {
-    img <- readImage(system.file('images', 'nuclei.tif', package='ExtImage'))
+    img <- readImage(system.file('images', 'nuclei.tif', package="EBImage"))
     ext_img <- c(xmin = 0, xmax = dim(img)[1], ymin = 0, ymax = dim(img)[2])
     sfe <- addImg(sfe, img, sample_id = "Vis5A", image_id = "ebi", extent = ext_img)
     img <- getImg(sfe, image_id = "ebi")
@@ -176,11 +176,13 @@ test_that("transposeImg, SpatRasterImage method", {
     expect_equal(d[2], 13)
 
     # Save to file
-    img_t3 <- transposeImg(img, filename = "foo.tif")
+    fn <- normalizePath(file.path(getwd(), "foo.tif"))
+    img_t3 <- transposeImg(img, filename = fn)
     expect_equal(dim(img)[1:2], dim(img_t3)[2:1])
-    expect_equal(imgSource(img_t3), "foo.tif")
-    expect_true(file.exists("foo.tif"))
-    file.remove("foo.tif")
+    expect_equal(imgSource(img_t3), fn)
+    expect_true(file.exists(fn))
+    file.remove(fn)
+    file.remove(paste0(fn, ".aux.xml"))
 })
 
 test_that("mirrorImg, SpatRasterImage method", {
@@ -198,10 +200,12 @@ test_that("mirrorImg, SpatRasterImage method", {
     expect_equal(imgRaster(img_m2)[10,3,2][[1]], 190)
 
     # Use filename
+    fn <- normalizePath(file.path(getwd(), "foo.tif"))
     img_m3 <- mirrorImg(img, filename = "foo.tif")
-    expect_equal(imgSource(img_m3), "foo.tif")
-    expect_true(file.exists("foo.tif"))
-    file.remove("foo.tif")
+    expect_equal(imgSource(img_m3), fn)
+    expect_true(file.exists(fn))
+    file.remove(fn)
+    file.remove(paste0(fn, ".aux.xml"))
 })
 
 test_that("Rotate method for SpatRasterImage which converts to ExtImage", {
@@ -291,7 +295,9 @@ test_that("Convert SpatRasterImage to ExtImage, RGB", {
     expect_equal(imgRaster(spi) |> terra::as.array(),
                  imgRaster(ebi) |> as.array() |> aperm(c(2,1,3)))
 })
-vizgen_dir <- VizgenOutput(file_path = "vizgen_test")
+
+fp <- tempfile()
+vizgen_dir <- VizgenOutput(file_path = fp)
 fn <- file.path(vizgen_dir, "images", "mosaic_Cellbound1_z3.tif")
 
 test_that("Convert SpatRasterImage to ExtImage, grayscale", {
@@ -378,7 +384,6 @@ test_that("Convert BioFormatsImage to ExtImage, full extent", {
     dim_img <- dim(imgRaster(ebi))
     expect_equal(dim_img, c(sizeX_full, sizeY_full))
 })
-# TODO: make small subset from XOA v2 data, to test reading a subset of channels
 
 ext_use <- c(xmin = 1000, xmax = 2000, ymin = 600, ymax = 1600)
 test_that("Convert BioFormatsImage to ExtImage, not full extent", {
@@ -434,9 +439,9 @@ test_that("Ignore resolution in toExtImage when there's only 1 resolution", {
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
     library(RBioFormats)
-    dir.create("xt")
-    file.copy(xenium_dir, "xt", recursive = TRUE)
-    fn1 <- file.path("xt", "xenium_lr", "morphology_mip.ome.tif")
+    fp <- tempfile()
+    fn <- XeniumOutput(file_path = fp)
+    fn1 <- file.path(fn, "morphology_mip.ome.tif")
     bfi <- BioFormatsImage(fn1, ext_use, isFull = FALSE)
     expect_message(spi <- toSpatRasterImage(bfi, resolution = 1L), "non OME")
     fn <- file.path(dirname(fn1), "morphology_mip_res1.tiff")
@@ -446,7 +451,7 @@ test_that("Convert BioFormatsImage to SpatRasterImage", {
     ext_sf_spi <- st_bbox(ext(spi)) |> st_as_sfc()
     expect_true(st_covered_by(ext_sf_bfi, ext_sf_spi, sparse = FALSE))
     expect_true(st_area(ext_sf_spi) / st_area(ext_sf_bfi) < 1.005)
-    unlink("xt", recursive = TRUE)
+    unlink(fn, recursive = TRUE)
 })
 
 test_that("Convert BioFormatsImage to SpatRasterImage not saving geotiff", {
@@ -617,7 +622,7 @@ test_that("Crop BioFormatsImage", {
 # ExtImage====================
 
 test_that("ExtImage constructor", {
-    img <- readImage(system.file('images', 'nuclei.tif', package='ExtImage'))
+    img <- readImage(system.file('images', 'nuclei.tif', package="EBImage"))
     expect_error(ExtImage(img, ext = NULL),
                  "Extent must be specified")
 })
@@ -685,5 +690,35 @@ test_that("Crop ExtImage", {
     expect_equal(dim(imgRaster(ebi_sub)), round(dim_expect))
 })
 
-unlink("xenium_test", recursive = TRUE)
-unlink("vizgen_test", recursive = TRUE)
+# Image setter-------
+test_that("Image setter, the image isn't already there", {
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn)
+    img <- getImg(sfe) |> toExtImage(resolution = 1L)
+    img <- img > 500
+    Img(sfe, image_id = "mask") <- img
+    df <- imgData(sfe)
+    expect_true("mask" %in% imageIDs(sfe))
+    img2 <- getImg(sfe, image_id = "mask")
+    expect_equal(img2, img)
+    unlink(fn, recursive = TRUE)
+})
+
+test_that("Image setter, modify existing image", {
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn)
+    df_old <- imgData(sfe)
+    img <- getImg(sfe) |> toExtImage(resolution = 1L)
+    # Increase contrast
+    img <- img * 1.1
+    Img(sfe, image_id = "morphology_focus") <- img
+    img2 <- getImg(sfe, image_id = "morphology_focus")
+    expect_equal(img2, img)
+    df_new <- imgData(sfe)
+    expect_equal(nrow(df_new), nrow(df_old))
+    unlink(fn, recursive = TRUE)
+})

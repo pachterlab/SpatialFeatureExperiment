@@ -47,3 +47,34 @@ test_that("Change sample ID", {
     rfd <- reducedDimFeatureData(sfe, "PCA")
     expect_equal(names(rfd), name_expect)
 })
+
+test_that("bbox center", {
+    bbox_use <- c(xmin = 10, xmax = 20, ymin = 5, ymax = 15)
+    expect_equal(bbox_center(bbox_use), c(15, 10))
+})
+fp <- tempfile()
+dir_use <- XeniumOutput("v1", file_path = fp)
+test_that("Get pixel size", {
+    library(RBioFormats)
+    fn <- file.path(dir_use, "morphology_focus.ome.tif")
+    # Top resolution
+    try(pss <- getPixelSize(fn))
+    pss <- getPixelSize(fn)
+    expect_equal(pss, c(1.7, 1.7))
+    pss2 <- getPixelSize(fn, 2L)
+    expect_equal(pss2, c(5.1, 5.1))
+})
+
+test_that("Aggregate bboxes", {
+    bboxes <- list(c(xmin = 5, xmax = 10, ymin = 2, ymax = 20),
+                   c(xmin = 8, xmax = 18, ymin = 0, ymax = 15))
+    bbox_all <- aggBboxes(bboxes)
+    expect_equal(bbox_all, c(xmin = 5, ymin = 0, xmax = 18, ymax = 20))
+})
+
+test_that("Image IDs", {
+    sfe <- readXenium(dir_use)
+    expect_setequal(imageIDs(sfe), c("morphology_focus", "morphology_mip"))
+})
+
+unlink(dir_use, recursive = TRUE)

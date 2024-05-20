@@ -94,9 +94,20 @@ but \code{sample_id} will be appended when to SFE objects are combined with
 because they can have overlapping coordinate values.
 }
 \examples{
-# Use Xenium toy example
+library(SFEData)
+library(RBioFormats)
+fp <- tempfile()
+dir_use <- XeniumOutput("v2", file_path = fp)
+# RBioFormats issue
+try(sfe <- readXenium(dir_use, add_molecules = TRUE))
+sfe <- readXenium(dir_use, add_molecules = TRUE)
+rowGeometries(sfe)
+rowGeometryNames(sfe)
+tx <- rowGeometry(sfe, "txSpots")
+txSpots(sfe)
+unlink(dir_use, recursive = TRUE)
 }
 \seealso{
 [dimGeometries()], [colGeometries()]
 }
-\concept{Column or row geometries}
+\concept{Getters and setters}

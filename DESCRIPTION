@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.5.2
+Version: 1.7.0
 Authors@R: 
     c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
     role = c("aut", "cre"),
@@ -19,6 +19,7 @@ Description: A new S4 class integrating Simple Features with the R package sf
     and SingleCellExperiment, hence methods for these parent classes can still
     be used.
 Imports:
+    Biobase,
     BiocGenerics,
     BiocNeighbors,
     BiocParallel,
@@ -40,7 +41,8 @@ Imports:
     SummarizedExperiment,
     stats,
     terra,
-    utils
+    utils,
+    zeallot
 License: Artistic-2.0
 Encoding: UTF-8
 RoxygenNote: 7.3.1
@@ -55,6 +57,7 @@ Collate:
     'df2sf.R'
     'dimGeometries.R'
     'featureData.R'
+    'formatTxSpots.R'
     'geometry_operation.R'
     'graph_wrappers.R'
     'image.R'
@@ -81,10 +84,13 @@ Suggests:
     testthat (>= 3.0.0),
     Voyager,
     xml2,
+    scater,
     Seurat,
     SeuratObject,
     dplyr,
     tidyr
+Remotes:
+    Voyager=github::pachterlab/voyager
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

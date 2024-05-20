@@ -114,7 +114,7 @@ fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
-\item{unit}{# Default unit is \code{"micron"}. However for Visium one can choose 
+\item{unit}{# Default unit is \code{"micron"}. However for Visium one can choose
 between \code{"micron"} or \code{"full_res_image_pixel"}.}
 
 \item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment},

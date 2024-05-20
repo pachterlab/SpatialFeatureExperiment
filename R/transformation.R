@@ -27,9 +27,10 @@
 }
 
 .transpose <- function(bbox) {
+    # Reflect about y=-x, then translate to c(center_y, center_x)
     M <- matrix(c(0,-1,-1,0), ncol = 2)
-    v <- c(((bbox["ymax"] - bbox["ymin"])/2 + bbox["ymin"])*2,
-           ((bbox["xmax"] - bbox["xmin"])/2 + bbox["xmin"])*2)
+    center <- bbox_center(bbox)
+    v <- as.vector(rev(center) - M %*% center)
     list(M = M, v = v)
 }
 
@@ -85,6 +86,8 @@
 .transform_geometry.sf <- function(g, mult, add) {
     gt <- st_geometry_type(g, FALSE) |> as.character()
     if (gt == "GEOMETRY") return(.transform_geometry_sf(g, mult, add))
+    # Empty geometries in the midst of 3D geometries causes trouble in st_coordinates
+    if (!is.null(st_z_range(g))) g <- g[!st_is_empty(g),]
     coords <- st_coordinates(g)
     coords[,c("X","Y")] <- .transform_geometry(coords[,c("X","Y")], mult, add)
     coord_names <- if (is.null(st_z_range(g))) c("X","Y") else c("X","Y","Z")
@@ -170,8 +173,12 @@
     center_old <- dim(img)[1:2]/2
     # Since it's cbind(px, 1)%*%m and y is flipped
     # Here the origin is the top left, adding positive number increases px inds
-    v <- center_new - t(M) %*% center_old
-    out <- EBImage::affine(imgRaster(img), rbind(M, t(v)),
+    # Basically, flip the image, perform the operation, then flip it back
+    # Tricky part is the translation
+    P <- matrix(c(1,0,0,-1), nrow = 2)
+    M2 <- P %*% M %*% P
+    v <- center_new - M2 %*% center_old
+    out <- EBImage::affine(imgRaster(img), t(cbind(M2, v)),
                            output.dim = dim_new_px)
     ExtImage(img = out, ext = bbox_new)
 }

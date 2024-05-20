@@ -42,13 +42,14 @@ down sampled to approximately this number of pixels.}
 
 \item{direction}{character. Should (partially) match "vertical" to flip by rows, or "horizontal" to flip by columns}
 
+\item{degrees}{How many degrees to rotate. Positive number means clockwise
+and negative number means counterclockwise.}
+
 \item{v}{Vector to spatially translate the SFE object.}
 
-\item{resolution}{Transposing, mirroring, and rotating \code{BioFormatsImage}
-will convert it into \code{ExtImage}, loading the image into memory. This
-argument specifies the resolution of image in the OME-TIFF pyramid to load.
-Ignored if no image of class \code{BioFormatsImage} is present in the
-sample(s) of interest.}
+\item{factor}{Numeric, scaling factor.}
+
+\item{M}{A 2x2 numeric matrix for the linear transformation in the xy plane.}
 }
 \value{
 An SFE object with the sample(s) transformed.

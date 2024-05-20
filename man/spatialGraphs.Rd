@@ -173,4 +173,4 @@ g2 <- spatialGraph(sfe, "visium", MARGIN = 2L)
 g <- annotGraph(sfe, "myofiber")
 g2 <- colGraph(sfe, "visium")
 }
-\concept{Spatial neighborhood graph field in SFE objects}
+\concept{Getters and setters}

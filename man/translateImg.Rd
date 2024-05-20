@@ -29,3 +29,19 @@ A \code{*Image} object of the same class that has been shifted in
 \description{
 This function shifts the spatial extent of the image in the x-y plane.
 }
+\seealso{
+Other image methods: 
+\code{\link{SFE-image}},
+\code{\link{affineImg}()},
+\code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
+\code{\link{imgRaster}()},
+\code{\link{imgSource}()},
+\code{\link{mirrorImg}()},
+\code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{transposeImg}()}
+}
+\concept{Image affine transformation}
+\concept{image methods}

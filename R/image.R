@@ -20,7 +20,8 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' \code{SpatialExperiment}.
 #'
 #' @param img A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.
-#' @return A \code{SpatRasterImage} or \code{PackedRasterImage} object.
+#' @param object A \code{SpatRasterImage} object.
+#' @return A \code{SpatRasterImage} object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
 #' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster
 #'   imgSource getImg rotateImg rmvImg
@@ -28,7 +29,7 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' @importClassesFrom terra SpatRaster
 #' @importClassesFrom EBImage Image
 #' @importFrom methods setClassUnion
-#' @concept Image and raster
+#' @concept Image classes
 #' @examples
 #' # Example code
 #' @name SpatRasterImage
@@ -56,6 +57,8 @@ SpatRasterImage <- function(img) new("SpatRasterImage", img)
 
 setClass("PackedRasterImage", contains=c("AlignedSpatialImage", "PackedSpatRaster"))
 
+#' @rdname SpatRasterImage
+#' @export
 setMethod("show", "SpatRasterImage", function(object) {
     d <- dim(object)
     dim <- paste(d[c(2,1,3)], collapse=" x ")
@@ -71,6 +74,7 @@ setMethod("show", "SpatRasterImage", function(object) {
 })
 
 setMethod("showAsCell", "SpatRasterImage", function(object) {
+    d <- dim(object)
     paste(paste(d[c(2,1,3)], collapse=" x "), "SpatRasterImage")
 })
 
@@ -105,6 +109,7 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #' is specified. If the subsequent transformation happens to restore the image
 #' to its original place, then transformation specifications will be removed.
 #'
+#' @param object A \code{BioFormatsImage} object.
 #' @param path Path to an OME-TIFF image file.
 #' @param ext Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
 #'   microns indicating the spatial extent covered by the image. If \code{NULL},
@@ -128,7 +133,7 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #' @return A \code{BioFormatsImage} object.
 #' @name BioFormatsImage
 #' @aliases BioFormatsImage-class
-#' @concept Image and raster
+#' @concept Image classes
 #' @seealso [isFull()], [origin()]
 #' @exportClass BioFormatsImage
 setClass("BioFormatsImage", contains = "AlignedSpatialImage",
@@ -202,6 +207,8 @@ setValidity("BioFormatsImage", function(object) {
     c(xmin = 0, ymin = 0, xmax = sizeX_full/sfx, ymax = sizeY_full/sfy)
 }
 
+#' @rdname BioFormatsImage
+#' @export
 setMethod("show", "BioFormatsImage", function(object) {
     d <- dim(object)
     dim <- paste0("X: ", d[1], ", Y: ", d[2], ", C: ", d[3], ", Z: ", d[4], ", T: ", d[5])
@@ -241,8 +248,13 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
 # bbox of the entire SFE object
 .combine_transforms <- function(bfi, new, bbox = ext(bfi)) {
     old <- transformation(bfi)
-    if (!length(old)) transformation(bfi) <- new
-    else {
+    if (!length(old)) {
+        nms <- c("xmin", "xmax", "ymin", "ymax")
+        if (!isTRUE(all.equal(bbox[nms], ext(bfi)[nms]))) {
+            new <- .get_mv(new, bbox)
+        }
+        transformation(bfi) <- new
+    }else {
         old <- .get_mv(old, bbox)
         new <- .get_mv(new, bbox)
         out <- list(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
@@ -267,6 +279,7 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
 #'   For \code{transformation}, a list.
 #' @name BioFormatsImage-getters
 #' @aliases isFull origin transformation
+#' @concept Image classes
 NULL
 
 #' @rdname BioFormatsImage-getters
@@ -293,16 +306,17 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 
 # ExtImage==============
 
-#' Representation of ExtImage images in SFE objects
+#' Use the EBImage \code{Image} class in SFE objects
 #'
 #' This is a thin wrapper around the \code{\link{Image}} class in the
-#' \code{ExtImage package} so it inherits from \code{VirtualSpatialImage} to be
+#' \code{EBImage} package so it inherits from \code{VirtualSpatialImage} to be
 #' compatible with \code{SpatialExperiment} from which SFE inherits. An
 #' \code{ext} field is added to specify the spatial extent of the image in
 #' microns to facilitate geometric operations on the SFE object (including the
 #' images) and plotting with \code{Voyager}.
 #'
 #' @inheritParams BioFormatsImage
+#' @param object An \code{ExtImage} object.
 #' @param img An \code{Image} object or anything that inherits from \code{Image}
 #'   such as \code{AnnotatedImage} in \code{RBioFormats}.
 #' @return An \code{ExtImage} object.
@@ -311,7 +325,7 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 #' @name ExtImage
 #' @aliases ExtImage-class
 #' @exportClass ExtImage
-#' @concept Image and raster
+#' @concept Image classes
 setClass("ExtImage", contains = c("AlignedSpatialImage", "Image"),
          slots = c(ext = "numeric"))
 
@@ -320,6 +334,8 @@ setValidity("ExtImage", function(object) {
     if (length(out)) return(out) else TRUE
 })
 
+#' @rdname ExtImage
+#' @export
 setMethod("show", "ExtImage", function(object) {
     d <- dim(object)
     dim <- paste(dim(object), collapse=" x ")
@@ -349,6 +365,21 @@ ExtImage <- function(img, ext = NULL) {
 }
 
 # Coercion of Image classes===================
+.get_subset <- function(bbox_use, sizeY, channel = NULL) {
+    ymin_px <- sizeY - bbox_use["ymax"]
+    ymax_px <- sizeY - bbox_use["ymin"]
+    bbox_img <- bbox_use
+    bbox_img["ymin"] <- ymin_px; bbox_img["ymax"] <- ymax_px
+    min_nms <- c("xmin", "ymin")
+    max_nms <- c("xmax", "ymax")
+    bbox_img[min_nms] <- floor(bbox_img[min_nms])
+    bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
+    # For instance, say xmin = 0. Then it should start with pixel 1.
+    list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
+         y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L),
+         c = channel)
+}
+
 .toExtImage <- function(x, resolution = 4L, channel = NULL) {
     check_installed("RBioFormats")
     # PhysicalSizeX seems to be a standard field
@@ -410,18 +441,9 @@ ExtImage <- function(img, ext = NULL) {
         } else sfx2 <- sfy2 <- 1
         # ext(x) has origin at the bottom left, while image indices have
         # origin at the top left. Need to convert the y indices.
-        ymin_px <- meta$sizeY - bbox_use["ymax"]
-        ymax_px <- meta$sizeY - bbox_use["ymin"]
-        bbox_img <- bbox_use
-        bbox_img["ymin"] <- ymin_px; bbox_img["ymax"] <- ymax_px
+        subset_use <- .get_subset(bbox_use, meta$sizeY, channel)
         bbox_use[min_nms] <- floor(bbox_use[min_nms])
         bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
-        bbox_img[min_nms] <- floor(bbox_img[min_nms])
-        bbox_img[max_nms] <- ceiling(bbox_img[max_nms])
-        # For instance, say xmin = 0. Then it should start with pixel 1.
-        subset_use <- list(x = seq(bbox_img["xmin"]+1L, bbox_img["xmax"]-1L, by = 1L),
-                           y = seq(bbox_img["ymin"]+1L, bbox_img["ymax"]-1L, by = 1L),
-                           c = channel)
         # Extent should account for the pixels
         ext_use <- bbox_use
         ext_use[x_nms] <- ext_use[x_nms]/(sfx*sfx2)
@@ -502,7 +524,7 @@ ExtImage <- function(img, ext = NULL) {
 #' @seealso toSpatRasterImage
 #' @aliases toExtImage
 #' @export
-#' @concept Image and raster
+#' @concept Image classes
 NULL
 
 #' @rdname toExtImage
@@ -531,7 +553,7 @@ setMethod("toExtImage", "SpatRasterImage", .toExtImage2)
 #' @name toSpatRasterImage
 #' @seealso toExtImage
 #' @export
-#' @concept Image and raster
+#' @concept Image classes
 NULL
 
 #' @rdname toSpatRasterImage
@@ -590,7 +612,8 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #' setter sets the pre-transformation extent.
 #' @name ext
 #' @aliases ext
-#' @concept Image and raster
+#' @concept Image methods
+#' @family image methods
 NULL
 
 .ext_ <- function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
@@ -646,6 +669,8 @@ setReplaceMethod("ext", c("SpatRasterImage", "numeric"),
 #'   in the full resolution image. The 5 dimensions are in the order of XYCZT:
 #'   x, y, channel, z, and time. This is not changed by transformations. Use
 #'   \code{\link{ext}} to see the extent after transformation.
+#' @concept Image methods
+#' @family image methods
 #' @export
 setMethod("dim", "BioFormatsImage", function(x) {
     check_installed("RBioFormats")
@@ -654,6 +679,64 @@ setMethod("dim", "BioFormatsImage", function(x) {
         coreMetadata(series = 1L)
     c(X=meta$sizeX, Y=meta$sizeY, C=meta$sizeC, Z=meta$sizeZ, "T"=meta$sizeT)
 })
+
+#' Image setter
+#'
+#' Modify or replace images stored in a \code{SpatialExperiment} object. This is
+#' different from \code{\link{addImg}} which adds the image from files and can't
+#' replace existing images, which is there to be consistent with
+#' \code{SpatialExperiment}. This setter here can replace existing images with
+#' another object that inherits from \code{VirtualSpatialImage}, including
+#' \code{\link{SpatRasterImage}}, \code{\link{BioFormatsImage}}, and
+#' \code{\link{ExtImage}}.
+#'
+#' @inheritParams SFE-image
+#' @param x A \code{SpatialExperiment} object, which includes SFE.
+#' @param scale_fct Scale factor to convert pixels in lower resolution to those
+#'   in the full resolution. Only relevant to image classes implemented in
+#'   \code{SpatialExperiment} but not \code{SpatialFeatureExperiment} because
+#'   the spatial extent of images in SFE takes precedence.
+#' @param value New version of image to add, must inherit from
+#'   \code{VirtualSpatialImage}.
+#' @return SFE object with the new image added.
+#' @concept Image methods
+#' @export
+#' @importFrom methods signature
+#' @importFrom SpatialExperiment imgData<-
+#' @aliases Img<-
+#' @examples
+#' library(EBImage)
+#' library(SFEData)
+#' library(RBioFormats)
+#' fp <- tempfile()
+#' fn <- XeniumOutput("v2", file_path = fp)
+#' # Weirdly the first time I get the null pointer error
+#' try(sfe <- readXenium(fn))
+#' sfe <- readXenium(fn)
+#' img <- getImg(sfe) |> toExtImage(resolution = 1L)
+#' img <- img[,,1] > 500
+#' Img(sfe, image_id = "mask") <- img
+#' imageIDs(sfe)
+#' unlink(fn, recursive = TRUE)
+#'
+setMethod("Img<-", signature = "SpatialExperiment",
+          function(x, sample_id = 1L, image_id, scale_fct = 1, value) {
+              sample_id <- .check_sample_id(x, sample_id)
+              df <- imgData(x)
+              ind <- which(df$sample_id == sample_id & df$image_id == image_id)
+              if (length(ind)) {
+                  df$data[[ind]] <- value
+              } else {
+                  df_new <- DataFrame(
+                      sample_id,
+                      image_id,
+                      data=I(list(value)),
+                      scaleFactor=scale_fct)
+                  df <- rbind(df, df_new)
+              }
+              imgData(x) <- df
+              x
+          })
 
 #' Methods for handling image-related data
 #'
@@ -672,6 +755,8 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #'
 #' @inheritParams mirrorImg
 #' @inheritParams rotateImg
+#' @inheritParams scaleImg
+#' @inheritParams affineImg
 #' @inheritParams SpatialExperiment::addImg
 #' @param x A SFE object.
 #' @param sample_id Which sample the image is associated with. Use
@@ -692,7 +777,7 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #' transposing a matrix. It's flipped about the line going from the top left to
 #' the bottom right.
 #' @name SFE-image
-#' @concept Image and raster
+#' @concept Image methods
 #' @family image methods
 #' @examples
 #' library(SFEData)
@@ -875,13 +960,13 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 #' @return \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
 #'   \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
 #'   image of the specified resolution will be read into memory as
-#'   \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
+#'   \code{AnnotatedImage} and \code{ExtImage}, which both inherit from
+#'   \code{EBImage::Image}.
 #' @export
 #' @name imgRaster
-#' @aliases imgRaster,SpatRasterImage-method
-#' imgRaster,BioFormatsImage-method
-#' imgRaster,ExtImage-method
-#' @concept Image and raster
+#' @aliases imgRaster,SpatRasterImage-method imgRaster,BioFormatsImage-method
+#'   imgRaster,ExtImage-method
+#' @concept Image methods
 #' @family image methods
 NULL
 
@@ -913,7 +998,7 @@ setMethod("imgRaster", "ExtImage", function(x) as(x, "Image"))
 #'   \code{NULL}.
 #' @name imgSource
 #' @export
-#' @concept Image and raster
+#' @concept Image methods
 #' @importFrom terra sources
 #' @family image methods
 NULL
@@ -923,7 +1008,7 @@ NULL
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              out <- sources(imgRaster(x))
+              out <- sources(imgRaster(x)) |> normalizePath()
               if (out == "") out <- NA_character_
               return(out)
           })
@@ -959,7 +1044,7 @@ setMethod("imgSource", "ExtImage", function(x) NA_character_)
 #'   ymax.
 #' @name transposeImg
 #' @aliases transposeImg
-#' @concept Image and raster
+#' @concept Image affine transformation
 #' @export
 #' @family image methods
 NULL
@@ -1033,7 +1118,7 @@ setMethod("transposeImg", "ExtImage",
 #' @return \code{*Image} object of the same class.
 #' @name mirrorImg
 #' @aliases mirrorImg
-#' @concept Image and raster
+#' @concept Image affine transformation
 #' @export
 #' @family image methods
 NULL
@@ -1066,7 +1151,7 @@ setMethod("mirrorImg", "SpatRasterImage",
 
 setMethod(".mirror_img", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
-                   bbox_all = ext(x)) {
+                   bbox_all = ext(x), ...) {
               direction <- match.arg(direction)
               .combine_transforms(x, list(name = "mirror", direction = direction),
                                   bbox = bbox_all)
@@ -1081,7 +1166,7 @@ setMethod("mirrorImg", "BioFormatsImage",
 
 setMethod(".mirror_img", "ExtImage",
           function(x, direction = c("vertical", "horizontal"),
-                   bbox_all = NULL) {
+                   bbox_all = NULL, ...) {
               direction <- match.arg(direction)
               fun <- if (direction == "vertical") EBImage::flip else EBImage::flop
               x <- fun(x)
@@ -1120,7 +1205,7 @@ setMethod("mirrorImg", "ExtImage",
 #'   \code{ExtImage}. Otherwise \code{*Image} object of the same class.
 #' @name rotateImg
 #' @aliases rotateImg
-#' @concept Image and raster
+#' @concept Image affine transformation
 #' @export
 #' @family image methods
 NULL
@@ -1141,7 +1226,7 @@ setMethod("rotateImg", "SpatRasterImage",
           })
 
 setMethod(".rotate_img", "BioFormatsImage",
-          function(x, degrees, bbox_all = ext(x)) {
+          function(x, degrees, bbox_all = ext(x), ...) {
               .combine_transforms(x, list(name = "rotate", degrees = degrees),
                                   bbox = bbox_all)
           })
@@ -1154,7 +1239,7 @@ setMethod("rotateImg", "BioFormatsImage",
           })
 
 setMethod(".rotate_img", "ExtImage",
-          function(x, degrees, bbox_all = ext(x)) {
+          function(x, degrees, bbox_all = ext(x), ...) {
               x <- EBImage::rotate(x, degrees)
               ext(x) <- .transform_bbox(ext(x), list(name="rotate", degrees=degrees),
                                         bbox_all = bbox_all)
@@ -1181,6 +1266,8 @@ setMethod("rotateImg", "ExtImage",
 #' @name translateImg
 #' @aliases translateImg
 #' @importFrom terra shift
+#' @concept Image affine transformation
+#' @family image methods
 #' @export
 NULL
 
@@ -1226,6 +1313,12 @@ setMethod("translateImg", "ExtImage", function(x, v, ...) {
 #' changed. The center of the image is unchanged.
 #' @aliases scaleImg
 #' @name scaleImg
+#' @concept Image affine transformation
+#' @family image methods
+#' @export
+NULL
+
+#' @rdname scaleImg
 #' @export
 setMethod("scaleImg", "AlignedSpatialImage",
           function(x, factor, ...) .scale_ext(x, factor))
@@ -1246,7 +1339,10 @@ setMethod("scaleImg", "AlignedSpatialImage",
 #' into memory as \code{ExtImage}.
 #' @name affineImg
 #' @aliases affineImg
+#' @concept Image affine transformation
+#' @family image methods
 #' @export
+NULL
 
 #' @rdname affineImg
 #' @export
@@ -1286,7 +1382,7 @@ setMethod("affineImg", "ExtImage",
 #'   extent is changed.
 #' @name cropImg
 #' @aliases cropImg
-#' @concept Image and raster
+#' @concept Image methods
 #' @export
 #' @family image methods
 NULL
@@ -1318,26 +1414,30 @@ setMethod("cropImg", "BioFormatsImage", function(x, bbox) {
 setMethod("cropImg", "ExtImage", function(x, bbox) {
     # Convert bbox to pixel range based on ext(x)
     bbox_old <- ext(x)
+    origin <- bbox_old[c("xmin", "ymin")]
+    bbox <- .shift_ext(bbox, -origin)
     dim_old <- dim(x)
     sfx <- dim_old[1]/(bbox_old["xmax"] - bbox_old["xmin"])
     sfy <- dim_old[2]/(bbox_old["ymax"] - bbox_old["ymin"])
     bbox_use <- bbox
     bbox_use[c("xmin", "xmax")] <- bbox_use[c("xmin", "xmax")] * sfx
     bbox_use[c("ymin", "ymax")] <- bbox_use[c("ymin", "ymax")] * sfy
-    bbox_use[c("xmin", "ymin")] <- floor(bbox_use[c("xmin", "ymin")])
-    bbox_use[c("xmax", "ymax")] <- ceiling(bbox_use[c("xmax", "ymax")])
+    min_nms <- c("xmin", "ymin")
+    max_nms <- c("xmax", "ymax")
+
+    subset_use <- .get_subset(bbox_use, dim_old[2])
+    bbox_use[min_nms] <- floor(bbox_use[min_nms])
+    bbox_use[max_nms] <- ceiling(bbox_use[max_nms])
 
     if (length(dim_old) == 3L)
-        x <- x[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
-                           seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L),]
+        x <- x[subset_use[[1]], subset_use[[2]],]
     else
-        x <- x[seq(bbox_use["xmin"]+1L, bbox_use["xmax"]-1L),
-                           seq(bbox_use["ymin"]+1L, bbox_use["ymax"]-1L)]
+        x <- x[subset_use[[1]], subset_use[[2]]]
 
     bbox_new <- bbox_use
     bbox_new[c("xmin", "xmax")] <- bbox_new[c("xmin", "xmax")] / sfx
     bbox_new[c("ymin", "ymax")] <- bbox_new[c("ymin", "ymax")] / sfy
-    ext(x) <- bbox_new
+    ext(x) <- .shift_ext(bbox_new, origin)
     x
 })
 

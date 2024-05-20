@@ -11,14 +11,14 @@
     dimData <- switch(MARGIN, rowData, colData)
     if (is.null(value)) fd <- metadata(dimData(x))[[fd_name]] else fd <- value
     if (!is.null(fd)) {
-        fd <- fd[intersect(rownames(fd), colnames(dimData(x))),]
+        fd <- fd[intersect(rownames(fd), colnames(dimData(x))),, drop = FALSE]
         empty <- .initDF(dimData(x))
         fd <- combineCols(empty, fd)
     }
     return(fd)
 }
 
-#' Get metadata of colData, rowData, and geometries
+#' Get global spatial analysis results and metadata of colData, rowData, and geometries
 #'
 #' Results of spatial analyses on columns in \code{colData}, \code{rowData}, and
 #' geometries are stored in their metadata, which can be accessed by the
@@ -31,7 +31,7 @@
 #'   annotGeometry. Defaults to 2, colGeometry.
 #' @param dimred Name of a dimension reduction, can be seen in
 #'   \code{\link{reducedDimNames}}.
-#' @concept Spatial analysis results
+#' @concept Getters and setters
 #' @return A \code{DataFrame}.
 #' @seealso getParams
 #' @export
@@ -40,6 +40,7 @@
 #' library(SpatialFeatureExperiment)
 #' library(SingleCellExperiment)
 #' library(SFEData)
+#' library(Voyager)
 #' sfe <- McKellarMuscleData("small")
 #' colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 #' # Moran's I for colData
@@ -107,11 +108,12 @@ reducedDimFeatureData <- function(sfe, dimred) {
 #'   \code{\link{reducedDimNames}}. \code{colGeometryName} and
 #'   \code{annotGeometryName} have precedence over \code{reducedDimName}.
 #' @return A named list showing the parameters
-#' @concept Spatial analysis results
+#' @concept Getters and setters
 #' @export
 #' @examples
 #' library(SFEData)
 #' library(scater)
+#' library(Voyager)
 #' sfe <- McKellarMuscleData("small")
 #' colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 #' sfe <- colDataMoransI(sfe, "nCounts")

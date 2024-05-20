@@ -5,7 +5,7 @@
 \alias{rowFeatureData}
 \alias{geometryFeatureData}
 \alias{reducedDimFeatureData}
-\title{Get metadata of colData, rowData, and geometries}
+\title{Get global spatial analysis results and metadata of colData, rowData, and geometries}
 \usage{
 colFeatureData(sfe)
 
@@ -39,6 +39,7 @@ the users to more directly access these results.
 library(SpatialFeatureExperiment)
 library(SingleCellExperiment)
 library(SFEData)
+library(Voyager)
 sfe <- McKellarMuscleData("small")
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 # Moran's I for colData
@@ -48,4 +49,4 @@ colFeatureData(sfe)
 \seealso{
 getParams
 }
-\concept{Spatial analysis results}
+\concept{Getters and setters}

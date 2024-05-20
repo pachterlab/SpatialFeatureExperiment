@@ -59,6 +59,8 @@
     } else if (type == "exp") {
         dmat <- exp(-alpha * distance)
     } else if (type == "dpd") {
+        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold in the dmax argument")
+        if (dmax <= 0) stop("DPD weights require a positive maximum distance threshold")
         dmat <- (1 - (distance/dmax)^alpha)^alpha
         dmat[dmat < 0] <- 0
     }
@@ -162,7 +164,7 @@
     }
 
     if (type == "dpd") {
-        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold")
+        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold in the dmax argument")
         if (dmax <= 0) stop("DPD weights require a positive maximum distance threshold")
         for (i in 1:n) {
             if (cardnb[i] > 0) {
@@ -276,7 +278,7 @@
     nb
 }
 
-.dnn_bioc <- function(coords, d2, BNPARAM = KmknnParam(),
+.dnn_bioc <- function(coords, d2, d1 = 0, BNPARAM = KmknnParam(),
                       BPPARAM = SerialParam(), row.names = NULL) {
     nn <- findNeighbors(coords, threshold = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM)
 
@@ -291,6 +293,9 @@
         index <- nn$index[[i]]
         ind_use <- index != i
         if (any(ind_use)) {
+            if (d1 > 0L) {
+                ind_use <- ind_use & (nn$distance[[i]] > d1)
+            }
             v <- index[ind_use]
             ord <- order(v)
             nb[[i]] <- v[ord]
@@ -302,7 +307,7 @@
     }
     attr(nb, "distance") <- glist
     attr(nb, "region.id") <- row.names
-    attr(nb, "dnn") <- c(0, d2)
+    attr(nb, "dnn") <- c(d1, d2)
     attr(nb, "nbtype") <- "distance"
     class(nb) <- c("nb", "nbdnn")
     nb
@@ -325,7 +330,7 @@
     if (nn_method == "spdep")
         dnearneigh(coords, d1, d2, use_kd_tree = use_kd_tree, row.names = row.names)
     else
-        .dnn_bioc(coords, d2 = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM,
+        .dnn_bioc(coords, d2 = d2, d1 = d1, BNPARAM = BNPARAM, BPPARAM = BPPARAM,
                   row.names = row.names)
 }
 .g2nb_sfe <- function(coords, fun, nnmult = 3, sym = FALSE, row.names = NULL) {

@@ -1,8 +1,8 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
-  #push:
-  #  branches: [devel]
+  push:
+    branches: [devel]
   pull_request:
     branches: [devel]
 
@@ -21,7 +21,6 @@ jobs:
         uses: grimbough/bioc-actions/setup-bioc@v1
         with:
           bioc-version: devel
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr

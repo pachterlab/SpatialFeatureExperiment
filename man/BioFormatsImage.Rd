@@ -4,8 +4,11 @@
 \name{BioFormatsImage}
 \alias{BioFormatsImage}
 \alias{BioFormatsImage-class}
+\alias{show,BioFormatsImage-method}
 \title{On disk representation of BioFormats images in SFE object}
 \usage{
+\S4method{show}{BioFormatsImage}(object)
+
 BioFormatsImage(
   path,
   ext = NULL,
@@ -15,6 +18,8 @@ BioFormatsImage(
 )
 }
 \arguments{
+\item{object}{A \code{BioFormatsImage} object.}
+
 \item{path}{Path to an OME-TIFF image file.}
 
 \item{ext}{Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
@@ -75,4 +80,4 @@ to its original place, then transformation specifications will be removed.
 \seealso{
 [isFull()], [origin()]
 }
-\concept{Image and raster}
+\concept{Image classes}

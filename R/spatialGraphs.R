@@ -37,7 +37,7 @@
 #'   only meaningful within the same piece of tissue. See the \code{sample_id}
 #'   argument in \code{\link{SpatialExperiment}}.
 #' @name spatialGraphs
-#' @concept Spatial neighborhood graph field in SFE objects
+#' @concept Getters and setters
 #' @return Getters for multiple graphs return a named list. Getters for
 #'   names return a character vector of the names. Getters for single graphs
 #'   return a \code{listw} object. Setters return an SFE object.

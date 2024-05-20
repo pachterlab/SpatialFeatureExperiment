@@ -81,6 +81,10 @@ and negative number means counterclockwise.}
 
 \item{v}{A numeric vector of length 2 specifying the vector in the xy plane
 to translate the SFE object.}
+
+\item{factor}{Numeric, scaling factor.}
+
+\item{M}{A 2x2 numeric matrix for the linear transformation in the xy plane.}
 }
 \description{
 Generics of these functions are defined in \code{SpatialExperiment}, except
@@ -119,12 +123,17 @@ sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 }
 \seealso{
 Other image methods: 
+\code{\link{affineImg}()},
 \code{\link{cropImg}()},
+\code{\link{dim,BioFormatsImage-method}},
+\code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},
 \code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
 \code{\link{transposeImg}()}
 }
-\concept{Image and raster}
+\concept{Image methods}
 \concept{image methods}

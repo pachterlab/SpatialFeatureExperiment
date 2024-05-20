@@ -14,13 +14,14 @@
 #' @return Invisibly \code{NULL}.
 #' @importFrom terra wrap unwrap
 #' @export
-#' @concept SpatialFeatureExperiment class
+#' @concept Utilities
 #' @examples
 #' outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
 #' samples <- file.path(outdir, paste0("sample0", 1:2))
 #' sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
 #' saveRDS(sfe, "foo.rds")
-#'
+#' # Clean up
+#' file.remove("foo.rds")
 setMethod("saveRDS", "SpatialFeatureExperiment",
           function(object, file = "", ascii = FALSE, version = NULL,
                    compress = TRUE, refhook = NULL) {
@@ -54,6 +55,14 @@ setMethod("unwrap", "SpatialFeatureExperiment",
                   img <- int_metadata(x)$imgData$data[[i]]
                   if (is(img, "PackedSpatRaster"))
                       img <- SpatRasterImage(unwrap(img))
+                  else if (is(img, "SpatRasterImage")) {
+                      old_slot <- tryCatch(img@image, error = function(e) NULL)
+                      if (!is.null(old_slot)) {
+                          if (is(old_slot, "SpatRaster")) img <- old_slot
+                          if (is(old_slot, "PackedSpatRaster")) img <- unwrap(old_slot)
+                          img <- SpatRasterImage(img)
+                      }
+                  }
                   int_metadata(x)$imgData$data[[i]] <- img
               }
               x

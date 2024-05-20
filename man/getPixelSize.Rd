@@ -20,3 +20,13 @@ the same.
 This function gets physical size of pixels in each resolution of a OME-TIFF
 pyramid in \code{\link{BioFormatsImage}}.
 }
+\examples{
+library(SFEData)
+fp <- tempfile()
+dir_use <- XeniumOutput("v1", file_path = fp)
+# RBioFormats null pointer error
+try(getPixelSize(file.path(dir_use, "morphology_focus.ome.tif")))
+getPixelSize(file.path(dir_use, "morphology_focus.ome.tif"))
+unlink(dir_use, recursive = TRUE)
+}
+\concept{Utilities}

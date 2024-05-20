@@ -20,3 +20,19 @@ This is different from other classes. The metadata is read where the
 dimensions in pixels can be found. The image itself is not read into memory
 here.
 }
+\seealso{
+Other image methods: 
+\code{\link{SFE-image}},
+\code{\link{affineImg}()},
+\code{\link{cropImg}()},
+\code{\link{ext}()},
+\code{\link{imgRaster}()},
+\code{\link{imgSource}()},
+\code{\link{mirrorImg}()},
+\code{\link{rotateImg}()},
+\code{\link{scaleImg}()},
+\code{\link{translateImg}()},
+\code{\link{transposeImg}()}
+}
+\concept{Image methods}
+\concept{image methods}
