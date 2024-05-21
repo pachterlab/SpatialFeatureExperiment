@@ -221,13 +221,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
     .DefaultAssay <- SeuratObject::DefaultAssay
 
     # Convert from Seurat to SFE ===== ####
-<<<<<<< HEAD
     # TODO (optional): support non-spatial Seurat to SFE as well? ----
-    
-=======
-    # TODO (optional) support non-spatial Seurat to SFE as well? ----
-
->>>>>>> 2ef9eae05df9d777350742c8ac5c2ad33a4ebdef
     if (!is.null(seu_obj)) {
       flip <- match.arg(flip)
       # use existing Assays
@@ -242,11 +236,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       }
 
       # loop for multiple FOVs/tissue sections ----
-<<<<<<< HEAD
       # TODO (enhancement): consider bplapply ---- 
-=======
-      # TODO: (enhancement) consider bplapply ----
->>>>>>> 2ef9eae05df9d777350742c8ac5c2ad33a4ebdef
       #..ie, when looping over FOVs with large number of cells and molecules
       obj_list <-
         lapply(seq(fov_names), function(fov_section) {
@@ -385,13 +375,11 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             } else { mols <- NULL }
 
           # Get sparse count matrices
-<<<<<<< HEAD
-=======
           assay_master <-
           if (length(assays_name) == length(fov_names))
             assays_name[fov_section]
           else .DefaultAssay(seu_obj)
->>>>>>> 2ef9eae05df9d777350742c8ac5c2ad33a4ebdef
+
           # get slot or layer names
           slot_names <- .GetSlotNames(object_seu = seu_obj,
                                       assay_seu = assay_master,
@@ -588,7 +576,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           if (length(assays_name) > 1) {
             # keep other assays, minus the default one 
             assays_name <- setdiff(assays_name, .DefaultAssay(seu_obj))
-<<<<<<< HEAD
             # sanity, if default assay cell ids match those in any other assays
             cells_passed <- 
               lapply(assays_name, function(i)
@@ -596,15 +583,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                   colnames() |>
                   match(x = _,
                         Seurat::GetAssay(seu_obj, .DefaultAssay(seu_obj)) |> 
-                          colnames()) |> 
-=======
-            # sanity, check if assays cell ids match those in fov_seu
-            cells_passed <-
-              lapply(assays_name, function(i)
-                Seurat::GetAssay(seu_obj, i) |>
-                  SeuratObject::Cells() |>
-                  match(x = _, cell_ids_fov) |>
->>>>>>> 2ef9eae05df9d777350742c8ac5c2ad33a4ebdef
+                          colnames()) |>
                   na.omit() |> any()) |> unlist()
             if (all(cells_passed)) {
               message(">>> Adding Seurat Assay(s) as Alternative Experiment(s): ",
@@ -656,8 +635,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       if (length(obj_list) > 1) {
         message(">>> Combining ", length(obj_list),
                 " SFE object(s) with unique `sample_id`")
-<<<<<<< HEAD
-        
         # Sanity on assays: 
         # the issue when different number of assays are present
         # see this https://github.com/drisso/SingleCellExperiment/issues/44
@@ -678,21 +655,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           }
         sfe <- do.call(cbind, obj_list)
         return(sfe)
-=======
-
-        # TODO: issue when one sfe has: ----
-          # assays(2): counts logcounts
-          # and assays(1): counts
-          # Error in .bind_Assays_objects(objects, along.cols = TRUE) :
-          #  the objects to bind must have the same number of assays
-          #
-
-        sfe <- do.call(cbind, obj_list)
-        return(sfe)
-
-        # TODO (alternatively) return list of objects? (when multiple samples/FOVs) ----
-        #return(obj_list)
->>>>>>> 2ef9eae05df9d777350742c8ac5c2ad33a4ebdef
       } else if (length(obj_list) == 1) {
         return(obj_list[[1]])
       } 
