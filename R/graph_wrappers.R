@@ -580,6 +580,13 @@ setMethod(
         match(bcs_use2, visium_row_col$barcode),
         c("col", "row")
     ]
+    if (is.na(coords_use) |> any()) {
+      # use "array_" cols from colData
+      coords_use <- 
+        colData(x)[, grep("array_", names(colData(x)))] |> 
+        as.data.frame() |> suppressWarnings()
+        colnames(coords_use) <- gsub("array_", "", colnames(coords_use))
+    }
     # So adjacent spots are equidistant
     coords_use$row <- coords_use$row * sqrt(3)
     g <- dnearneigh(as.matrix(coords_use),
