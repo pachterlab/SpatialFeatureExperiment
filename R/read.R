@@ -10,6 +10,9 @@
 #' @inheritParams SpatialExperiment::read10xVisium
 #' @inheritParams findVisiumGraph
 #' @inheritParams SpatialFeatureExperiment
+#' @param bin_size \code{c(character)}, use this only when loading VisiumHD. 
+#'  Specify which bin resolution to load, default is \code{NULL} which assumes that data is standard Visium.
+#'  Eg, single resolution is \code{c("8")}, if to load all three resolutions, use \code{c("2", "8", "16")}.
 #' @param type Either "HDF5", and the matrix will be represented as
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
@@ -18,6 +21,8 @@
 #'   \code{outs} directory under the directory specified in the \code{samples}
 #'   argument, as in Space Ranger output. Change the \code{dirs} argument if you
 #'   have moved or renamed the output directory.
+#' @param add_Graph \code{c(local)}, if to add spatial neighborhood graph for spots and only if \code{c(data = "filtered")}.
+#'  Default is \code{c(TRUE)}
 #' @param unit Whether to use pixels in full resolution image or microns as the
 #'   unit. If using microns, then spacing between spots in pixels will be used
 #'   to convert the coordinates into microns, as the spacing is known to be 100
@@ -51,6 +56,25 @@
 #'     type = "sparse", data = "filtered",
 #'     load = FALSE
 #' ))
+#' 
+#' # load VisiumHD
+#' # path to "binned_outputs" directory containing:
+#' └── binned_outputs
+#'     ├── square_002um
+#'     ├── square_008um
+#'     └── square_016um
+#' dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
+#' # this is public dataset -> https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
+#' sfe_hd <-
+#' read10xVisiumSFE(samples = list.files(dir_hd), # 1:3 resolutions
+#'                  dirs = dir_hd,
+#'                  bin_size = c("8", "16"), # this defines which of 1:3 resolutions to load
+#'                  type = "HDF5", # Note, "sparse" -> takes longer to load
+#'                  data = "filtered", # spots under tissue
+#'                  images = c("lowres"), # for now low res. image only
+#'                  add_Graph = FALSE # Note, if VisiumHD this can take time for 2 or 8µm res.
+#'                  )
+#'                   
 read10xVisiumSFE <- function(samples = "",
                              dirs = file.path(samples, "outs"),
                              sample_id = paste0(
@@ -60,30 +84,49 @@ read10xVisiumSFE <- function(samples = "",
                                      seq_along(samples)
                                  )
                              ),
+                             bin_size = NULL,
                              type = c("HDF5", "sparse"),
                              data = c("filtered", "raw"),
                              images = c("lowres", "hires"),
                              unit = c("full_res_image_pixel", "micron"),
+                             add_Graph = TRUE,
                              style = "W", zero.policy = NULL, load = FALSE) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
+    
     images <- match.arg(images, several.ok = TRUE)
     img_fns <- c(
-        lowres="tissue_lowres_image.png",
-        hires="tissue_hires_image.png")
+      lowres = "tissue_lowres_image.png",
+      hires = "tissue_hires_image.png")
     img_fns <- img_fns[images]
-
+    
+    # supports VisiumHD
+    if (!is.null(bin_size)) {
+      # sanity, to make sure it is VisiumHD using file pattern
+      sanity_passed <- 
+        grep("binned_out|square|um$", c(dirs, list.files(dirs))) |> any()
+      if (sanity_passed) {
+        # match sample names with bin_size
+        samples <- grep(paste0(bin_size, collapse = "|"), samples, value = TRUE)
+        sample_id <- samples
+        is_VisiumHD <- TRUE
+        }
+      } else { is_VisiumHD <- FALSE }
+    
     # Read one sample at a time, in order to get spot diameter one sample at a time
-    # TODO: need support for VisiumHD ----
     sfes <- lapply(seq_along(samples), function(i) {
-        o <- read10xVisium(dirs[i], sample_id[i], type, data, images, load = FALSE)
+        o <- .read10xVisium(if (is_VisiumHD) dirs else dirs[i],
+                            sample_id[i],
+                            if (is_VisiumHD) bin_size[i] else "", 
+                            type, data, images, load = FALSE)
         imgData(o) <- NULL
-
-        scalefactors <- fromJSON(file = file.path(
-            dirs[i], "spatial",
-            "scalefactors_json.json"
-        ))
+        scalefactors <- 
+          fromJSON(file = file.path(
+            if (is_VisiumHD) dirs else dirs[i], 
+            if (is_VisiumHD) samples[i] else "", 
+            "spatial", "scalefactors_json.json"))
+        
         o <- .spe_to_sfe(o,
                          colGeometries = NULL, rowGeometries = NULL,
                          annotGeometries = NULL, spatialCoordsNames = NULL,
@@ -92,7 +135,7 @@ read10xVisiumSFE <- function(samples = "",
                          unit = unit
         )
         # Add spatial enrichment if present
-        fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
+        fn <- file.path(dirs[i], if (is_VisiumHD) samples[i] else "", "spatial", "spatial_enrichment.csv")
         if (file.exists(fn)) {
             enrichment <- read.csv(fn)
             row_inds <- match(rownames(o), enrichment$Feature.ID)
@@ -111,7 +154,8 @@ read10xVisiumSFE <- function(samples = "",
             rowData(o) <- cbind(rowData(o), enrichment2)
         }
         # Add barcode fluorescence intensity if present
-        fn2 <- file.path(dirs[i], "spatial", "barcode_fluorescence_intensity.csv")
+        fn2 <- file.path(dirs[i], if (is_VisiumHD) samples[i] else "", 
+                         "spatial", "barcode_fluorescence_intensity.csv")
         if (file.exists(fn2)) {
             fluo <- read.csv(fn2)
             row_inds <- match(colnames(o), fluo$barcode)
@@ -119,43 +163,165 @@ read10xVisiumSFE <- function(samples = "",
             fluo$in_tissue <- NULL
             colData(o) <- cbind(colData(o), fluo[row_inds,])
         }
-
         names_use <- paste("tissue", images, "scalef", sep = "_")
         scale_imgs <- unlist(scalefactors[names_use])
+
         # Convert to microns and set extent for image
         if (unit == "micron") {
+          message(">>> Converting pixels to microns")
+          # for VisiumHD
+          if (is_VisiumHD)
+            scale_fct <- 
+              as.integer(bin_size[i]) / scalefactors$microns_per_pixel
+          else 
             scale_fct <- .pixel2micron(o)
             cg <- spotPoly(o)
             cg$geometry <- cg$geometry * scale_fct
             spotPoly(o) <- cg
             # Scale factors for images
             scale_imgs <- scale_imgs / scale_fct
-        } else {
-            scale_imgs <- scalefactors[paste("tissue", images, "scalef",
-                                             sep = "_")]
-        }
+            } else { 
+              scale_imgs <- scalefactors[names_use]
+            }
+
+        # add sample id to SFE
+        spotPoly(o)$sample_id <- sampleIDs(o)
+        
         # Set up ImgData
-        img_fns2 <- file.path(dirs[i], "spatial", img_fns)
+        img_fns2 <- file.path(if (is_VisiumHD) dirs else dirs[i],
+                              if (is_VisiumHD) samples[i] else "", 
+                              "spatial", img_fns)
+        scale_imgs_out <- scale_imgs
+        
         img_dfs <- lapply(seq_along(img_fns), function(j) {
             .get_imgData(img_fns2[j], sample_id = sample_id[i],
                          image_id = names(img_fns)[j],
                          extent = NULL, scale_fct = scale_imgs[[j]],
                          flip = TRUE)
         })
+        
         img_df <- do.call(rbind, img_dfs)
         imgData(o) <- img_df
+        
         # Create Visium graph for filtered data
         if (data == "filtered") {
-            colGraph(o, "visium") <- findVisiumGraph(
-                o, sample_id = "all", style = style,
-                zero.policy = zero.policy
-            )
+          if (add_Graph) {
+            message(paste0(">>> Adding spatial neighborhood graph to ", 
+                           sample_id[i], "\n"))
+            colGraph(o, "visium") <- 
+              findVisiumGraph(o, sample_id = "all", 
+                              style = style,
+                              zero.policy = zero.policy)
+          } else { return(o) }
         }
         o
     })
     out <- do.call(cbind, sfes)
     out
 }
+
+# Modified version of SpatialExperiment::read10xVisium to support VisiumHD
+.read10xVisium <-
+  function(samples = "", # eg, path to "./binned_outputs"
+           sample_id = paste0("sample", sprintf("%02d", seq_along(samples))),
+           bin_size = "8",
+           type = c("HDF5", "sparse"), 
+           data = c("filtered", "raw"), 
+           images = "lowres", 
+           load = TRUE)
+  {
+    if (!requireNamespace("DropletUtils", quietly = TRUE)) {
+      warning("DropletUtils package must be installed to use read10xVisium()")
+    }
+    type <- match.arg(type)
+    data <- match.arg(data)
+    imgs <- c("lowres", "hires", "detected", "aligned")
+    imgs <- match.arg(images, imgs, several.ok = TRUE)
+    # check if input is VisiumHD
+    if (any(grep("square_", list.files(samples))))
+      VisiumHD <- TRUE 
+    else 
+      VisiumHD <- FALSE
+    if (VisiumHD) {
+      samples <- file.path(samples, 
+                           grep(paste0(bin_size, collapse = "|"), 
+                                list.files(samples), value = TRUE))
+      # sanity
+      if (any(length(samples) != length(bin_size))) {
+        # match samples and bin_size
+        samples <- 
+          grep(paste0(bin_size, collapse = "|"), 
+               samples, value = TRUE)
+        }
+      sids <- basename(samples)
+      names(samples) <- sids
+      } else {
+        if (is.null(sids <- names(samples))) {
+          if (is.null(sids <- sample_id)) {
+            stop("'sample_id' mustn't be NULL when 'samples' are unnamed")
+          } else if (!is.character(sample_id) && length(unique(sample_id)) != 
+                     length(samples)) 
+            stop("'sample_id' should contain as many unique values as 'samples'")
+        } else if (length(unique(sids)) != length(samples)) 
+          stop("names of 'samples' should be unique")
+        names(samples) <- sids
+        i <- basename(samples) != "outs"
+        samples[i] <- file.path(samples[i], "outs")
+      }
+    message(paste0(">>> 10X ", ifelse(VisiumHD, "VisiumHD", "Visium"), 
+                   " data will be loaded: ", basename(sids), "\n"))
+    fns <- paste0(data, "_feature_bc_matrix", switch(type, HDF5 = ".h5", ""))
+    counts <- file.path(samples, fns)
+    dir <- file.path(samples, "spatial")
+    suffix <- c("", "_list")
+    if (VisiumHD) {
+      xyz <- file.path(dir, "tissue_positions.parquet")
+      } else {
+        xyz <- file.path(rep(dir, each = length(suffix)), sprintf("tissue_positions%s.csv", 
+                                                                rep(suffix, length(sids))))
+      }
+    xyz <- xyz[file.exists(xyz)]
+    sfs <- file.path(dir, "scalefactors_json.json")
+    names(xyz) <- names(sfs) <- sids
+    img_fns <- list(lowres = "tissue_lowres_image.png", hires = "tissue_hires_image.png", 
+                    detected = "detected_tissue_image.jpg", aligned = "aligned_fiducials.jpg")
+    img_fns <- img_fns[imgs]
+    img_fns <- lapply(dir, file.path, img_fns)
+    img_fns <- unlist(img_fns)
+    nan <- !file.exists(img_fns)
+    if (all(nan)) {
+      stop(sprintf("No matching files found for 'images=c(%s)", 
+                   paste(dQuote(imgs), collapse = ", ")))
+      } else if (any(nan)) {
+        message("Skipping missing images\n  ", paste(img_fns[nan], 
+                                                   collapse = "\n  "))
+      img_fns <- img_fns[!nan]
+      }
+    img <- SpatialExperiment::readImgData(samples, sids, img_fns, sfs, load)
+    spel <- lapply(seq_along(counts), function(i) {
+      sce <- DropletUtils::read10xCounts(samples = counts[i], 
+                                         sample.names = sids[i], 
+                                         col.names = TRUE, 
+                                         row.names = "symbol")
+      if (VisiumHD) {
+        spd <- 
+          arrow::read_parquet(xyz[i]) |> 
+          as.data.frame()
+        rownames(spd) <- spd$barcode
+        } else {
+          spd <- SpatialExperiment:::.read_xyz(xyz[i])
+        }
+      obs <- intersect(colnames(sce), rownames(spd))
+      sce <- sce[, obs]
+      spd <- spd[obs, ]
+      SpatialExperiment::SpatialExperiment(assays = assays(sce), rowData = DataFrame(symbol = rowData(sce)$Symbol), 
+                                           sample_id = sids[i], colData = DataFrame(spd), 
+                                           spatialCoordsNames = c("pxl_col_in_fullres", "pxl_row_in_fullres"))
+      })
+    spe <- do.call(cbind, spel)
+    SpatialExperiment::imgData(spe) <- img
+    return(spe)
+  }
 
 #' @importFrom sf st_nearest_feature st_distance
 #' @importFrom stats median
@@ -627,7 +793,7 @@ readVizgen <- function(data_dir,
     # NOTE: might take some time to run
     if (use_bboxes && is.null(polys)) {
         message(">>> Creating bounding boxes from `cell_metadata`")
-        # TODO: rewrite to use the now much faster df2sf ----
+        # TODO: rewrite bboxes_sfc using much faster df2sf ----
         bboxes_sfc <-
             bplapply(seq_len(nrow(metadata)),
                      function(i) {

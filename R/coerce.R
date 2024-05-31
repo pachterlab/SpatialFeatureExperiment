@@ -192,7 +192,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 }
 
 # Converter function from Seurat (v4 & v5) object to SpatialFeatureExperiment
-#' @importFrom SummarizedExperiment assays
+#' @importFrom SummarizedExperiment assays assayNames
 #' @importFrom methods slot slotNames
 #' @importFrom SingleCellExperiment SingleCellExperiment mainExpName altExp altExpNames reducedDim
 .seu_to_sfe <-
@@ -221,8 +221,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
     .DefaultAssay <- SeuratObject::DefaultAssay
 
     # Convert from Seurat to SFE ===== ####
-    # TODO (optional) support non-spatial Seurat to SFE as well? ----
-
+    # TODO (optional): support non-spatial Seurat to SFE as well? ----
     if (!is.null(seu_obj)) {
       flip <- match.arg(flip)
       # use existing Assays
@@ -237,12 +236,17 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       }
 
       # loop for multiple FOVs/tissue sections ----
-      # TODO: (enhancement) consider bplapply ----
+      # TODO (enhancement): consider bplapply ---- 
       #..ie, when looping over FOVs with large number of cells and molecules
       obj_list <-
         lapply(seq(fov_names), function(fov_section) {
+          # make sure the correct assay is used as Main assay
+          assay_master <- 
+            if (length(assays_name) == length(fov_names))
+              assays_name[fov_section] 
+            else .DefaultAssay(seu_obj)
           message(">>> Seurat Assays found: ", paste0(assays_name, collapse = ", "), "\n",
-                  ">>> ", .DefaultAssay(seu_obj), " -> will be used as 'Main Experiment'")
+                  ">>> ", assay_master, " -> will be used as 'Main Experiment'")
           # Make `sf` df geometries
           # get spatial S4 FOV object
           fov_seu <- seu_obj[[fov_names[fov_section]]]
@@ -375,6 +379,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           if (length(assays_name) == length(fov_names))
             assays_name[fov_section]
           else .DefaultAssay(seu_obj)
+
           # get slot or layer names
           slot_names <- .GetSlotNames(object_seu = seu_obj,
                                       assay_seu = assay_master,
@@ -569,14 +574,16 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # TODO (alternatively): use `MultiAssayExperiment` instead? ----
           # Currently using `altExp` if > 1 Seurat Assays are present ----
           if (length(assays_name) > 1) {
-            # keep assays minus default one
+            # keep other assays, minus the default one 
             assays_name <- setdiff(assays_name, .DefaultAssay(seu_obj))
-            # sanity, check if assays cell ids match those in fov_seu
-            cells_passed <-
+            # sanity, if default assay cell ids match those in any other assays
+            cells_passed <- 
               lapply(assays_name, function(i)
                 Seurat::GetAssay(seu_obj, i) |>
-                  SeuratObject::Cells() |>
-                  match(x = _, cell_ids_fov) |>
+                  colnames() |>
+                  match(x = _,
+                        Seurat::GetAssay(seu_obj, .DefaultAssay(seu_obj)) |> 
+                          colnames()) |>
                   na.omit() |> any()) |> unlist()
             if (all(cells_passed)) {
               message(">>> Adding Seurat Assay(s) as Alternative Experiment(s): ",
@@ -628,24 +635,31 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       if (length(obj_list) > 1) {
         message(">>> Combining ", length(obj_list),
                 " SFE object(s) with unique `sample_id`")
-
-        # TODO: issue when one sfe has: ----
-          # assays(2): counts logcounts
-          # and assays(1): counts
-          # Error in .bind_Assays_objects(objects, along.cols = TRUE) :
-          #  the objects to bind must have the same number of assays
-          #
-
+        # Sanity on assays: 
+        # the issue when different number of assays are present
+        # see this https://github.com/drisso/SingleCellExperiment/issues/44
+        # thus, we keep only identical assays present in all sfe objects
+        assays_n <- 
+          lapply(obj_list, function(i) assayNames(i))
+        # check of assays are identical 
+        ident_assays <- do.call(setdiff, arg = assays_n)
+        if (!length(ident_assays) == 0) {
+          message(">>> Only following assay(s) are identical and will be kept:", 
+                  paste0("\n", do.call(intersect, arg = assays_n)))
+          obj_list <-
+            lapply(obj_list, function(i) {
+              assay(i, do.call(setdiff, arg = assays_n)) <- NULL
+              # update objects
+              updateObject(i)
+              return(i) })
+          }
         sfe <- do.call(cbind, obj_list)
         return(sfe)
-
-        # TODO (alternatively) return list of objects? (when multiple samples/FOVs) ----
-        #return(obj_list)
       } else if (length(obj_list) == 1) {
-        message("\n", ">>> `SFE` object is ready!")
         return(obj_list[[1]])
-      }
+      } 
     } else { stop("No Seurat object in `x` was found") }
+    message("\n", ">>> `SFE` object is ready!")
   }
 
 # Set formal method for Seurat to SFE
