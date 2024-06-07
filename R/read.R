@@ -460,6 +460,7 @@ read10xVisiumSFE <- function(samples = "",
 
 # sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
+# TODO: this needs to be optimized, takes too long for real data ----
 .check_st_valid <- function(sf_df = NULL) {
     # sf_df is a single sf data frame, not a list of sf data frames
     invalid_inds <- which(!st_is_valid(sf_df))
@@ -808,6 +809,7 @@ readVizgen <- function(data_dir,
 
     if (!is.null(polys)) {
         # sanity on geometries
+        message(">>> Checking polygon validity")
         polys <- .check_st_valid(polys)
         rownames(polys) <- polys$ID
         polys$ID <- NULL
@@ -896,6 +898,7 @@ readCosMX <- function(data_dir,
                                     spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
                                     unit = "full_res_image_pixel")
     # sanity on geometries
+    message(">>> Checking polygon validity")
     polys <- .check_st_valid(polys)
     cellSeg(sfe) <- polys
 
@@ -1170,8 +1173,8 @@ readXenium <- function(data_dir,
                         df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
                               geometryType = "POLYGON") })
             }
-            message(">>> Checking polygon validity")
             # sanity on geometries
+            message(">>> Checking polygon validity")
             polys <- lapply(polys, .check_st_valid)
 
             fn_out <- c(cell = "cell_boundaries_sf.parquet",
