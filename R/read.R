@@ -726,7 +726,7 @@ readVizgen <- function(data_dir,
     meta_fn <- .check_vizgen_fns(data_dir, "cell_metadata")
     metadata <- fread(meta_fn, colClasses = list(character = 1))
     if (any(names(metadata) == "transcript_count") && filter_counts) {
-        message(">>> ..filtering `cell_metadata` - keep cells with `transcript_count` > 0")
+        message(">>> filtering `cell_metadata` - keep cells with `transcript_count` > 0")
         metadata <- metadata[metadata$transcript_count > 0,]
     }
 
@@ -988,8 +988,8 @@ readCosMX <- function(data_dir,
 #' @note Sometimes when reading images, you will see this error the first time:
 #' 'java.lang.NullPointerException: Cannot invoke
 #' "loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
-#' "RBioFormats.reader" is null'. Rerun the code and it should work the second
-#' time.
+#' "RBioFormats.reader" is null'. See this issue https://github.com/aoles/RBioFormats/issues/42 
+#' Rerun the code and it should work the second time.
 #' @export
 #' @concept Read data into SFE
 #' @importFrom sf st_area st_geometry<- st_as_sf
@@ -1236,8 +1236,8 @@ readXenium <- function(data_dir,
     # Filtering count matrix, metadata and segmentations ----
     # filtering metadata and count matrix
     if (any(names(metadata) == "transcript_counts") && filter_counts) {
-        message(">>> ..filtering cell metadata - keep cells with `transcript_counts` > 0")
-        metadata <- metadata[metadata$transcript_count > 0,]
+        message(">>> filtering cell metadata - keep cells with `transcript_counts` > 0")
+        metadata <- metadata[metadata$transcript_counts > 0,]
         sce <- sce[,match(metadata$cell_id, colnames(sce)) |> na.omit()]
     } else {
         # if metadata isn't already filtered
