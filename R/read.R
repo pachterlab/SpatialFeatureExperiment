@@ -460,7 +460,6 @@ read10xVisiumSFE <- function(samples = "",
 
 # sanity on geometries to remove any self-intersection
 #' @importFrom sf st_buffer st_is_valid
-# TODO: this needs to be optimized, takes too long for real data ----
 .check_st_valid <- function(sf_df = NULL) {
     # sf_df is a single sf data frame, not a list of sf data frames
     invalid_inds <- which(!st_is_valid(sf_df))
@@ -475,7 +474,9 @@ read10xVisiumSFE <- function(samples = "",
         }
         old_type <- st_geometry_type(sf_df, by_geometry = FALSE)
         if (new_type != old_type && new_type != "GEOMETRY") {
-            sf_df <- st_cast(sf_df, as.character(new_type))
+            sf_df <- sfheaders::sf_cast(sf_df, as.character(new_type))
+            # sf::st_cast can take too long
+            #sf_df <- st_cast(sf_df, as.character(new_type))
         }
         st_geometry(sf_df)[invalid_inds] <- geoms_new
     }
