@@ -320,14 +320,10 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
     z_option <- match.arg(z_option)
-    ext <- file_ext(file)
     if (dest == "colGeometry") {
         return <- FALSE
         if (is.null(file_out))
             stop("file_out must be specified for dest = 'colGeometry'.")
-    }
-    if (!ext %in% c("csv", "gz", "tsv", "txt", "parquet")) {
-        stop("The file must be one of csv, gz, tsv, txt, or parquet")
     }
     if (!is.null(file_out) && (file.exists(file_out) ||
                                dir.exists(file_path_sans_ext(file_out)))) {
@@ -337,34 +333,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     if (!is.numeric(z) && z != "all") {
         stop("z must either be numeric or be 'all' indicating all z-planes.")
     }
-    if (ext == "parquet") {
-        check_installed("arrow")
-        mols <- arrow::read_parquet(file)
-        # convert cols with raw bytes to character
-        # NOTE: can take a while.
-        mols <- .rawToChar_df(mols, BPPARAM = BPPARAM)
-        # sanity, convert to data.table
-        if (!is(mols, "data.table")) {
-            mols <- data.table::as.data.table(mols)
-        }
-    } else {
-        mols <- fread(file)
-    }
-    names(mols)[names(mols) == gene_col] <- "gene"
-    gene_col <- "gene"
-    ind <- !spatialCoordsNames[1:2] %in% names(mols)
-    if (any(ind)) {
-        col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
-        ax <- c("x", "y")
-        stop(paste(ax[ind], collapse = ", "), " coordinate column(s) ",
-             paste(col_offending, collapse = ", "), " not found.")
-    }
-    spatialCoordsNames <- intersect(spatialCoordsNames, names(mols))
-    if (flip) {
-        y_name <- spatialCoordsNames[2]
-        if (!is.data.table(mols)) ..y_name <- y_name
-        mols[,y_name] <- -mols[,..y_name]
-    }
+    mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
+                           min_phred, flip, BPPARAM)
     # Check z
     use_z <- length(spatialCoordsNames) == 3L
     if (use_z) {
@@ -388,9 +358,6 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
             z <- "all" # Non-integer z values
             z_option <- "3d"
         }
-    }
-    if (phred_col %in% names(mols) && !is.null(min_phred)) {
-        mols <- mols[mols[[phred_col]] >= min_phred,]
     }
     message(">>> Converting transcript spots to geometry")
     if (dest == "colGeometry") {

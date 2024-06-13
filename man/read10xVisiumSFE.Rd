@@ -8,10 +8,12 @@ read10xVisiumSFE(
   samples = "",
   dirs = file.path(samples, "outs"),
   sample_id = paste0("sample", sprintf("\%02d", seq_along(samples))),
+  bin_size = NULL,
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
   images = c("lowres", "hires"),
   unit = c("full_res_image_pixel", "micron"),
+  add_Graph = TRUE,
   style = "W",
   zero.policy = NULL,
   load = FALSE
@@ -32,6 +34,10 @@ have moved or renamed the output directory.}
 one for each directory specified via \code{samples}; 
 ignored if \code{!is.null(names(samples))}}
 
+\item{bin_size}{\code{c(character)}, use this only when loading VisiumHD.
+Specify which bin resolution to load, default is \code{NULL} which assumes that data is standard Visium.
+Eg, single resolution is \code{c("8")}, if to load all three resolutions, use \code{c("2", "8", "16")}.}
+
 \item{type}{Either "HDF5", and the matrix will be represented as
 \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 \code{dgCMatrix}.}
@@ -46,6 +52,9 @@ Valid values are \code{"lowres", "hires", "fullres", "detected", "aligned"}}
 unit. If using microns, then spacing between spots in pixels will be used
 to convert the coordinates into microns, as the spacing is known to be 100
 microns. This is used to plot scale bar.}
+
+\item{add_Graph}{\code{c(local)}, if to add spatial neighborhood graph for spots and only if \code{c(data = "filtered")}.
+Default is \code{c(TRUE)}}
 
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
@@ -87,5 +96,24 @@ list.files(file.path(samples[1], "spatial"))
     type = "sparse", data = "filtered",
     load = FALSE
 ))
+
+# load VisiumHD
+# path to "binned_outputs" directory containing:
+└── binned_outputs
+    ├── square_002um
+    ├── square_008um
+    └── square_016um
+dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
+# this is public dataset -> https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
+sfe_hd <-
+read10xVisiumSFE(samples = list.files(dir_hd), # 1:3 resolutions
+                 dirs = dir_hd,
+                 bin_size = c("8", "16"), # this defines which of 1:3 resolutions to load
+                 type = "HDF5", # Note, "sparse" -> takes longer to load
+                 data = "filtered", # spots under tissue
+                 images = c("lowres"), # for now low res. image only
+                 add_Graph = FALSE # Note, if VisiumHD this can take time for 2 or 8µm res.
+                 )
+
 }
 \concept{Read data into SFE}

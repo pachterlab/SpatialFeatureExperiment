@@ -36,6 +36,7 @@ Imports:
     sf,
     sfheaders,
     SingleCellExperiment,
+    sparseMatrixStats,
     SpatialExperiment,
     spdep (>= 1.1-7),
     SummarizedExperiment,
@@ -50,6 +51,8 @@ Collate:
     'AllGenerics.R'
     'utils.R'
     'SFE-class.R'
+    'aggregate.R'
+    'align.R'
     'annotGeometries.R'
     'cbind.R'
     'coerce.R'
@@ -68,6 +71,7 @@ Collate:
     'reexports.R'
     'saveRDS.R'
     'spatialGraphs.R'
+    'split.R'
     'subset.R'
     'transformation.R'
     'updateObject.R'

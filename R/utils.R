@@ -294,7 +294,7 @@ gdalParquetAvailable <- function() {
     (major_version == 1L && minor_version > 4L) || major_version == 2L
 }
 
-.get_tech_tx_fields <- function(tech, data_dir) {
+.get_tech_tx_fields <- function(tech, data_dir = NULL) {
     spatialCoordsNames <- switch(
         tech,
         Vizgen = c("global_x", "global_y", "global_z"),
@@ -313,14 +313,17 @@ gdalParquetAvailable <- function() {
         Xenium = "cell_id",
         CosMX = "cell_ID"
     )
-    fn <- switch(
-        tech,
-        Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
-        CosMX = grep("tx_file.csv",
-                     list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
-                     value = TRUE),
-        Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
-    )
+    if (is.null(data_dir)) fn <- NULL
+    else {
+        fn <- switch(
+            tech,
+            Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
+            CosMX = grep("tx_file.csv",
+                         list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
+                         value = TRUE),
+            Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
+        )
+    }
     list(spatialCoordsNames = spatialCoordsNames,
          gene_col = gene_col,
          cell_col = cell_col,
@@ -333,4 +336,47 @@ gdalParquetAvailable <- function() {
         features <- rowData(x)[[swap_rownames]][inds]
     } else features <- ids
     features
+}
+
+.check_tx_file <- function(file, spatialCoordsNames, gene_col, phred_col,
+                           min_phred, flip, BPPARAM = SerialParam()) {
+    if (is.character(file)) {
+        ext <- file_ext(file)
+        if (!ext %in% c("csv", "gz", "tsv", "txt", "parquet")) {
+            stop("The file must be one of csv, gz, tsv, txt, or parquet")
+        }
+        if (ext == "parquet") {
+            check_installed("arrow")
+            mols <- arrow::read_parquet(file)
+            # convert cols with raw bytes to character
+            # NOTE: can take a while.
+            mols <- .rawToChar_df(mols, BPPARAM = BPPARAM)
+            # sanity, convert to data.table
+            if (!is(mols, "data.table")) {
+                mols <- data.table::as.data.table(mols)
+            }
+        } else {
+            mols <- fread(file)
+        }
+    } else mols <- file
+
+    names(mols)[names(mols) == gene_col] <- "gene"
+    gene_col <- "gene"
+    ind <- !spatialCoordsNames[1:2] %in% names(mols)
+    if (any(ind)) {
+        col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
+        ax <- c("x", "y")
+        stop(paste(ax[ind], collapse = ", "), " coordinate column(s) ",
+             paste(col_offending, collapse = ", "), " not found.")
+    }
+    spatialCoordsNames <- intersect(spatialCoordsNames, names(mols))
+    if (flip) {
+        y_name <- spatialCoordsNames[2]
+        if (!is.data.table(mols)) ..y_name <- y_name
+        mols[,y_name] <- -mols[,..y_name]
+    }
+    if (phred_col %in% names(mols) && !is.null(min_phred)) {
+        mols <- mols[mols[[phred_col]] >= min_phred,]
+    }
+    mols
 }
