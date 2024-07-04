@@ -478,18 +478,6 @@ NULL
     }
 }
 
-.check_rg <- function(type, x, sample_id) {
-    if (identical(sample_id, "all")) {
-        .check_rg_sample_all(type, x)
-    } else if (!identical(sample_id, "all")) {
-        sample_id <- .check_sample_id(x, sample_id, TRUE)
-        # By convention, should be name_sample to distinguish between samples for
-        # rowGeometries of the same name
-        type <- .check_rg_type(type, x, sample_id)
-    }
-    type
-}
-
 #' @rdname rowGeometries
 #' @export
 rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {

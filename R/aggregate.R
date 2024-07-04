@@ -127,7 +127,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                             new_geometry_name = "bins") {
     if (!is.null(df)) data_dir <- NULL
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
-        .get_tech_tx_fields(tech, data_dir)
+        getTechTxFields(tech, data_dir)
     aggregateTx(file = fn, df = df, by = by,
                 spatialCoordsNames = spatialCoordsNames,
                 gene_col = gene_col,

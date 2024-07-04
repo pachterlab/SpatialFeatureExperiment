@@ -335,6 +335,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     }
     mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
                            min_phred, flip, BPPARAM)
+    gene_col <- "gene"
     # Check z
     use_z <- length(spatialCoordsNames) == 3L
     if (use_z) {
@@ -506,7 +507,7 @@ formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     tech <- match.arg(tech)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
-        .get_tech_tx_fields(tech, data_dir)
+        getTechTxFields(tech, data_dir)
     if (tech == "CosMX" && split_cell_comps)
         split_col <- "CellComp"
     else split_col <- NULL
@@ -533,7 +534,7 @@ addTxTech <- function(sfe, data_dir, sample_id = 1L,
                       z_option = c("3d", "split"), flip = FALSE,
                       file_out = NULL, BPPARAM = SerialParam()) {
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
-        .get_tech_tx_fields(tech, data_dir)
+        getTechTxFields(tech, data_dir)
     if (tech == "CosMX") flip <- FALSE
     if (tech == "CosMX" && split_cell_comps)
         split_col <- "CellComp"

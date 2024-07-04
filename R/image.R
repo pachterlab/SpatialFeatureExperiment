@@ -409,8 +409,8 @@ ExtImage <- function(img, ext = NULL) {
             message("Resolution subscript out of bound, reading the lowest resolution")
             resolution <- n_res
         }
-        meta <- coreMetadata(m, series = resolution)
     }
+    meta <- coreMetadata(m, series = resolution)
     # Extent of lower resolution may not be the same as the top one
     # Need to more accurately infer extent
     # Infer the scale factor, and then get the difference from the rounding
