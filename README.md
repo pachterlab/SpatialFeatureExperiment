@@ -38,3 +38,6 @@ Below is a list of SFE features that extend the SPE object:
 Voyager: exploratory single-cell genomics data analysis with geospatial statistics.
 Lambda Moses, Pétur Helgi Einarsson, Kayla Jackson, Laura Luebbert, A. Sina Booeshaghi, Sindri Antonsson, Páll Melsted, Lior Pachter
 bioRxiv 2023.07.20.549945; doi: https://doi.org/10.1101/2023.07.20.549945
+
+# Contributing
+* To run all the test use: ```Rscript -e "devtools::test()"```
