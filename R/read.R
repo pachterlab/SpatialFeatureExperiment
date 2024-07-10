@@ -13,6 +13,8 @@
 #' @param type Either "HDF5", and the matrix will be represented as
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
+#' @param barcode_allow_list a dataframe containing valid barcodes see: https://kb.10xgenomics.com/hc/en-us/articles/115004506263-What-is-a-barcode-whitelist
+#' The format is "barcode", "col", "row". If NULL it will use inbuilt SpatialFeatureExperiment::visium_row_col (v4 values).
 #' @param dirs Directory for each sample that contains the \code{spatial} and
 #'   \code{raw/filtered_featues_bc_matrix} directories. By default, the
 #'   \code{outs} directory under the directory specified in the \code{samples}
@@ -60,6 +62,7 @@ read10xVisiumSFE <- function(samples = "",
                                      seq_along(samples)
                                  )
                              ),
+                             barcode_allow_list = NULL,
                              type = c("HDF5", "sparse"),
                              data = c("filtered", "raw"),
                              images = c("lowres", "hires"),
@@ -147,8 +150,8 @@ read10xVisiumSFE <- function(samples = "",
         # Create Visium graph for filtered data
         if (data == "filtered") {
             colGraph(o, "visium") <- findVisiumGraph(
-                o, sample_id = "all", style = style,
-                zero.policy = zero.policy
+                o, sample_id = "all", barcode_allow_list = barcode_allow_list,
+                style = style, zero.policy = zero.policy
             )
         }
         o

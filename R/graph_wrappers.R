@@ -567,12 +567,16 @@ setMethod(
     }
 )
 
-.comp_visium_graph <- function(x, sample_id, style, zero.policy) {
+.comp_visium_graph <- function(x, sample_id, barcode_allow_list, style, zero.policy) {
     bcs_use <- colnames(x)[colData(x)$sample_id == sample_id]
     bcs_use2 <- sub("[-\\d]+$", "", bcs_use, perl = TRUE)
-    # visium_row_col <- SpatialFeatureExperiment::visium_row_col
-    coords_use <- visium_row_col[
-        match(bcs_use2, visium_row_col$barcode),
+    if (is.null(barcode_allow_list)) {
+        # visium_row_col <- SpatialFeatureExperiment::visium_row_col
+        data(visium_row_col)
+        barcode_allow_list <- visium_row_col
+    }
+    coords_use <- barcode_allow_list[
+        match(bcs_use2, barcode_allow_list$barcode),
         c("col", "row")
     ]
     # So adjacent spots are equidistant
@@ -587,6 +591,7 @@ setMethod(
         package = list("SpatialFeatureExperiment",
                        packageVersion("SpatialFeatureExperiment")),
         args = list(
+            barcode_allow_list = barcode_allow_list,
             style = style,
             zero.policy = zero.policy,
             sample_id = sample_id
@@ -631,15 +636,15 @@ setMethod(
 #' sfe2 <- McKellarMuscleData(dataset = "small2")
 #' sfe_combined <- cbind(sfe, sfe2)
 #' gs <- findVisiumGraph(sfe, sample_id = "all")
-findVisiumGraph <- function(x, sample_id = "all", style = "W",
+findVisiumGraph <- function(x, sample_id = "all", barcode_allow_list = NULL, style = "W",
                             zero.policy = NULL) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (length(sample_id) == 1L) {
-        out <- .comp_visium_graph(x, sample_id, style, zero.policy)
+        out <- .comp_visium_graph(x, sample_id, barcode_allow_list, style, zero.policy)
     } else {
         out <- lapply(
             sample_id,
-            function(s) .comp_visium_graph(x, s, style, zero.policy)
+            function(s) .comp_visium_graph(x, s, barcode_allow_list, style, zero.policy)
         )
         names(out) <- sample_id
     }

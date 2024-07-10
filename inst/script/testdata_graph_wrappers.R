@@ -17,7 +17,8 @@ g1 <- nb2listw(dnearneigh(coords_mat[sample01_ind,], 1.9, 2.1,
 g2 <- nb2listw(dnearneigh(coords_mat[!sample01_ind,], 1.9, 2.1))
 attr(g1, "method") <- list(FUN = "findVisiumGraph",
                            package = "SpatialFeatureExperiment",
-                           args = list(style = "W",
+                           args = list(barcode_allow_list = NULL,
+                                       style = "W",
                                        zero.policy = NULL,
                                        sample_id = "sample01"))
 # g2 doesn't have the attributes on purpose for unit test purposes
@@ -46,7 +47,8 @@ g1_sub <- nb2listw(dnearneigh(spatialCoords(spe1)[-1,], 1.9, 2.1,
                               row.names = colnames(spe1)[-1]))
 attr(g1_sub, "method") <- list(FUN = "findVisiumGraph",
                                package = "SpatialFeatureExperiment",
-                               args = list(style = "W",
+                               args = list(barcode_allow_list = NULL,
+                                           style = "W",
                                            zero.policy = NULL,
                                            sample_id = "sample01"))
 saveRDS(g1_sub, "inst/extdata/colgraph_visium_sub.rds")
