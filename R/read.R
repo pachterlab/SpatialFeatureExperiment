@@ -14,7 +14,7 @@
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
 #' @param barcode_allow_list a dataframe containing valid barcodes see: https://kb.10xgenomics.com/hc/en-us/articles/115004506263-What-is-a-barcode-whitelist
-#' The format is "barcode", "col", "row". If NULL it will use inbuilt SpatialFeatureExperiment::visium_row_col (v4 values).
+#' The format is "barcode", "col", "row". If NULL it will use inbuilt SpatialFeatureExperiment::visium_row_col (v1 values).
 #' @param dirs Directory for each sample that contains the \code{spatial} and
 #'   \code{raw/filtered_featues_bc_matrix} directories. By default, the
 #'   \code{outs} directory under the directory specified in the \code{samples}
