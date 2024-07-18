@@ -101,3 +101,4 @@ biocViews:
     Spatial
 URL: https://github.com/pachterlab/SpatialFeatureExperiment
 BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues
+LazyData: true
