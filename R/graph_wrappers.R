@@ -575,10 +575,21 @@ setMethod(
         data(visium_row_col)
         barcode_allow_list <- visium_row_col
     }
+
+    # Check that there are still some barcodes left
+    valid_barcodes <- bcs_use2 %in% barcode_allow_list$barcode
+    if (!all(valid_barcodes)) {
+        warning(paste0("Invalid barcodes removed. Valid barcodes: ", sum(valid_barcodes), "/", length(valid_barcodes)))
+    }
+    if (!any(valid_barcodes)) {
+        stop("After filtering by valid barcode, there were none left, try passing a different barcode_allow_list.")
+    }
+
     coords_use <- barcode_allow_list[
         match(bcs_use2, barcode_allow_list$barcode),
         c("col", "row")
     ]
+
     # So adjacent spots are equidistant
     coords_use$row <- coords_use$row * sqrt(3)
     g <- dnearneigh(as.matrix(coords_use),

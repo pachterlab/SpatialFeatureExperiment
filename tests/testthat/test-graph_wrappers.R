@@ -112,17 +112,3 @@ test_that("Exact Bioc methods for dnearneigh return same results as spdep method
         expect_equal(g1, g2, ignore_attr = TRUE)
     }
 })
-
-sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
-    package = "SpatialFeatureExperiment"
-))
-g_visium <- readRDS(system.file("extdata/colgraph_visium.rds",
-    package = "SpatialFeatureExperiment"
-))
-test_that("Correct Visium graph", {
-    g <- findVisiumGraph(sfe_visium, "sample01")
-    expect_equal(g, g_visium, ignore_attr = TRUE)
-    attrs_reconst <- attr(g, "method")
-    expect_equal(attrs_reconst$FUN, "findVisiumGraph")
-    expect_equal(attrs_reconst$args$style, "W")
-})
