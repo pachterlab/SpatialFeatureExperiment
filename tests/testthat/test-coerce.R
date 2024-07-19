@@ -20,13 +20,13 @@ test_that("Convert SPE and SCE to SFE, no images", {
     sfe4 <- toSpatialFeatureExperiment(sce, spatialCoordsNames = c("pxl_col_in_fullres",
                                                                    "pxl_row_in_fullres"))
     sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered")
-    centroids_check <- st_centroid(spotPoly(sfe))
+    centroids_check <- st_centroid(st_geometry(spotPoly(sfe)))
 
     expect_s4_class(sfe1, "SpatialFeatureExperiment")
     expect_equal(sfe2, sfe1)
     expect_equal(sfe3, sfe1)
     expect_equal(sfe4, sfe1)
-    expect_equal(centroids(sfe1), centroids_check, ignore_attr = "row.names")
+    expect_equal(st_geometry(centroids(sfe1)), centroids_check, ignore_attr = "row.names")
     expect_equal(spatialCoords(sfe1), spatialCoords(sfe), ignore_attr = "dimnames")
 })
 

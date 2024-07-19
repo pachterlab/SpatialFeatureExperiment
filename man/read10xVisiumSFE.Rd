@@ -16,7 +16,8 @@ read10xVisiumSFE(
   add_Graph = TRUE,
   style = "W",
   zero.policy = NULL,
-  load = FALSE
+  load = FALSE,
+  row.names = c("id", "symbol")
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ Default is \code{c(TRUE)}}
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 
 \item{load}{Not used, kept for backward compatibility.}
+
+\item{row.names}{String specifying whether to use Ensembl IDs ("ID") or gene symbols ("Symbol") as row names. If using symbols, the Ensembl ID will be appended to disambiguate in case the same symbol corresponds to multiple Ensembl IDs.}
 }
 \value{
 A SpatialFeatureExperiment object. The images might need to be
@@ -99,12 +102,13 @@ list.files(file.path(samples[1], "spatial"))
 
 # load VisiumHD
 # path to "binned_outputs" directory containing:
-└── binned_outputs
-    ├── square_002um
-    ├── square_008um
-    └── square_016um
+# └── binned_outputs
+#     ├── square_002um
+#     ├── square_008um
+#     └── square_016um
 dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
-# this is public dataset -> https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
+# this is public dataset ->
+# https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
 sfe_hd <-
 read10xVisiumSFE(samples = list.files(dir_hd), # 1:3 resolutions
                  dirs = dir_hd,

@@ -98,7 +98,7 @@ This function reads the standard 10X Xenium output into an SFE object.
 Sometimes when reading images, you will see this error the first time:
 'java.lang.NullPointerException: Cannot invoke
 "loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
-"RBioFormats.reader" is null'. See this issue https://github.com/aoles/RBioFormats/issues/42 
+"RBioFormats.reader" is null'. See this issue https://github.com/aoles/RBioFormats/issues/42
 Rerun the code and it should work the second time.
 }
 \examples{
