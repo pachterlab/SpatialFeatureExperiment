@@ -1,3 +1,123 @@
+#' Aggregate transcript spots from file
+#'
+#' This function reads the transcript spot file from the standard output of the
+#' commercial technologies (not GeoParquet) for spatial aggregation where the
+#' spots are assigned to polygons such as cells or spatial bins. Presets for
+#' Xenium, MERFISH, and CosMX are available. For Vizgen and Xenium, the images
+#' can be added when \code{add_images = TRUE}.
+#'
+#' @param df If the file is already loaded into memory, a data frame (sf) with
+#'   columns for the x, y, and optionally z coordinates and gene assignment of
+#'   each transcript spot. If specified, then argument \code{file} will be
+#'   ignored.
+#' @param by A \code{sfc} or \code{sf} object for spatial aggregation.
+#' @param new_geometry_name Name to give to the new \code{colGeometry} in the
+#'   output. Defaults to "bins".
+#' @param flip_geometry Logical, whether to flip the transcript spot geometries
+#'   to match the images if added later.
+#' @param image String, which image(s) to add to the output SFE object. Not
+#'   applicable to CosMX. See \code{\link{readVizgen}} and
+#'   \code{\link{readXenium}} for options and multiple images can be specified.
+#'   If \code{NULL}, then the default from the read function for the technology
+#'   will be used.
+#' @inheritParams formatTxTech
+#' @inheritParams formatTxSpots
+#' @inheritParams readXenium
+#' @inheritParams sf::st_make_grid
+#' @inheritParams SpatialFeatureExperiment
+#' @note The resulting SFE object often includes geometries (e.g. grid cells)
+#'   outside tissue, because there can be transcript spots detected outside the
+#'   tissue. Also, bins at the edge of the tissue that don't fully overlap with
+#'   the tissue will have lower transcript counts; this may have implications to
+#'   downstream spatial analyses.
+#' @return A SFE object with count matrix for number of spots of each gene in
+#'   each geometry. Geometries with no spot are removed.
+#' @importFrom data.table as.data.table
+#' @importFrom sf st_make_grid
+#' @export
+aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
+                        spatialCoordsNames = c("X", "Y", "Z"),
+                        gene_col = "gene",
+                        phred_col = "qv", min_phred = 20, flip_geometry = FALSE,
+                        cellsize = NULL, square = TRUE, flat_topped = FALSE,
+                        new_geometry_name = "bins", unit = "micron") {
+    # This is only for one file, one sample
+    if (!is.null(df)) file <- df
+    mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
+                           min_phred, flip_geometry, BPPARAM)
+    mols <- df2sf(mols, spatialCoordsNames = spatialCoordsNames,
+                  geometryType = "POINT")
+    if (is.null(by))
+        by <- st_make_grid(mols, cellsize = cellsize, square = square,
+                           flat_topped = flat_topped)
+    else if (is(by, "sf")) by <- st_geometry(by)
+    grid_sf <- st_sf(grid_id = seq_along(by), geometry = by)
+    mols <- st_join(mols, grid_sf) # Took 5.87 minutes for 7171453 spots and 8555 bins
+    mols <- st_drop_geometry(mols) |> as.data.table()
+    mols <- mols[, .N, by = .(gene, grid_id)]
+    mols$gene <- factor(mols$gene) # The levels are alphabetically arranged
+    mols$gene_index <- as.integer(mols$gene)
+    new_mat <- sparseMatrix(i = mols$gene_index, j = mols$grid_id, x = mols$N)
+    rownames(new_mat) <- levels(mols$gene)
+    colnames(new_mat) <- seq_len(ncol(new_mat))
+    new_mat <- new_mat[,colSums(new_mat) > 0] # Remove empty grid cells
+    cgs <- list(bins = grid_sf[grid_sf$grid_id %in% mols$grid_id, "geometry"])
+    names(cgs) <- new_geometry_name
+    SpatialFeatureExperiment(assays = list(counts = new_mat),
+                             colGeometries = cgs, unit = unit)
+}
+
+#' @rdname aggregateTx
+#' @export
+aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
+                            tech = c("Vizgen", "Xenium", "CosMX"),
+                            sample_id = "sample01",
+                            image = NULL,
+                            min_phred = 20, flip = c("geometry", "image", "none"),
+                            max_flip = "50 MB",
+                            cellsize = NULL, square = TRUE, flat_topped = FALSE,
+                            new_geometry_name = "bins") {
+    if (!is.null(df)) data_dir <- NULL
+    tech <- match.arg(tech)
+    flip <- match.arg(flip)
+    c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
+        getTechTxFields(tech, data_dir)
+    if (tech == "Xenium") {
+        c(xoa_version, major_version, minor_version, instrument_version) %<-%
+            .get_XOA_version(data_dir)
+    }
+    img_choices <- image <- switch (
+        tech,
+        Vizgen = c("DAPI", "PolyT", "Cellbound"),
+        Xenium = if (major_version > 1L) "morphology_focus" else c("morphology_focus", "morphology_mip"),
+        NA
+    )
+    if (is.null(image)) {
+        image <- img_choices
+    } else {
+        image <- match.arg(image, img_choices, several.ok = TRUE)
+    }
+    if (tech == "Xenium") {
+        c(img_df, flip) %<-% .get_xenium_images(data_dir, image, major_version,
+                                                flip, max_flip, sample_id)
+    } else if (tech == "Vizgen") {
+        c(img_df, flip) %<-% .get_vizgen_images(data_dir, image, flip, max_flip,
+                                                z = "all", sample_id = sample_id)
+    } else {
+        img_df <- NULL
+        flip <- "none"
+    }
+    sfe <- aggregateTx(file = fn, df = df, by = by, sample_id = sample_id,
+                spatialCoordsNames = spatialCoordsNames,
+                gene_col = gene_col,
+                phred_col = "qv", min_phred = min_phred,
+                flip_geometry = (flip == "geometry"),
+                cellsize = cellsize, square = square, flat_topped = flat_topped,
+                new_geometry_name = new_geometry_name)
+    imgData(sfe) <- img_df
+    sfe
+}
+
 .aggregate_num <- function(mat, inds, FUN, fun_name, BPPARAM) {
     if (fun_name %in% c("sum", "mean")) {
         if (fun_name == "sum")
@@ -64,78 +184,6 @@
                              sample_id = sampleIDs(x),
                              colGeometries = cgs)
 }
-
-#' Aggregate transcript spots from file
-#'
-#' This function reads the transcript spot file from the standard output of the
-#' commercial technologies (not GeoParquet) for spatial aggregation where the
-#' spots are assigned to polygons such as cells or spatial bins. Presets for
-#' Xenium, MERFISH, and CosMX are available.
-#'
-#' @param df If the file is already loaded into memory, a data frame (sf) with
-#'   columns for the x, y, and optionally z coordinates and gene assignment of
-#'   each transcript spot. If specified, then argument \code{file} will be
-#'   ignored.
-#' @param by A \code{sfc} or \code{sf} object for spatial aggregation.
-#' @inheritParams formatTxTech
-#' @inheritParams formatTxSpots
-#' @note The resulting SFE object often includes geometries (e.g. grid cells)
-#'   outside tissue, because there can be transcript spots detected outside the
-#'   tissue.
-#' @return A SFE object with count matrix for number of spots of each gene in
-#'   each geometry. Geometries with no spot are removed.
-#' @importFrom data.table as.data.table
-#' @importFrom sf st_make_grid
-#' @export
-aggregateTx <- function(file, df = NULL, by = NULL, spatialCoordsNames = c("X", "Y", "Z"),
-                        gene_col = "gene",
-                        phred_col = "qv", min_phred = 20, flip = FALSE,
-                        cellsize = NULL, square = TRUE, flat_topped = FALSE,
-                        new_geometry_name = "bins", unit = "micron") {
-    # This is only for one file, one sample
-    if (!is.null(df)) file <- df
-    mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
-                           min_phred, flip, BPPARAM)
-    mols <- df2sf(mols, spatialCoordsNames = spatialCoordsNames,
-                  geometryType = "POINT")
-    if (is.null(by))
-        by <- st_make_grid(mols, cellsize = cellsize, square = square,
-                           flat_topped = flat_topped)
-    else if (is(by, "sf")) by <- st_geometry(by)
-    grid_sf <- st_sf(grid_id = seq_along(by), geometry = by)
-    mols <- st_join(mols, grid_sf) # Took 5.87 minutes for 7171453 spots and 8555 bins
-    mols <- st_drop_geometry(mols) |> as.data.table()
-    mols <- mols[, .N, by = .(gene, grid_id)]
-    mols$gene <- factor(mols$gene) # The levels are alphabetically arranged
-    mols$gene_index <- as.integer(mols$gene)
-    new_mat <- sparseMatrix(i = mols$gene_index, j = mols$grid_id, x = mols$N)
-    rownames(new_mat) <- levels(mols$gene)
-    colnames(new_mat) <- seq_len(ncol(new_mat))
-    new_mat <- new_mat[,colSums(new_mat) > 0] # Remove empty grid cells
-    cgs <- list(bins = grid_sf[grid_sf$grid_id %in% mols$grid_id, "geometry"])
-    names(cgs) <- new_geometry_name
-    SpatialFeatureExperiment(assays = list(counts = new_mat),
-                             colGeometries = cgs, unit = unit)
-}
-
-#' @rdname aggregateTx
-#' @export
-aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
-                            tech = c("Vizgen", "Xenium", "CosMX"),
-                            min_phred = 20, flip = FALSE,
-                            cellsize = NULL, square = TRUE, flat_topped = FALSE,
-                            new_geometry_name = "bins") {
-    if (!is.null(df)) data_dir <- NULL
-    c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
-        getTechTxFields(tech, data_dir)
-    aggregateTx(file = fn, df = df, by = by,
-                spatialCoordsNames = spatialCoordsNames,
-                gene_col = gene_col,
-                phred_col = "qv", min_phred = min_phred, flip = flip,
-                cellsize = cellsize, square = square, flat_topped = flat_topped,
-                new_geometry_name = new_geometry_name)
-}
-
 
 # Might turn this into an exported function
 .aggregate_sample_tx <- function(x, by, rowGeometryName, new_geometry_name) {
@@ -262,14 +310,17 @@ setMethod("aggregate", "SpatialFeatureExperiment",
               if (length(sample_id) > 1L) {
                   by <- split(by$geometry, list(sample_id = by$sample_id))
               }
-              sfes <- lapply(sample_id, function(sfe, df) {
-                  .aggregate_sample(sfe, by = df, FUN = FUN,
+              sfes <- lapply(sample_id, function(s) {
+                  .aggregate_sample(sfes[[s]], by = by[[s]], FUN = FUN,
                                     colGeometryName = colGeometryName,
                                     rowGeometryName = rowGeometryName)
               })
               out <- do.call(cbind, sfes)
               # Add the original rowGeometries back
               rowGeometries(out) <- rowGeometries(x, sample_id = sample_id)
+              # Keep imgData
+              id_orig <- imgData(x)
+              imgData(out) <- id_orig[id_orig$sample_id %in% sample_id,]
               out
           })
 

@@ -10,6 +10,7 @@
 #' @inheritParams SpatialExperiment::read10xVisium
 #' @inheritParams findVisiumGraph
 #' @inheritParams SpatialFeatureExperiment
+#' @inheritParams DropletUtils::read10xCounts
 #' @param bin_size \code{c(character)}, use this only when loading VisiumHD.
 #'  Specify which bin resolution to load, default is \code{NULL} which assumes that data is standard Visium.
 #'  Eg, single resolution is \code{c("8")}, if to load all three resolutions, use \code{c("2", "8", "16")}.
@@ -59,12 +60,13 @@
 #'
 #' # load VisiumHD
 #' # path to "binned_outputs" directory containing:
-#' └── binned_outputs
-#'     ├── square_002um
-#'     ├── square_008um
-#'     └── square_016um
+#' # └── binned_outputs
+#' #     ├── square_002um
+#' #     ├── square_008um
+#' #     └── square_016um
 #' dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
-#' # this is public dataset -> https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
+#' # this is public dataset ->
+#' # https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
 #' sfe_hd <-
 #' read10xVisiumSFE(samples = list.files(dir_hd), # 1:3 resolutions
 #'                  dirs = dir_hd,
@@ -90,12 +92,17 @@ read10xVisiumSFE <- function(samples = "",
                              images = c("lowres", "hires"),
                              unit = c("full_res_image_pixel", "micron"),
                              add_Graph = TRUE,
-                             style = "W", zero.policy = NULL, load = FALSE) {
+                             style = "W", zero.policy = NULL, load = FALSE,
+                             row.names = c("id", "symbol")) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
 
     images <- match.arg(images, several.ok = TRUE)
+    row.names <- match.arg(row.names)
+    enrichment_feature <- switch(row.names,
+                                 id = "Feature.ID",
+                                 symbol = "Feature.Name")
     img_fns <- c(
       lowres = "tissue_lowres_image.png",
       hires = "tissue_hires_image.png")
@@ -119,7 +126,8 @@ read10xVisiumSFE <- function(samples = "",
         o <- .read10xVisium(if (is_VisiumHD) dirs else dirs[i],
                             sample_id[i],
                             if (is_VisiumHD) bin_size[i] else "",
-                            type, data, images, load = FALSE)
+                            type, data, images, load = FALSE,
+                            row.names  = row.names)
         imgData(o) <- NULL
         scalefactors <-
           fromJSON(file = file.path(
@@ -138,7 +146,7 @@ read10xVisiumSFE <- function(samples = "",
         fn <- file.path(dirs[i], if (is_VisiumHD) samples[i] else "", "spatial", "spatial_enrichment.csv")
         if (file.exists(fn)) {
             enrichment <- read.csv(fn)
-            row_inds <- match(rownames(o), enrichment$Feature.ID)
+            row_inds <- match(rownames(o), enrichment[[enrichment_feature]])
             # Let me not worry about different samples having different genes for now
             if (i == 1L) {
                 rowData(o) <- cbind(rowData(o),
@@ -228,7 +236,7 @@ read10xVisiumSFE <- function(samples = "",
            type = c("HDF5", "sparse"),
            data = c("filtered", "raw"),
            images = "lowres",
-           load = TRUE)
+           load = TRUE, row.names = "id")
   {
     if (!requireNamespace("DropletUtils", quietly = TRUE)) {
       warning("DropletUtils package must be installed to use read10xVisium()")
@@ -302,7 +310,7 @@ read10xVisiumSFE <- function(samples = "",
       sce <- DropletUtils::read10xCounts(samples = counts[i],
                                          sample.names = sids[i],
                                          col.names = TRUE,
-                                         row.names = "symbol")
+                                         row.names = row.names)
       if (VisiumHD) {
         spd <-
           arrow::read_parquet(xyz[i]) |>
@@ -483,6 +491,52 @@ read10xVisiumSFE <- function(samples = "",
     return(sf_df)
 }
 
+.get_vizgen_images <- function(data_dir, image, flip, max_flip, z, sample_id) {
+    # Read images----------
+    # sanity on image names
+    # .."Cellbound" image usually has a digit, eg "Cellbound3"
+    image_regex <- image
+    if (any("Cellbound" %in% image)) {
+        image_regex[which(image %in% "Cellbound")] <-
+            paste0(grep("Cell", image_regex, value = TRUE), "\\d") }
+
+    if (z == "all") {
+        img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z-?\\d+\\.tiff?$")
+    } else {
+        num_pattern <- paste(z, collapse = "|")
+        img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z",
+                              num_pattern, "\\.tiff?$")
+    }
+    img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern,
+                         ignore.case = TRUE, full.names = TRUE)
+    if_exists <- vapply(image, function(img) any(grepl(img, img_fn, ignore.case = TRUE)),
+                        FUN.VALUE = logical(1))
+    if (!all(if_exists)) {
+        warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
+                " in this z-plane don't exist, or have non-standard file name(s).")
+    }
+    do_flip <- .if_flip_img(img_fn, max_flip)
+    if (!length(img_fn)) flip <- "none"
+    else if (!any(do_flip) && flip == "image") flip <- "geometry"
+    if (any(if_exists)) {
+        manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
+        extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
+        if (flip == "geometry") {
+            extent[c("ymin", "ymax")] <- -extent[c("ymax", "ymin")]
+        }
+        # Set up ImgData
+        img_dfs <- lapply(img_fn, function(fn) {
+            # Now allowing multiple z planes
+            id_use <- sub("^mosaic_", "", basename(fn))
+            id_use <- sub("\\.tiff?$", "", id_use)
+            .get_imgData(fn, sample_id = sample_id, image_id = id_use,
+                         extent = extent, flip = (flip == "image"))
+        })
+        img_df <- do.call(rbind, img_dfs)
+    }
+    list(img_df = img_df, flip = flip)
+}
+
 #' Read Vizgen MERFISH output as SpatialFeatureExperiment
 #'
 #' This function reads the standard Vizgen MERFISH output into an SFE object.
@@ -587,34 +641,7 @@ readVizgen <- function(data_dir,
     if ((any(z < 0) || any(z > 6)) && z != "all") {
         stop("z must be beween 0 and 6 (inclusive).")
     }
-
-    # Read images----------
-    # sanity on image names
-    # .."Cellbound" image usually has a digit, eg "Cellbound3"
-    image_regex <- image
-    if (any("Cellbound" %in% image)) {
-        image_regex[which(image %in% "Cellbound")] <-
-            paste0(grep("Cell", image_regex, value = TRUE), "\\d") }
-
-    if (z == "all") {
-        img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z-?\\d+\\.tiff?$")
-    } else {
-        num_pattern <- paste(z, collapse = "|")
-        img_pattern <- paste0("mosaic_(", paste(image_regex, collapse = "|"), ")_z",
-                              num_pattern, "\\.tiff?$")
-    }
-    img_fn <- list.files(file.path(data_dir, "images"), pattern = img_pattern,
-                         ignore.case = TRUE, full.names = TRUE)
-    if_exists <- vapply(image, function(img) any(grepl(img, img_fn, ignore.case = TRUE)),
-                        FUN.VALUE = logical(1))
-    if (!all(if_exists)) {
-        warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
-                " in this z-plane don't exist, or have non-standard file name(s).")
-    }
-    do_flip <- .if_flip_img(img_fn, max_flip)
-    if (!length(img_fn)) flip <- "none"
-    else if (!any(do_flip) && flip == "image") flip <- "geometry"
-
+    c(img_df, flip) %<-% .get_vizgen_images(data_dir, image, flip, max_flip, z, sample_id)
     # Read cell segmentation-------------
     # Use segmentation output from ".parquet" file
     # check if ".parquet" file is present
@@ -769,22 +796,6 @@ readVizgen <- function(data_dir,
         polys <- polys[matched.cells, , drop = FALSE]
     }
 
-    if (any(if_exists)) {
-        manifest <- fromJSON(file = file.path(data_dir, "images", "manifest.json"))
-        extent <- setNames(manifest$bbox_microns, c("xmin", "ymin", "xmax", "ymax"))
-        if (flip == "geometry") {
-            extent[c("ymin", "ymax")] <- -extent[c("ymax", "ymin")]
-        }
-        # Set up ImgData
-        img_dfs <- lapply(img_fn, function(fn) {
-            # Now allowing multiple z planes
-            id_use <- sub("^mosaic_", "", basename(fn))
-            id_use <- sub("\\.tiff?$", "", id_use)
-            .get_imgData(fn, sample_id = sample_id, image_id = id_use,
-                         extent = extent, flip = (flip == "image"))
-        })
-        img_df <- do.call(rbind, img_dfs)
-    }
     sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
                                     colData = metadata,
                                     sample_id = sample_id,
@@ -959,83 +970,7 @@ readCosMX <- function(data_dir,
     fn
 }
 
-#' Read 10X Xenium output as SpatialFeatureExperiment
-#'
-#' This function reads the standard 10X Xenium output into an SFE object.
-#'
-#' @inheritParams readVizgen
-#' @inheritParams formatTxSpots
-#' @param image Which image(s) to load, can be "morphology_mip",
-#'   "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
-#'   v2, there is no longer "morphology_mip" and "morphology_focus" is a
-#'   directory with 4 images corresponding to 4 channels: DAPI, "Cadherin", 18S,
-#'   and Vimentin. So this argument is ignored for XOA v2.
-#' @param segmentations Which segmentation outputs to read, can be "cell",
-#'   "nucleus", or both.
-#' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
-#'   symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
-#'   appended to disambiguate in case the same symbol corresponds to multiple
-#'   Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
-#'   symbols are used in the transcript spot files.
-#' @return An SFE object. If reading segmentations, the cell or nuclei
-#'   segmentation will be saved to `cell_boundaries_sf.parquet` and
-#'   `nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time the
-#'   boundaries can be read much more quickly. If reading transcript spots
-#'   (`add_molecules = TRUE`), then the reformatted transcript spots are saved
-#'   to file specified in the `file_out` argument, which is by default
-#'   `tx_spots.parquet` in the same directory as the rest of the data. If images
-#'   are present, then the images will be of the \code{BioFormatsImage} class
-#'   and not loaded into memory until necessary in later operations.
-#' @note Sometimes when reading images, you will see this error the first time:
-#' 'java.lang.NullPointerException: Cannot invoke
-#' "loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
-#' "RBioFormats.reader" is null'. See this issue https://github.com/aoles/RBioFormats/issues/42 
-#' Rerun the code and it should work the second time.
-#' @export
-#' @concept Read data into SFE
-#' @importFrom sf st_area st_geometry<- st_as_sf
-#' @importFrom terra rast ext vect
-#' @importFrom BiocParallel bpmapply bplapply
-#' @importFrom rlang check_installed
-#' @importFrom SpatialExperiment imgData<-
-#' @importFrom SingleCellExperiment counts
-#' @importFrom data.table fread merge.data.table rbindlist is.data.table
-#' @importFrom DropletUtils read10xCounts
-#' @importFrom zeallot %<-%
-#' @examples
-#' library(SFEData)
-#' library(RBioFormats)
-#' fp <- tempfile()
-#' dir_use <- XeniumOutput("v2", file_path = fp)
-#' # RBioFormats issue
-#' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
-#' sfe <- readXenium(dir_use, add_molecules = TRUE)
-#' unlink(dir_use, recursive = TRUE)
-
-readXenium <- function(data_dir,
-                       sample_id = "sample01",
-                       image = c("morphology_focus", "morphology_mip"),
-                       segmentations = c("cell", "nucleus"),
-                       row.names = c("id", "symbol"),
-                       flip = c("geometry", "image", "none"),
-                       max_flip = "50 MB",
-                       filter_counts = FALSE,
-                       add_molecules = FALSE,
-                       min_phred = 20,
-                       BPPARAM = SerialParam(),
-                       file_out = file.path(data_dir, "tx_spots.parquet")) {
-    check_installed("sfarrow")
-    data_dir <- normalizePath(data_dir, mustWork = TRUE)
-    flip <- match.arg(flip)
-    image <- match.arg(image, several.ok = TRUE)
-    row.names <- match.arg(row.names)
-    if (add_molecules) {
-        message(">>> Must use gene symbols as row names when adding transcript spots.")
-        row.names <- "symbol"
-    }
-    c(xoa_version, major_version, minor_version, instrument_version) %<-%
-        .get_XOA_version(data_dir)
-
+.get_xenium_images <- function(data_dir, image, major_version, flip, max_flip, sample_id) {
     # Read images-----------
     # supports 2 images, in XOA v1:
     # `morphology_mip.ome.tif` - 2D maximum projection intensity (MIP) image of the tissue morphology image.
@@ -1088,8 +1023,91 @@ readXenium <- function(data_dir,
                 img
             })
         }
+    } else {
+        img_df <- NULL
+        flip <- "none"
     }
+    list(img_df = img_df, flip = flip)
+}
 
+#' Read 10X Xenium output as SpatialFeatureExperiment
+#'
+#' This function reads the standard 10X Xenium output into an SFE object.
+#'
+#' @inheritParams readVizgen
+#' @inheritParams formatTxSpots
+#' @param image Which image(s) to load, can be "morphology_mip",
+#'   "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
+#'   v2, there is no longer "morphology_mip" and "morphology_focus" is a
+#'   directory with 4 images corresponding to 4 channels: DAPI, "Cadherin", 18S,
+#'   and Vimentin. So this argument is ignored for XOA v2.
+#' @param segmentations Which segmentation outputs to read, can be "cell",
+#'   "nucleus", or both.
+#' @param row.names String specifying whether to use Ensembl IDs ("id") or gene
+#'   symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
+#'   appended to disambiguate in case the same symbol corresponds to multiple
+#'   Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
+#'   symbols are used in the transcript spot files.
+#' @return An SFE object. If reading segmentations, the cell or nuclei
+#'   segmentation will be saved to `cell_boundaries_sf.parquet` and
+#'   `nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time the
+#'   boundaries can be read much more quickly. If reading transcript spots
+#'   (`add_molecules = TRUE`), then the reformatted transcript spots are saved
+#'   to file specified in the `file_out` argument, which is by default
+#'   `tx_spots.parquet` in the same directory as the rest of the data. If images
+#'   are present, then the images will be of the \code{BioFormatsImage} class
+#'   and not loaded into memory until necessary in later operations.
+#' @note Sometimes when reading images, you will see this error the first time:
+#' 'java.lang.NullPointerException: Cannot invoke
+#' "loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
+#' "RBioFormats.reader" is null'. See this issue https://github.com/aoles/RBioFormats/issues/42
+#' Rerun the code and it should work the second time.
+#' @export
+#' @concept Read data into SFE
+#' @importFrom sf st_area st_geometry<- st_as_sf
+#' @importFrom terra rast ext vect
+#' @importFrom BiocParallel bpmapply bplapply
+#' @importFrom rlang check_installed
+#' @importFrom SpatialExperiment imgData<-
+#' @importFrom SingleCellExperiment counts
+#' @importFrom data.table fread merge.data.table rbindlist is.data.table
+#' @importFrom DropletUtils read10xCounts
+#' @importFrom zeallot %<-%
+#' @examples
+#' library(SFEData)
+#' library(RBioFormats)
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v2", file_path = fp)
+#' # RBioFormats issue
+#' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
+#' sfe <- readXenium(dir_use, add_molecules = TRUE)
+#' unlink(dir_use, recursive = TRUE)
+
+readXenium <- function(data_dir,
+                       sample_id = "sample01",
+                       image = c("morphology_focus", "morphology_mip"),
+                       segmentations = c("cell", "nucleus"),
+                       row.names = c("id", "symbol"),
+                       flip = c("geometry", "image", "none"),
+                       max_flip = "50 MB",
+                       filter_counts = FALSE,
+                       add_molecules = FALSE,
+                       min_phred = 20,
+                       BPPARAM = SerialParam(),
+                       file_out = file.path(data_dir, "tx_spots.parquet")) {
+    check_installed("sfarrow")
+    data_dir <- normalizePath(data_dir, mustWork = TRUE)
+    flip <- match.arg(flip)
+    image <- match.arg(image, several.ok = TRUE)
+    row.names <- match.arg(row.names)
+    if (add_molecules) {
+        message(">>> Must use gene symbols as row names when adding transcript spots.")
+        row.names <- "symbol"
+    }
+    c(xoa_version, major_version, minor_version, instrument_version) %<-%
+        .get_XOA_version(data_dir)
+    c(img_df, flip) %<-% .get_xenium_images(data_dir, image, major_version,
+                                            flip, max_flip, sample_id)
     # Read cell/nucleus segmentation ----
     if (!is.null(segmentations)) {
         # get files .parquet or .csv
@@ -1283,7 +1301,7 @@ readXenium <- function(data_dir,
     }
 
     # add images
-    if (use_imgs) imgData(sfe) <- img_df
+    imgData(sfe) <- img_df
 
     # Read transcript coordinates ----
     # NOTE z-planes are non-integer, cannot select or use `z` as in `readVizgen`
