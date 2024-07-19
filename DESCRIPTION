@@ -46,7 +46,7 @@ Imports:
     zeallot
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Collate: 
     'AllGenerics.R'
     'utils.R'
@@ -55,6 +55,7 @@ Collate:
     'align.R'
     'annotGeometries.R'
     'cbind.R'
+    'changeSampleIDs.R'
     'coerce.R'
     'data.R'
     'df2sf.R'
