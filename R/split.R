@@ -9,6 +9,7 @@
 #' object. The \code{splitContiguity} function splits the SFE object by
 #' contiguity of an \code{annotGeometry}, which by default is "tissueBoundary".
 #'
+#' @inheritParams crop
 #' @param x An SFE object
 #' @param f It can be a \code{sf} data frame or \code{sfc} to split by geometry.
 #'   Each row of the \code{sf} data frame or each element in the \code{sfc} will
@@ -28,50 +29,52 @@
 #'   by contiguity. Only pieces that are large enough are considered.
 #' @return A list of SFE objects.
 #' @concept Geometric operations
-#' @name split-SpatialFeatureExperiment
+#' @name splitByCol
+#' @aliases splitByCol
 #' @examples
 #' # example code
 NULL
 
-#' @rdname split-SpatialFeatureExperiment
+#' @rdname splitByCol
 #' @export
-setMethod("split", c("SpatialFeatureExperiment", "sf"),
-          function(x, f, sample_id = "all", colGeometryName = 1L) {
+setMethod("splitByCol", c("SpatialFeatureExperiment", "sf"),
+          function(x, f, sample_id = "all", colGeometryName = 1L, cover = FALSE) {
               sample_id <- .check_sample_id(x, sample_id, one = FALSE)
               if (!"sample_id" %in% names(f) && length(sample_id) > 1L)
                   stop("f must have a column sample_id when multiple samples are specified.")
               l <- split(st_geometry(f), f$sample_id)
-              split(x, l, sample_id = sample_id, colGeometryName = colGeometryName)
+              splitByCol(x, l, sample_id = sample_id, colGeometryName = colGeometryName, cover = cover)
           })
 
-#' @rdname split-SpatialFeatureExperiment
+#' @rdname splitByCol
 #' @export
-setMethod("split", c("SpatialFeatureExperiment", "sfc"),
-          function(x, f, sample_id = 1L, colGeometryName = 1L) {
+setMethod("splitByCol", c("SpatialFeatureExperiment", "sfc"),
+          function(x, f, sample_id = 1L, colGeometryName = 1L, cover = FALSE) {
               sample_id <- .check_sample_id(x, sample_id)
               x <- x[, x$sample_id == sample_id]
-              lapply(sfc, function(g) {
+              lapply(f, function(g) {
                   crop(x, g, colGeometryName = colGeometryName,
-                       keep_whole = "col", cover = TRUE)
+                       keep_whole = "col", cover = cover) # Maybe I can make cover optional
               })
           })
 
-#' @rdname split-SpatialFeatureExperiment
+#' @rdname splitByCol
 #' @export
-setMethod("split", c("SpatialFeatureExperiment", "list"),
-          function(x, f, sample_id = "all", colGeometryName = 1L) {
+setMethod("splitByCol", c("SpatialFeatureExperiment", "list"),
+          function(x, f, sample_id = "all", colGeometryName = 1L, cover = FALSE) {
               sample_id <- .check_sample_id(x, sample_id, one = FALSE)
               f <- f[sample_id]
               if (!length(f))
                   stop("None of the geometries correspond to sample_id")
               out <- lapply(sample_id, function(s) {
-                  split(x, f[[s]], sample_id = s, colGeometryName = colGeometryName)
+                  splitByCol(x, f[[s]], sample_id = s, colGeometryName = colGeometryName,
+                        cover = cover)
               })
               names(out) <- sample_id
               unlist(out, recursive = FALSE)
           })
 
-#' @rdname split-SpatialFeatureExperiment
+#' @rdname splitByCol
 #' @export
 splitSamples <- function(x) {
     ss <- sampleIDs(x)
@@ -81,12 +84,12 @@ splitSamples <- function(x) {
     out
 }
 
-#' @rdname split-SpatialFeatureExperiment
+#' @rdname splitByCol
 #' @export
 #' @importFrom sf st_collection_extract
 splitContiguity <- function(x, colGeometryName = 1L,
                             annotGeometryName = "tissueBoundary",
-                            min_area = 0, join = st_intersects) {
+                            min_area = 0, cover = FALSE) {
     ag <- annotGeometry(x, annotGeometryName)
     gt <- st_geometry_type(ag, by_geometry = FALSE)
     # Will I allow points and linestrings in the future?
@@ -96,10 +99,11 @@ splitContiguity <- function(x, colGeometryName = 1L,
         tryCatch(ag <- st_collection_extract(ag, type = c("POLYGON", "MULTIPOLYGON")),
                  warning = function(w) stop("None of the geometries are POLYGON or MULTIPOLYGON"))
     }
-    if (gt != "POLYGON") ag <- st_cast(ag, "POLYGON", warn = FALSE)
+    ag_union <- st_union(ag) # Merge contiguous pieces
+    ag_union <- st_cast(ag_union, "POLYGON", warn = FALSE)
     if (min_area > 0) {
-        ag$area <- st_area(ag)
-        ag <- ag[ag$area > min_area,]
+        ag_union$area <- st_area(ag_union)
+        ag_union <- ag_union[ag_union$area > min_area,]
     }
-    split(x, ag, colGeometryName = colGeometryName)
+    splitByCol(x, ag_union, colGeometryName = colGeometryName, cover = cover)
 }
