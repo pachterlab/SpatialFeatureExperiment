@@ -63,9 +63,9 @@ setMethod("splitByCol", c("SpatialFeatureExperiment", "sfc"),
 setMethod("splitByCol", c("SpatialFeatureExperiment", "list"),
           function(x, f, sample_id = "all", colGeometryName = 1L, cover = FALSE) {
               sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-              f <- f[sample_id]
-              if (!length(f))
+              if (!any(sample_id %in% names(f)))
                   stop("None of the geometries correspond to sample_id")
+              f <- f[intersect(sample_id, names(f))]
               out <- lapply(sample_id, function(s) {
                   splitByCol(x, f[[s]], sample_id = s, colGeometryName = colGeometryName,
                         cover = cover)
@@ -78,7 +78,6 @@ setMethod("splitByCol", c("SpatialFeatureExperiment", "list"),
 #' @export
 splitSamples <- function(x) {
     ss <- sampleIDs(x)
-    if (length(ss) == 1L) return(x)
     out <- lapply(ss, function(s) x[, x$sample_id == s])
     names(out) <- ss
     out
