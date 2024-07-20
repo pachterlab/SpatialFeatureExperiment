@@ -15,6 +15,7 @@
   square = TRUE,
   flat_topped = FALSE,
   new_geometry_name = "bins",
+  join = st_intersects,
   BPPARAM = SerialParam()
 )
 }
@@ -28,10 +29,16 @@ frame must have a column \code{sample_id} to indicate which geometry for
 which sample. This argument is optional if \code{cellsize} is specified.}
 
 \item{FUN}{Function to aggregate the numerical columns in \code{colData} and
-the gene count matrix. This can be \code{sum}, \code{mean}, or any
-\code{row*} function in the \code{sparseMatrixStats} package such as
-\code{\link{rowMedians}}. Aggregation is not done when aggregating by
-transcript spots in \code{rowGeometry}.}
+the gene count matrix. This can be \code{sum}, \code{mean}, or any function
+that takes a numeric matrix as input and returns a numeric vector whose
+length is same as the number of rows in the input matrix, such as
+\code{rowMedians}. See package \code{matrixStats}. Depending on the
+function used for aggregation, numeric columns of \code{colData} may need
+to be interpreted differently after aggregation. Aggregation is not done
+when aggregating by transcript spots in \code{rowGeometry}. When it's sum
+or mean, matrix multiplication is used for aggregation rather than calling
+the sum or mean function itself; this is much faster than looping through
+the bins and calling the function on each of them.}
 
 \item{sample_id}{Which samples to aggregate, defaults to "all".}
 
@@ -49,9 +56,11 @@ data, by default the first one.}
 \item{new_geometry_name}{Name to give to the new \code{colGeometry} in the
 output. Defaults to "bins".}
 
+\item{join}{logical spatial predicate function to use if \code{by} is a simple features object or geometry; see \link[sf]{st_join}}
+
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
-computing when aggregating different genes. Defaults to
-\code{SerialParam()}.}
+computing when aggregating data with functions other than sum and mean.
+Defaults to \code{SerialParam()}.}
 }
 \value{
 An SFE object with \code{colGeometry} the same as the geometry

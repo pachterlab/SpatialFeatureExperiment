@@ -120,26 +120,31 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 
 .aggregate_num <- function(mat, inds, FUN, fun_name, BPPARAM) {
     if (fun_name %in% c("sum", "mean")) {
+        i <- unlist(inds) # cell index
+        ll <- lengths(inds) # bin index
+        j <- rep(seq_along(inds), times = ll)
         if (fun_name == "sum")
-            mat_agg <- sparseMatrix(i = unlist(inds), j = seq_along(inds), x = 1,
+            mat_agg <- sparseMatrix(i = i, j = j, x = 1,
                                     dims = c(ncol(mat), length(inds)))
         else if (fun_name == "mean") {
-            ll <- lengths(inds)
-            mat_agg <- sparseMatrix(i = unlist(inds), j = seq_along(inds),
+            mat_agg <- sparseMatrix(i = i, j = j,
                                     x = rep(1/ll, times = ll),
                                     dims = c(ncol(mat), length(inds)))
         }
+        # mat has genes in rows and cells in columns
         out_agg <- mat %*% mat_agg
+        # Variance and standard deviation can also be expressed with matrix
+        # algebra. Not implementing yet since most likely they're not commonly
+        # used for aggregation purposes.
     } else if (fun_name %in% getNamespaceExports("sparseMatrixStats")) {
-        # For functions supported by sparseMatrixStats
-        if (!grepl("^row", fun_name))
-            stop("Only row* functions from sparseMatrixStats can be used for FUN.")
-        cnts_agg <- bplapply(inds, function(i) {
+        out_agg <- bplapply(inds, function(i) {
             m <- mat[,i,drop = FALSE]
             FUN(m)
         }, BPPARAM = BPPARAM)
         out_agg <- matrix(unlist(out_agg), ncol = length(inds))
+        rownames(out_agg) <- rownames(mat)
     } else stop("Function ", fun_name, " not supported for aggregating SFE.")
+    if (is(out_agg, "dgeMatrix")) out_agg <- as.matrix(out_agg)
     out_agg
 }
 
@@ -147,8 +152,12 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 .aggregate_sample_cell <- function(x, by, FUN, fun_name, colGeometryName, join,
                                    new_geometry_name, BPPARAM) {
     cg <- colGeometry(x, type = colGeometryName)
+    # Preliminary check of overlap
+    if (!join(st_as_sfc(st_bbox(by)), st_as_sfc(st_bbox(cg)), sparse = FALSE))
+        stop("`by` does not overlap with this sample")
     inds <- join(by, cg) # somewhat faster than join(cg, by) when by has fewer geometries than cg
-    not_empty <- which(length(inds))
+    not_empty <- which(lengths(inds) > 0L)
+    if (!length(not_empty)) stop("`by` does not overlap with this sample")
     by <- by[not_empty]
     inds <- inds[not_empty]
     cnts <- counts(x)
@@ -157,6 +166,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     cnts_agg <- .aggregate_num(cnts, inds, FUN, fun_name, BPPARAM)
     # Aggregate numeric columns of colData; logical are converted to numeric
     df <- colData(x)
+    df$sample_id <- NULL
     which_logical <- which(vapply(df, is.logical, FUN.VALUE = logical(1)))
     for (i in which_logical) {
         df[,i] <- as.integer(df[,i])
@@ -164,25 +174,33 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     numeric_cols <- vapply(df, is.numeric, FUN.VALUE = logical(1))
     if (any(numeric_cols)) {
         cd <- t(as.matrix(df[,numeric_cols, drop = FALSE]))
-        cd_agg <- .aggregate_num(cd, inds, FUN, fun_name, BPPARAM) |> t()
+        cd_agg <- .aggregate_num(cd, inds, FUN, fun_name, BPPARAM) |> Matrix::t()
         cd_agg <- as(cd_agg, "DFrame")
-    }
+    } else cd_agg <- make_zero_col_DFrame(length(inds))
     # Deal with anything that is neither numerical nor logical
     # Primarily character and factor. What about list columns? I don't know.
+    # For now, the list columns will be split just like categorical variables
+    # and become nested lists
     if (!all(numeric_cols)) {
         df_bin <- data.frame(bin = rep(seq_along(inds), times = lengths(inds)),
                              index = unlist(inds))
         df_bin <- df_bin[order(df_bin$index),]
         names_not_num <- names(df)[!numeric_cols]
+        cat_agg <- matrix(NA, nrow = length(inds), ncol = length(names_not_num))
+        colnames(cat_agg) <- names_not_num
+        cat_agg <- data.frame(cat_agg)
         for (n in names_not_num)
-            df_bin[[n]] <- split(df[[,i]][n], list(bin = df_bin$bin))
-        if (any(numeric_cols)) cd_agg <- cbind(df_bin, cd_agg)
+            cat_agg[[n]] <- split(df[[n]], df_bin$bin)
+        cd_agg <- cbind(cat_agg, cd_agg)
     }
-    cgs <- list(bins = by)
+    cgs <- list(bins = st_sf(geometry = by))
     names(cgs) <- new_geometry_name
-    SpatialFeatureExperiment(assays = list(counts = cngs_agg), colData = cd_agg,
-                             sample_id = sampleIDs(x),
-                             colGeometries = cgs)
+    out <- SpatialFeatureExperiment(assays = list(counts = cnts_agg), colData = cd_agg,
+                                    sample_id = sampleIDs(x),
+                                    colGeometries = cgs)
+    colnames(out) <- seq_along(by)
+    rownames(out) <- rownames(x)
+    out
 }
 
 # Might turn this into an exported function
@@ -197,7 +215,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     tx_coords <- st_coordinates(rg) # Might write another function similar to formatTxTech to skip this
     tx_point <- df2sf(tx_coords, spatialCoordsNames = c("X", "Y", "Z"))
     tx_ind <- as.data.table(st_drop_geometry(tx_point))
-    tx_info <- txSpots(sfe) |> st_drop_geometry()
+    tx_info <- txSpots(x) |> st_drop_geometry()
     tx_info$L1 <- seq_along(tx_info$gene) # it has to be "gene" if it's from formatTxSpots
     tx_point <- merge(tx_point, tx_info, by = "L1") # takes a while
     tx_point <- st_as_sf(tx_point) |> st_join(grid_sf) # takes a few minutes
@@ -205,13 +223,16 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     tx_counts <- tx_counts[, .N, by = .(gene, L1, grid_id)]
 
     new_mat <- sparseMatrix(i = tx_counts$L1, j = tx_counts$grid_id, x = tx_counts$N)
-    cgs <- list(bins = by)
+    cgs <- list(bins = grid_sf)
     names(cgs) <- new_geometry_name
-    SpatialFeatureExperiment(assays = list(counts = new_mat),
+    out <- SpatialFeatureExperiment(assays = list(counts = new_mat),
                              colGeometries = cgs)
+    colnames(out) <- seq_along(by)
+    rownames(out) <- rownames(x)
+    out
 }
 
-.aggregate_sample <- function(x, by = NULL, FUN = sum,
+.aggregate_sample <- function(x, by = NULL, FUN = sum, fun_name,
                               colGeometryName = 1L, rowGeometryName = NULL,
                               join = st_intersects, new_geometry_name = "bins",
                               BPPARAM = SerialParam()) {
@@ -220,13 +241,60 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     # Can't do S4 method with signature for `by` because the argument `by` isn't
     # in the generic and I don't want to mess with the `aggregate` function in
     # other packages
-    if (is.null(rowGeometryName)) {
+    if (!is.null(rowGeometryName)) {
         .aggregate_sample_tx(x, by, rowGeometryName, new_geometry_name)
     } else {
         .aggregate_sample_cell(x, by, FUN, fun_name, colGeometryName, join,
-                                new_geometry_name, BPPARAM)
+                               new_geometry_name, BPPARAM)
     }
 }
+
+.aggregate_SFE <-
+    function(x, by = NULL, FUN = sum, sample_id = "all",
+             colGeometryName = 1L, rowGeometryName = NULL,
+             cellsize = NULL, square = TRUE, flat_topped = FALSE,
+             new_geometry_name = "bins", join = st_intersects,
+             BPPARAM = SerialParam()) {
+        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+        if (is.null(by) && is.null(cellsize)) {
+            stop("Either `by` or `cellsize` must be specified.")
+        }
+        # Make grid for multiple samples if `by` is not specified
+        if (is.null(by)) {
+            by <- .make_grid_samples(x, sample_id, colGeometryName,
+                                     cellsize, square, flat_topped)
+        }
+        if (is.list(by) && !is(by, "sfc")) {
+            if (!any(sample_id %in% names(by)))
+                stop("None of the geometries in `by` correspond to sample_id")
+            by <- by[intersect(sample_id, names(by))]
+        } else {
+            if (!is(by, "sfc") && !is(by, "sf"))
+                stop("`by` must be either sf or sfc.")
+            if (length(sample_id) > 1L) {
+                if (is(by, "sfc") || !"sample_id" %in% names(by))
+                    stop("`by` must be an sf data frame with a column `sample_id`")
+                by <- split(st_geometry(by), by$sample_id)
+            }
+        }
+        if (is(by, "sfc")) by <- setNames(list(by), sample_id)
+        fun_name <- as.character(substitute(FUN))
+        sfes <- splitSamples(x) # Output list should have sample IDs as names
+        sfes <- lapply(sample_id, function(s) {
+            .aggregate_sample(sfes[[s]], by = by[[s]], FUN = FUN,
+                              colGeometryName = colGeometryName,
+                              rowGeometryName = rowGeometryName,
+                              join = join, fun_name = fun_name,
+                              new_geometry_name = new_geometry_name)
+        })
+        out <- do.call(cbind, sfes)
+        # Add the original rowGeometries back
+        rowGeometries(out) <- rowGeometries(x, sample_id = sample_id)
+        # Keep imgData
+        id_orig <- imgData(x)
+        imgData(out) <- id_orig[id_orig$sample_id %in% sample_id,]
+        out
+    }
 
 #' Aggregate data in SFE using geometry
 #'
@@ -259,19 +327,25 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 #'   frame must have a column \code{sample_id} to indicate which geometry for
 #'   which sample. This argument is optional if \code{cellsize} is specified.
 #' @param FUN Function to aggregate the numerical columns in \code{colData} and
-#'   the gene count matrix. This can be \code{sum}, \code{mean}, or any
-#'   \code{row*} function in the \code{sparseMatrixStats} package such as
-#'   \code{\link{rowMedians}}. Aggregation is not done when aggregating by
-#'   transcript spots in \code{rowGeometry}.
+#'   the gene count matrix. This can be \code{sum}, \code{mean}, or any function
+#'   that takes a numeric matrix as input and returns a numeric vector whose
+#'   length is same as the number of rows in the input matrix, such as
+#'   \code{rowMedians}. See package \code{matrixStats}. Depending on the
+#'   function used for aggregation, numeric columns of \code{colData} may need
+#'   to be interpreted differently after aggregation. Aggregation is not done
+#'   when aggregating by transcript spots in \code{rowGeometry}. When it's sum
+#'   or mean, matrix multiplication is used for aggregation rather than calling
+#'   the sum or mean function itself; this is much faster than looping through
+#'   the bins and calling the function on each of them.
 #' @param sample_id Which samples to aggregate, defaults to "all".
 #' @param colGeometryName Which \code{colGeometry} to spatially aggregate the
 #'   data, by default the first one.
 #' @param rowGeometryName Which \code{rowGeometry} to spatially aggregate
 #' @param new_geometry_name Name to give to the new \code{colGeometry} in the
-#' output. Defaults to "bins".
+#'   output. Defaults to "bins".
 #' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
-#'   computing when aggregating different genes. Defaults to
-#'   \code{SerialParam()}.
+#'   computing when aggregating data with functions other than sum and mean.
+#'   Defaults to \code{SerialParam()}.
 #' @return An SFE object with \code{colGeometry} the same as the geometry
 #'   specified in \code{by} or same as the grid specified in \code{cellsize}.
 #'   \code{rowGeometries} and \code{rowData} remain the same as in the input
@@ -280,49 +354,12 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 #'   counterparts), and \code{spatialGraphs} are dropped because those results
 #'   no longer apply after aggregation.
 #' @export
+#' @importFrom stats aggregate
 #' @concept Geometric operations
 #' @examples
 #' # example code
 #'
-setMethod("aggregate", "SpatialFeatureExperiment",
-          function(x, by = NULL, FUN = sum, sample_id = "all",
-                   colGeometryName = 1L, rowGeometryName = NULL,
-                   cellsize = NULL, square = TRUE, flat_topped = FALSE,
-                   new_geometry_name = "bins",
-                   BPPARAM = SerialParam()) {
-              sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-              if (is.null(by) && is.null(cellsize)) {
-                  stop("Either `by` or `cellsize` must be specified.")
-              }
-              # Make grid for multiple samples if `by` is not specified
-              if (is.null(by)) {
-                  by <- .make_grid_samples(x, sample_id, colGeometryName,
-                                           cellsize, square, flat_topped)
-              }
-              if (!is(by, "sfc") && !is(by, "sf"))
-                  stop("`by` must be either sf or sfc.")
-              if (length(sample_id) > 1L && (is(by, "sfc") || !"sample_id" %in% names(by))) {
-                  stop("`by` must be a sf data frame with a column `sample_id`")
-              }
-              # Need to check new_geometry_name
-              fun_name <- substitute(FUN)
-              sfes <- splitSamples(x) # Output list should have sample IDs as names
-              if (length(sample_id) > 1L) {
-                  by <- split(by$geometry, list(sample_id = by$sample_id))
-              }
-              sfes <- lapply(sample_id, function(s) {
-                  .aggregate_sample(sfes[[s]], by = by[[s]], FUN = FUN,
-                                    colGeometryName = colGeometryName,
-                                    rowGeometryName = rowGeometryName)
-              })
-              out <- do.call(cbind, sfes)
-              # Add the original rowGeometries back
-              rowGeometries(out) <- rowGeometries(x, sample_id = sample_id)
-              # Keep imgData
-              id_orig <- imgData(x)
-              imgData(out) <- id_orig[id_orig$sample_id %in% sample_id,]
-              out
-          })
+setMethod("aggregate", "SpatialFeatureExperiment", .aggregate_SFE)
 
 # Function to make grid for multiple samples
 .make_grid_samples <- function(x, sample_id, colGeometryName, cellsize, square,
