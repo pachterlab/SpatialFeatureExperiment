@@ -26,6 +26,8 @@ pieces2 <- readRDS(system.file("extdata/subpieces.rds", package = "SpatialFeatur
 pieces2_list <- split(st_geometry(pieces2), pieces2$sample_id)
 
 test_that("Split by list of sfcs, each element for one sample", {
+    expect_error(splitByCol(sfe2, setNames(pieces2_list, c("foo", "bar"))),
+                 "None of the geometries correspond to sample_id")
     sfes2 <- splitByCol(sfe2, pieces2_list)
     # there are 4 pieces
     expect_type(sfes2, "list")
@@ -61,6 +63,13 @@ test_that("Split different samples into separate SFE objects", {
     expect_true(all(classes == "SpatialFeatureExperiment"))
     expect_true(all(st_covers(pieces[[1]], colGeometry(sfes4[[1]]), sparse = FALSE)))
     expect_true(all(st_covers(pieces[[2]], colGeometry(sfes4[[2]]), sparse = FALSE)))
+})
+
+test_that("splitSamples when there's only 1 sample", {
+    s <- splitSamples(sfe)
+    expect_type(s, "list")
+    expect_length(s, 1L)
+    expect_equal(dim(s[[1]]), dim(sfe))
 })
 
 cont <- readRDS(system.file("extdata/contiguity.rds", package = "SpatialFeatureExperiment"))
