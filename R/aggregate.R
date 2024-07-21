@@ -44,7 +44,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
     # This is only for one file, one sample
     if (!is.null(df)) file <- df
     mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
-                           min_phred, flip_geometry, BPPARAM)
+                           min_phred, flip_geometry)
     mols <- df2sf(mols, spatialCoordsNames = spatialCoordsNames,
                   geometryType = "POINT")
     if (is.null(by))

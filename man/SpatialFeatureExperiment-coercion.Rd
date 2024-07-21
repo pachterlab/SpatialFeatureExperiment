@@ -17,8 +17,7 @@
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   spotDiameter = NA,
-  unit = NULL,
-  BPPARAM = deprecated()
+  unit = NULL
 )
 
 \S4method{toSpatialFeatureExperiment}{SingleCellExperiment}(
@@ -37,8 +36,7 @@
   image_id = NULL,
   loadImage = TRUE,
   imgData = NULL,
-  unit = NULL,
-  BPPARAM = deprecated()
+  unit = NULL
 )
 
 \S4method{toSpatialFeatureExperiment}{Seurat}(
@@ -117,9 +115,6 @@ arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 \item{unit}{# Default unit is \code{"micron"}. However for Visium one can choose
 between \code{"micron"} or \code{"full_res_image_pixel"}.}
 
-\item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment},
-but is used when coercing from \code{Seurat} object.}
-
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
 be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
@@ -163,6 +158,9 @@ it's GeoTIFF.}
 
 \item{image_scalefactors}{# A \code{character}, choose between "lowres" or "hires".
 Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.}
+
+\item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment},
+but is used when coercing from \code{Seurat} object.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object

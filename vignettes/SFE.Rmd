@@ -512,8 +512,8 @@ plot(spotPoly(sfe_in_tissue), col = "gray", add = TRUE)
 
 `crop` can also be used in the conventional sense of cropping, i.e. specifying a bounding box.
 ```{r}
-sfe_cropped <- crop(sfe, colGeometryName = "spotPoly", sample_id = "Vis5A",
-                    xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500)
+sfe_cropped <- crop(sfe, y = c(xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500),
+                    colGeometryName = "spotPoly", sample_id = "Vis5A")
 ```
 
 The `colGeometryName` is used to determine which columns in the gene count matrix to keep. All geometries in the SFE object will be subsetted so only portions intersecting `y` or the bounding box are kept. Since the intersection operation can produce a mixture of geometry types, such as intersection of two polygons producing polygons, points, and lines, the geometry types of the `sf` data frames after subsetting may be different from those of the originals. 
@@ -538,7 +538,7 @@ Sometimes the spatial coordinates of different samples can take very different v
 
 To find the bounding box of all geometries in each sample of an SFE object:
 ```{r}
-bbox(sfe, sample_id = "Vis5A")
+SpatialFeatureExperiment::bbox(sfe, sample_id = "Vis5A")
 ```
 
 To move the coordinates:

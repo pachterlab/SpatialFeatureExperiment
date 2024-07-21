@@ -29,6 +29,7 @@
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
 #' @importFrom methods slot<-
 #' @importFrom SingleCellExperiment altExp<- reducedDim<-
+#' @importFrom SummarizedExperiment assay<-
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
 #' @concept SpatialFeatureExperiment class
@@ -92,11 +93,7 @@ setMethod(
     function(x, colGeometries = NULL, rowGeometries = NULL,
              annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
              annotGeometryType = "POLYGON",
-             spatialGraphs = NULL, spotDiameter = NA, unit = NULL,
-             BPPARAM = deprecated()) {
-        if (is_present(BPPARAM)) {
-            deprecate_warn("1.6.0", "toSpatialFeatureExperiment(BPPARAM = )")
-        }
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
         if (is.null(colGeometries)) {
             colGeometries <- int_colData(x)$colGeometries
         }
@@ -132,11 +129,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                    image_id=NULL,
                    loadImage=TRUE,
                    imgData=NULL,
-                   unit = NULL,
-                   BPPARAM = deprecated()) {
-              if (is_present(BPPARAM)) {
-                  deprecate_warn("1.6.0", "toSpatialFeatureExperiment(BPPARAM = )")
-              }
+                   unit = NULL) {
               spe <- toSpatialExperiment(x, sample_id=sample_id,
                                          spatialCoordsNames=spatialCoordsNames,
                                          spatialCoords=spatialCoords,
@@ -236,14 +229,14 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       }
 
       # loop for multiple FOVs/tissue sections ----
-      # TODO (enhancement): consider bplapply ---- 
+      # TODO (enhancement): consider bplapply ----
       #..ie, when looping over FOVs with large number of cells and molecules
       obj_list <-
         lapply(seq(fov_names), function(fov_section) {
           # make sure the correct assay is used as Main assay
-          assay_master <- 
+          assay_master <-
             if (length(assays_name) == length(fov_names))
-              assays_name[fov_section] 
+              assays_name[fov_section]
             else .DefaultAssay(seu_obj)
           message(">>> Seurat Assays found: ", paste0(assays_name, collapse = ", "), "\n",
                   ">>> ", assay_master, " -> will be used as 'Main Experiment'")
@@ -574,15 +567,15 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # TODO (alternatively): use `MultiAssayExperiment` instead? ----
           # Currently using `altExp` if > 1 Seurat Assays are present ----
           if (length(assays_name) > 1) {
-            # keep other assays, minus the default one 
+            # keep other assays, minus the default one
             assays_name <- setdiff(assays_name, .DefaultAssay(seu_obj))
             # sanity, if default assay cell ids match those in any other assays
-            cells_passed <- 
+            cells_passed <-
               lapply(assays_name, function(i)
                 Seurat::GetAssay(seu_obj, i) |>
                   colnames() |>
                   match(x = _,
-                        Seurat::GetAssay(seu_obj, .DefaultAssay(seu_obj)) |> 
+                        Seurat::GetAssay(seu_obj, .DefaultAssay(seu_obj)) |>
                           colnames()) |>
                   na.omit() |> any()) |> unlist()
             if (all(cells_passed)) {
@@ -635,16 +628,16 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       if (length(obj_list) > 1) {
         message(">>> Combining ", length(obj_list),
                 " SFE object(s) with unique `sample_id`")
-        # Sanity on assays: 
+        # Sanity on assays:
         # the issue when different number of assays are present
         # see this https://github.com/drisso/SingleCellExperiment/issues/44
         # thus, we keep only identical assays present in all sfe objects
-        assays_n <- 
+        assays_n <-
           lapply(obj_list, function(i) assayNames(i))
-        # check of assays are identical 
+        # check of assays are identical
         ident_assays <- do.call(setdiff, arg = assays_n)
         if (!length(ident_assays) == 0) {
-          message(">>> Only following assay(s) are identical and will be kept:", 
+          message(">>> Only following assay(s) are identical and will be kept:",
                   paste0("\n", do.call(intersect, arg = assays_n)))
           obj_list <-
             lapply(obj_list, function(i) {
@@ -657,7 +650,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
         return(sfe)
       } else if (length(obj_list) == 1) {
         return(obj_list[[1]])
-      } 
+      }
     } else { stop("No Seurat object in `x` was found") }
     message("\n", ">>> `SFE` object is ready!")
   }

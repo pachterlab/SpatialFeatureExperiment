@@ -763,7 +763,6 @@ setMethod("Img<-", signature = "SpatialExperiment",
 #'   \code{\link{sampleIDs}} to get sample IDs present in the SFE object.
 #' @param image_id Image ID, such as "lowres" and "hires" for Visium data and
 #'   "DAPI" and "PolyT" for Vizgen MERFISH data.
-#' @param file File from which to read the image.
 #' @param extent A numeric vector of length 4 with names of the set xmin, ymin,
 #'   xmax, and ymax, specifying the extent of the image.
 #' @param scale_fct Scale factor -- multiply pixel coordinates in full
@@ -797,12 +796,7 @@ NULL
 #' @export
 setMethod("addImg", "SpatialFeatureExperiment",
           function(x, imageSource, sample_id = 1L, image_id,
-                   extent = NULL, scale_fct = 1, file = deprecated()) {
-              if (lifecycle::is_present(file)) {
-                  deprecate_warn("1.6.0", "SpatialFeatureExperiment::addImg(file = )",
-                                 "SpatialFeatureExperiment::addImg(imageSource = )")
-                  imageSource <- file
-              }
+                   extent = NULL, scale_fct = 1) {
               sample_id <- .check_sample_id(x, sample_id)
               if (!is.null(extent)) {
                   if (!is.numeric(extent))

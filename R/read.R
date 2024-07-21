@@ -533,6 +533,9 @@ read10xVisiumSFE <- function(samples = "",
                          extent = extent, flip = (flip == "image"))
         })
         img_df <- do.call(rbind, img_dfs)
+    } else {
+        img_df <- NULL
+        flip <- "none"
     }
     list(img_df = img_df, flip = flip)
 }
@@ -828,7 +831,7 @@ readVizgen <- function(data_dir,
         cellSeg(sfe) <- polys
     }
 
-    if (any(if_exists)) { imgData(sfe) <- img_df }
+    imgData(sfe) <- img_df
 
     if (add_molecules) {
         message(">>> Reading transcript coordinates")

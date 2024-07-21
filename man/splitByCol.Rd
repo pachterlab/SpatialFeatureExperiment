@@ -51,9 +51,6 @@ contiguity.}
 \item{min_area}{Minimum area in the same unit as the geometry coordinates
 (squared) for each piece to be considered a separate piece when splitting
 by contiguity. Only pieces that are large enough are considered.}
-
-\item{join}{Logical spatial predicate function to use when \code{f} is
-\code{sf} or \code{sfc}. See \code{\link{st_join}}.}
 }
 \value{
 A list of SFE objects.

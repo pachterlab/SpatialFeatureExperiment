@@ -362,8 +362,6 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   included in the indicated sample IDs are subsetted. If sample is not
 #'   indicated in \code{y}, then the same geometry or bounding box is used to
 #'   subset all samples specified in the \code{sample_id} argument.
-#' @param pred Deprecated. The binary predicate is now tied to the geometric
-#'   operation specified in \code{op}.
 #' @param op A geometric operation function to crop the geometries in the SFE
 #'   object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
 #'   are allowed. If "intersection", then only things inside \code{y} is kept
@@ -377,10 +375,6 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
 #'   be entirely outside \code{y} if \code{op = st_difference}. Only relevant
 #'   when \code{keep_whole != "none"}.
-#' @param xmin Deprecated. Supply the bounding box to argument \code{y} instead.
-#' @param xmax Deprecated.
-#' @param ymin Deprecated.
-#' @param ymax Deprecated.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
@@ -396,21 +390,9 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     sample_id = "Vis5A"
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
-                 pred = deprecated(), op = st_intersection,
+                 op = st_intersection,
                  keep_whole = "none",
-                 cover = FALSE,
-                 xmin = deprecated(), xmax = deprecated(),
-                 ymin = deprecated(), ymax = deprecated()) {
-    if (is_present(pred)) {
-        deprecate_warn("1.6.0", "SpatialFeatureExperiment::crop(pred = )")
-    }
-    if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
-                       is_present(ymin) || is_present(ymax))) {
-        deprecate_warn("1.6.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
-                       details = "Please use argument `y` to specify bounding box instead.")
-        y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
-                      sample_id)
-    }
+                 cover = FALSE) {
     if (!(identical(op, sf::st_intersection) || identical(op, sf::st_difference))) {
         stop("op must be either st_intersection or st_difference.")
     }

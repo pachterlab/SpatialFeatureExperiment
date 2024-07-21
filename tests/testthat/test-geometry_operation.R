@@ -1,5 +1,7 @@
 library(sf)
 library(SFEData)
+library(terra)
+
 # From sf's examples
 pts = st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
 pol = st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
@@ -66,14 +68,6 @@ test_that("Only crop one sample out of two, with sf", {
         spotPoly(sfe_cropped2, "sample02"),
         bbox_use
     )), 2)
-})
-
-test_that("Using a bounding box to crop SFE objects, deprecated way", {
-    expect_warning(sfe_cropped <- crop(sfe_visium, sample_id = "sample01",
-                                       xmin = 1, xmax = 3, ymin = 1, ymax = 6),
-                   "deprecated")
-    cg <- spotPoly(sfe_cropped, "sample01")
-    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
 })
 
 test_that("Using a bounding box to crop SFE objects, current way, expected errors", {
@@ -687,7 +681,7 @@ test_that("Rotate SFE object with image", {
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
 
     # Also see if spotPoly is aligned
-    v2 <- terra::extract(terra::mean(img), st_centroid(st_geometry(spotPoly(sfe2))))
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(spotPoly(sfe2)))))
     expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
 
     int1 <- st_intersects(rg, spotPoly(sfe))
@@ -711,7 +705,7 @@ test_that("Rotate SFE object with image after cropping", {
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
 
     # Also see if spotPoly is aligned
-    v2 <- terra::extract(terra::mean(img), st_centroid(st_geometry(spotPoly(sfe2))))
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(spotPoly(sfe2)))))
     expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
 
     int1 <- st_intersects(rg, spotPoly(sfe))
@@ -734,7 +728,7 @@ test_that("Scale SFE object with image", {
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
 
     # Also see if spotPoly is aligned
-    v2 <- terra::extract(terra::mean(img), st_centroid(st_geometry(spotPoly(sfe2))))
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(spotPoly(sfe2)))))
     expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
 
     int1 <- st_intersects(rg, spotPoly(sfe))
@@ -758,7 +752,7 @@ test_that("Scale SFE object with image after cropping", {
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
 
     # Also see if spotPoly is aligned
-    v2 <- terra::extract(terra::mean(img), st_centroid(st_geometry(spotPoly(sfe2))))
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(spotPoly(sfe2)))))
     expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
 
     int1 <- st_intersects(rg, spotPoly(sfe))
@@ -783,7 +777,7 @@ test_that("General affine transformation of SFE object with image", {
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
 
     # Also see if spotPoly is aligned
-    v2 <- terra::extract(terra::mean(img), st_centroid(st_geometry(spotPoly(sfe2))))
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(spotPoly(sfe2)))))
     expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
 
     int1 <- st_intersects(rg, spotPoly(sfe))
@@ -809,7 +803,7 @@ test_that("Affine transformation of SFE object with image, after cropping", {
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
 
     # Also see if spotPoly is aligned
-    v2 <- terra::extract(terra::mean(img), st_centroid(st_geometry(spotPoly(sfe2))))
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(spotPoly(sfe2)))))
     expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
 
     int1 <- st_intersects(rg, spotPoly(sfe))

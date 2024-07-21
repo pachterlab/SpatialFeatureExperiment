@@ -20,8 +20,6 @@
 #' @param colGeometryName Which \code{colGeometry} to use to determine which
 #'   cells or spots should belong to which new SFE object when splitting by
 #'   \code{sf} or \code{sfc}. Default to the first one.
-#' @param join Logical spatial predicate function to use when \code{f} is
-#'   \code{sf} or \code{sfc}. See \code{\link{st_join}}.
 #' @param annotGeometryName Name of \code{annotGeometry} to use to split by
 #'   contiguity.
 #' @param min_area Minimum area in the same unit as the geometry coordinates
