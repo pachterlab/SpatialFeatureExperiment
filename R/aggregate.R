@@ -261,7 +261,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
         }
         # Make grid for multiple samples if `by` is not specified
         if (is.null(by)) {
-            by <- .make_grid_samples(x, sample_id, colGeometryName,
+            by <- .make_grid_samples(x, sample_id,
                                      cellsize, square, flat_topped)
         }
         if (is.list(by) && !is(by, "sfc")) {
@@ -362,11 +362,11 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 setMethod("aggregate", "SpatialFeatureExperiment", .aggregate_SFE)
 
 # Function to make grid for multiple samples
-.make_grid_samples <- function(x, sample_id, colGeometryName, cellsize, square,
+.make_grid_samples <- function(x, sample_id, cellsize, square,
                                flat_topped) {
-    cg <- colGeometry(x, sample_id = "all", type = colGeometryName)
-    cg$sample_id <- x$sample_id
-    cg <- cg[cg$sample_id %in% sample_id,]
-    cgs <- split(cg, f = cg$sample_id)
-    lapply(cgs, st_make_grid, cellsize = cellsize, square = square, flat_topped = flat_topped)
+    bboxes <- .bbox2sf(bbox(x, sample_id = sample_id), sample_id)
+    out <- lapply(st_geometry(bboxes), st_make_grid, cellsize = cellsize,
+                  square = square, flat_topped = flat_topped)
+    names(out) <- sample_id
+    out
 }
