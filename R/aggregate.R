@@ -77,7 +77,6 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                             max_flip = "50 MB",
                             cellsize = NULL, square = TRUE, flat_topped = FALSE,
                             new_geometry_name = "bins") {
-    if (!is.null(df)) data_dir <- NULL
     tech <- match.arg(tech)
     flip <- match.arg(flip)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
