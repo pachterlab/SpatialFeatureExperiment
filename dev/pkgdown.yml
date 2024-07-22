@@ -1,10 +1,6 @@
-pandoc: 2.14.2
-pkgdown: 2.0.6
+pandoc: 3.1.11
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   SFE: SFE.html
-last_built: 2022-09-10T01:26Z
-urls:
-  reference: https://pachterlab.github.io/SpatialFeatureExperiment/reference
-  article: https://pachterlab.github.io/SpatialFeatureExperiment/articles
-
+last_built: 2024-07-22T21:43Z

@@ -1,99 +1,79 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/articles/SFE.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/index.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-class.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-coercion.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-subset.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/addVisiumSpotPoly.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/annotGeometries.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/annotOp.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/annotPred.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/annotSummary.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/bbox-SpatialFeatureExperiment-method.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/cbind-SpatialFeatureExperiment-method.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/changeSampleIDs.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/crop.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/df2sf.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/dimGeometries.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/findSpatialNeighbors-SpatialFeatureExperiment-method.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/findVisiumGraph.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/localResults.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/read10xVisiumSFE.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/removeEmptySpace.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/sampleIDs.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/show-SpatialFeatureExperiment-method.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/spatialGraphs.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/st_any_pred.html</loc>
-  </url>
-  <url>
-    <loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/visium_row_col.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/dev/LICENSE.html</loc></url>
+<url><loc>/dev/articles/SFE.html</loc></url>
+<url><loc>/dev/articles/index.html</loc></url>
+<url><loc>/dev/authors.html</loc></url>
+<url><loc>/dev/index.html</loc></url>
+<url><loc>/dev/news/index.html</loc></url>
+<url><loc>/dev/reference/BioFormatsImage-getters.html</loc></url>
+<url><loc>/dev/reference/BioFormatsImage.html</loc></url>
+<url><loc>/dev/reference/ExtImage.html</loc></url>
+<url><loc>/dev/reference/Img-set-SpatialExperiment-method.html</loc></url>
+<url><loc>/dev/reference/SFE-image.html</loc></url>
+<url><loc>/dev/reference/SFE-transform.html</loc></url>
+<url><loc>/dev/reference/SpatRasterImage.html</loc></url>
+<url><loc>/dev/reference/SpatialFeatureExperiment-class.html</loc></url>
+<url><loc>/dev/reference/SpatialFeatureExperiment-coercion.html</loc></url>
+<url><loc>/dev/reference/SpatialFeatureExperiment-subset.html</loc></url>
+<url><loc>/dev/reference/SpatialFeatureExperiment.html</loc></url>
+<url><loc>/dev/reference/addVisiumSpotPoly.html</loc></url>
+<url><loc>/dev/reference/affineImg.html</loc></url>
+<url><loc>/dev/reference/aggBboxes.html</loc></url>
+<url><loc>/dev/reference/aggregate-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/aggregateTx.html</loc></url>
+<url><loc>/dev/reference/annotGeometries.html</loc></url>
+<url><loc>/dev/reference/annotOp.html</loc></url>
+<url><loc>/dev/reference/annotPred.html</loc></url>
+<url><loc>/dev/reference/annotSummary.html</loc></url>
+<url><loc>/dev/reference/bbox-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/bbox_center.html</loc></url>
+<url><loc>/dev/reference/cbind-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/changeSampleIDs.html</loc></url>
+<url><loc>/dev/reference/colFeatureData.html</loc></url>
+<url><loc>/dev/reference/colGeometries.html</loc></url>
+<url><loc>/dev/reference/crop.html</loc></url>
+<url><loc>/dev/reference/cropImg.html</loc></url>
+<url><loc>/dev/reference/df2sf.html</loc></url>
+<url><loc>/dev/reference/dim-BioFormatsImage-method.html</loc></url>
+<url><loc>/dev/reference/dimGeometries.html</loc></url>
+<url><loc>/dev/reference/ext.html</loc></url>
+<url><loc>/dev/reference/findSpatialNeighbors-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/findVisiumGraph.html</loc></url>
+<url><loc>/dev/reference/formatTxSpots.html</loc></url>
+<url><loc>/dev/reference/formatTxTech.html</loc></url>
+<url><loc>/dev/reference/gdalParquetAvailable.html</loc></url>
+<url><loc>/dev/reference/getParams.html</loc></url>
+<url><loc>/dev/reference/getPixelSize.html</loc></url>
+<url><loc>/dev/reference/getTechTxFields.html</loc></url>
+<url><loc>/dev/reference/imageIDs.html</loc></url>
+<url><loc>/dev/reference/imgRaster.html</loc></url>
+<url><loc>/dev/reference/imgSource.html</loc></url>
+<url><loc>/dev/reference/index.html</loc></url>
+<url><loc>/dev/reference/internal-Voyager.html</loc></url>
+<url><loc>/dev/reference/localResults.html</loc></url>
+<url><loc>/dev/reference/mirrorImg.html</loc></url>
+<url><loc>/dev/reference/read10xVisiumSFE.html</loc></url>
+<url><loc>/dev/reference/readCosMX.html</loc></url>
+<url><loc>/dev/reference/readSelectTx.html</loc></url>
+<url><loc>/dev/reference/readVizgen.html</loc></url>
+<url><loc>/dev/reference/readXenium.html</loc></url>
+<url><loc>/dev/reference/reexports.html</loc></url>
+<url><loc>/dev/reference/removeEmptySpace.html</loc></url>
+<url><loc>/dev/reference/rotateImg.html</loc></url>
+<url><loc>/dev/reference/rowGeometries.html</loc></url>
+<url><loc>/dev/reference/sampleIDs.html</loc></url>
+<url><loc>/dev/reference/saveRDS-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/scaleImg.html</loc></url>
+<url><loc>/dev/reference/show-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/spatialGraphs.html</loc></url>
+<url><loc>/dev/reference/splitByCol.html</loc></url>
+<url><loc>/dev/reference/st_any_pred.html</loc></url>
+<url><loc>/dev/reference/toExtImage.html</loc></url>
+<url><loc>/dev/reference/toSpatRasterImage.html</loc></url>
+<url><loc>/dev/reference/translateImg.html</loc></url>
+<url><loc>/dev/reference/transposeImg.html</loc></url>
+<url><loc>/dev/reference/unit-SpatialFeatureExperiment-method.html</loc></url>
+<url><loc>/dev/reference/updateObject.html</loc></url>
+<url><loc>/dev/reference/visium_row_col.html</loc></url>
 </urlset>
+
