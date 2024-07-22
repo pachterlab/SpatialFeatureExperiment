@@ -5,7 +5,7 @@ template:
   bslib:
     text-muted: "#cccccc"
 development:
-  mode: auto
+  mode: devel
 reference:
   - title: SpatialFeatureExperiment class
   - contents: has_concept("SpatialFeatureExperiment class")
