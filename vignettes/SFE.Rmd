@@ -1,6 +1,6 @@
 ---
 title: "Introduction to the SpatialFeatureExperiment class"
-author: "Lambda Moses, Lior Pachter"
+author: "Lambda Moses, Alik Huseynov, Lior Pachter"
 date: "`r format(Sys.Date(), '%b %d, %Y')`"
 output:
     BiocStyle::html_document:
