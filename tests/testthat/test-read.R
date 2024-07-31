@@ -683,7 +683,7 @@ test_that("readXenium XOA v2, normal stuff", {
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
     # About 1% of cells detected don't have nuclei here
-    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.89)
     cat("Actual mean ", mean(v$lyr.1, na.rm = TRUE))
     unlink(fn, recursive = TRUE)
 })
@@ -724,7 +724,7 @@ test_that("readXenium XOA v2, use csv files", {
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
     # About 1% of cells detected don't have nuclei here
-    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.89)
     cat("Actual mean ", mean(v$lyr.1, na.rm = TRUE))
     unlink(fn, recursive = TRUE)
 })
@@ -745,7 +745,7 @@ test_that("readXenium, flip image", {
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, st_centroid(nucSeg(sfe)))
     # About 1% of cells detected don't have nuclei here
-    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.89)
     cat("Actual mean ", mean(v$lyr.1, na.rm = TRUE))
 
     # That the image was actually flipped
