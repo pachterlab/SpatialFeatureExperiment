@@ -60,10 +60,10 @@
 #'
 #' # load VisiumHD
 #' # path to "binned_outputs" directory containing:
-#' # └── binned_outputs
-#' #     ├── square_002um
-#' #     ├── square_008um
-#' #     └── square_016um
+#' # |── binned_outputs
+#' #     |── square_002um
+#' #     |── square_008um
+#' #     |── square_016um
 #' dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
 #' # this is public dataset ->
 #' # https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
