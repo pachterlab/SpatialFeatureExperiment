@@ -127,7 +127,7 @@ read10xVisiumSFE <- function(samples = "",
                             sample_id[i],
                             if (is_VisiumHD) bin_size[i] else "",
                             type, data, images, load = FALSE,
-                            row.names  = row.names)
+                            row.names = row.names)
         imgData(o) <- NULL
         scalefactors <-
           fromJSON(file = file.path(
@@ -317,7 +317,11 @@ read10xVisiumSFE <- function(samples = "",
           as.data.frame()
         rownames(spd) <- spd$barcode
         } else {
-          spd <- SpatialExperiment:::.read_xyz(xyz[i])
+          # read Visium `tissue_positions` without SPE internals
+          spd <- read.csv(xyz[i],
+                          col.names = c("barcode", "in_tissue", "array_row", "array_col",
+                                        "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
+          spd$in_tissue <- as.logical(spd$in_tissue)
         }
       obs <- intersect(colnames(sce), rownames(spd))
       sce <- sce[, obs]
