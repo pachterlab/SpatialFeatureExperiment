@@ -488,10 +488,11 @@ read10xVisiumSFE <- function(samples = "",
         if (new_type != old_type && new_type != "GEOMETRY") {
             sf_df <- sfheaders::sf_cast(sf_df, as.character(new_type))
             # sf::st_cast can take too long
-            #sf_df <- st_cast(sf_df, as.character(new_type))
         }
         st_geometry(sf_df)[invalid_inds] <- geoms_new
     }
+    # remove any holes inside polygons
+    sf_df <- sfheaders::sf_remove_holes(sf_df)
     return(sf_df)
 }
 
@@ -793,13 +794,13 @@ readVizgen <- function(data_dir,
         polys <- polys[inds,]
     }
 
-    # check matching cell ids in polygon geometries, should match the count matrix cell ids
+    # check matching cell ids in polygon geometries, should match the count matrix's cell ids
     if (!is.null(polys) &&
         !identical(polys$ID, rns)) {
         # filter geometries
         matched.cells <- match(rns, polys$ID) |> na.omit()
         message(">>> filtering geometries to match ", length(matched.cells),
-                " cells with counts > 0")
+                " cells with count matrix's cell ids")
         polys <- polys[matched.cells, , drop = FALSE]
     }
 
