@@ -873,6 +873,7 @@ readVizgen <- function(data_dir,
 readCosMX <- function(data_dir,
                       z = "all",
                       sample_id = "sample01", # How often do people read in multiple samples?
+                      min_area = 15,
                       add_molecules = FALSE,
                       split_cell_comps = FALSE,
                       BPPARAM = SerialParam(),
@@ -911,6 +912,8 @@ readCosMX <- function(data_dir,
                        geometryType = "POLYGON",
                        id_col = "cellID")
         polys <- polys[match(meta$cell_ID, polys$cellID),]
+        polys <- .filter_polygons(polys, min_area,
+                                  BPPARAM = BPPARAM)
         suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
     }
 
@@ -1093,6 +1096,7 @@ readCosMX <- function(data_dir,
 
 readXenium <- function(data_dir,
                        sample_id = "sample01",
+                       min_area = 15,
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
                        row.names = c("id", "symbol"),
@@ -1201,6 +1205,9 @@ readXenium <- function(data_dir,
                               geometryType = "POLYGON") })
             }
             # sanity on geometries
+            polys <- lapply(polys, function(i) {
+              .filter_polygons(i, min_area, BPPARAM = BPPARAM)
+              })
             message(">>> Checking polygon validity")
             polys <- lapply(polys, .check_st_valid)
 
