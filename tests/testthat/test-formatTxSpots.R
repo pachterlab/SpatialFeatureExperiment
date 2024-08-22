@@ -38,7 +38,7 @@ test_that("Format MERFISH transcript spots for colGeometries", {
                         dest = "colGeometry",
                         file_out = file.path(dir_use, "tx_in_cells"),
                         z = 3L)
-    dir_check <- file.path(dir_use, "tx_in_cells")
+    dir_check <- normalizePath(file.path(dir_use, "tx_in_cells"))
     expect_equal(cg, dir_check)
     expect_true(dir.exists(dir_check))
     fns_expect <- paste0(unique(df$gene[df$global_z == 3L]), "_spots.parquet")
@@ -93,7 +93,7 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
                         gene_col = "target", not_in_cell_id = "0",
                         spatialCoordsNames = c("x_global_px", "y_global_px", "z"),
                         file_out = file.path(dir_use, "tx_spots"))
-    expect_equal(cg, file.path(dir_use, "tx_spots"))
+    expect_equal(cg, normalizePath(file.path(dir_use, "tx_spots")))
     # Oh, great, there's Bex1/2, illegal file name. No wonder people don't like CosMX
     df <- data.table::fread(file.path(dir_use, "Run5642_S3_Quarter_exprMat_file.csv"))
     genes <- names(df)[-c(1:2)]

@@ -200,7 +200,7 @@ test_that("mirrorImg, SpatRasterImage method", {
 
     # Use filename
     img_m3 <- mirrorImg(img, filename = "foo.tif")
-    expect_equal(imgSource(img_m3), "foo.tif")
+    expect_equal(basename(imgSource(img_m3)), "foo.tif")
     expect_true(file.exists("foo.tif"))
     file.remove("foo.tif")
     file.remove("foo.tif.aux.xml")
