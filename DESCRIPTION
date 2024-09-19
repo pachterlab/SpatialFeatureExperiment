@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.7.2
+Version: 1.7.3
 Authors@R: 
     c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
     role = c("aut", "cre"),
@@ -93,7 +93,7 @@ Suggests:
     sparseMatrixStats,
     testthat (>= 3.0.0),
     tidyr,
-    Voyager,
+    Voyager (>= 1.7.2),
     xml2
 Remotes:
     Voyager=github::pachterlab/voyager

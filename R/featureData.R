@@ -1,29 +1,19 @@
-.initDF <- function(m) {
-    rownames_use <- colnames(m)
-    fd <- make_zero_col_DFrame(nrow = ncol(m))
-    rownames(fd) <- rownames_use
-    fd
-}
-
-#' @importFrom S4Vectors combineCols
+#' @importFrom S4Vectors combineCols mcols mcols<-
 .format_fd <- function(x, MARGIN, value = NULL) {
-    fd_name <- "featureData"
     dimData <- switch(MARGIN, rowData, colData)
-    if (is.null(value)) fd <- metadata(dimData(x))[[fd_name]] else fd <- value
-    if (!is.null(fd)) {
-        fd <- fd[intersect(rownames(fd), colnames(dimData(x))),, drop = FALSE]
-        empty <- .initDF(dimData(x))
-        fd <- combineCols(empty, fd)
-    }
+    fd <- value[intersect(rownames(value), colnames(dimData(x))),, drop = FALSE]
+    empty <- make_zero_col_DFrame(ncol(dimData(x)))
+    rownames(empty) <- colnames(dimData(x))
+    fd <- combineCols(empty, fd)
     return(fd)
 }
 
-#' Get global spatial analysis results and metadata of colData, rowData, and geometries
+#' Get global spatial analysis results and metadata of colData, rowData, and
+#' geometries
 #'
 #' Results of spatial analyses on columns in \code{colData}, \code{rowData}, and
-#' geometries are stored in their metadata, which can be accessed by the
-#' \code{\link{metadata}} function. The \code{colFeaturedata} function allows
-#' the users to more directly access these results.
+#' geometries are stored in their metadata. The \code{colFeaturedata} function
+#' allows the users to more directly access these results.
 #'
 #' @param sfe An SFE object.
 #' @param type Which geometry, can be name (character) or index (integer)
@@ -47,19 +37,19 @@
 #' sfe <- colDataMoransI(sfe, "nCounts")
 #' colFeatureData(sfe)
 colFeatureData <- function(sfe) {
-    .format_fd(sfe, 2L)
+    mcols(colData(sfe))
 }
 
 `colFeatureData<-` <- function(sfe, value) {
     if (!is.null(value)) value <- .format_fd(sfe, 2L, value)
-    metadata(colData(sfe))$featureData <- value
+    mcols(colData(sfe)) <- value
     sfe
 }
 
 #' @rdname colFeatureData
 #' @export
 rowFeatureData <- function(sfe) {
-    .format_fd(sfe, 1L)
+    mcols(rowData(sfe))
 }
 
 #' @rdname colFeatureData
