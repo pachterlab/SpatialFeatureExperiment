@@ -93,6 +93,15 @@ What this function does is similar to
 because any geometry and more aggregation function can be used, not just
 regular grids, and the aggregation can be performed on the transcript spots.
 }
+\note{
+For developers: When debugging this function after calling
+  \code{devtools::load_all(".")}, you may get an error that comes from S3
+  dispatch of \code{aggregate.Vector} from the \code{S4Vectors} package. When
+  that happens, either restart the R session, or run
+  \code{setGeneric("aggregate", function(x, ...)
+  standardGeneric("aggregate"))} in the console to make an S4 generic as done
+  in the \code{terra} package to prioritize S4 dispatch.
+}
 \examples{
 # example code
 

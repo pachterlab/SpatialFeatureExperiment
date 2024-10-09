@@ -176,7 +176,7 @@ test_that("transposeImg, SpatRasterImage method", {
     expect_equal(d[2], 13)
 
     # Save to file
-    fn <- normalizePath(file.path(getwd(), "foo.tif"))
+    fn <- normalizePath(file.path(getwd(), "foo.tif"), mustWork = FALSE)
     img_t3 <- transposeImg(img, filename = fn)
     expect_equal(dim(img)[1:2], dim(img_t3)[2:1])
     expect_equal(imgSource(img_t3), fn)
@@ -200,7 +200,7 @@ test_that("mirrorImg, SpatRasterImage method", {
     expect_equal(imgRaster(img_m2)[10,3,2][[1]], 190)
 
     # Use filename
-    fn <- normalizePath(file.path(getwd(), "foo.tif"))
+    fn <- normalizePath(file.path(getwd(), "foo.tif"), mustWork = FALSE)
     img_m3 <- mirrorImg(img, filename = "foo.tif")
     expect_equal(imgSource(img_m3), fn)
     expect_true(file.exists(fn))

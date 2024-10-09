@@ -134,7 +134,7 @@ inds <- c(rep(TRUE, ncol(sfe1)), not_singleton)
 
 test_that("Images are cropped after subsetting, multiple samples", {
     sfe3 <- sfe[,inds]
-    cg <- st_centroid(spotPoly(sfe3, sample_id = "all"))
+    cg <- st_centroid(st_geometry(spotPoly(sfe3, sample_id = "all")))
     nCounts <- Matrix::colSums(counts(sfe3))
     # For sample 1
     img1 <- getImg(sfe3, sample_id = "ob") |> imgRaster()

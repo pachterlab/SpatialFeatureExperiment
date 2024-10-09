@@ -117,3 +117,4 @@ The resulting SFE object often includes geometries (e.g. grid cells)
   the tissue will have lower transcript counts; this may have implications to
   downstream spatial analyses.
 }
+\concept{Geometric operations}

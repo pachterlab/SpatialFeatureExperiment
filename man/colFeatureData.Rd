@@ -5,7 +5,8 @@
 \alias{rowFeatureData}
 \alias{geometryFeatureData}
 \alias{reducedDimFeatureData}
-\title{Get global spatial analysis results and metadata of colData, rowData, and geometries}
+\title{Get global spatial analysis results and metadata of colData, rowData, and
+geometries}
 \usage{
 colFeatureData(sfe)
 
@@ -31,9 +32,8 @@ A \code{DataFrame}.
 }
 \description{
 Results of spatial analyses on columns in \code{colData}, \code{rowData}, and
-geometries are stored in their metadata, which can be accessed by the
-\code{\link{metadata}} function. The \code{colFeaturedata} function allows
-the users to more directly access these results.
+geometries are stored in their metadata. The \code{colFeaturedata} function
+allows the users to more directly access these results.
 }
 \examples{
 library(SpatialFeatureExperiment)

@@ -33,11 +33,10 @@ setMethod("updateObject", "SpatialFeatureExperiment",
               triggered <- FALSE
               curr_version <- packageVersion("SpatialFeatureExperiment")
               if (is.null(old_version)) {
-                  # Meaning prior to 1.1.4, i.e. the first version
-                  old_version <- package_version("1.0.0")
-                  #int_metadata(object)$SFE_version <- curr_version
-                  triggered <- TRUE
+                  # There's an update to colFeatureData in 1.7.3
+                  old_version <- package_version("1.7.2")
               }
+              if (old_version < package_version("1.7.3")) triggered <- TRUE
               if (verbose && triggered) {
                   message("[updateObject] ", class(object)[1], " object uses ",
                           "internal representation\n",
@@ -45,9 +44,15 @@ setMethod("updateObject", "SpatialFeatureExperiment",
                           old_version, ". ", "Updating it to version ",
                           curr_version, "\n", appendLF = FALSE)
               }
+              if (triggered) {
+                  if (!is.null(metadata(colData(object))$featureData)) {
+                      fd <- metadata(colData(object))$featureData
+                      colFeatureData(object) <- fd
+                      metadata(colData(object))$featureData <- NULL
+                  }
+              }
               int_metadata(object)$SFE_version <- curr_version
               callNextMethod()
-              #object
           })
 
 #' @rdname updateObject
