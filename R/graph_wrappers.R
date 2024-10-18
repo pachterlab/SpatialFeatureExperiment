@@ -657,3 +657,80 @@ findVisiumGraph <- function(x, sample_id = "all", style = "W",
     }
     return(out)
 }
+
+.add_side_inds <- function(df, side = c("l", "r", "t", "b", "tl", "tr", "bl", "br")) {
+    side <- match.arg(side)
+    name_use <- paste0("index_", side)
+    df2 <- df[,c("index", "array_col", "array_row")]
+    names(df2)[1] <- name_use
+    if (side == "l") {
+        df2$array_col <- df2$array_col - 1L
+    } else if (side == "r") {
+        df2$array_col <- df2$array_col + 1L
+    } else if (side == "t") {
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "b") {
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "tl") {
+        df2$array_col <- df2$array_col - 1L
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "tr") {
+        df2$array_col <- df2$array_col + 1L
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "bl") {
+        df2$array_col <- df2$array_col - 1L
+        df2$array_row <- df2$array_row + 1L
+    } else if (side == "br") {
+        df2$array_col <- df2$array_col + 1L
+        df2$array_row <- df2$array_row + 1L
+    }
+    merge(df, df2, by = c("array_row", "array_col"), all.x = TRUE)
+}
+
+#' Find Visium HD spatial neighborhood graph
+#'
+#' Visium HD spots are arranged in a square grid. This function finds either a
+#' rook or a queen spatial neighborhood graph for the spots. \code{colData} of
+#' the SFE object must have columns \code{array_row} and \code{array_col}.
+#' 
+#' @inheritParams spdep::nb2listw
+#' @param x An SFE object with Visium HD data with one sample with the required
+#'   information in its \code{colData}.
+#' @param queen Logical. Default is \code{FALSE}, using rook neighbors.
+#' @concept Spatial neighborhood graph
+#' @return A \code{listw} object for the graph.
+#' @export
+findVisiumHDGraph <- function(x, style = "W", queen = FALSE) {
+    df <- as.data.frame(colData(x))
+    df$index <- seq_along(df$barcode)
+    cols_use <- c("index", "array_row", "array_col")
+    df <- df[,cols_use]
+    df <- as.data.table(df)
+    
+    if (queen) {
+        sides <- c("l", "r", "t", "b", "tl", "tr", "bl", "br")
+    } else {
+        sides <- c("l", "r", "t", "b")
+    }
+    for (s in sides) {
+        df <- .add_side_inds(df, s)
+    }
+    cols <- paste0("index_", sides)
+    gm <- as.matrix(df[,..cols])
+    gm <- gm + 1L # Convert to 1 based indexing for spdep
+    colnames(gm) <- NULL
+    g <- apply(gm, 1, function(x) x[!is.na(x)])
+    class(g) <- "nb"
+    out <- nb2listw(g, style = style, zero.policy = TRUE)
+    attr(out, "method") <- list(
+        FUN = "findVisiumHDGraph",
+        package = list("SpatialFeatureExperiment",
+                       packageVersion("SpatialFeatureExperiment")),
+        args = list(
+            style = style,
+            zero.policy = zero.policy,
+            sample_id = sample_id
+        )
+    )
+    out
+}
