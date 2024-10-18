@@ -134,7 +134,7 @@ setAs(
             if (is.null(rownames(coords_use))) {
                 rownames(coords_use) <- colnames(from)
             }
-            cg <- .sc2cg(coords_use)
+            cg <- .sc2cg(coords_use) # add `endCapStyle = "SQUARE"` when VisiumHD?
             int_colData(from)[["colGeometries"]] <-
                 make_zero_col_DFrame(nrow(int_colData(from)))
             int_colData(from)$colGeometries$centroids <- cg

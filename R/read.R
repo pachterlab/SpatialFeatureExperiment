@@ -87,7 +87,6 @@ read10xVisiumSFE <- function(samples = "",
     enrichment_feature <- switch(row.names,
                                  id = "Feature.ID",
                                  symbol = "Feature.Name")
-
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(samples), function(i) {
         o <- .read10xVisium(dirs[i], sample_id[i],
@@ -422,67 +421,125 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     df
 }
 
-#' @importFrom sf st_is_empty
+#' @importFrom sf st_is_empty st_drop_geometry
 #' @importFrom BiocParallel bplapply
 #' @importFrom utils head
-.filter_polygons <- function(polys, min_area, BPPARAM = SerialParam()) {
-    # Sanity check on nested polygon lists
+#' 
+.filter_polygons <- function(polys, min_area,
+                             is_Xenium = FALSE, # indicate if input tech is Xenium or not
+                             BPPARAM = SerialParam()) {
+    # Sanity check: 
+    # TODO ..on `min_area` arg
+    
+    #..on nested polygon lists
     test.segs <- vapply(st_geometry(polys), length, FUN.VALUE = integer(1))
     if (any(test.segs > 1)) {
         segs.art.index <- which(test.segs > 1)
         warning("Sanity checks on cell segmentation polygons:", "\n",
                 ">>> ..found ", length(segs.art.index),
                 " cells with (nested) polygon lists", "\n",
-                ">>> ..applying filtering")
-    }
+                ">>> ..applying filtering") }
+    # add sequence of numbers as temporary column
+    polys$ID_row <- seq_len(length.out = nrow(polys))
+    polys.ID_row <- polys$ID_row
     # remove empty elements
-    polys.orig <- polys
-    polys <- polys[!st_is_empty(polys),]
-    empty.inds <- which(!polys.orig$ID %in% polys$ID)
-    if (length(empty.inds)) { message(">>> ..removing ",
-                                      length(empty.inds), " empty polygons") }
-    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON") {
-        polys_sep <- lapply(st_geometry(polys), function(x) {
-            st_cast(st_sfc(x), "POLYGON")
-        })
-        areas <- lapply(polys_sep, st_area)
-
-        if (!is.null(min_area)) {
-            which_keep <- lapply(areas, function(x) which(x > min_area))
-            multi_inds <- which(lengths(which_keep) > 1L)
-            if (length(multi_inds)) {
-                warning("There are ", length(multi_inds), " cells with multiple",
-                        " pieces in cell segmentation larger than min_area,",
-                        " whose first 10 indices are: ",
-                        paste(multi_inds |> head(10), # necessary to print all?
-                              collapse = ", "),
-                        ". The largest piece is kept.")
-                which_keep[multi_inds] <- lapply(areas[multi_inds], which.max)
-            }
-            inds <- lengths(which_keep) > 0L
-            polys <- polys[inds,]
-            # using parallelization, else can take a while when `which_keep` length is towards 100K
-            which_keep <- unlist(which_keep[inds])
-        } else if (is.null(min_area)) {
-            # use only maximal area, ie the largest polygon
-            warning(">>> ..keeping polygons with the largest area only")
-            which_keep <- lapply(areas, function(x) which.max(x))
-        }
-        geo <- st_geometry(polys)
-        new_geo <- # Should only iterate over those with multiple pieces
-            bplapply(seq_along(which_keep), function(i) {
-                geo[[i]] <- st_cast(geo[i], "POLYGON")[[which_keep[i]]] |>
-                    unique() |> # remove any duplicates
-                    st_polygon()
-            }, BPPARAM = BPPARAM) |> st_sfc()
-        st_geometry(polys) <- new_geo
-    } else {
-        inds <- st_area(st_geometry(polys)) > min_area
-        if (any(inds)) {
-            message("Removing ", sum(!inds), " cells with area less than ", min_area)
-        }
-        polys <- polys[inds,]
+    polys <- polys[!st_is_empty(polys), ]
+    empty.inds <- which(!polys.ID_row %in% polys$ID_row)
+    if (length(empty.inds)) { 
+        message(">>> ..removing ", length(empty.inds), " empty polygons") }
+    # check if polys are from Xenium tech
+    is_xen <- 
+        grepl("cell_id|label_id", names(polys)) |> 
+        any() |> all(is_Xenium)
+    # check if not all are TRUE
+    if (!is_xen && is_Xenium) {
+        warning("Provided segmentations data for `.filter_polygons` indicates Xenium technology,", "\n", 
+                "However, it doesn’t contain `cell_id` and/or `label_id` columns")
     }
+    # identify which column contains tech-specific cell ids
+    # ie, "cell_id" for Xenium; "cellID" for CosMX; "EntityID" for Vizgen
+    cell_ID <- grep("cell_id|cellID|EntityID", 
+                    colnames(polys), value = TRUE)
+    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON" && 
+        !is_Xenium) {
+        # convert sf df to polygons directly
+        message(">>> Casting MULTIPOLYGON geometry to POLYGON")
+        polys <- sfheaders::sf_cast(polys, to = "POLYGON")
+        # get polygon areas
+        areas <- st_area(st_geometry(polys))
+        names(areas) <- polys$ID_row
+        # filter all polygons
+        if (!is.null(min_area)) {
+            # filter areas larger than `min_area`
+            inds <- which(areas > min_area)
+            polys <- polys[inds, ]
+        }
+        dupl_inds <- which(polys[[cell_ID]] |> duplicated())
+        # filter polygons with multiple pieces in single cell segmentation
+        if (length(dupl_inds)) {
+            warning("There are ", length(dupl_inds), " cells with multiple", " pieces in cell segmentation", 
+                    if (!is.null(min_area)) " larger than `min_area`,",
+                    " whose first 10 indices are: ",
+                    paste(dupl_inds |> head(10),
+                          collapse = ", "),
+                    ". The largest piece is kept.")
+            dupl_cells <- polys[[cell_ID]][dupl_inds]
+            # areas of polygons with multiple pieces
+            dupl_areas <- areas[which(names(areas) %in% polys$ID_row[dupl_inds])]
+            if (!is.null(min_area))
+                # filter with minimal area
+                dupl_areas <- dupl_areas[dupl_areas > min_area]
+            # get clean polygons
+            add_geo <-
+                # this can take time if not parallelized and many artifacts to be removed
+                bplapply(seq_along(names(dupl_areas) |> unique()), 
+                         function(i) {
+                             which_keep <- 
+                                 dupl_areas[names(dupl_areas) %in% unique(names(dupl_areas))[i]] |> 
+                                 which.max()
+                             polys[polys[[cell_ID]] %in% dupl_cells[i], ] |> 
+                                 st_geometry() |> _[[which_keep]]
+                         }, BPPARAM = BPPARAM) |> st_sfc()
+            # add clean geometries
+            polys_add <- 
+                polys[polys[[cell_ID]] %in% dupl_cells, ] |> 
+                st_drop_geometry() |>
+                dplyr::distinct(get(cell_ID),
+                                .keep_all = TRUE)
+            st_geometry(polys_add) <- add_geo
+            # combine polygon dfs
+            colnames(polys_add) <- colnames(polys)
+            polys <- 
+                # data.table is faster than rbind or dplyr::bind_rows
+                data.table::rbindlist(list(polys[!polys[[cell_ID]] %in% dupl_cells,], 
+                                           polys_add)) |> 
+                as.data.frame() |> st_as_sf()
+            # sort by ID_row
+            polys <- dplyr::arrange(polys, -dplyr::desc(ID_row))
+            # add polygon area values to df
+            polys$polygon_area <- st_area(st_geometry(polys))
+        }
+    } else {
+        # keep geometry type as it is, ie no casting to POLYGON
+        if (!is.null(min_area)) {
+            areas <- st_area(st_geometry(polys))
+            polys$polygon_area <- areas
+            # filter areas larger than `min_area`
+            inds <- which(areas > min_area)
+            if (any(inds)) {
+                message(">>> Removing ", c(length(areas) - length(inds)), 
+                        " cells with area < ", min_area, " µm\u00B2")
+            }
+            polys <- polys[inds, ]
+        } else { polys }
+    }
+    if (inherits(polys[[cell_ID]], "integer64"))
+        # convert from integer64 to character
+        polys[[cell_ID]] <- as.character(polys[[cell_ID]])
+    # remove ID_row
+    polys$ID_row <- NULL
+    if (!any(names(polys) == "polygon_area"))
+        polys$polygon_area <- st_area(st_geometry(polys))
     polys
 }
 
@@ -537,11 +594,12 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
         old_type <- st_geometry_type(sf_df, by_geometry = FALSE)
         if (new_type != old_type && new_type != "GEOMETRY") {
             sf_df <- sfheaders::sf_cast(sf_df, as.character(new_type))
-            # sf::st_cast can take too long
-            #sf_df <- st_cast(sf_df, as.character(new_type))
+            # sf::st_cast can take a while
         }
         st_geometry(sf_df)[invalid_inds] <- geoms_new
     }
+    # remove any holes inside polygons
+    sf_df <- sfheaders::sf_remove_holes(sf_df)
     return(sf_df)
 }
 
@@ -843,13 +901,13 @@ readVizgen <- function(data_dir,
         polys <- polys[inds,]
     }
 
-    # check matching cell ids in polygon geometries, should match the count matrix cell ids
+    # check matching cell ids in polygon geometries, should match the count matrix's cell ids
     if (!is.null(polys) &&
         !identical(polys$ID, rns)) {
         # filter geometries
         matched.cells <- match(rns, polys$ID) |> na.omit()
         message(">>> filtering geometries to match ", length(matched.cells),
-                " cells with counts > 0")
+                " cells with count matrix's cell ids")
         polys <- polys[matched.cells, , drop = FALSE]
     }
 
@@ -863,7 +921,7 @@ readVizgen <- function(data_dir,
     # NOTE: might take some time to run
     if (use_bboxes && is.null(polys)) {
         message(">>> Creating bounding boxes from `cell_metadata`")
-        # TODO: rewrite bboxes_sfc using much faster df2sf ----
+        # TODO: rewrite bboxes_sfc using much faster sfheaders and df2sf ----
         bboxes_sfc <-
             bplapply(seq_len(nrow(metadata)),
                      function(i) {
@@ -873,6 +931,7 @@ readVizgen <- function(data_dir,
                      }, BPPARAM = BPPARAM)
         bboxes <- st_sf(geometry = st_sfc(unlist(bboxes_sfc, recursive = FALSE)))
         rownames(bboxes) <- rownames(metadata)
+        # TODO, give proper name and getter, eg bBox()
         colGeometry(sfe, "cell_bboxes") <- bboxes
     }
 
@@ -922,6 +981,7 @@ readVizgen <- function(data_dir,
 readCosMX <- function(data_dir,
                       z = "all",
                       sample_id = "sample01", # How often do people read in multiple samples?
+                      min_area = 15,
                       add_molecules = FALSE,
                       split_cell_comps = FALSE,
                       BPPARAM = SerialParam(),
@@ -960,6 +1020,8 @@ readCosMX <- function(data_dir,
                        geometryType = "POLYGON",
                        id_col = "cellID")
         polys <- polys[match(meta$cell_ID, polys$cellID),]
+        polys <- .filter_polygons(polys, min_area,
+                                  BPPARAM = BPPARAM)
         suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
     }
 
@@ -1142,6 +1204,7 @@ readCosMX <- function(data_dir,
 
 readXenium <- function(data_dir,
                        sample_id = "sample01",
+                       min_area = 15,
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
                        row.names = c("id", "symbol"),
@@ -1181,7 +1244,6 @@ readXenium <- function(data_dir,
             message(">>> Preprocessed sf segmentations found\n",
                     ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
                     " segmentations")
-            # add cell id to rownames
             polys <- lapply(fn_segs, sfarrow::st_read_parquet)
         } else {
             if (no_raw_bytes) {
@@ -1250,6 +1312,9 @@ readXenium <- function(data_dir,
                               geometryType = "POLYGON") })
             }
             # sanity on geometries
+            polys <- lapply(polys, function(i) {
+                .filter_polygons(i, min_area, is_Xenium = TRUE, BPPARAM = BPPARAM)
+                })
             message(">>> Checking polygon validity")
             polys <- lapply(polys, .check_st_valid)
 
