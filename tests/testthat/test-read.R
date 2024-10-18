@@ -1,6 +1,8 @@
 library(SFEData)
 library(sfarrow)
 library(S4Vectors)
+library(spdep)
+set.SubgraphOption(FALSE) # I don't care in this case
 # Read Visium=============
 outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
 bc_flou1 <- read.csv(file.path(outdir, "sample01", "outs", "spatial",
@@ -83,12 +85,12 @@ test_that("Image is properly aligned in pixel space", {
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
     cg$geometry <- st_centroid(cg$geometry)
-    img_lo <- getImg(sfe, image_id = "lowres") |> imgRaster()
+    img_lo <- getImg(sfe, image_id = "lowres")
     img_lo <- terra::mean(img_lo)
     v_lo <- terra::extract(img_lo, cg)
     # This test only works for this tissue for filtered data
     expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
-    img_hi <- getImg(sfe, image_id = "hires") |> imgRaster()
+    img_hi <- getImg(sfe, image_id = "hires")
     img_hi <- terra::mean(img_hi)
     v_hi <- terra::extract(img_hi, cg)
     expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
@@ -134,6 +136,56 @@ test_that("Micron spot spacing works when there're singletons", {
     sfe <- read10xVisiumSFE("kidney", unit = "micron", zero.policy = TRUE)
     expect_equal(unit(sfe), "micron")
 })
+
+# Read Visium HD==================
+dir <- "~/WoundAnalysis/Visium-HD data/YVW01_binned_outputs/"
+# 5. The error messages
+test_that("readVisiumHD, one resolution", {
+    sfe <- readVisiumHD(dir, bin_size = 16, sample_id = "UW")
+    expect_s4_class(sfe, "SpatialFeatureExperiment")
+    expect_equal(sampleIDs(sfe), "UW")
+    expect_setequal(colGeometryNames(sfe), c("centroids", "spotPoly"))
+    expect_equal(as.character(st_geometry_type(centroids(sfe), by_geometry = FALSE)),
+                 "POINT")
+    expect_equal(as.character(st_geometry_type(spotPoly(sfe), by_geometry = FALSE)),
+                 "POLYGON")
+    g_coords <- st_coordinates(spotPoly(sfe))
+    expect_equal(nrow(g_coords)/length(unique(g_coords[,"L2"])), 5)
+})
+
+test_that("Read multiple resolutions", {
+    sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW")
+    expect_type(sfes, "list")
+    classes <- vapply(sfes, class, FUN.VALUE = character(1))
+    expect_true(all(classes == "SpatialFeatureExperiment"))
+    expect_equal(sampleIDs(sfes[[1]]), "UW_8um")
+    expect_equal(sampleIDs(sfes[[2]]), "UW_16um")
+})
+
+test_that("When sample_id is not set", {
+    sfes <- readVisiumHD(dir, bin_size = c(8, 16))
+    expect_equal(sampleIDs(sfes[[1]]), "square_008um")
+    expect_equal(sampleIDs(sfes[[2]]), "square_016um")
+})
+
+test_that("Rotate the grid", {
+    sfe2 <- readVisiumHD(dir, bin_size = 16, sample_id = "UW", rotate = TRUE)
+    # To test, make sure that the tiles complete cover the space
+    bbox_use <- st_as_sfc(st_bbox(c(xmin=10000, xmax = 10200, ymin=5000, ymax=5200)))
+    cg <- spotPoly(sfe2)
+    cg <- cg[st_covered_by(cg, bbox_use, sparse = FALSE),]
+    bbox_cg <- st_as_sfc(st_bbox(cg))
+    area_diff <- st_area(st_difference(bbox_cg, st_union(cg)))
+    expect_true(area_diff < 20) # The number depends on the resolution and the bbox
+})
+
+test_that("Micron space, including image alignment", {
+    sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron")
+    expect_equal(SpatialFeatureExperiment::unit(sfe), "micron")
+    areas <- st_area(spotPoly(sfe))
+    expect_true(max(abs(areas - 256)) < sqrt(.Machine$double.eps))
+})
+
 # Read Vizgen MERFISH==============
 test_that("readVizgen flip geometry, use cellpose", {
     fp <- tempfile()
