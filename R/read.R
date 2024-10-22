@@ -192,7 +192,11 @@ read10xVisiumSFE <- function(samples = "",
             as.data.frame()
         rownames(spd) <- spd$barcode
     } else {
-        spd <- SpatialExperiment:::.read_xyz(xyz)
+        spd <- read.csv(xyz,
+                        col.names = c("barcode", "in_tissue", "array_row", "array_col",
+                                      "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
+        spd$in_tissue <- as.logical(spd$in_tissue)
+        
     }
     # Convert to microns and set extent for image
     if (unit == "micron") {

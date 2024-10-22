@@ -792,6 +792,53 @@ setMethod("Img<-", signature = "SpatialExperiment",
 #' sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 NULL
 
+.get_img_idx <- function(x, sample_id=NULL, image_id=NULL) {
+    img <- imgData(x)
+    for (i in c("sample_id", "image_id")) {
+        j <- get(i)
+        if (is.factor(j) || is.numeric(j))
+            assign(i, as.character(j))
+        if (!(is.null(j) || j %in% img[[i]] ||
+              length(j) == 1 && is.logical(j)))
+            stop(sprintf(c(
+                "'%s' invalid; should be NULL, TRUE/FALSE,",
+                " or matching entries in imgData(.)$%s"), i))
+    }
+    if (is.character(sample_id) && is.character(image_id)) {
+        sid <- img$sample_id == sample_id
+        iid <- img$image_id == image_id
+    } else if (isTRUE(sample_id) && isTRUE(image_id)) {
+        sid <- iid <- !logical(nrow(img))
+    } else if (is.null(sample_id) && is.null(image_id)) {
+        sid <- iid <- diag(nrow(img))[1, ]
+    } else if (is.character(sample_id) && isTRUE(image_id)) {
+        sid <- img$sample_id == sample_id
+        iid <- !logical(nrow(img))
+    } else if (is.character(image_id) && isTRUE(sample_id)) {
+        iid <- img$image_id == image_id
+        sid <- !logical(nrow(img))
+    } else if (is.character(sample_id) && is.null(image_id)) {
+        sid <- img$sample_id == sample_id
+        iid <- diag(nrow(img))[which(sid)[1], ]
+    } else if (is.character(image_id) && is.null(sample_id)) {
+        iid <- img$image_id == image_id
+        sid <- diag(nrow(img))[which(iid)[1], ]
+    } else if (isTRUE(sample_id) && is.null(image_id)) {
+        iid <- match(unique(img$sample_id), img$sample_id)
+        iid <- colSums(diag(nrow(img))[iid, , drop=FALSE])
+        sid <- !logical(nrow(img))
+    } else if (isTRUE(image_id) && is.null(sample_id)) {
+        sid <- match(unique(img$image_id), img$image_id)
+        sid <- colSums(diag(nrow(img))[sid, , drop=FALSE])
+        iid <- !logical(nrow(img))
+    }
+    if (!any(idx <- sid & iid)) 
+        stop("No 'imgData' entry(ies) matched the specified", 
+             sprintf(" 'image_id = %s' and 'sample_id = %s'", 
+                     dQuote(image_id), dQuote(sample_id)))
+    return(which(idx))
+}
+
 #' @rdname SFE-image
 #' @export
 setMethod("addImg", "SpatialFeatureExperiment",
@@ -812,7 +859,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
               # check that image entry doesn't already exist
               idx <- tryCatch(
                   error=function(e) e,
-                  SpatialExperiment:::.get_img_idx(x, sample_id, image_id))
+                  .get_img_idx(x, sample_id, image_id))
 
               if (!inherits(idx, "error"))
                   stop("'imgData' already contains an entry with",
@@ -872,7 +919,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
         old <- getImg(x, sample_id, image_id)
         if (!is.null(old)) {
             if (!is.list(old)) old <- list(old)
-            idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
+            idx <- .get_img_idx(x, sample_id, image_id)
             new <- lapply(old, img_fun, ...)
             imgData(x)$data[idx] <- new
         }
