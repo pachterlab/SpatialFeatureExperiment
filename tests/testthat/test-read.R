@@ -141,6 +141,7 @@ test_that("Micron spot spacing works when there're singletons", {
 dir <- "~/WoundAnalysis/Visium-HD data/YVW01_binned_outputs/"
 # 5. The error messages
 test_that("readVisiumHD, one resolution", {
+    testthat::skip_on_ci()
     sfe <- readVisiumHD(dir, bin_size = 16, sample_id = "UW")
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), "UW")
@@ -154,6 +155,7 @@ test_that("readVisiumHD, one resolution", {
 })
 
 test_that("Read multiple resolutions", {
+    testthat::skip_on_ci()
     sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW")
     expect_type(sfes, "list")
     classes <- vapply(sfes, class, FUN.VALUE = character(1))
@@ -163,12 +165,14 @@ test_that("Read multiple resolutions", {
 })
 
 test_that("When sample_id is not set", {
+    testthat::skip_on_ci()
     sfes <- readVisiumHD(dir, bin_size = c(8, 16))
     expect_equal(sampleIDs(sfes[[1]]), "square_008um")
     expect_equal(sampleIDs(sfes[[2]]), "square_016um")
 })
 
 test_that("Rotate the grid", {
+    testthat::skip_on_ci()
     sfe2 <- readVisiumHD(dir, bin_size = 16, sample_id = "UW", rotate = TRUE)
     # To test, make sure that the tiles complete cover the space
     bbox_use <- st_as_sfc(st_bbox(c(xmin=10000, xmax = 10200, ymin=5000, ymax=5200)))
@@ -180,6 +184,7 @@ test_that("Rotate the grid", {
 })
 
 test_that("Micron space, including image alignment", {
+    testthat::skip_on_ci()
     sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron")
     expect_equal(SpatialFeatureExperiment::unit(sfe), "micron")
     areas <- st_area(spotPoly(sfe))

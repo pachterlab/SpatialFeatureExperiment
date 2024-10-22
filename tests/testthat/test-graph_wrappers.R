@@ -157,6 +157,7 @@ test_that("Correct Visium graph", {
 })
 
 test_that("Correct Visium HD graph", {
+    testthat::skip_on_ci()
     dir <- "~/WoundAnalysis/Visium-HD data/YVW01_binned_outputs/"
     sfe <- readVisiumHD(dir, bin_size = 16)
     g <- findVisiumHDGraph(sfe)
