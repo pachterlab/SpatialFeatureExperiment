@@ -41,6 +41,8 @@
                 terra::RGB(im_new) <- seq_len(3)
             } else if (is(img, "RemoteSpatialImage") || is(img, "StoredSpatialImage")) {
                 suppressWarnings(im_new <- rast(imgSource(img)))
+                if (packageVersion('terra') >= as.package_version("1.7.83"))
+                    im_new <- terra::flip(im_new)
             } else {
                 warning("Don't know how to convert image ", i, " to SpatRaster, ",
                         "dropping image.")

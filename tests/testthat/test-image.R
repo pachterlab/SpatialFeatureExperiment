@@ -197,7 +197,7 @@ test_that("mirrorImg, SpatRasterImage method", {
     img_m2 <- mirrorImg(img, maxcell = 100)
     expect_equal(dim(img_m2), c(13,8,3))
     # check content
-    expect_equal(imgRaster(img_m2)[10,3,2][[1]], 190)
+    expect_equal(imgRaster(img_m2)[4,3,2][[1]], 190)
 
     # Use filename
     fn <- normalizePath(file.path(getwd(), "foo.tif"), mustWork = FALSE)
@@ -242,6 +242,7 @@ test_that("scaleImg, SpatRasterImage method, EBI behind the scene", {
 
 test_that("affineImg, SpatRasterImage method, EBI behind the scene", {
     suppressWarnings(spi <- SpatRasterImage(rast(img_path)))
+    spi <- mirrorImg(spi, "vertical")
     # Should rotate clockwise somewhat, squished to be flatter, shear to the right
     M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
     v <- c(0, 300)

@@ -73,12 +73,13 @@ read10xVisiumSFE <- function(samples = "",
                              unit = c("full_res_image_pixel", "micron"),
                              style = "W", zero.policy = NULL, load = deprecated(),
                              row.names = c("id", "symbol"),
-                             flip = c("geometry", "image")) {
+                             flip = c("geometry", "image", "none")) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
-
+    if (packageVersion('terra') >= as.package_version("1.7.83"))
+        flip <- "none"
     if (is_present(load)) {
         deprecate_warn("1.8.0", "read10xVisiumSFE(load)")
     }
@@ -340,6 +341,8 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
+    if (packageVersion('terra') >= as.package_version("1.7.83"))
+        flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
     bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
                           several.ok = TRUE) |> 
@@ -378,9 +381,9 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @importFrom stats median
 .pixel2micron <- function(df) {
     # Use center spots rather than corner, to be more robust for filtered data
-    mid_row <- median(sfe$array_row)
-    mid_col <- median(sfe$array_col)
-    inds_sub <- abs(sfe$array_row - mid_row) <= 2 & abs(sfe$array_col - mid_col) <= 2
+    mid_row <- median(df$array_row)
+    mid_col <- median(df$array_col)
+    inds_sub <- abs(df$array_row - mid_row) <= 2 & abs(df$array_col - mid_col) <= 2
     scn <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
     coords_sub <- df2sf(df[inds_sub, scn], scn)
     inds <- st_nearest_feature(coords_sub)
@@ -420,7 +423,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 
     # keep non-emplty elements
     df <- st_sf(geometry = sf::st_sfc(geometries),
-                ID = cell_ids[which(inds)],
+                EntityID = cell_ids[which(inds)],
                 ZIndex = z)
     df
 }
@@ -439,7 +442,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     test.segs <- vapply(st_geometry(polys), length, FUN.VALUE = integer(1))
     if (any(test.segs > 1)) {
         segs.art.index <- which(test.segs > 1)
-        warning("Sanity checks on cell segmentation polygons:", "\n",
+        message("Sanity checks on cell segmentation polygons:", "\n",
                 ">>> ..found ", length(segs.art.index),
                 " cells with (nested) polygon lists", "\n",
                 ">>> ..applying filtering") }
@@ -508,9 +511,9 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             polys_add <- 
                 polys[polys[[cell_ID]] %in% dupl_cells, ] |> 
                 st_drop_geometry() |>
-                dplyr::distinct(get(cell_ID),
+                dplyr::distinct(!!rlang::sym(cell_ID),
                                 .keep_all = TRUE)
-            st_geometry(polys_add) <- add_geo
+            polys_add$Geometry <- add_geo
             # combine polygon dfs
             colnames(polys_add) <- colnames(polys)
             polys <- 
@@ -756,6 +759,8 @@ readVizgen <- function(data_dir,
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
+    if (packageVersion('terra') >= as.package_version("1.7.83"))
+        flip <- "none"
     image <- match.arg(image, several.ok = TRUE)
     if ((any(z < 0) || any(z > 6)) && z != "all") {
         stop("z must be beween 0 and 6 (inclusive).")
@@ -825,10 +830,10 @@ readVizgen <- function(data_dir,
                                       BPPARAM = BPPARAM)
             st_geometry(polys) <- "geometry"
             if ("EntityID" %in% names(polys))
-                polys$ID <- polys$EntityID
+                polys$EntityID <- polys$EntityID
             if (!"ZLevel" %in% names(polys)) # For reading what's written after HDF5
                 polys$ZLevel <- 1.5 * (polys$ZIndex + 1L)
-            polys <- polys[,c("ID", "ZIndex", "Type", "ZLevel", "geometry")]
+            polys <- polys[,c("EntityID", "ZIndex", "Type", "ZLevel", "geometry")]
         } else {
             warning("No '.parquet' or `hdf5` files present, check input directory -> `data_dir`")
             polys <- NULL }
@@ -880,7 +885,7 @@ readVizgen <- function(data_dir,
     if (!is.null(polys)) {
         # remove NAs when matching
         metadata <-
-            metadata[match(polys$ID, metadata[[1]]) |> na.omit(),]
+            metadata[match(polys$EntityID, metadata[[1]]) |> na.omit(),]
     }
     rownames(metadata) <- metadata[[1]]
     metadata[,1] <- NULL
@@ -907,9 +912,9 @@ readVizgen <- function(data_dir,
 
     # check matching cell ids in polygon geometries, should match the count matrix's cell ids
     if (!is.null(polys) &&
-        !identical(polys$ID, rns)) {
+        !identical(polys$EntityID, rns)) {
         # filter geometries
-        matched.cells <- match(rns, polys$ID) |> na.omit()
+        matched.cells <- match(rns, polys$EntityID) |> na.omit()
         message(">>> filtering geometries to match ", length(matched.cells),
                 " cells with count matrix's cell ids")
         polys <- polys[matched.cells, , drop = FALSE]
@@ -943,8 +948,8 @@ readVizgen <- function(data_dir,
         # sanity on geometries
         message(">>> Checking polygon validity")
         polys <- .check_st_valid(polys)
-        rownames(polys) <- polys$ID
-        polys$ID <- NULL
+        rownames(polys) <- polys$EntityID
+        polys$EntityID <- NULL
         cellSeg(sfe) <- polys
     }
 
@@ -1000,11 +1005,10 @@ readCosMX <- function(data_dir,
 
     meta <- fread(fn_metadata)
     mat <- fread(fn_mat) # TODO: write to h5 or mtx. Consult alabaster.sce
-    polys <- fread(fn_polys)
+    
 
     meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")
     mat$cell_ID <- paste(mat$cell_ID, mat$fov, sep = "_")
-    polys$cellID <- paste(polys$cellID, polys$fov, sep = "_")
 
     mat <- mat[match(meta$cell_ID, mat$cell_ID),]
     cell_ids <- mat$cell_ID
@@ -1019,6 +1023,8 @@ readCosMX <- function(data_dir,
         polys <- sfarrow::st_read_parquet(poly_sf_fn)
         rownames(polys) <- polys$cellID
     } else {
+        polys <- fread(fn_polys)
+        polys$cellID <- paste(polys$cellID, polys$fov, sep = "_")
         message(">>> Constructing cell polygons")
         polys <- df2sf(polys, spatialCoordsNames = c("x_global_px", "y_global_px"),
                        geometryType = "POLYGON",
