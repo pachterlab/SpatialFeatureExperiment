@@ -4,7 +4,7 @@
 \alias{findVisiumHDGraph}
 \title{Find Visium HD spatial neighborhood graph}
 \usage{
-findVisiumHDGraph(x, style = "W", queen = FALSE)
+findVisiumHDGraph(x, style = "W", queen = FALSE, zero.policy = TRUE)
 }
 \arguments{
 \item{x}{An SFE object with Visium HD data with one sample with the required
@@ -13,6 +13,8 @@ information in its \code{colData}.}
 \item{style}{\code{style} can take values \dQuote{W}, \dQuote{B}, \dQuote{C}, \dQuote{U}, \dQuote{minmax} and \dQuote{S}}
 
 \item{queen}{Logical. Default is \code{FALSE}, using rook neighbors.}
+
+\item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 }
 \value{
 A \code{listw} object for the graph.

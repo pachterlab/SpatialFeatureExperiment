@@ -541,8 +541,11 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             if (is_Visium == "VisiumV2")
               # set scaling factor -> microns per pixel
               scale_fct <- bin_um / spot_diameter
-            else
-              scale_fct <- .pixel2micron(sfe)
+            else {
+                df_coords <- as.data.frame(spatialCoords(sfe))
+                names(df_coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
+                scale_fct <- .pixel2micron(cbind(as.data.frame(colData(sfe)), df_coords))
+            }
             cg <- spotPoly(sfe)
             cg$geometry <- cg$geometry * scale_fct
             spotPoly(sfe) <- cg

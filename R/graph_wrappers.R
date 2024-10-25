@@ -700,7 +700,8 @@ findVisiumGraph <- function(x, sample_id = "all", style = "W",
 #' @concept Spatial neighborhood graph
 #' @return A \code{listw} object for the graph.
 #' @export
-findVisiumHDGraph <- function(x, style = "W", queen = FALSE) {
+findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
+                              zero.policy = TRUE) {
     df <- as.data.frame(colData(x))
     df$index <- seq_along(df$barcode)
     cols_use <- c("index", "array_row", "array_col")
@@ -729,7 +730,7 @@ findVisiumHDGraph <- function(x, style = "W", queen = FALSE) {
         args = list(
             style = style,
             zero.policy = zero.policy,
-            sample_id = sample_id
+            sample_id = sampleIDs(x)
         )
     )
     out

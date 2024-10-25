@@ -7,6 +7,7 @@
 readXenium(
   data_dir,
   sample_id = "sample01",
+  min_area = 15,
   image = c("morphology_focus", "morphology_mip"),
   segmentations = c("cell", "nucleus"),
   row.names = c("id", "symbol"),
@@ -26,6 +27,9 @@ readXenium(
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
 be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
 Default = \code{sample01}.}
+
+\item{min_area}{Minimum cell area in square microns. Anything smaller will be
+considered artifact or debris and removed.}
 
 \item{image}{Which image(s) to load, can be "morphology_mip",
 "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)

@@ -34,6 +34,12 @@ samples independently.}
 \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 \code{dgCMatrix}.}
 
+\item{data}{character string specifying whether to read in
+filtered (spots mapped to tissue) or raw data (all spots).}
+
+\item{images}{character vector specifying which images to include. 
+Valid values are \code{"lowres", "hires", "fullres", "detected", "aligned"}}
+
 \item{unit}{Whether to use pixels in full resolution image or microns as the
 unit. If using microns, then spacing between spots in pixels will be used
 to convert the coordinates into microns, as the spacing is known to be 100
@@ -77,22 +83,4 @@ An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
 }
 \description{
 This function reads Visium HD Space Ranger output into R.
-}
-\examples{
-# load VisiumHD
-# path to "binned_outputs" directory containing:
-# |-- binned_outputs
-#     |-- square_002um
-#     |-- square_008um
-#     |-- square_016um
-dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
-# this is public dataset ->
-# https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
-sfe_hd <-
-read10xVisiumSFE(dirs = dir_hd,
-                 bin_size = c(8, 16), # this defines which of 1:3 resolutions to load
-                 type = "HDF5", # Note, "sparse" -> takes longer to load
-                 data = "filtered", # spots under tissue
-                 add_graph = TRUE)
-
 }

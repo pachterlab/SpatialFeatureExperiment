@@ -8,6 +8,7 @@ readCosMX(
   data_dir,
   z = "all",
   sample_id = "sample01",
+  min_area = 15,
   add_molecules = FALSE,
   split_cell_comps = FALSE,
   BPPARAM = SerialParam(),
@@ -25,6 +26,9 @@ transcript spots.}
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
 be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
 Default = \code{sample01}.}
+
+\item{min_area}{Minimum cell area in square microns. Anything smaller will be
+considered artifact or debris and removed.}
 
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
 object.}

@@ -11,6 +11,7 @@
 #' @inheritParams findVisiumGraph
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams DropletUtils::read10xCounts
+#' @inheritParams SpatialExperiment::read10xVisium
 #' @param sample To be consistent with \code{SpatialExperiment::read10xVisium},
 #'   one or more directories with Space Ranger output for a Visium sample. It is
 #'   assumed to have the \code{outs} directory in it but this can be overridden
@@ -270,8 +271,7 @@ read10xVisiumSFE <- function(samples = "",
                        sample_id, "\n"))
         if (VisiumHD) {
             colGraph(sfe, "visiumhd") <- 
-                findVisiumHDGraph(sfe, sample_id = "all", style = style,
-                                  zero.policy = zero.policy)
+                findVisiumHDGraph(sfe, style = style, zero.policy = zero.policy)
         } else {
             colGraph(sfe, "visium") <-
                 findVisiumGraph(sfe, sample_id = "all",
@@ -311,21 +311,6 @@ read10xVisiumSFE <- function(samples = "",
 #'   \code{\link{Voyager::plotSpatialFeature}}.
 #' @export
 #' @examples
-#' # load VisiumHD
-#' # path to "binned_outputs" directory containing:
-#' # |-- binned_outputs
-#' #     |-- square_002um
-#' #     |-- square_008um
-#' #     |-- square_016um
-#' dir_hd <- "~/Downloads/Visium_HD_Mouse_Brain/binned_outputs/"
-#' # this is public dataset ->
-#' # https://www.10xgenomics.com/datasets/visium-hd-cytassist-gene-expression-libraries-of-mouse-brain-he
-#' sfe_hd <-
-#' read10xVisiumSFE(dirs = dir_hd,
-#'                  bin_size = c(8, 16), # this defines which of 1:3 resolutions to load
-#'                  type = "HDF5", # Note, "sparse" -> takes longer to load
-#'                  data = "filtered", # spots under tissue
-#'                  add_graph = TRUE)
 #' 
 readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L), 
                          sample_id = NULL, 
@@ -461,7 +446,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     # check if not all are TRUE
     if (!is_xen && is_Xenium) {
         warning("Provided segmentations data for `.filter_polygons` indicates Xenium technology,", "\n", 
-                "However, it doesn’t contain `cell_id` and/or `label_id` columns")
+                "However, it doesn't contain `cell_id` and/or `label_id` columns")
     }
     # identify which column contains tech-specific cell ids
     # ie, "cell_id" for Xenium; "cellID" for CosMX; "EntityID" for Vizgen
@@ -535,7 +520,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             inds <- which(areas > min_area)
             if (any(inds)) {
                 message(">>> Removing ", c(length(areas) - length(inds)), 
-                        " cells with area < ", min_area, " µm\u00B2")
+                        " cells with area < ", min_area, " \u03BCm\u00B2")
             }
             polys <- polys[inds, ]
         } else { polys }
@@ -794,7 +779,7 @@ readVizgen <- function(data_dir,
             # `cellpose_micron_space.parquet`
             # `cellpose_mosaic_space.parquet`
             # or any other `parquet` files
-            # use µm units
+            # use um units
             parq_clean <-
                 grep("cell_boundaries|micron_space",
                      parq, value = TRUE)

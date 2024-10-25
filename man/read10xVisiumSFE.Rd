@@ -16,7 +16,7 @@ read10xVisiumSFE(
   zero.policy = NULL,
   load = deprecated(),
   row.names = c("id", "symbol"),
-  flip = c("geometry", "image")
+  flip = c("geometry", "image", "none")
 )
 }
 \arguments{
@@ -42,6 +42,12 @@ samples independently.}
 \item{type}{Either "HDF5", and the matrix will be represented as
 \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 \code{dgCMatrix}.}
+
+\item{data}{character string specifying whether to read in
+filtered (spots mapped to tissue) or raw data (all spots).}
+
+\item{images}{character vector specifying which images to include. 
+Valid values are \code{"lowres", "hires", "fullres", "detected", "aligned"}}
 
 \item{unit}{Whether to use pixels in full resolution image or microns as the
 unit. If using microns, then spacing between spots in pixels will be used
