@@ -19,7 +19,7 @@ test_that("Convert SPE and SCE to SFE, no images", {
     colData(sce) <- cbind(colData(sce), coords[,c("pxl_col_in_fullres", "pxl_row_in_fullres")])
     sfe4 <- toSpatialFeatureExperiment(sce, spatialCoordsNames = c("pxl_col_in_fullres",
                                                                    "pxl_row_in_fullres"))
-    sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered")
+    sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered", flip = "image")
     centroids_check <- st_centroid(st_geometry(spotPoly(sfe)))
 
     expect_s4_class(sfe1, "SpatialFeatureExperiment")

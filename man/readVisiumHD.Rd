@@ -79,8 +79,11 @@ An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
   \code{\link{read10xVisiumSFE}}, the centroids geometry is also added
   because it will greatly facilitate plotting when there are many spots when
   not zooming in. See the \code{scattermore} argument in
-  \code{\link{Voyager::plotSpatialFeature}}.
+  \code{\link[Voyager]{plotSpatialFeature}}.
 }
 \description{
 This function reads Visium HD Space Ranger output into R.
+}
+\examples{
+#
 }

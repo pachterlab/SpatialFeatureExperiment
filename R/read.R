@@ -308,10 +308,10 @@ read10xVisiumSFE <- function(samples = "",
 #'   \code{\link{read10xVisiumSFE}}, the centroids geometry is also added
 #'   because it will greatly facilitate plotting when there are many spots when
 #'   not zooming in. See the \code{scattermore} argument in
-#'   \code{\link{Voyager::plotSpatialFeature}}.
+#'   \code{\link[Voyager]{plotSpatialFeature}}.
 #' @export
 #' @examples
-#' 
+#' #
 readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L), 
                          sample_id = NULL, 
                          type = c("HDF5", "sparse"),

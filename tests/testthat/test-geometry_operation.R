@@ -879,7 +879,7 @@ test_that("Transpose SFE object with BioFormatsImage", {
     # outside the nucleus. So I use nuclei centroids
     v <- terra::extract(spi, st_centroid(nucSeg(sfe2)$geometry) |> vect())
     expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9) # NA's from cells that don't have nuclei
-
+    cat("Actual mean: ", mean(v$lyr.1, na.rm = TRUE))
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
     bbox_cg <- st_bbox(cellSeg(sfe2))
