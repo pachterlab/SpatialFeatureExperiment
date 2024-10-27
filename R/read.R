@@ -416,13 +416,15 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @importFrom sf st_is_empty st_drop_geometry
 #' @importFrom BiocParallel bplapply
 #' @importFrom utils head
-#' 
 .filter_polygons <- function(polys, min_area,
                              is_Xenium = FALSE, # indicate if input tech is Xenium or not
                              BPPARAM = SerialParam()) {
     # Sanity check: 
-    # TODO ..on `min_area` arg
-    
+    #..on `min_area` arg
+    if (!is.null(min_area)) {
+        if (!is.numeric(min_area) || min_area <= 0)
+            stop("`min_area` has to be non-zero positive numeric value or `NULL`")
+    }
     #..on nested polygon lists
     test.segs <- vapply(st_geometry(polys), length, FUN.VALUE = integer(1))
     if (any(test.segs > 1)) {
@@ -520,8 +522,8 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             inds <- which(areas > min_area)
             if (any(inds)) {
                 message(">>> Removing ", c(length(areas) - length(inds)), 
-                        " cells with area < ", min_area, " \u03BCm\u00B2")
-            }
+                        " cells with area < ", min_area)
+                }
             polys <- polys[inds, ]
         } else { polys }
     }
@@ -676,8 +678,9 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #'   it's GeoTIFF.
 #' @param image Which image(s) to load, can be "DAPI", "PolyT", "Cellbound" or
 #'   any combination of them.
-#' @param min_area Minimum cell area in square microns. Anything smaller will be
-#'   considered artifact or debris and removed.
+#' @param min_area Minimum cell area in square microns or pixel units (eg for CosMX).
+#'   Anything smaller will be considered artifact or debris and removed. 
+#'   Default to `NULL`, ie no filtering of polygons.
 #' @param filter_counts Logical, whether to keep cells with counts \code{> 0}.
 #' @param add_molecules Logical, whether to add transcripts coordinates to an
 #'   object.
@@ -730,7 +733,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 readVizgen <- function(data_dir,
                        z = "all",
                        sample_id = "sample01", # How often do people read in multiple samples?
-                       min_area = 15,
+                       min_area = NULL,
                        image = c("DAPI", "PolyT", "Cellbound"),
                        flip = c("geometry", "image", "none"),
                        max_flip = "50 MB",
@@ -975,7 +978,7 @@ readVizgen <- function(data_dir,
 readCosMX <- function(data_dir,
                       z = "all",
                       sample_id = "sample01", # How often do people read in multiple samples?
-                      min_area = 15,
+                      min_area = NULL,
                       add_molecules = FALSE,
                       split_cell_comps = FALSE,
                       BPPARAM = SerialParam(),
@@ -1199,7 +1202,7 @@ readCosMX <- function(data_dir,
 
 readXenium <- function(data_dir,
                        sample_id = "sample01",
-                       min_area = 15,
+                       min_area = NULL,
                        image = c("morphology_focus", "morphology_mip"),
                        segmentations = c("cell", "nucleus"),
                        row.names = c("id", "symbol"),
