@@ -347,8 +347,7 @@ test_that("Deal with multiple pieces, remove pieces that are too small", {
     dir_use <- VizgenOutput("hdf5", file_path = fp)
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
     suppressWarnings(st_write_parquet(parq2, file.path(dir_use, "cell_boundaries.parquet")))
-
-    expect_warning(sfe <- readVizgen(dir_use, z = 3L, image = "PolyT"), "The largest piece is kept")
+    expect_warning(sfe <- readVizgen(dir_use, z = 3L, min_area = 15, image = "PolyT"), "The largest piece is kept")
     cg <- cellSeg(sfe)
     expect_equal(st_geometry_type(cg, by_geometry = "FALSE") |> as.character(), "POLYGON")
     expect_equal(colnames(sfe), as.character(parq2$EntityID[c(1,2,4)]))
@@ -371,7 +370,7 @@ test_that("No polygons left", {
     file.remove(file.path(dir_use, "cell_boundaries.parquet"))
     suppressWarnings(st_write_parquet(parq2, file.path(dir_use, "cell_boundaries.parquet")))
 
-    expect_error(readVizgen(dir_use, z = 3L, image = "PolyT"),
+    expect_error(readVizgen(dir_use, z = 3L, min_area = 15, image = "PolyT"),
                  "No polygons left after filtering")
     unlink(dir_use, recursive = TRUE)
 })

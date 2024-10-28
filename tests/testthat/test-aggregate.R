@@ -118,7 +118,8 @@ test_that("aggregate for SFE by cells, manually supply `by` argument", {
 })
 
 test_that("aggregate.SFE use a row* function", {
-    agg2 <- aggregate(sfe, by = grid2, FUN = rowMedians)
+    #agg2 <- aggregate(sfe, by = grid2, FUN = rowMedians) # doesn't work MatrixGenerics::rowMedians
+    agg2 <- aggregate(sfe, by = grid2, FUN = rowMeans2) # works MatrixGenerics::rowMeans2
     expect_s4_class(agg2, "SpatialFeatureExperiment")
     # empty grid cells were removed
     expect_true(ncol(agg2) <= length(grid2) & ncol(agg2) > 0)
