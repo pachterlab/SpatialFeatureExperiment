@@ -42,14 +42,14 @@ reducedDim(x, type, ...)
 }
 \arguments{
 \item{x}{
-    A SummarizedExperiment object or derivative.
+    A SummarizedExperiment object.
   }
 
 \item{...}{
     For \code{assay}, arguments in \code{...} are forwarded to \code{assays}.
 
     For \code{rbind}, \code{cbind}, \code{...} contains SummarizedExperiment
-    objects (or derivatives) to be combined.
+    objects to be combined.
 
     For other accessors, ignored.
   }
@@ -58,14 +58,13 @@ reducedDim(x, type, ...)
     For \code{rowData}: Like \code{\link[S4Vectors]{mcols}(x)}, by default
     \code{rowData(x)} propagates the rownames of \code{x} to the returned
     \link[S4Vectors]{DataFrame} object (note that for a SummarizedExperiment
-    object or derivative, the rownames are also the names i.e.
-    \code{rownames(x)} is always the same as \code{names(x)}).
-    Setting \code{use.names=FALSE} suppresses this propagation i.e. it
-    returns a \link[S4Vectors]{DataFrame} object with no rownames. Use this
-    when \code{rowData(x)} fails, which can happen when the rownames contain
-    NAs (because the rownames of a SummarizedExperiment object or derivative
-    can contain NAs, but the rownames of a \link[S4Vectors]{DataFrame} object
-    cannot).
+    object, the rownames are also the names i.e. \code{rownames(x)} is
+    always the same as \code{names(x)}). Setting \code{use.names=FALSE}
+    suppresses this propagation i.e. it returns a \link[S4Vectors]{DataFrame}
+    object with no rownames. Use this when \code{rowData(x)} fails,
+    which can happen when the rownames contain NAs (because the rownames
+    of a SummarizedExperiment object can contain NAs, but the rownames of
+    a \link[S4Vectors]{DataFrame} object cannot).
 
     For \code{combineRows} and \code{combineCols}: See Combining section
     below.
