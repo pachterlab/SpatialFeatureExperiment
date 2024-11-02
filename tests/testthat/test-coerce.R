@@ -69,3 +69,10 @@ test_that("Convert SPE to SFE, stored images", {
     diffs2 <- bbox_img[c(2,4)] - bbox_img[c(1,3)]
     expect_true(all(diffs1 / diffs2 > (1-1/min(dim(img1)))))
 })
+
+test_that("Convert SPE to SFE, with SpatRaster image", {
+    spe <- read10xVisium(dir, load = FALSE, type = "sparse")
+    suppressWarnings(Img(spe, image_id = "lowres") <- rast(imgSource(getImg(spe))) |> SpatRasterImage())
+    sfe <- toSpatialFeatureExperiment(spe)
+    expect_true(is(getImg(sfe), "SpatRaster"))
+})

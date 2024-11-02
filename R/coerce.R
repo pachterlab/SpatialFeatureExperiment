@@ -28,7 +28,10 @@
         img_data <- imgData(spe)$data
         new_imgs <- lapply(seq_along(img_data), function(i) {
             img <- img_data[[i]]
-            if (is(img, "LoadedSpatialImage")) {
+            is_sfe_img <- class(img)[1] %in% c("SpatRasterImage", "ExtImage", "BioFormatsImage")
+            if (is_sfe_img) {
+                im_new <- img
+            } else if (is(img, "LoadedSpatialImage")) {
                 im <- imgRaster(img)
                 rgb_v <- col2rgb(im)
                 nrow <- dim(im)[2]
@@ -49,7 +52,8 @@
                 im_new <- NULL
             }
             # Use scale factor for extent
-            ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+            if (!is.null(im_new) && !is_sfe_img)
+                ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
             im_new
         })
         inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
