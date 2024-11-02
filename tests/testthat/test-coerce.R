@@ -75,4 +75,5 @@ test_that("Convert SPE to SFE, with SpatRaster image", {
     suppressWarnings(Img(spe, image_id = "lowres") <- rast(imgSource(getImg(spe))) |> SpatRasterImage())
     sfe <- toSpatialFeatureExperiment(spe)
     expect_true(is(getImg(sfe), "SpatRaster"))
+    expect_equal(getImg(spe), getImg(sfe))
 })
