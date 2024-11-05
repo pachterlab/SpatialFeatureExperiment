@@ -8,7 +8,7 @@ cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
     package = "SpatialFeatureExperiment"
 ))
 
-test_that("Get the correct graph and attr for reconstruction", {
+test_that("Get the correct graph and attr", {
     g <- findSpatialNeighbors(sfe2, sample_id = "sample01",
         type = "spatialCoords",
         MARGIN = 2, method = "tri2nb"
@@ -18,10 +18,10 @@ test_that("Get the correct graph and attr for reconstruction", {
     expect_equal(names(attrs_reconst), c("FUN", "package", "args"))
     expect_equal(attrs_reconst$FUN, "findSpatialNeighbors")
     expect_equal(attrs_reconst$package[[1]], "SpatialFeatureExperiment")
-    expect_equal(attrs_reconst$package[[2]], packageVersion("SpatialFeatureExperiment"))
+    expect_equal(attrs_reconst$package[[2]], as.character(packageVersion("SpatialFeatureExperiment")))
     expect_equal(attrs_reconst$args$dist_type, "none")
     expect_equal(attrs_reconst$args$style, "W")
-    expect_true("row.names" %in% names(attrs_reconst$args))
+    expect_false("row.names" %in% names(attrs_reconst$args))
     expect_equal(attrs_reconst$args$method, "tri2nb")
 })
 

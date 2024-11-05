@@ -6,22 +6,18 @@
 
 #' Subsetting SpatialFeatureExperiment objects
 #'
-#' The method for SFE reconstructs the spatial graphs when the SFE object is
-#' subsetted as the \code{listw} objects encodes the nodes with indices which
-#' are no longer valid after subsetting as some nodes are no longer present.
-#'
+#' Note that spatial neighborhood graphs may change meaning after subsetting.
+#' For example, for a k nearest neighbor graph, after subsetting, some cells
+#' might no longer have all k nearest neighbors from the original
+#' 
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param i Row indices for subsetting.
 #' @param j column indices for subsetting.
-#' @param drop Logical. If \code{FALSE}, then a warning will be issued that the
-#'   node indices in the graphs are no longer valid so the row and col graphs
-#'   affected by subsetting are dropped. At present, this only works with the
-#'   wrapper functions in this package that take in SFE objects and records the
-#'   info required to reconstruct the graphs. While this argument is ignored for
-#'   \code{SummarizedExperiment}
+#' @param drop Ignored as of version 1.9.2.
 #' @param ... Passed to the \code{SingleCellExperiment} method of \code{[}.
 #' @importFrom methods callNextMethod
 #' @importFrom utils getFromNamespace
+#' @importFrom spdep subset.listw
 #' @return A subsetted \code{SpatialFeatureExperiment} object.
 #' @name SpatialFeatureExperiment-subset
 #' @aliases [,SpatialFeatureExperiment,ANY,ANY,ANY-method
@@ -81,78 +77,31 @@ setMethod(
             graphs_sub <- graphs_sub[, names(graphs_sub) %in% sampleIDs(x),
                 drop = FALSE
             ]
-            if (!drop) {
-                # Check which graphs need to be reconstructed
-                # Wouldn't need reconstruction if the barcodes within one sample
-                # are still in the same order
-                cn2 <- colnames(x)
-                new_sample_colnames <- lapply(sample_ids, function(s) {
-                    cn2[colData(x)$sample_id %in% s]
-                })
-                old_sample_compare <- old_sample_colnames[sample_ids0 %in% sample_ids]
-                samples_reconstruct <- mapply(
-                    function(old, new) !isTRUE(all.equal(old, new)),
-                    old = old_sample_compare,
-                    new = new_sample_colnames,
-                    SIMPLIFY = TRUE
-                )
-                for (s in which(samples_reconstruct)) {
-                    for (m in seq_len(2)) { # Not reconstructing annotGraphs
-                        # Not sure what to do differently with rowGraphs yet
-                        for (g in seq_along(graphs_sub[[s]][[m]])) {
-                            method_info <- attr(graphs_sub[[s]][[m]][[g]], "method")
-                            if (is.null(method_info)) {
-                                warning(
-                                    "Graph reconstruction info is missing for sample ",
-                                    names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
-                                    names(graphs_sub[[s]][[m]])[g], ". ",
-                                    "Dropping graph.\n"
-                                )
-                                graphs_sub[[s]][[m]][[g]] <- NULL
-                            } else {
-                                if (requireNamespace(method_info$package[[1]], quietly = TRUE)) {
-                                    fun <- getFromNamespace(method_info$FUN, method_info$package[[1]])
-                                    if ("row.names" %in% names(method_info$args)) {
-                                        method_info$args[["row.names"]] <-
-                                            method_info$args[["row.names"]][j]
-                                    }
-                                    tryCatch(graphs_sub[[s]][[m]][[g]] <-
-                                        do.call(fun, c(list(x = x), method_info$args)),
-                                    error = function(e) {
-                                        warning(
-                                            "Graph reconstruction failed for sample ",
-                                            names(graphs_sub)[s], " ",
-                                            .margin_name(m), "Graph ",
-                                            names(graphs_sub[[s]][[m]])[g],
-                                            ": ", e, "Dropping graph.\n"
-                                        )
-                                        graphs_sub[[s]][[m]][[g]] <- NULL
-                                    }
-                                    )
-                                } else {
-                                    warning(
-                                        "Package ", method_info$package[[1]],
-                                        " used to construct graph for sample ",
-                                        names(graphs_sub)[s], " ", .margin_name(m),
-                                        "Graph ", names(graphs_sub[[s]][[m]])[g],
-                                        " is not installed. ", "Dropping graph.\n"
-                                    )
-                                    graphs_sub[[s]][[m]][[g]] <- NULL
-                                }
-                            }
-                        }
+            # Check which graphs need to be subsetted
+            # Wouldn't need reconstruction if the barcodes within one sample
+            # are still in the same order
+            cn2 <- colnames(x)
+            new_sample_colnames <- lapply(sample_ids, function(s) {
+                cn2[colData(x)$sample_id %in% s]
+            })
+            old_sample_compare <- old_sample_colnames[sample_ids0 %in% sample_ids]
+            samples_subset <- mapply(
+                function(old, new) !isTRUE(all.equal(old, new)),
+                old = old_sample_compare,
+                new = new_sample_colnames,
+                SIMPLIFY = TRUE
+            )
+            for (s in which(samples_subset)) {
+                j_sample <- old_sample_compare[[s]] %in% new_sample_colnames[[s]]
+                for (m in seq_len(2)) { # Not subsetting annotGraphs
+                    # Not sure what to do differently with rowGraphs yet
+                    for (g in seq_along(graphs_sub[[s]][[m]])) {
+                        method_info <- attr(graphs_sub[[s]][[m]][[g]], "method")
+                        graphs_sub[[s]][[m]][[g]] <- subset(graphs_sub[[s]][[m]][[g]], j_sample)
                     }
                 }
-                spatialGraphs(x) <- graphs_sub
-            } else {
-                message(
-                    "Node indices in the graphs are no longer valid after subsetting. ",
-                    "Dropping all row and col graphs."
-                )
-                spatialGraphs(x) <- graphs_sub
-                spatialGraphs(x, MARGIN = 1) <- NULL
-                spatialGraphs(x, MARGIN = 2) <- NULL
             }
+            spatialGraphs(x) <- graphs_sub
         }
         if (!missing(j) && .is0(j)) spatialGraphs(x) <- NULL
         validObject(x)

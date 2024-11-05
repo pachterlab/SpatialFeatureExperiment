@@ -35,7 +35,7 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
 
       - if: runner.os == 'macOS'
-        run: brew install apache-arrow
+        run: brew install apache-arrow && brew install fftw
 
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1

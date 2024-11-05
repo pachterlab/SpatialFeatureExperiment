@@ -388,11 +388,14 @@
             alpha = alpha, dmax = dmax
         )
     }
-
+    # I'll refactor to avoid reconstructing graphs After that, the graph params
+    # may be used in Voyager to make sure that results with the same name were
+    # comptuted with the same parameters.
+    args <- args[!names(args) %in% c("BPPARAM", "BNPARAM", "row.names")]
     attr(out, "method") <- list(
         FUN = "findSpatialNeighbors",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = c(
             method = method, args,
             dist_type = dist_type,
@@ -597,7 +600,7 @@ setMethod(
     attr(out, "method") <- list(
         FUN = "findVisiumGraph",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = list(
             style = style,
             zero.policy = zero.policy,
@@ -726,7 +729,7 @@ findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
     attr(out, "method") <- list(
         FUN = "findVisiumHDGraph",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = list(
             style = style,
             zero.policy = zero.policy,
