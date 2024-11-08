@@ -53,8 +53,8 @@
             }
             # Use scale factor for extent
             if (!is.null(im_new) && !is_sfe_img) {
-                im_new <- new("SpatRasterImage", im_new)
                 ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+                im_new <- new("SpatRasterImage", im_new)
             }
             im_new
         })
