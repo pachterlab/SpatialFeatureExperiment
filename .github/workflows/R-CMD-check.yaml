@@ -35,7 +35,7 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
 
       - if: runner.os == 'macOS'
-        run: brew install apache-arrow fftw jpeg libtiff imagemagick package-dev
+        run: brew install apache-arrow fftw jpeg libtiff imagemagick pkg-config
 
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1
