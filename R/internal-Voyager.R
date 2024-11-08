@@ -158,3 +158,7 @@ NULL
     }
     type
 }
+
+#' @rdname internal-Voyager
+#' @export
+.ext_ <- function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]

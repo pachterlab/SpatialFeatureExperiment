@@ -2,6 +2,7 @@ library(SpatialExperiment)
 library(SingleCellExperiment)
 library(DropletUtils)
 library(sf)
+library(SFEData)
 
 dir <- system.file("extdata/sample01", package = "SpatialFeatureExperiment")
 
@@ -76,4 +77,13 @@ test_that("Convert SPE to SFE, with SpatRaster image", {
     sfe <- toSpatialFeatureExperiment(spe)
     expect_true(is(getImg(sfe), "SpatRaster"))
     expect_equal(getImg(spe), getImg(sfe))
+})
+
+test_that("Convert SPE to SFE, when the SPE has BioFormatsImage", {
+    fp <- tempfile()
+    xenium <- XeniumOutput("v1")
+    sfe <- readXenium(xenium)
+    spe <- as(sfe, "SpatialExperiment")
+    sfe2 <- toSpatialFeatureExperiment(spe)
+    expect_s4_class(getImg(sfe2), "BioFormatsImage")
 })

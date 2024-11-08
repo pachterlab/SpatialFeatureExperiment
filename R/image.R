@@ -167,7 +167,7 @@ setValidity("BioFormatsImage", function(object) {
         } else if (mat) {
             M <- object@transformation$M
             v <- object@transformation$v
-            if (!identical(dim(M), c(2,2)) || !is.numeric(M) || .numeric2NA(v)) {
+            if (!identical(dim(M), c(2L,2L)) || !is.numeric(M) || .numeric2NA(v)) {
                 outs[4] <- paste0("M must be a 2x2 numeric matrix, and v a numeric vector of length 2 with no NA.")
             }
         }
@@ -615,8 +615,6 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #' @concept Image methods
 #' @family image methods
 NULL
-
-.ext_ <- function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
 
 #' @rdname ext
 #' @export

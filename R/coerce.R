@@ -52,15 +52,14 @@
                 im_new <- NULL
             }
             # Use scale factor for extent
-            if (!is.null(im_new) && !is_sfe_img)
+            if (!is.null(im_new) && !is_sfe_img) {
+                im_new <- new("SpatRasterImage", im)
                 ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+            }
             im_new
         })
         inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
         new_imgs <- new_imgs[inds]
-        new_imgs <- lapply(new_imgs, function(im) {
-            new("SpatRasterImage", im)
-        })
         imgData(spe) <- imgData(spe)[inds,]
         if (length(new_imgs)) imgData(spe)$data <- new_imgs
     }
