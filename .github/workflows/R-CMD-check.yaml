@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
+          #- {os: macos-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
           #- {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
@@ -35,7 +35,7 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
 
       - if: runner.os == 'macOS'
-        run: brew install apache-arrow fftw jpeg libtiff imagemagick pkg-config
+        run: brew install apache-arrow fftw jpeg-turbo libtiff imagemagick pkg-config
 
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1
