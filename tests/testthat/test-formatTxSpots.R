@@ -1,8 +1,8 @@
 library(SFEData)
 library(sf)
 test_that("Read MERFISH transcript spots into rowGeometries", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", add_molecules = TRUE)
     expect_equal(rowGeometryNames(sfe), "txSpots")
     rg <- txSpots(sfe)
@@ -15,8 +15,8 @@ test_that("Read MERFISH transcript spots into rowGeometries", {
 })
 
 test_that("Format MERFISH transcript spots for colGeometries", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     expect_error(formatTxSpots(file.path(dir_use, "detected_transcripts.csv"),
                                dest = "colGeometry"),
                  "file_out must be specified")
@@ -38,7 +38,7 @@ test_that("Format MERFISH transcript spots for colGeometries", {
                         dest = "colGeometry",
                         file_out = file.path(dir_use, "tx_in_cells"),
                         z = 3L)
-    dir_check <- normalizePath(file.path(dir_use, "tx_in_cells"))
+    dir_check <- file.path(dir_use, "tx_in_cells") |> normalizePath()
     expect_equal(cg, dir_check)
     expect_true(dir.exists(dir_check))
     fns_expect <- paste0(unique(df$gene[df$global_z == 3L]), "_spots.parquet")
@@ -63,8 +63,8 @@ test_that("Format MERFISH transcript spots for colGeometries", {
 })
 
 test_that("Error messages in formatTxSpots", {
-    fp <- tempdir()
-    dir_use <- VizgenOutput("hdf5", file_path = file.path(fp, "vizgen_test"))
+    fp <- tempfile()
+    dir_use <- VizgenOutput("hdf5", file_path = fp)
     file <- file.path(dir_use, "detected_transcripts.csv")
     expect_error(formatTxSpots(file, dest = "colGeometry", file_out = NULL),
                  "file_out must be specified")
@@ -84,8 +84,8 @@ test_that("Error messages in formatTxSpots", {
 })
 
 test_that("Format CosMX spots for colGeometry, multiple z-planes", {
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
 
     cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
                         dest = "colGeometry", z = "all", z_option = "split",
@@ -111,8 +111,8 @@ test_that("Format CosMX spots for colGeometry, multiple z-planes", {
 
 test_that("Read transcript spots from a subset of genes", {
     skip_if_not(gdalParquetAvailable())
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
                           file_out = file.path(fn, "tx_spots.parquet"))
     gene_select <- c("ACE2", "BMX")
@@ -126,8 +126,8 @@ test_that("Read transcript spots from a subset of genes", {
 
 test_that("Error message when Parquet driver is unavailable", {
     skip_if(gdalParquetAvailable())
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
                           file_out = file.path(fn, "tx_spots.parquet"))
     gene_select <- c("ACE2", "BMX")
@@ -139,8 +139,8 @@ test_that("Error message when Parquet driver is unavailable", {
 test_that("Add a subset of spots", {
     skip_if_not(gdalParquetAvailable())
     library(RBioFormats)
-    fp <- tempdir()
-    fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
     try(sfe <- readXenium(fn))
     sfe <- readXenium(fn)
     fn_tx <- formatTxTech(fn, tech = "Xenium", flip = TRUE, return = FALSE,
@@ -155,8 +155,8 @@ test_that("Add a subset of spots", {
 
 test_that("Add subset of spots, multiple files in tx spots output", {
     skip_if_not(gdalParquetAvailable())
-    fp <- tempdir()
-    dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
 
     sfe <- readCosMX(dir_use)
     fn_tx <- formatTxTech(dir_use, tech = "CosMX", z = "all", z_option = "split",
@@ -175,9 +175,3 @@ test_that("Add subset of spots, multiple files in tx spots output", {
     expect_true(all(is_empty1[-(1:5)]))
     unlink(dir_use, recursive = TRUE)
 })
-
-# Final cleanup in case failed test messed with cleanup
-fp <- tempdir()
-unlink(file.path(fp, "cosmx_test"), recursive = TRUE)
-unlink(file.path(fp, "vizgen_test"), recursive = TRUE)
-unlink(file.path(fp, "xenium_test"), recursive = TRUE)

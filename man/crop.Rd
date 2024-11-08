@@ -9,14 +9,9 @@ crop(
   y = NULL,
   colGeometryName = 1L,
   sample_id = "all",
-  pred = deprecated(),
   op = st_intersection,
   keep_whole = "none",
-  cover = FALSE,
-  xmin = deprecated(),
-  xmax = deprecated(),
-  ymin = deprecated(),
-  ymax = deprecated()
+  cover = FALSE
 )
 }
 \arguments{
@@ -38,9 +33,6 @@ included in the indicated sample IDs are subsetted. If sample is not
 indicated in \code{y}, then the same geometry or bounding box is used to
 subset all samples specified in the \code{sample_id} argument.}
 
-\item{pred}{Deprecated. The binary predicate is now tied to the geometric
-operation specified in \code{op}.}
-
 \item{op}{A geometric operation function to crop the geometries in the SFE
 object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
 are allowed. If "intersection", then only things inside \code{y} is kept
@@ -56,14 +48,6 @@ Can also be "none" so all geometries are actually cropped.}
 covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
 be entirely outside \code{y} if \code{op = st_difference}. Only relevant
 when \code{keep_whole != "none"}.}
-
-\item{xmin}{Deprecated. Supply the bounding box to argument \code{y} instead.}
-
-\item{xmax}{Deprecated.}
-
-\item{ymin}{Deprecated.}
-
-\item{ymax}{Deprecated.}
 }
 \value{
 An SFE object. There is no guarantee that the geometries after

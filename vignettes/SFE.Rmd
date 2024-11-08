@@ -295,10 +295,19 @@ rownames(mat) <- sample(LETTERS, 5)
 ```
 
 That should be sufficient to create an SPE object, and an SFE object, even though no `sf` data frame was constructed for the geometries. The constructor behaves similarly to the SPE constructor. The centroid coordinates of the Visium spots in the toy example can be converted into spot polygons with the `spotDiameter` argument. Spot diameter in pixels in full resolution image can be found in the `scalefactors_json.json` file in Space Ranger output.
+
 ```{r}
 sfe3 <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
                                 spatialCoordsNames = c("col", "row"),
                                 spotDiameter = 0.7)
+```
+
+When `colData` contains columns for the centroid coordinates, the `spatialCoordsNames` argument specifies which columns in `colData` are for the coordinates, in the same order as x, y, and z (if applicable). If the coordinates are not in `colData`, they can be specified separately in the `spatialCoords` argument:
+
+```{r}
+sfe3 <- SpatialFeatureExperiment(list(counts = mat), 
+                                 spatialCoords = as.matrix(coords1[, c("col", "row")]),
+                                 spotDiameter = 0.7)
 ```
 
 More geometries and spatial graphs can be added after calling the constructor.
@@ -503,8 +512,8 @@ plot(spotPoly(sfe_in_tissue), col = "gray", add = TRUE)
 
 `crop` can also be used in the conventional sense of cropping, i.e. specifying a bounding box.
 ```{r}
-sfe_cropped <- crop(sfe, colGeometryName = "spotPoly", sample_id = "Vis5A",
-                    xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500)
+sfe_cropped <- crop(sfe, y = c(xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500),
+                    colGeometryName = "spotPoly", sample_id = "Vis5A")
 ```
 
 The `colGeometryName` is used to determine which columns in the gene count matrix to keep. All geometries in the SFE object will be subsetted so only portions intersecting `y` or the bounding box are kept. Since the intersection operation can produce a mixture of geometry types, such as intersection of two polygons producing polygons, points, and lines, the geometry types of the `sf` data frames after subsetting may be different from those of the originals. 
@@ -529,7 +538,7 @@ Sometimes the spatial coordinates of different samples can take very different v
 
 To find the bounding box of all geometries in each sample of an SFE object:
 ```{r}
-bbox(sfe, sample_id = "Vis5A")
+SpatialFeatureExperiment::bbox(sfe, sample_id = "Vis5A")
 ```
 
 To move the coordinates:

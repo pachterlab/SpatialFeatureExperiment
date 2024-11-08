@@ -76,13 +76,14 @@ page for the Parquet driver}.
 \examples{
 library(SFEData)
 if (gdalParquetAvailable()) {
-    fp <- tempdir()
-    dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    dir_use <- XeniumOutput("v2", file_path = fp)
     fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
                           file_out = file.path(dir_use, "tx_spots.parquet"))
     gene_select <- c("ACE2", "BMX")
     df <- readSelectTx(fn_tx, gene_select)
-
+    # RBioFormats null pointer error the first time
+    try(sfe <- readXenium(dir_use))
     sfe <- readXenium(dir_use)
     sfe <- addSelectTx(sfe, fn_tx, head(rownames(sfe), 5), swap_rownames = "Symbol")
     unlink(dir_use, recursive = TRUE)

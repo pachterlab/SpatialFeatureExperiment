@@ -14,90 +14,6 @@
 #' sampleIDs(sfe)
 sampleIDs <- function(sfe) unique(colData(sfe)$sample_id)
 
-#' Change sample IDs
-#'
-#' Change sample IDs in all fields of the SFE object where sample IDs are
-#' present, not just the colData.
-#'
-#' @inheritParams sampleIDs
-#' @param replacement A named character vector whose names are the existing
-#'   sample IDs to be changed and whose values are the corresponding
-#'   replacements.
-#' @return An SFE object.
-#' @concept Utilities
-#' @export
-#' @examples
-#' library(SFEData)
-#' sfe <- McKellarMuscleData(dataset = "small")
-#' sfe <- changeSampleIDs(sfe, c(Vis5A = "sample01"))
-#' sampleIDs(sfe)
-changeSampleIDs <- function(sfe, replacement) {
-    for (i in seq_along(replacement)) {
-        original <- names(replacement)[i]
-        colData(sfe)$sample_id[colData(sfe)$sample_id == original] <-
-            replacement[i]
-        gs_names <- names(int_metadata(sfe)$spatialGraphs)
-        names(int_metadata(sfe)$spatialGraphs)[gs_names == original] <-
-            replacement[i]
-        if (length(int_metadata(sfe)$annotGeometries)) {
-            for (n in names(int_metadata(sfe)$annotGeometries)) {
-                ag <- int_metadata(sfe)$annotGeometries[[n]]
-                ind <- ag$sample_id == original
-                int_metadata(sfe)$annotGeometries[[n]]$sample_id[ind] <- replacement[i]
-            }
-        }
-        if (length(rowGeometries(sfe))) {
-            nms <- rowGeometryNames(sfe)
-            nms <- gsub(paste0(original, "$"), replacement[i], nms)
-            rowGeometryNames(sfe) <- nms
-            # Edge case: what if one sample_id includes another one?
-            # e.g. sample01_x and x
-        }
-        if (nrow(imgData(sfe))) {
-            imgData(sfe)$sample_id[imgData(sfe)$sample_id == original] <-
-                replacement[i]
-        }
-        # Check spatial results
-        # rowData
-        rd_ind <- grepl(paste0("_", original), names(rowData(sfe)))
-        if (any(rd_ind)) {
-            names(rowData(sfe)) <- gsub(paste0("_", original), paste0("_", replacement[i]),
-                                        names(rowData(sfe)))
-        }
-        # featureData
-        if (!is.null(colFeatureData(sfe))) {
-            nms <- names(colFeatureData(sfe))
-            nms <- gsub(paste0("_", original), paste0("_", replacement[i]), nms)
-            names(colFeatureData(sfe)) <- nms
-        }
-        # colGeometries
-        for (n in colGeometryNames(sfe)) {
-            if (!is.null(geometryFeatureData(sfe, n, 2L))) {
-                nms <- names(geometryFeatureData(sfe, n, 2L))
-                nms <- gsub(paste0("_", original), paste0("_", replacement[i]), nms)
-                names(geometryFeatureData(sfe, n, 2L)) <- nms
-            }
-        }
-        # annotGeometries
-        for (n in annotGeometryNames(sfe)) {
-            if (!is.null(geometryFeatureData(sfe, n, 3L))) {
-                nms <- names(geometryFeatureData(sfe, n, 3L))
-                nms <- gsub(paste0("_", original), paste0("_", replacement[i]), nms)
-                names(geometryFeatureData(sfe, n, 3L)) <- nms
-            }
-        }
-        # reducedDims
-        for (n in reducedDimNames(sfe)) {
-            if (!is.null(reducedDimFeatureData(sfe, n))) {
-                nms <- names(reducedDimFeatureData(sfe, n))
-                nms <- gsub(paste0("_", original), paste0("_", replacement[i]), nms)
-                names(reducedDimFeatureData(sfe, n)) <- nms
-            }
-        }
-    }
-    sfe
-}
-
 .translate_value <- function(x, translate, value, sample_id = NULL) {
     if (translate && !is.null(int_metadata(x)$orig_bbox)) {
         if (anyNA(value$sample_id) || is.null(value$sample_id)) {
@@ -173,8 +89,8 @@ bbox_center <- function(bbox) {
 #' @concept Utilities
 #' @examples
 #' library(SFEData)
-#' fp <- tempdir()
-#' dir_use <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v1", file_path = fp)
 #' # RBioFormats null pointer error
 #' try(getPixelSize(file.path(dir_use, "morphology_focus.ome.tif")))
 #' getPixelSize(file.path(dir_use, "morphology_focus.ome.tif"))
@@ -294,7 +210,25 @@ gdalParquetAvailable <- function() {
     (major_version == 1L && minor_version > 4L) || major_version == 2L
 }
 
-.get_tech_tx_fields <- function(tech, data_dir) {
+#' Get relevant fields and file paths for transcript spots
+#'
+#' Get column names for x, y, and z coordinates, gene IDs, and cell IDs from the
+#' transcript file and get file paths for transcript spot coordinates given
+#' technology.
+#'
+#' @param tech Name of the commercial technology, must be one of Vizgen, Xenium,
+#' and CosMX.
+#' @param data_dir Top level directory of the output.
+#' @return A named list with elements:
+#' \describe{
+#' \item{\code{spatialCoordsNames}}{A character vector for column names for the
+#' xyz coordinates of the transcript spots.}
+#' \item{\code{gene_col}}{Column name for gene IDs.}
+#' \item{\code{cell_col}}{Column name for cell IDs.}
+#' \item{\code{fn}}{File path of the transcript spot file.}
+#' }
+#' @export
+getTechTxFields <- function(tech, data_dir = NULL) {
     spatialCoordsNames <- switch(
         tech,
         Vizgen = c("global_x", "global_y", "global_z"),
@@ -313,14 +247,17 @@ gdalParquetAvailable <- function() {
         Xenium = "cell_id",
         CosMX = "cell_ID"
     )
-    fn <- switch(
-        tech,
-        Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
-        CosMX = grep("tx_file.csv",
-                     list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
-                     value = TRUE),
-        Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
-    )
+    if (is.null(data_dir)) fn <- NULL
+    else {
+        fn <- switch(
+            tech,
+            Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
+            CosMX = grep("tx_file.csv",
+                         list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
+                         value = TRUE),
+            Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
+        )
+    }
     list(spatialCoordsNames = spatialCoordsNames,
          gene_col = gene_col,
          cell_col = cell_col,
@@ -333,4 +270,47 @@ gdalParquetAvailable <- function() {
         features <- rowData(x)[[swap_rownames]][inds]
     } else features <- ids
     features
+}
+
+.check_tx_file <- function(file, spatialCoordsNames, gene_col, phred_col,
+                           min_phred, flip, BPPARAM = SerialParam()) {
+    if (is.character(file)) {
+        ext <- file_ext(file)
+        if (!ext %in% c("csv", "gz", "tsv", "txt", "parquet")) {
+            stop("The file must be one of csv, gz, tsv, txt, or parquet")
+        }
+        if (ext == "parquet") {
+            check_installed("arrow")
+            mols <- arrow::read_parquet(file)
+            # convert cols with raw bytes to character
+            # NOTE: can take a while.
+            mols <- .rawToChar_df(mols, BPPARAM = BPPARAM)
+            # sanity, convert to data.table
+            if (!is(mols, "data.table")) {
+                mols <- data.table::as.data.table(mols)
+            }
+        } else {
+            mols <- fread(file)
+        }
+    } else mols <- file
+
+    names(mols)[names(mols) == gene_col] <- "gene"
+    gene_col <- "gene"
+    ind <- !spatialCoordsNames[1:2] %in% names(mols)
+    if (any(ind)) {
+        col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
+        ax <- c("x", "y")
+        stop(paste(ax[ind], collapse = ", "), " coordinate column(s) ",
+             paste(col_offending, collapse = ", "), " not found.")
+    }
+    spatialCoordsNames <- intersect(spatialCoordsNames, names(mols))
+    if (flip) {
+        y_name <- spatialCoordsNames[2]
+        if (!is.data.table(mols)) ..y_name <- y_name
+        mols[,y_name] <- -mols[,..y_name]
+    }
+    if (phred_col %in% names(mols) && !is.null(min_phred)) {
+        mols <- mols[mols[[phred_col]] >= min_phred,]
+    }
+    mols
 }

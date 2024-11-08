@@ -18,30 +18,35 @@ SpatialFeatureExperiment(
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   unit = c("full_res_image_pixel", "micron"),
-  BPPARAM = deprecated(),
   ...
 )
 }
 \arguments{
-\item{assays}{A \code{list} or \code{SimpleList} of matrix-like elements,
+\item{assays}{
+    A \code{list} or \code{SimpleList} of matrix-like elements,
     or a matrix-like object (e.g. an ordinary matrix, a data frame,
     a \link[S4Vectors]{DataFrame} object from the \pkg{S4Vectors} package,
-    a \link[Matrix]{sparseMatrix} derivative from the \pkg{Matrix} package,
-    a \link[DelayedArray]{DelayedMatrix} object from the \pkg{DelayedArray}
-    package, etc...).
+    a \link[SparseArray]{SparseMatrix} derivative from the \pkg{SparseArray}
+    package, a \link[Matrix]{sparseMatrix} derivative from the \pkg{Matrix}
+    package, a \link[DelayedArray]{DelayedMatrix} object from the
+    \pkg{DelayedArray} package, etc...).
     All elements of the list must have the same dimensions, and dimension
     names (if present) must be consistent across elements and with the row
-    names of \code{rowRanges} and \code{colData}.}
+    names of \code{rowRanges} and \code{colData}.
+  }
 
-\item{colData}{An optional \link{DataFrame} describing the
-    samples. Row names, if present, become the column names of the
-    RangedSummarizedExperiment.}
+\item{colData}{
+    An optional \link{DataFrame} describing the samples. Row names on
+    \code{colData}, if present, become the column names of the returned object.
+  }
 
-\item{rowData}{A \link[S4Vectors]{DataFrame} object describing 
-    the rows. Row names, if present, become the row names of the
-    SummarizedExperiment object. The number of rows of the
-    \link[S4Vectors]{DataFrame} must equal the number of rows of the
-    matrices in \code{assays}.}
+\item{rowData}{
+    \code{NULL} (the default) or a \link[S4Vectors]{DataFrame} object
+    describing the rows. Row names, if present, become the row names of
+    the constructed SummarizedExperiment object. The number of rows of
+    the \link[S4Vectors]{DataFrame} must equal the number of rows of the
+    matrices in \code{assays}.
+  }
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -118,9 +123,6 @@ for spatial neighborhood graphs.}
 
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
-
-\item{BPPARAM}{Deprecated. The `sfheaders` package is used in
-\code{\link{df2sf}} for much better performance.}
 
 \item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
 and \code{\link{SingleCellExperiment}} constructors.}

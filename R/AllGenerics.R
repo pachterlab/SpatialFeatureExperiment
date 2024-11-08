@@ -269,3 +269,6 @@ if (!isGeneric("unwrap")) {setGeneric("unwrap", function(x, ...) standardGeneric
 
 #' @export
 setGeneric("Img<-", function(x, sample_id = 1L, image_id, scale_fct = 1, value) standardGeneric("Img<-"))
+
+#' @export
+setGeneric("splitByCol", function(x, f, ...) standardGeneric("splitByCol"))

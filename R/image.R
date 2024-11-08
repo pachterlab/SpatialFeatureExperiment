@@ -167,7 +167,7 @@ setValidity("BioFormatsImage", function(object) {
         } else if (mat) {
             M <- object@transformation$M
             v <- object@transformation$v
-            if (!identical(dim(M), c(2,2)) || !is.numeric(M) || .numeric2NA(v)) {
+            if (!identical(dim(M), c(2L,2L)) || !is.numeric(M) || .numeric2NA(v)) {
                 outs[4] <- paste0("M must be a 2x2 numeric matrix, and v a numeric vector of length 2 with no NA.")
             }
         }
@@ -409,8 +409,8 @@ ExtImage <- function(img, ext = NULL) {
             message("Resolution subscript out of bound, reading the lowest resolution")
             resolution <- n_res
         }
-        meta <- coreMetadata(m, series = resolution)
     }
+    meta <- coreMetadata(m, series = resolution)
     # Extent of lower resolution may not be the same as the top one
     # Need to more accurately infer extent
     # Infer the scale factor, and then get the difference from the rounding
@@ -616,8 +616,6 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #' @family image methods
 NULL
 
-.ext_ <- function(x) x@ext[c("xmin", "xmax", "ymin", "ymax")]
-
 #' @rdname ext
 #' @export
 setMethod("ext", "BioFormatsImage",
@@ -708,8 +706,8 @@ setMethod("dim", "BioFormatsImage", function(x) {
 #' library(EBImage)
 #' library(SFEData)
 #' library(RBioFormats)
-#' fp <- tempdir()
-#' fn <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' fn <- XeniumOutput("v2", file_path = fp)
 #' # Weirdly the first time I get the null pointer error
 #' try(sfe <- readXenium(fn))
 #' sfe <- readXenium(fn)
@@ -763,7 +761,6 @@ setMethod("Img<-", signature = "SpatialExperiment",
 #'   \code{\link{sampleIDs}} to get sample IDs present in the SFE object.
 #' @param image_id Image ID, such as "lowres" and "hires" for Visium data and
 #'   "DAPI" and "PolyT" for Vizgen MERFISH data.
-#' @param file File from which to read the image.
 #' @param extent A numeric vector of length 4 with names of the set xmin, ymin,
 #'   xmax, and ymax, specifying the extent of the image.
 #' @param scale_fct Scale factor -- multiply pixel coordinates in full
@@ -793,16 +790,58 @@ setMethod("Img<-", signature = "SpatialExperiment",
 #' sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
 NULL
 
+.get_img_idx <- function(x, sample_id=NULL, image_id=NULL) {
+    img <- imgData(x)
+    for (i in c("sample_id", "image_id")) {
+        j <- get(i)
+        if (is.factor(j) || is.numeric(j))
+            assign(i, as.character(j))
+        if (!(is.null(j) || j %in% img[[i]] ||
+              length(j) == 1 && is.logical(j)))
+            stop(sprintf(c(
+                "'%s' invalid; should be NULL, TRUE/FALSE,",
+                " or matching entries in imgData(.)$%s"), i))
+    }
+    if (is.character(sample_id) && is.character(image_id)) {
+        sid <- img$sample_id == sample_id
+        iid <- img$image_id == image_id
+    } else if (isTRUE(sample_id) && isTRUE(image_id)) {
+        sid <- iid <- !logical(nrow(img))
+    } else if (is.null(sample_id) && is.null(image_id)) {
+        sid <- iid <- diag(nrow(img))[1, ]
+    } else if (is.character(sample_id) && isTRUE(image_id)) {
+        sid <- img$sample_id == sample_id
+        iid <- !logical(nrow(img))
+    } else if (is.character(image_id) && isTRUE(sample_id)) {
+        iid <- img$image_id == image_id
+        sid <- !logical(nrow(img))
+    } else if (is.character(sample_id) && is.null(image_id)) {
+        sid <- img$sample_id == sample_id
+        iid <- diag(nrow(img))[which(sid)[1], ]
+    } else if (is.character(image_id) && is.null(sample_id)) {
+        iid <- img$image_id == image_id
+        sid <- diag(nrow(img))[which(iid)[1], ]
+    } else if (isTRUE(sample_id) && is.null(image_id)) {
+        iid <- match(unique(img$sample_id), img$sample_id)
+        iid <- colSums(diag(nrow(img))[iid, , drop=FALSE])
+        sid <- !logical(nrow(img))
+    } else if (isTRUE(image_id) && is.null(sample_id)) {
+        sid <- match(unique(img$image_id), img$image_id)
+        sid <- colSums(diag(nrow(img))[sid, , drop=FALSE])
+        iid <- !logical(nrow(img))
+    }
+    if (!any(idx <- sid & iid)) 
+        stop("No 'imgData' entry(ies) matched the specified", 
+             sprintf(" 'image_id = %s' and 'sample_id = %s'", 
+                     dQuote(image_id), dQuote(sample_id)))
+    return(which(idx))
+}
+
 #' @rdname SFE-image
 #' @export
 setMethod("addImg", "SpatialFeatureExperiment",
           function(x, imageSource, sample_id = 1L, image_id,
-                   extent = NULL, scale_fct = 1, file = deprecated()) {
-              if (lifecycle::is_present(file)) {
-                  deprecate_warn("1.6.0", "SpatialFeatureExperiment::addImg(file = )",
-                                 "SpatialFeatureExperiment::addImg(imageSource = )")
-                  imageSource <- file
-              }
+                   extent = NULL, scale_fct = 1) {
               sample_id <- .check_sample_id(x, sample_id)
               if (!is.null(extent)) {
                   if (!is.numeric(extent))
@@ -818,7 +857,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
               # check that image entry doesn't already exist
               idx <- tryCatch(
                   error=function(e) e,
-                  SpatialExperiment:::.get_img_idx(x, sample_id, image_id))
+                  .get_img_idx(x, sample_id, image_id))
 
               if (!inherits(idx, "error"))
                   stop("'imgData' already contains an entry with",
@@ -878,7 +917,7 @@ setMethod("addImg", "SpatialFeatureExperiment",
         old <- getImg(x, sample_id, image_id)
         if (!is.null(old)) {
             if (!is.list(old)) old <- list(old)
-            idx <- SpatialExperiment:::.get_img_idx(x, sample_id, image_id)
+            idx <- .get_img_idx(x, sample_id, image_id)
             new <- lapply(old, img_fun, ...)
             imgData(x)$data[idx] <- new
         }
@@ -1008,7 +1047,7 @@ NULL
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              out <- sources(imgRaster(x))
+              out <- sources(imgRaster(x)) |> normalizePath()
               if (out == "") out <- NA_character_
               return(out)
           })

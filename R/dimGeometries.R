@@ -398,8 +398,8 @@ nucSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' @examples
 #' library(SFEData)
 #' library(RBioFormats)
-#' fp <- tempdir()
-#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v2", file_path = fp)
 #' # RBioFormats issue
 #' try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #' sfe <- readXenium(dir_use, add_molecules = TRUE)
@@ -476,18 +476,6 @@ NULL
     if (any(has_other)) {
         stop("Name of rowGeometry for all samples should not include any sample ID.")
     }
-}
-
-.check_rg <- function(type, x, sample_id) {
-    if (identical(sample_id, "all")) {
-        .check_rg_sample_all(type, x)
-    } else if (!identical(sample_id, "all")) {
-        sample_id <- .check_sample_id(x, sample_id, TRUE)
-        # By convention, should be name_sample to distinguish between samples for
-        # rowGeometries of the same name
-        type <- .check_rg_type(type, x, sample_id)
-    }
-    type
 }
 
 #' @rdname rowGeometries

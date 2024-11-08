@@ -122,13 +122,14 @@
 #' @examples
 #' library(SFEData)
 #' if (gdalParquetAvailable()) {
-#'     fp <- tempdir()
-#'     dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#'     fp <- tempfile()
+#'     dir_use <- XeniumOutput("v2", file_path = fp)
 #'     fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
 #'                           file_out = file.path(dir_use, "tx_spots.parquet"))
 #'     gene_select <- c("ACE2", "BMX")
 #'     df <- readSelectTx(fn_tx, gene_select)
-#'
+#'     # RBioFormats null pointer error the first time
+#'     try(sfe <- readXenium(dir_use))
 #'     sfe <- readXenium(dir_use)
 #'     sfe <- addSelectTx(sfe, fn_tx, head(rownames(sfe), 5), swap_rownames = "Symbol")
 #'     unlink(dir_use, recursive = TRUE)
@@ -292,14 +293,14 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' @rdname formatTxSpots
 #' @examples
 #' # Default arguments are for MERFISH
-#' fp <- tempdir()
-#' dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+#' fp <- tempfile()
+#' dir_use <- SFEData::VizgenOutput(file_path = fp)
 #' g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 #' unlink(dir_use, recursive = TRUE)
 #'
 #' # For CosMX, note the colnames, also dest = "colGeometry"
 #' # Results are written to the tx_spots directory
-#' dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+#' dir_use <- SFEData::CosMXOutput(file_path = fp)
 #' cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 #' dest = "colGeometry", z = "all",
 #' cell_col = c("cell_ID", "fov"),
@@ -319,14 +320,10 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
     z_option <- match.arg(z_option)
-    ext <- file_ext(file)
     if (dest == "colGeometry") {
         return <- FALSE
         if (is.null(file_out))
             stop("file_out must be specified for dest = 'colGeometry'.")
-    }
-    if (!ext %in% c("csv", "gz", "tsv", "txt", "parquet")) {
-        stop("The file must be one of csv, gz, tsv, txt, or parquet")
     }
     if (!is.null(file_out) && (file.exists(file_out) ||
                                dir.exists(file_path_sans_ext(file_out)))) {
@@ -336,34 +333,9 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     if (!is.numeric(z) && z != "all") {
         stop("z must either be numeric or be 'all' indicating all z-planes.")
     }
-    if (ext == "parquet") {
-        check_installed("arrow")
-        mols <- arrow::read_parquet(file)
-        # convert cols with raw bytes to character
-        # NOTE: can take a while.
-        mols <- .rawToChar_df(mols, BPPARAM = BPPARAM)
-        # sanity, convert to data.table
-        if (!is(mols, "data.table")) {
-            mols <- data.table::as.data.table(mols)
-        }
-    } else {
-        mols <- fread(file)
-    }
-    names(mols)[names(mols) == gene_col] <- "gene"
+    mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
+                           min_phred, flip, BPPARAM)
     gene_col <- "gene"
-    ind <- !spatialCoordsNames[1:2] %in% names(mols)
-    if (any(ind)) {
-        col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
-        ax <- c("x", "y")
-        stop(paste(ax[ind], collapse = ", "), " coordinate column(s) ",
-             paste(col_offending, collapse = ", "), " not found.")
-    }
-    spatialCoordsNames <- intersect(spatialCoordsNames, names(mols))
-    if (flip) {
-        y_name <- spatialCoordsNames[2]
-        if (!is.data.table(mols)) ..y_name <- y_name
-        mols[,y_name] <- -mols[,..y_name]
-    }
     # Check z
     use_z <- length(spatialCoordsNames) == 3L
     if (use_z) {
@@ -387,9 +359,6 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
             z <- "all" # Non-integer z values
             z_option <- "3d"
         }
-    }
-    if (phred_col %in% names(mols) && !is.null(min_phred)) {
-        mols <- mols[mols[[phred_col]] >= min_phred,]
     }
     message(">>> Converting transcript spots to geometry")
     if (dest == "colGeometry") {
@@ -523,8 +492,8 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
 #' @export
 #' @examples
 #' library(SFEData)
-#' fp <- tempdir()
-#' dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+#' fp <- tempfile()
+#' dir_use <- XeniumOutput("v2", file_path = fp)
 #' fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
 #'                       file_out = file.path(dir_use, "tx_spots.parquet"))
 #'
@@ -538,7 +507,7 @@ formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     tech <- match.arg(tech)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
-        .get_tech_tx_fields(tech, data_dir)
+        getTechTxFields(tech, data_dir)
     if (tech == "CosMX" && split_cell_comps)
         split_col <- "CellComp"
     else split_col <- NULL
@@ -565,7 +534,7 @@ addTxTech <- function(sfe, data_dir, sample_id = 1L,
                       z_option = c("3d", "split"), flip = FALSE,
                       file_out = NULL, BPPARAM = SerialParam()) {
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
-        .get_tech_tx_fields(tech, data_dir)
+        getTechTxFields(tech, data_dir)
     if (tech == "CosMX") flip <- FALSE
     if (tech == "CosMX" && split_cell_comps)
         split_col <- "CellComp"

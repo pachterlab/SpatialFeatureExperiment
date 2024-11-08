@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.6.1
+Version: 1.8.1
 Authors@R: 
     c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
     role = c("aut", "cre"),
@@ -45,13 +45,16 @@ Imports:
     zeallot
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Collate: 
     'AllGenerics.R'
     'utils.R'
     'SFE-class.R'
+    'aggregate.R'
+    'align.R'
     'annotGeometries.R'
     'cbind.R'
+    'changeSampleIDs.R'
     'coerce.R'
     'data.R'
     'df2sf.R'
@@ -63,11 +66,13 @@ Collate:
     'image.R'
     'int_dimData.R'
     'internal-Voyager.R'
+    'listw2sparse.R'
     'localResults.R'
     'read.R'
     'reexports.R'
     'saveRDS.R'
     'spatialGraphs.R'
+    'split.R'
     'subset.R'
     'transformation.R'
     'updateObject.R'
@@ -75,22 +80,23 @@ Collate:
 Suggests: 
     arrow,
     BiocStyle,
+    dplyr,
     knitr,
     RBioFormats,
     rhdf5,
     rmarkdown,
+    scater,
     sfarrow,
     SFEData (>= 1.5.3),
-    testthat (>= 3.0.0),
-    Voyager,
-    xml2,
-    scater,
     Seurat,
     SeuratObject,
-    dplyr,
-    tidyr
+    sparseMatrixStats,
+    testthat (>= 3.0.0),
+    tidyr,
+    Voyager (>= 1.7.2),
+    xml2
 Remotes:
-    Voyager=github::pachterlab/voyager
+    Voyager=github::pachterlab/voyager@devel
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

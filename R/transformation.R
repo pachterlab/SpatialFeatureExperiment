@@ -86,8 +86,10 @@
 .transform_geometry.sf <- function(g, mult, add) {
     gt <- st_geometry_type(g, FALSE) |> as.character()
     if (gt == "GEOMETRY") return(.transform_geometry_sf(g, mult, add))
-    # Empty geometries in the midst of 3D geometries causes trouble in st_coordinates
-    if (!is.null(st_z_range(g))) g <- g[!st_is_empty(g),]
+    # Empty geometries causes trouble in st_coordinates
+    inds <- !st_is_empty(g)
+    rns <- rownames(g)[inds]
+    g <- g[inds,]
     coords <- st_coordinates(g)
     coords[,c("X","Y")] <- .transform_geometry(coords[,c("X","Y")], mult, add)
     coord_names <- if (is.null(st_z_range(g))) c("X","Y") else c("X","Y","Z")
@@ -101,6 +103,7 @@
                 group_col = group_col, id_col = id_col, subid_col = subid_col,
                 check = FALSE)
     st_geometry(g) <- st_geometry(g2)
+    rownames(g) <- rns
     g
 }
 

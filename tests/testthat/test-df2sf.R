@@ -12,8 +12,6 @@ test_that("df2sf works properly for points", {
 
 test_that("Points but with spotDiameter", {
     sf_use <- df2sf(pts_df, geometryType = "POINT", spotDiameter = 0.1)
-    expect_warning(df2sf(pts_df, geometryType = "POINT", spotDiameter = 0.1,
-                         BPPARAM = BiocParallel::SerialParam()), "deprecated")
     pts_sf_dia <- readRDS(system.file("extdata/pts_sf_dia.rds",
         package = "SpatialFeatureExperiment"
     ))

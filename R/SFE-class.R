@@ -87,8 +87,6 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
 #' @param unit Unit the coordinates are in, either microns or pixels in full
 #'   resolution image.
-#' @param BPPARAM Deprecated. The `sfheaders` package is used in
-#'   \code{\link{df2sf}} for much better performance.
 #' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
 #'   and \code{\link{SingleCellExperiment}} constructors.
 #' @return A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
@@ -143,12 +141,7 @@ SpatialFeatureExperiment <- function(assays,
                                      annotGeometryType = "POLYGON",
                                      spatialGraphs = NULL,
                                      unit = c("full_res_image_pixel", "micron"),
-                                     BPPARAM = deprecated(),
                                      ...) {
-    if (is_present(BPPARAM)) {
-        deprecate_warn("1.6.0", "SpatialFeatureExperiment(BPPARAM = )",
-                       details = "The sfheaders package is now used in df2sf() for much better performance")
-    }
     if (!length(colData)) {
         colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
     }
@@ -186,71 +179,6 @@ SpatialFeatureExperiment <- function(assays,
         spatialCoordsNames, annotGeometryType,
         spatialGraphs, spotDiameter, unit
     )
-    return(sfe)
-}
-
-#' @importFrom grDevices col2rgb
-.spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
-                        spatialCoordsNames, annotGeometryType, spatialGraphs,
-                        spotDiameter, unit) {
-    if (is.null(colGeometries)) {
-      cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
-      colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter))
-      names(colGeometries) <- cg_name
-    }
-    if (!is.null(rowGeometries)) {
-        rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
-            spotDiameter = NA, geometryType = "POLYGON"
-        )
-    }
-    if (!is.null(annotGeometries)) {
-        annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
-            spotDiameter = NA,
-            geometryType = annotGeometryType
-        )
-    }
-    if (nrow(imgData(spe))) {
-        # Convert to SpatRaster
-        img_data <- imgData(spe)$data
-        new_imgs <- lapply(seq_along(img_data), function(i) {
-            img <- img_data[[i]]
-            if (is(img, "LoadedSpatialImage")) {
-                im <- imgRaster(img)
-                rgb_v <- col2rgb(im)
-                nrow <- dim(im)[2]
-                ncol <- dim(im)[1]
-                r <- t(matrix(rgb_v["red",], nrow = nrow, ncol = ncol))
-                g <- t(matrix(rgb_v["green",], nrow = nrow, ncol = ncol))
-                b <- t(matrix(rgb_v["blue",], nrow = nrow, ncol = ncol))
-                arr <- simplify2array(list(r, g, b))
-                im_new <- rast(arr)
-                terra::RGB(im_new) <- seq_len(3)
-            } else if (is(img, "RemoteSpatialImage") || is(img, "StoredSpatialImage")) {
-                suppressWarnings(im_new <- rast(imgSource(img)))
-            } else if (!is(img, "SpatRasterImage")) {
-                warning("Don't know how to convert image ", i, " to SpatRaster, ",
-                        "dropping image.")
-                im_new <- NULL
-            }
-            # Use scale factor for extent
-            ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
-            im_new
-        })
-        inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
-        new_imgs <- new_imgs[inds]
-        new_imgs <- lapply(new_imgs, function(im) {
-            new("SpatRasterImage", im)
-        })
-        imgData(spe) <- imgData(spe)[inds,]
-        if (length(new_imgs)) imgData(spe)$data <- new_imgs
-    }
-    sfe <- new("SpatialFeatureExperiment", spe)
-    colGeometries(sfe, withDimnames = FALSE) <- colGeometries
-    rowGeometries(sfe, withDimnames = FALSE) <- rowGeometries
-    annotGeometries(sfe) <- annotGeometries
-    spatialGraphs(sfe) <- spatialGraphs
-    int_metadata(sfe)$unit <- unit
-    int_metadata(sfe)$SFE_version <- packageVersion("SpatialFeatureExperiment")
     return(sfe)
 }
 

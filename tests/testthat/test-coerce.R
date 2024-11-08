@@ -2,6 +2,7 @@ library(SpatialExperiment)
 library(SingleCellExperiment)
 library(DropletUtils)
 library(sf)
+library(SFEData)
 
 dir <- system.file("extdata/sample01", package = "SpatialFeatureExperiment")
 
@@ -19,14 +20,14 @@ test_that("Convert SPE and SCE to SFE, no images", {
     colData(sce) <- cbind(colData(sce), coords[,c("pxl_col_in_fullres", "pxl_row_in_fullres")])
     sfe4 <- toSpatialFeatureExperiment(sce, spatialCoordsNames = c("pxl_col_in_fullres",
                                                                    "pxl_row_in_fullres"))
-    sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered")
-    centroids_check <- st_centroid(spotPoly(sfe))
+    sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered", flip = "image")
+    centroids_check <- st_centroid(st_geometry(spotPoly(sfe)))
 
     expect_s4_class(sfe1, "SpatialFeatureExperiment")
     expect_equal(sfe2, sfe1)
     expect_equal(sfe3, sfe1)
     expect_equal(sfe4, sfe1)
-    expect_equal(centroids(sfe1), centroids_check, ignore_attr = "row.names")
+    expect_equal(st_geometry(centroids(sfe1)), centroids_check, ignore_attr = "row.names")
     expect_equal(spatialCoords(sfe1), spatialCoords(sfe), ignore_attr = "dimnames")
 })
 
@@ -68,4 +69,21 @@ test_that("Convert SPE to SFE, stored images", {
     diffs1 <- bbox[3:4] - bbox[1:2]
     diffs2 <- bbox_img[c(2,4)] - bbox_img[c(1,3)]
     expect_true(all(diffs1 / diffs2 > (1-1/min(dim(img1)))))
+})
+
+test_that("Convert SPE to SFE, with SpatRaster image", {
+    spe <- read10xVisium(dir, load = FALSE, type = "sparse")
+    suppressWarnings(Img(spe, image_id = "lowres") <- rast(imgSource(getImg(spe))) |> SpatRasterImage())
+    sfe <- toSpatialFeatureExperiment(spe)
+    expect_true(is(getImg(sfe), "SpatRaster"))
+    expect_equal(getImg(spe), getImg(sfe))
+})
+
+test_that("Convert SPE to SFE, when the SPE has BioFormatsImage", {
+    fp <- tempfile()
+    xenium <- XeniumOutput("v1")
+    sfe <- readXenium(xenium)
+    spe <- as(sfe, "SpatialExperiment")
+    sfe2 <- toSpatialFeatureExperiment(spe)
+    expect_s4_class(getImg(sfe2), "BioFormatsImage")
 })
