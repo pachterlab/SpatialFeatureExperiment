@@ -7,8 +7,16 @@ pts = st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
 pol = st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
 
 test_that("trivial, st_any_intersects", {
-    o <- st_any_intersects(pts, pol)
+    o <- st_any_intersects(pts, pol, sparse = FALSE)
     expect_equal(o, c(TRUE, TRUE, FALSE))
+    o <- st_any_intersects(pts, pol, sparse = TRUE)
+    expect_equal(o, c(1L, 2L))
+})
+
+test_that("Swap x and y for st_intersects", {
+    o1 <- st_any_intersects(pts, pol, sparse = TRUE)
+    o2 <- st_any_intersects(pts, pol, sparse = TRUE, yx = TRUE)
+    expect_equal(o1, o2)
 })
 
 test_that("trivial, st_n_intersects", {
@@ -48,10 +56,10 @@ rowGeometry(sfe_visium, "points", sample_id = "sample01", withDimnames = FALSE) 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all")
     cg <- spotPoly(sfe_cropped, "all")
-    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
+    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by, sparse = FALSE)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
     rg <- rowGeometry(sfe_cropped)
-    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by)))
+    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by, sparse = FALSE)))
 })
 
 test_that("Only crop one sample out of two, with sf", {
@@ -59,10 +67,10 @@ test_that("Only crop one sample out of two, with sf", {
                  "No bounding boxes for samples specified.")
     sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample01")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped2, "sample02"), bbox_use,
-                                 pred = st_covered_by
+                                 pred = st_covered_by, sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped2, "sample02"),
@@ -92,10 +100,10 @@ test_that("Using a bounding box to crop SFE objects, current way, one sample", {
                  "No bounding boxes for samples specified.")
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use,
-                                 pred = st_covered_by
+                                 pred = st_covered_by, sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped, "sample02"),
@@ -111,10 +119,10 @@ test_that("Using a bounding box to crop SFE objects, current way, all samples", 
                                 c("sample01", "sample02")))
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use2,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
 })
 
@@ -289,7 +297,7 @@ test_that("annotOp", {
         rownames(out),
         colnames(sfe_visium)[colData(sfe_visium)$sample_id == "sample01"]
     )
-    p <- st_any_pred(out, bbox_use, st_covered_by)
+    p <- st_any_pred(out, bbox_use, st_covered_by, sparse = FALSE)
     expect_true(all(p[c(1, 2, 5)]))
     expect_false(any(p[3:4]))
 })

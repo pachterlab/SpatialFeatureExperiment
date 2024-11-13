@@ -7,11 +7,11 @@
 \alias{st_n_intersects}
 \title{Simple geometry predicates}
 \usage{
-st_any_pred(x, y, pred)
+st_any_pred(x, y, pred, yx = FALSE, sparse = FALSE, ...)
 
-st_any_intersects(x, y)
+st_any_intersects(x, y, yx = FALSE, sparse = FALSE)
 
-st_n_pred(x, y, pred)
+st_n_pred(x, y, pred, ...)
 
 st_n_intersects(x, y)
 }
@@ -23,11 +23,24 @@ st_n_intersects(x, y)
 \item{pred}{A geometric binary predicate function, such as
 \code{\link{st_intersects}}. It should return an object of class
 \code{sgbp}, for sparse predicates.}
+
+\item{yx}{Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
+symmetric predicates, the results should be the same. When x has a large
+number of geometries and y has few, \code{pred(y, x)} is much faster than
+\code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
+\code{st_is_within_distance}.}
+
+\item{sparse}{If \code{TRUE}, returns numeric indices rather than logical
+vector. Defaults to \code{FALSE} for backward compatibility, though the
+default in \code{st_intersects} is \code{TRUE}.}
+
+\item{...}{Arguments passed to \code{pred}.}
 }
 \value{
 For \code{st_any_*}, a logical vector indicating whether each
   geometry in \code{x} intersects (or other predicates such as is covered by)
-  anything in \code{y}. Simplified from the \code{sgbp} results which
+  anything in \code{y} or a numeric vector of indices of \code{TRUE} when
+  \code{sparse = TRUE}. Simplified from the \code{sgbp} results which
   indicate which item in \code{y} each item in \code{x} intersects, which
   might not always be relevant. For \code{st_n_*}, an integer vector
   indicating the number of geometries in y returns TRUE for each geometry in

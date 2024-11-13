@@ -13,9 +13,19 @@
 #' @param pred A geometric binary predicate function, such as
 #'   \code{\link{st_intersects}}. It should return an object of class
 #'   \code{sgbp}, for sparse predicates.
+#' @param yx Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
+#'   symmetric predicates, the results should be the same. When x has a large
+#'   number of geometries and y has few, \code{pred(y, x)} is much faster than
+#'   \code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
+#'   \code{st_is_within_distance}.
+#' @param sparse If \code{TRUE}, returns numeric indices rather than logical
+#'   vector. Defaults to \code{FALSE} for backward compatibility, though the
+#'   default in \code{st_intersects} is \code{TRUE}.
+#' @param ... Arguments passed to \code{pred}.
 #' @return For \code{st_any_*}, a logical vector indicating whether each
 #'   geometry in \code{x} intersects (or other predicates such as is covered by)
-#'   anything in \code{y}. Simplified from the \code{sgbp} results which
+#'   anything in \code{y} or a numeric vector of indices of \code{TRUE} when
+#'   \code{sparse = TRUE}. Simplified from the \code{sgbp} results which
 #'   indicate which item in \code{y} each item in \code{x} intersects, which
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
@@ -36,18 +46,27 @@
 #' st_any_intersects(pts, pol)
 #' st_n_pred(pts, pol, pred = st_disjoint)
 #' st_n_intersects(pts, pol)
-st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
-# TODO: put the item with more geometries in the x position. This way is much faster.
-# If swapping positions, it shouldn't be hard to recover it if the pred is symmetric
+st_any_pred <- function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
+    if (length(x) > length(y)*10 && yx) {
+        res <- unlist(unclass(pred(y, x, ...)))
+        res <- sort(unique(res))
+        if (!sparse) res <- which(seq_along(x) %in% res)
+    } else {
+        res <- lengths(pred(x, y, ...)) > 0L
+        if (sparse) res <- which(res)
+    }
+    res
+}
 
 #' @rdname st_any_pred
 #' @export
-st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
+st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE) 
+    st_any_pred(x, y, st_intersects, yx = yx, sparse = sparse)
 
 #' @rdname st_any_pred
 #' @export
-st_n_pred <- function(x, y, pred) lengths(pred(x, y))
-
+st_n_pred <- function(x, y, pred, ...) lengths(pred(x, y, ...))
+# Not doing yx here since this is usually not used when length(y) << length(x)
 #' @rdname st_any_pred
 #' @export
 st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
@@ -145,7 +164,8 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' (i.e. \code{colGeometry}) and an annotation geometry for each sample. For
 #' example, whether each Visium spot intersects with the tissue boundary in each
 #' sample.
-#'
+#' 
+#' @inheritParams st_any_pred
 #' @param sfe An SFE object.
 #' @param colGeometryName Name of column geometry for the predicate.
 #' @param annotGeometryName Name of annotation geometry for the predicate.
@@ -171,12 +191,13 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' # How many nuclei are there in each Visium spot
 #' n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                      sample_id = "all", pred = st_intersects) {
+                      sample_id = "all", pred = st_intersects, yx = FALSE) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
         colGeometryName = colGeometryName,
-        samples_use = sample_id, fun = st_any_pred, pred = pred
+        samples_use = sample_id, fun = st_any_pred, pred = pred,
+        yx = yx, sparse = FALSE
     )
 }
 
@@ -425,7 +446,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     }
     preds <- .annot_fun(x, y, colGeometryName,
         samples_use = samples_use,
-        fun = st_any_pred, pred = pred
+        fun = st_any_pred, pred = pred, yx = TRUE
     )
     # Don't remove anything from other samples
     other_bcs <- setdiff(colnames(x), names(preds))
