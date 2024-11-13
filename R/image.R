@@ -1047,8 +1047,12 @@ NULL
 setMethod("imgSource",
           "SpatRasterImage",
           function(x) {
-              out <- sources(imgRaster(x)) |> normalizePath()
-              if (out == "") out <- NA_character_
+              out <- sources(x)
+              if (out == "") return(NA_character_)
+              # Deal with multi-page TIFF that gets GTIFF_DIR:x:
+              # Assume the image was read from a single file from addImg
+              out <- gsub("^GTIFF_DIR\\:\\d+\\:", "", out)
+              out <- normalizePath(out)
               return(out)
           })
 
