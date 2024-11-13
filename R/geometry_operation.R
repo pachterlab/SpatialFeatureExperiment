@@ -47,10 +47,10 @@
 #' st_n_pred(pts, pol, pred = st_disjoint)
 #' st_n_intersects(pts, pol)
 st_any_pred <- function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
-    if (length(x) > length(y)*10 && yx) {
+    if (yx) {
         res <- unlist(unclass(pred(y, x, ...)))
         res <- sort(unique(res))
-        if (!sparse) res <- which(seq_along(x) %in% res)
+        if (!sparse) res <- seq_along(st_geometry(x)) %in% res
     } else {
         res <- lengths(pred(x, y, ...)) > 0L
         if (sparse) res <- which(res)
@@ -401,7 +401,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
-#' @importFrom sf st_intersection st_union st_agr st_covered_by st_disjoint
+#' @importFrom sf st_intersection st_union st_agr st_covers st_disjoint
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @export
 #' @examples
@@ -426,9 +426,9 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     }
     is_difference <- identical(op, sf::st_difference)
     pred <- if (is_difference) {
-        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covered_by(x, y, sparse = sparse)
+        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
     } else {
-        if (cover) st_covered_by else st_intersects
+        if (cover) st_covers else st_intersects
     }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
