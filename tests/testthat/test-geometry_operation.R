@@ -143,10 +143,10 @@ test_that("Keep whole colGeometry items", {
     cg2 <- colGeometry(sfe_cropped, sample_id = "sample01")
     # colGeometry not cropped
     expect_equal(cg, cg2)
-    # annotGeometry cropped by bbox of colGeometry
+    # annotGeometry cropped
     cg_bbox <- st_bbox(cg) |> st_as_sfc()
     ag2 <- annotGeometry(sfe_cropped, sample_id = "sample01")
-    expect_true(st_equals(ag2, cg_bbox, sparse = FALSE))
+    expect_true(st_equals(ag2, st_as_sfc(bbox_cg), sparse = FALSE))
     # rowGeometry
     rg_check <- rowGeometry(sfe_cropped, "points", sample_id = "sample01")
     rg_bbox2 <- st_bbox(rg_check) |> st_as_sfc()

@@ -37,6 +37,8 @@
 #' st_n_pred(pts, pol, pred = st_disjoint)
 #' st_n_intersects(pts, pol)
 st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
+# TODO: put the item with more geometries in the x position. This way is much faster.
+# If swapping positions, it shouldn't be hard to recover it if the pred is symmetric
 
 #' @rdname st_any_pred
 #' @export
@@ -460,18 +462,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                 rbind(in_sample[preds,], other_samples)
         })
     } else {
-        if ("col" %in% keep_whole) {
-            y <- lapply(samples_use, function(s) {
-                sample_index <- colData(out)$sample_id == s
-                cgs <- as.list(int_colData(out)[["colGeometries"]][sample_index, ,
-                                                                   drop = FALSE
-                ])
-                lapply(cgs, st_bbox) |> aggBboxes()
-            })
-            y <- do.call(cbind, y)
-            colnames(y) <- samples_use
-            y <- .bbox2sf(y, samples_use)
-        }
         annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
                                        y = y,
                                        samples_use = samples_use, op = op,
@@ -479,12 +469,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         )
     }
     if (length(rowGeometries(out))) {
-        if (!identical(keep_whole, "none") && length(rowGeometries(out))) {
-            # What about rowGeometries? Can't just use preds.
-            # I think use the actual bbox of colGeometries if not cropped
-            y <- bbox(out, sample_id = samples_use, include_row = FALSE)
-            y <- .bbox2sf(y, samples_use)
-        }
         for (s in samples_use) {
             rgs <- rowGeometries(out, sample_id = s)
             rowGeometries(out, sample_id = s) <-

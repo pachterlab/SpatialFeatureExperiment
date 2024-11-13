@@ -52,7 +52,7 @@ setMethod("splitByCol", c("SpatialFeatureExperiment", "sfc"),
               x <- x[, x$sample_id == sample_id]
               lapply(f, function(g) {
                   crop(x, g, colGeometryName = colGeometryName,
-                       keep_whole = "col", cover = cover) # Maybe I can make cover optional
+                       keep_whole = "col", cover = cover)
               })
           })
 
