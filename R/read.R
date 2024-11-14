@@ -340,7 +340,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
         grep("binned_out|square|um$", dirs_check) |> any()
     if (sanity_passed) {
         # match sample names with bin_size
-        samples <- grep(paste0(bin_size, collapse = "|"), dirs_check, value = TRUE)
+        samples <- grep(paste0(paste0(bin_size, collapse = "|"), "um$"), dirs_check, value = TRUE)
     } else {
         stop("data_dir should contain or be `square_0xxum`")
     }
