@@ -18,6 +18,7 @@
 #'   it will be the row and column names of the output matrix.
 #' @export
 #' @importFrom Matrix sparseMatrix
+#' @concept Spatial neighborhood graph
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData("small")
@@ -47,6 +48,7 @@ listw2sparse <- function(listw) {
 #' When the input is an SFE object, the rows and columns will match the column
 #' names of the SFE object.
 #' @export
+#' @concept Spatial neighborhood graph
 #' @examples
 #' # example code
 #'

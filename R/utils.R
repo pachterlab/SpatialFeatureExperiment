@@ -228,6 +228,7 @@ gdalParquetAvailable <- function() {
 #' \item{\code{fn}}{File path of the transcript spot file.}
 #' }
 #' @export
+#' @concept Utilities
 getTechTxFields <- function(tech, data_dir = NULL) {
     spatialCoordsNames <- switch(
         tech,

@@ -87,3 +87,4 @@ This function reads Visium HD Space Ranger output into R.
 \examples{
 #
 }
+\concept{Read data into SFE}

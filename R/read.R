@@ -310,6 +310,7 @@ read10xVisiumSFE <- function(samples = "",
 #'   not zooming in. See the \code{scattermore} argument in
 #'   \code{\link[Voyager]{plotSpatialFeature}}.
 #' @export
+#' @concept Read data into SFE
 #' @examples
 #' #
 readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L), 

@@ -27,3 +27,4 @@ Get column names for x, y, and z coordinates, gene IDs, and cell IDs from the
 transcript file and get file paths for transcript spot coordinates given
 technology.
 }
+\concept{Utilities}
