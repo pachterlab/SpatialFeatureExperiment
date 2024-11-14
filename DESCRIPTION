@@ -79,6 +79,7 @@ Collate:
     'validity.R'
 Suggests: 
     arrow,
+    assorthead (>= 1.1.2),
     BiocStyle,
     dplyr,
     knitr,
