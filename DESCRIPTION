@@ -96,9 +96,6 @@ Suggests:
     tidyr,
     Voyager (>= 1.7.2),
     xml2
-Remotes:
-    Voyager=github::pachterlab/voyager@devel,
-    github::LTLA/assorthead
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)
