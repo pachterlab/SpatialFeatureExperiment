@@ -7,6 +7,7 @@
 readXenium(
   data_dir,
   sample_id = "sample01",
+  min_area = NULL,
   image = c("morphology_focus", "morphology_mip"),
   segmentations = c("cell", "nucleus"),
   row.names = c("id", "symbol"),
@@ -26,6 +27,10 @@ readXenium(
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
 be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
 Default = \code{sample01}.}
+
+\item{min_area}{Minimum cell area in square microns or pixel units (eg for CosMX).
+Anything smaller will be considered artifact or debris and removed. 
+Default to `NULL`, ie no filtering of polygons.}
 
 \item{image}{Which image(s) to load, can be "morphology_mip",
 "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
@@ -98,14 +103,14 @@ This function reads the standard 10X Xenium output into an SFE object.
 Sometimes when reading images, you will see this error the first time:
 'java.lang.NullPointerException: Cannot invoke
 "loci.formats.DimensionSwapper.setMetadataFiltered(boolean)" because
-"RBioFormats.reader" is null'. Rerun the code and it should work the second
-time.
+"RBioFormats.reader" is null'. See this issue https://github.com/aoles/RBioFormats/issues/42
+Rerun the code and it should work the second time.
 }
 \examples{
 library(SFEData)
 library(RBioFormats)
-fp <- tempdir()
-dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+fp <- tempfile()
+dir_use <- XeniumOutput("v2", file_path = fp)
 # RBioFormats issue
 try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 sfe <- readXenium(dir_use, add_molecules = TRUE)

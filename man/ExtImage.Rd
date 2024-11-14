@@ -4,11 +4,16 @@
 \name{ExtImage}
 \alias{ExtImage}
 \alias{ExtImage-class}
+\alias{show,ExtImage-method}
 \title{Use the EBImage \code{Image} class in SFE objects}
 \usage{
+\S4method{show}{ExtImage}(object)
+
 ExtImage(img, ext = NULL)
 }
 \arguments{
+\item{object}{An \code{ExtImage} object.}
+
 \item{img}{An \code{Image} object or anything that inherits from \code{Image}
 such as \code{AnnotatedImage} in \code{RBioFormats}.}
 
@@ -16,8 +21,6 @@ such as \code{AnnotatedImage} in \code{RBioFormats}.}
 microns indicating the spatial extent covered by the image. If \code{NULL},
 then the extent will be inferred from the metadata, from physical pixel
 size and the number of pixels.}
-
-\item{object}{An \code{ExtImage} object.}
 }
 \value{
 An \code{ExtImage} object.

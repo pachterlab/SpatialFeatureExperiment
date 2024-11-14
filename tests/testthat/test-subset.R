@@ -1,4 +1,6 @@
 library(S4Vectors)
+library(spdep)
+set.SubgraphOption(FALSE)
 # Unit test the subsetting method
 sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
     package = "SpatialFeatureExperiment"
@@ -21,12 +23,6 @@ annotGeometry(sfe2, "baz", "sample01") <- ag
 test_that("After removing one sample_id, it's also removed in annotGeometries", {
     sfe2 <- sfe2[, 4:5]
     expect_equal(nrow(int_metadata(sfe2)$annotGeometries$baz), 0)
-})
-
-test_that("row and col graphs are dropped if drop = TRUE", {
-    expect_message(sfe2 <- sfe2[, 2:5, drop = TRUE], "Dropping all")
-    # Don't have rowGraphs to begin with
-    expect_true(is.null(unlist(as.list(colGraphs(sfe2)))))
 })
 
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
@@ -52,39 +48,12 @@ test_that("Retain correct spatialGraphs structure when one entire sample is left
     expect_true(is(spatialGraph(sfe_visium1, "foo", 2, "sample01"), "listw"))
 })
 
-test_that("Correctly reconstruct the graphs when they need to be reconstructed", {
+test_that("Correctly subset the graphs", {
     # Remove one item from sample01
     sfe_visium <- sfe_visium[, -1]
     expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
         ignore_attr = TRUE
     )
-})
-
-test_that("Warning message and dropping graphs when reconstruction info is unavailable", {
-    # Remove one item from sample02
-    expect_warning(
-        sfe_visium <- sfe_visium[, -13],
-        "Graph reconstruction info is missing for sample sample02 colGraph bar"
-    )
-    expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
-})
-
-test_that("Warning message and dropping graphs when package required for reconstruction is not installed", {
-    attr(g_visium2, "method") <- list(
-        FUN = "findVisiumGraph",
-        package = "foobar",
-        args = list(
-            style = "W",
-            zero.policy = NULL,
-            sample_id = "sample01"
-        )
-    )
-    colGraph(sfe_visium, "bar", "sample02") <- g_visium2
-    expect_warning(
-        sfe_visium <- sfe_visium[, -13],
-        "Package foobar used to construct graph for sample sample02 colGraph bar is not installed"
-    )
-    expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
 })
 
 # Need uncropped image
@@ -134,7 +103,7 @@ inds <- c(rep(TRUE, ncol(sfe1)), not_singleton)
 
 test_that("Images are cropped after subsetting, multiple samples", {
     sfe3 <- sfe[,inds]
-    cg <- st_centroid(spotPoly(sfe3, sample_id = "all"))
+    cg <- st_centroid(st_geometry(spotPoly(sfe3, sample_id = "all")))
     nCounts <- Matrix::colSums(counts(sfe3))
     # For sample 1
     img1 <- getImg(sfe3, sample_id = "ob") |> imgRaster()

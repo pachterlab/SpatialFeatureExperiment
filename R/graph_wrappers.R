@@ -59,6 +59,8 @@
     } else if (type == "exp") {
         dmat <- exp(-alpha * distance)
     } else if (type == "dpd") {
+        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold in the dmax argument")
+        if (dmax <= 0) stop("DPD weights require a positive maximum distance threshold")
         dmat <- (1 - (distance/dmax)^alpha)^alpha
         dmat[dmat < 0] <- 0
     }
@@ -162,7 +164,7 @@
     }
 
     if (type == "dpd") {
-        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold")
+        if (is.null(dmax)) stop("DPD weights require a maximum distance threshold in the dmax argument")
         if (dmax <= 0) stop("DPD weights require a positive maximum distance threshold")
         for (i in 1:n) {
             if (cardnb[i] > 0) {
@@ -276,7 +278,7 @@
     nb
 }
 
-.dnn_bioc <- function(coords, d2, BNPARAM = KmknnParam(),
+.dnn_bioc <- function(coords, d2, d1 = 0, BNPARAM = KmknnParam(),
                       BPPARAM = SerialParam(), row.names = NULL) {
     nn <- findNeighbors(coords, threshold = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM)
 
@@ -291,6 +293,9 @@
         index <- nn$index[[i]]
         ind_use <- index != i
         if (any(ind_use)) {
+            if (d1 > 0L) {
+                ind_use <- ind_use & (nn$distance[[i]] > d1)
+            }
             v <- index[ind_use]
             ord <- order(v)
             nb[[i]] <- v[ord]
@@ -302,7 +307,7 @@
     }
     attr(nb, "distance") <- glist
     attr(nb, "region.id") <- row.names
-    attr(nb, "dnn") <- c(0, d2)
+    attr(nb, "dnn") <- c(d1, d2)
     attr(nb, "nbtype") <- "distance"
     class(nb) <- c("nb", "nbdnn")
     nb
@@ -325,7 +330,7 @@
     if (nn_method == "spdep")
         dnearneigh(coords, d1, d2, use_kd_tree = use_kd_tree, row.names = row.names)
     else
-        .dnn_bioc(coords, d2 = d2, BNPARAM = BNPARAM, BPPARAM = BPPARAM,
+        .dnn_bioc(coords, d2 = d2, d1 = d1, BNPARAM = BNPARAM, BPPARAM = BPPARAM,
                   row.names = row.names)
 }
 .g2nb_sfe <- function(coords, fun, nnmult = 3, sym = FALSE, row.names = NULL) {
@@ -383,11 +388,14 @@
             alpha = alpha, dmax = dmax
         )
     }
-
+    # I'll refactor to avoid reconstructing graphs After that, the graph params
+    # may be used in Voyager to make sure that results with the same name were
+    # comptuted with the same parameters.
+    args <- args[!names(args) %in% c("BPPARAM", "BNPARAM", "row.names")]
     attr(out, "method") <- list(
         FUN = "findSpatialNeighbors",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = c(
             method = method, args,
             dist_type = dist_type,
@@ -575,6 +583,13 @@ setMethod(
         match(bcs_use2, visium_row_col$barcode),
         c("col", "row")
     ]
+    if (is.na(coords_use) |> any()) {
+      # use "array_" cols from colData
+      coords_use <- 
+        colData(x)[, grep("array_", names(colData(x)))] |> 
+        as.data.frame() |> suppressWarnings()
+        colnames(coords_use) <- gsub("array_", "", colnames(coords_use))
+    }
     # So adjacent spots are equidistant
     coords_use$row <- coords_use$row * sqrt(3)
     g <- dnearneigh(as.matrix(coords_use),
@@ -585,7 +600,7 @@ setMethod(
     attr(out, "method") <- list(
         FUN = "findVisiumGraph",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = list(
             style = style,
             zero.policy = zero.policy,
@@ -644,4 +659,82 @@ findVisiumGraph <- function(x, sample_id = "all", style = "W",
         names(out) <- sample_id
     }
     return(out)
+}
+
+.add_side_inds <- function(df, side = c("l", "r", "t", "b", "tl", "tr", "bl", "br")) {
+    side <- match.arg(side)
+    name_use <- paste0("index_", side)
+    df2 <- df[,c("index", "array_col", "array_row")]
+    names(df2)[1] <- name_use
+    if (side == "l") {
+        df2$array_col <- df2$array_col - 1L
+    } else if (side == "r") {
+        df2$array_col <- df2$array_col + 1L
+    } else if (side == "t") {
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "b") {
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "tl") {
+        df2$array_col <- df2$array_col - 1L
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "tr") {
+        df2$array_col <- df2$array_col + 1L
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "bl") {
+        df2$array_col <- df2$array_col - 1L
+        df2$array_row <- df2$array_row + 1L
+    } else if (side == "br") {
+        df2$array_col <- df2$array_col + 1L
+        df2$array_row <- df2$array_row + 1L
+    }
+    merge(df, df2, by = c("array_row", "array_col"), all.x = TRUE)
+}
+
+#' Find Visium HD spatial neighborhood graph
+#'
+#' Visium HD spots are arranged in a square grid. This function finds either a
+#' rook or a queen spatial neighborhood graph for the spots. \code{colData} of
+#' the SFE object must have columns \code{array_row} and \code{array_col}.
+#' 
+#' @inheritParams spdep::nb2listw
+#' @param x An SFE object with Visium HD data with one sample with the required
+#'   information in its \code{colData}.
+#' @param queen Logical. Default is \code{FALSE}, using rook neighbors.
+#' @concept Spatial neighborhood graph
+#' @return A \code{listw} object for the graph.
+#' @export
+findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
+                              zero.policy = TRUE) {
+    df <- as.data.frame(colData(x))
+    df$index <- seq_along(df$barcode)
+    cols_use <- c("index", "array_row", "array_col")
+    df <- df[,cols_use]
+    df <- as.data.table(df)
+    
+    if (queen) {
+        sides <- c("l", "r", "t", "b", "tl", "tr", "bl", "br")
+    } else {
+        sides <- c("l", "r", "t", "b")
+    }
+    for (s in sides) {
+        df <- .add_side_inds(df, s)
+    }
+    cols <- paste0("index_", sides)
+    gm <- as.matrix(df[,..cols])
+    gm <- gm + 1L # Convert to 1 based indexing for spdep
+    colnames(gm) <- NULL
+    g <- apply(gm, 1, function(x) x[!is.na(x)])
+    class(g) <- "nb"
+    out <- nb2listw(g, style = style, zero.policy = TRUE)
+    attr(out, "method") <- list(
+        FUN = "findVisiumHDGraph",
+        package = list("SpatialFeatureExperiment",
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
+        args = list(
+            style = style,
+            zero.policy = zero.policy,
+            sample_id = sampleIDs(x)
+        )
+    )
+    out
 }

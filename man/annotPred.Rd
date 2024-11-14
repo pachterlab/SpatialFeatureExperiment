@@ -10,7 +10,8 @@ annotPred(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  pred = st_intersects
+  pred = st_intersects,
+  yx = FALSE
 )
 
 annotNPred(
@@ -33,6 +34,12 @@ samples.}
 
 \item{pred}{Predicate function to use, defaults to
 \code{\link{st_intersects}}.}
+
+\item{yx}{Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
+symmetric predicates, the results should be the same. When x has a large
+number of geometries and y has few, \code{pred(y, x)} is much faster than
+\code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
+\code{st_is_within_distance}.}
 }
 \value{
 For \code{annotPred}, a logical vector of the same length as the

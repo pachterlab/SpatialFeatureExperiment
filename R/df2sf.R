@@ -224,12 +224,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                   ),
                   group_col = "group",
                   id_col = "ID",
-                  subid_col = "subID", check = TRUE,
-                  BPPARAM = deprecated(), ...) {
-    if (is_present(BPPARAM)) {
-        deprecate_warn("1.6.0", "df2sf(BPPARAM = )",
-                       details = "The sfheaders package is now used instead for much better performance")
-    }
+                  subid_col = "subID", check = TRUE, ...) {
     if (is.matrix(df)) df <- as.data.frame(df)
     if (any(!spatialCoordsNames %in% names(df))) {
         cols_absent <- setdiff(spatialCoordsNames, names(df))

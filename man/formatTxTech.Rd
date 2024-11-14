@@ -100,8 +100,8 @@ technology.
 }
 \examples{
 library(SFEData)
-fp <- tempdir()
-dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium_test"))
+fp <- tempfile()
+dir_use <- XeniumOutput("v2", file_path = fp)
 fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
                       file_out = file.path(dir_use, "tx_spots.parquet"))
 

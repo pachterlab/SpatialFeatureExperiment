@@ -167,7 +167,9 @@ setMethod(
         # Still need to combine rowGeometries separately
         if (length(rgns)) {
             rgs <- lapply(args, rowGeometries)
-            rgs <- do.call(c, rgs)
+            rgs <- lapply(rgs, as.list) # S4 SimpleList won't unlist
+            names(rgs) <- NULL
+            rgs <- unlist(rgs, recursive = FALSE)
             args <- lapply(args, function(x) {
                 rowGeometries(x) <- NULL
                 x
@@ -242,6 +244,7 @@ setMethod(
                     int_metadata(a)[["spatialGraphs"]]
                 }
             })
+            names(sgs_use) <- NULL
             new_sgs <- do.call(cbind, sgs_use)
             int_metadata(out)[["spatialGraphs"]] <- NULL
             int_metadata(out)$spatialGraphs <- new_sgs

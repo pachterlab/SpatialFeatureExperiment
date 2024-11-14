@@ -4,8 +4,11 @@
 \name{BioFormatsImage}
 \alias{BioFormatsImage}
 \alias{BioFormatsImage-class}
+\alias{show,BioFormatsImage-method}
 \title{On disk representation of BioFormats images in SFE object}
 \usage{
+\S4method{show}{BioFormatsImage}(object)
+
 BioFormatsImage(
   path,
   ext = NULL,
@@ -15,6 +18,8 @@ BioFormatsImage(
 )
 }
 \arguments{
+\item{object}{A \code{BioFormatsImage} object.}
+
 \item{path}{Path to an OME-TIFF image file.}
 
 \item{ext}{Numeric vector with names "xmin", "xmax", "ymin", "ymax" in
@@ -39,8 +44,6 @@ can have names "name" and named parameter of the transformation, e.g.
 (clockwise), and "scale" and factor = 2. The list can also have names "M"
 for a 2x2 linear transformation matrix in the xy plane and "v" for a
 translation vector of length 2 to specify general affine transformation.}
-
-\item{object}{A \code{BioFormatsImage} object.}
 }
 \value{
 A \code{BioFormatsImage} object.

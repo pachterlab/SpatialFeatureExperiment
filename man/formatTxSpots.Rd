@@ -150,14 +150,14 @@ When `dest = "colGeometry"`, the geometries are always written to disk
 }
 \examples{
 # Default arguments are for MERFISH
-fp <- tempdir()
-dir_use <- SFEData::VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+fp <- tempfile()
+dir_use <- SFEData::VizgenOutput(file_path = fp)
 g <- formatTxSpots(file.path(dir_use, "detected_transcripts.csv"))
 unlink(dir_use, recursive = TRUE)
 
 # For CosMX, note the colnames, also dest = "colGeometry"
 # Results are written to the tx_spots directory
-dir_use <- SFEData::CosMXOutput(file_path = file.path(fp, "cosmx_test"))
+dir_use <- SFEData::CosMXOutput(file_path = fp)
 cg <- formatTxSpots(file.path(dir_use, "Run5642_S3_Quarter_tx_file.csv"),
 dest = "colGeometry", z = "all",
 cell_col = c("cell_ID", "fov"),

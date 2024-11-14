@@ -16,20 +16,15 @@
 
 \item{...}{Passed to the \code{SingleCellExperiment} method of \code{[}.}
 
-\item{drop}{Logical. If \code{FALSE}, then a warning will be issued that the
-node indices in the graphs are no longer valid so the row and col graphs
-affected by subsetting are dropped. At present, this only works with the
-wrapper functions in this package that take in SFE objects and records the
-info required to reconstruct the graphs. While this argument is ignored for
-\code{SummarizedExperiment}}
+\item{drop}{Ignored as of version 1.9.2.}
 }
 \value{
 A subsetted \code{SpatialFeatureExperiment} object.
 }
 \description{
-The method for SFE reconstructs the spatial graphs when the SFE object is
-subsetted as the \code{listw} objects encodes the nodes with indices which
-are no longer valid after subsetting as some nodes are no longer present.
+Note that spatial neighborhood graphs may change meaning after subsetting.
+For example, for a k nearest neighbor graph, after subsetting, some cells
+might no longer have all k nearest neighbors from the original
 }
 \examples{
 # Just like subsetting matrices and SingleCellExperiment

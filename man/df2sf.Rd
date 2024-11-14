@@ -14,7 +14,6 @@ df2sf(
   id_col = "ID",
   subid_col = "subID",
   check = TRUE,
-  BPPARAM = deprecated(),
   ...
 )
 }
@@ -47,9 +46,6 @@ polygon within a MULTIPOLYGON.}
 related to constructing the geometry of interese such as number of vertices
 per geometry. If \code{FALSE}, it will save a bit of time, which is useful
 when the input is already known to be good.}
-
-\item{BPPARAM}{Deprecated. The `sfheaders` package is used in
-\code{\link{df2sf}} for much better performance.}
 
 \item{...}{Other arguments passed to `sf::st_buffer`, mainly to make polygon shapes,
 eg Visium spot `endCapStyle = "ROUND"` and VisiumHD bin `endCapStyle = "SQUARE"`}

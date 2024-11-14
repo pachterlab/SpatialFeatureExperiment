@@ -12,8 +12,8 @@ sfe <- McKellarMuscleData("small")
 img_path <- system.file(file.path("extdata", "sample01", "outs", "spatial",
                                   "tissue_lowres_image.png"),
                         package = "SpatialFeatureExperiment")
-fp <- tempdir()
-xenium_dir <- XeniumOutput("v1", file_path = file.path(fp, "xenium_test"))
+fp <- tempfile()
+xenium_dir <- XeniumOutput("v1", file_path = fp)
 xenium_fn <- file.path(xenium_dir, "morphology_mip.ome.tif")
 
 test_that("addImg, SpatRasterImage", {
@@ -176,12 +176,13 @@ test_that("transposeImg, SpatRasterImage method", {
     expect_equal(d[2], 13)
 
     # Save to file
-    img_t3 <- transposeImg(img, filename = "foo.tif")
+    fn <- normalizePath(file.path(getwd(), "foo.tif"), mustWork = FALSE)
+    img_t3 <- transposeImg(img, filename = fn)
     expect_equal(dim(img)[1:2], dim(img_t3)[2:1])
-    expect_equal(imgSource(img_t3), "foo.tif")
-    expect_true(file.exists("foo.tif"))
-    file.remove("foo.tif")
-    file.remove("foo.tif.aux.xml")
+    expect_equal(imgSource(img_t3), fn)
+    expect_true(file.exists(fn))
+    file.remove(fn)
+    file.remove(paste0(fn, ".aux.xml"))
 })
 
 test_that("mirrorImg, SpatRasterImage method", {
@@ -196,14 +197,16 @@ test_that("mirrorImg, SpatRasterImage method", {
     img_m2 <- mirrorImg(img, maxcell = 100)
     expect_equal(dim(img_m2), c(13,8,3))
     # check content
-    expect_equal(imgRaster(img_m2)[10,3,2][[1]], 190)
+    if (packageVersion('terra') >= as.package_version("1.7.83"))
+        expect_equal(imgRaster(img_m2)[4,3,2][[1]], 190)
 
     # Use filename
+    fn <- normalizePath(file.path(getwd(), "foo.tif"), mustWork = FALSE)
     img_m3 <- mirrorImg(img, filename = "foo.tif")
-    expect_equal(imgSource(img_m3), "foo.tif")
-    expect_true(file.exists("foo.tif"))
-    file.remove("foo.tif")
-    file.remove("foo.tif.aux.xml")
+    expect_equal(imgSource(img_m3), fn)
+    expect_true(file.exists(fn))
+    file.remove(fn)
+    file.remove(paste0(fn, ".aux.xml"))
 })
 
 test_that("Rotate method for SpatRasterImage which converts to ExtImage", {
@@ -240,6 +243,8 @@ test_that("scaleImg, SpatRasterImage method, EBI behind the scene", {
 
 test_that("affineImg, SpatRasterImage method, EBI behind the scene", {
     suppressWarnings(spi <- SpatRasterImage(rast(img_path)))
+    if (packageVersion('terra') >= as.package_version("1.7.83"))
+        spi <- mirrorImg(spi, "vertical")
     # Should rotate clockwise somewhat, squished to be flatter, shear to the right
     M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
     v <- c(0, 300)
@@ -294,8 +299,8 @@ test_that("Convert SpatRasterImage to ExtImage, RGB", {
                  imgRaster(ebi) |> as.array() |> aperm(c(2,1,3)))
 })
 
-fp <- tempdir()
-vizgen_dir <- VizgenOutput(file_path = file.path(fp, "vizgen_test"))
+fp <- tempfile()
+vizgen_dir <- VizgenOutput(file_path = fp)
 fn <- file.path(vizgen_dir, "images", "mosaic_Cellbound1_z3.tif")
 
 test_that("Convert SpatRasterImage to ExtImage, grayscale", {
@@ -437,8 +442,8 @@ test_that("Ignore resolution in toExtImage when there's only 1 resolution", {
 
 test_that("Convert BioFormatsImage to SpatRasterImage", {
     library(RBioFormats)
-    fp <- tempdir()
-    fn <- XeniumOutput(file_path = file.path(fp, "xenium_test"))
+    fp <- tempfile()
+    fn <- XeniumOutput(file_path = fp)
     fn1 <- file.path(fn, "morphology_mip.ome.tif")
     bfi <- BioFormatsImage(fn1, ext_use, isFull = FALSE)
     expect_message(spi <- toSpatRasterImage(bfi, resolution = 1L), "non OME")
@@ -688,5 +693,35 @@ test_that("Crop ExtImage", {
     expect_equal(dim(imgRaster(ebi_sub)), round(dim_expect))
 })
 
-unlink(xenium_dir, recursive = TRUE)
-unlink(vizgen_dir, recursive = TRUE)
+# Image setter-------
+test_that("Image setter, the image isn't already there", {
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn)
+    img <- getImg(sfe) |> toExtImage(resolution = 1L)
+    img <- img > 500
+    Img(sfe, image_id = "mask") <- img
+    df <- imgData(sfe)
+    expect_true("mask" %in% imageIDs(sfe))
+    img2 <- getImg(sfe, image_id = "mask")
+    expect_equal(img2, img)
+    unlink(fn, recursive = TRUE)
+})
+
+test_that("Image setter, modify existing image", {
+    fp <- tempfile()
+    fn <- XeniumOutput("v2", file_path = fp)
+    # Weirdly the first time I get the null pointer error
+    sfe <- readXenium(fn)
+    df_old <- imgData(sfe)
+    img <- getImg(sfe) |> toExtImage(resolution = 1L)
+    # Increase contrast
+    img <- img * 1.1
+    Img(sfe, image_id = "morphology_focus") <- img
+    img2 <- getImg(sfe, image_id = "morphology_focus")
+    expect_equal(img2, img)
+    df_new <- imgData(sfe)
+    expect_equal(nrow(df_new), nrow(df_old))
+    unlink(fn, recursive = TRUE)
+})

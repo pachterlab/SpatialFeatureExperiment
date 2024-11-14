@@ -13,9 +13,19 @@
 #' @param pred A geometric binary predicate function, such as
 #'   \code{\link{st_intersects}}. It should return an object of class
 #'   \code{sgbp}, for sparse predicates.
+#' @param yx Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
+#'   symmetric predicates, the results should be the same. When x has a large
+#'   number of geometries and y has few, \code{pred(y, x)} is much faster than
+#'   \code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
+#'   \code{st_is_within_distance}.
+#' @param sparse If \code{TRUE}, returns numeric indices rather than logical
+#'   vector. Defaults to \code{FALSE} for backward compatibility, though the
+#'   default in \code{st_intersects} is \code{TRUE}.
+#' @param ... Arguments passed to \code{pred}.
 #' @return For \code{st_any_*}, a logical vector indicating whether each
 #'   geometry in \code{x} intersects (or other predicates such as is covered by)
-#'   anything in \code{y}. Simplified from the \code{sgbp} results which
+#'   anything in \code{y} or a numeric vector of indices of \code{TRUE} when
+#'   \code{sparse = TRUE}. Simplified from the \code{sgbp} results which
 #'   indicate which item in \code{y} each item in \code{x} intersects, which
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
@@ -36,16 +46,27 @@
 #' st_any_intersects(pts, pol)
 #' st_n_pred(pts, pol, pred = st_disjoint)
 #' st_n_intersects(pts, pol)
-st_any_pred <- function(x, y, pred) lengths(pred(x, y)) > 0L
+st_any_pred <- function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
+    if (yx) {
+        res <- unlist(unclass(pred(y, x, ...)))
+        res <- sort(unique(res))
+        if (!sparse) res <- seq_along(st_geometry(x)) %in% res
+    } else {
+        res <- lengths(pred(x, y, ...)) > 0L
+        if (sparse) res <- which(res)
+    }
+    res
+}
 
 #' @rdname st_any_pred
 #' @export
-st_any_intersects <- function(x, y) st_any_pred(x, y, st_intersects)
+st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE) 
+    st_any_pred(x, y, st_intersects, yx = yx, sparse = sparse)
 
 #' @rdname st_any_pred
 #' @export
-st_n_pred <- function(x, y, pred) lengths(pred(x, y))
-
+st_n_pred <- function(x, y, pred, ...) lengths(pred(x, y, ...))
+# Not doing yx here since this is usually not used when length(y) << length(x)
 #' @rdname st_any_pred
 #' @export
 st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
@@ -143,7 +164,8 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' (i.e. \code{colGeometry}) and an annotation geometry for each sample. For
 #' example, whether each Visium spot intersects with the tissue boundary in each
 #' sample.
-#'
+#' 
+#' @inheritParams st_any_pred
 #' @param sfe An SFE object.
 #' @param colGeometryName Name of column geometry for the predicate.
 #' @param annotGeometryName Name of annotation geometry for the predicate.
@@ -169,12 +191,13 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' # How many nuclei are there in each Visium spot
 #' n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                      sample_id = "all", pred = st_intersects) {
+                      sample_id = "all", pred = st_intersects, yx = FALSE) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
         colGeometryName = colGeometryName,
-        samples_use = sample_id, fun = st_any_pred, pred = pred
+        samples_use = sample_id, fun = st_any_pred, pred = pred,
+        yx = yx, sparse = FALSE
     )
 }
 
@@ -362,8 +385,6 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   included in the indicated sample IDs are subsetted. If sample is not
 #'   indicated in \code{y}, then the same geometry or bounding box is used to
 #'   subset all samples specified in the \code{sample_id} argument.
-#' @param pred Deprecated. The binary predicate is now tied to the geometric
-#'   operation specified in \code{op}.
 #' @param op A geometric operation function to crop the geometries in the SFE
 #'   object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
 #'   are allowed. If "intersection", then only things inside \code{y} is kept
@@ -377,14 +398,10 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
 #'   be entirely outside \code{y} if \code{op = st_difference}. Only relevant
 #'   when \code{keep_whole != "none"}.
-#' @param xmin Deprecated. Supply the bounding box to argument \code{y} instead.
-#' @param xmax Deprecated.
-#' @param ymin Deprecated.
-#' @param ymax Deprecated.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
-#' @importFrom sf st_intersection st_union st_agr st_covered_by st_disjoint
+#' @importFrom sf st_intersection st_union st_agr st_covers st_disjoint
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @export
 #' @examples
@@ -396,21 +413,9 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     sample_id = "Vis5A"
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
-                 pred = deprecated(), op = st_intersection,
+                 op = st_intersection,
                  keep_whole = "none",
-                 cover = FALSE,
-                 xmin = deprecated(), xmax = deprecated(),
-                 ymin = deprecated(), ymax = deprecated()) {
-    if (is_present(pred)) {
-        deprecate_warn("1.6.0", "SpatialFeatureExperiment::crop(pred = )")
-    }
-    if (is.null(y) && (is_present(xmin) || is_present(xmax) ||
-                       is_present(ymin) || is_present(ymax))) {
-        deprecate_warn("1.6.0", I("Specifying bounding box with arguments xmin, xmax, ymin, and ymax"),
-                       details = "Please use argument `y` to specify bounding box instead.")
-        y <- .bbox2sf(c(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
-                      sample_id)
-    }
+                 cover = FALSE) {
     if (!(identical(op, sf::st_intersection) || identical(op, sf::st_difference))) {
         stop("op must be either st_intersection or st_difference.")
     }
@@ -421,9 +426,9 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     }
     is_difference <- identical(op, sf::st_difference)
     pred <- if (is_difference) {
-        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covered_by(x, y, sparse = sparse)
+        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
     } else {
-        if (cover) st_covered_by else st_intersects
+        if (cover) st_covers else st_intersects
     }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
@@ -441,7 +446,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     }
     preds <- .annot_fun(x, y, colGeometryName,
         samples_use = samples_use,
-        fun = st_any_pred, pred = pred
+        fun = st_any_pred, pred = pred, yx = TRUE
     )
     # Don't remove anything from other samples
     other_bcs <- setdiff(colnames(x), names(preds))
@@ -478,18 +483,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                 rbind(in_sample[preds,], other_samples)
         })
     } else {
-        if ("col" %in% keep_whole) {
-            y <- lapply(samples_use, function(s) {
-                sample_index <- colData(out)$sample_id == s
-                cgs <- as.list(int_colData(out)[["colGeometries"]][sample_index, ,
-                                                                   drop = FALSE
-                ])
-                lapply(cgs, st_bbox) |> aggBboxes()
-            })
-            y <- do.call(cbind, y)
-            colnames(y) <- samples_use
-            y <- .bbox2sf(y, samples_use)
-        }
         annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
                                        y = y,
                                        samples_use = samples_use, op = op,
@@ -497,12 +490,6 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         )
     }
     if (length(rowGeometries(out))) {
-        if (!identical(keep_whole, "none") && length(rowGeometries(out))) {
-            # What about rowGeometries? Can't just use preds.
-            # I think use the actual bbox of colGeometries if not cropped
-            y <- bbox(out, sample_id = samples_use, include_row = FALSE)
-            y <- .bbox2sf(y, samples_use)
-        }
         for (s in samples_use) {
             rgs <- rowGeometries(out, sample_id = s)
             rowGeometries(out, sample_id = s) <-

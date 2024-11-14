@@ -11,15 +11,7 @@
 \alias{affineImg,SpatialFeatureExperiment-method}
 \title{Methods for handling image-related data}
 \usage{
-\S4method{addImg}{SpatialFeatureExperiment}(
-  x,
-  imageSource,
-  sample_id = 1L,
-  image_id,
-  extent = NULL,
-  scale_fct = 1,
-  file = deprecated()
-)
+\S4method{addImg}{SpatialFeatureExperiment}(x, imageSource, sample_id = 1L, image_id, extent = NULL, scale_fct = 1)
 
 \S4method{transposeImg}{SpatialFeatureExperiment}(
   x,
@@ -64,8 +56,6 @@ xmax, and ymax, specifying the extent of the image.}
 \item{scale_fct}{Scale factor -- multiply pixel coordinates in full
 resolution image by this scale factor should yield pixel coordinates in a
 different resolution. \code{extent} takes precedence over \code{scale_fct}.}
-
-\item{file}{File from which to read the image.}
 
 \item{maxcell}{Max number of pixels to load \code{SpatRasterImage} into
 memory. The default 1e7 is chosen because this is the approximate number of

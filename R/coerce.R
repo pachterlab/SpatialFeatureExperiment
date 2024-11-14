@@ -1,3 +1,79 @@
+#' @importFrom grDevices col2rgb
+.spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
+                        spatialCoordsNames, annotGeometryType, spatialGraphs,
+                        spotDiameter, unit, endCapStyle = "ROUND", 
+                        add_centroids = FALSE) {
+    if (is.null(colGeometries)) {
+        cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
+        colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter, 
+                                           endCapStyle = endCapStyle))
+        names(colGeometries) <- cg_name
+        if (add_centroids && cg_name != "centroids") {
+            colGeometries$centroids <- .sc2cg(spatialCoords(spe))
+        }
+    }
+    if (!is.null(rowGeometries)) {
+        rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
+                                     spotDiameter = NA, geometryType = "MULTIPOINT"
+        )
+    }
+    if (!is.null(annotGeometries)) {
+        annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
+                                       spotDiameter = NA,
+                                       geometryType = annotGeometryType
+        )
+    }
+    if (nrow(imgData(spe))) {
+        # Convert to SpatRaster
+        img_data <- imgData(spe)$data
+        new_imgs <- lapply(seq_along(img_data), function(i) {
+            img <- img_data[[i]]
+            is_sfe_img <- class(img)[1] %in% c("SpatRasterImage", "ExtImage", "BioFormatsImage")
+            if (is_sfe_img) {
+                im_new <- img
+            } else if (is(img, "LoadedSpatialImage")) {
+                im <- imgRaster(img)
+                rgb_v <- col2rgb(im)
+                nrow <- dim(im)[2]
+                ncol <- dim(im)[1]
+                r <- t(matrix(rgb_v["red",], nrow = nrow, ncol = ncol))
+                g <- t(matrix(rgb_v["green",], nrow = nrow, ncol = ncol))
+                b <- t(matrix(rgb_v["blue",], nrow = nrow, ncol = ncol))
+                arr <- simplify2array(list(r, g, b))
+                im_new <- rast(arr)
+                terra::RGB(im_new) <- seq_len(3)
+            } else if (is(img, "RemoteSpatialImage") || is(img, "StoredSpatialImage")) {
+                suppressWarnings(im_new <- rast(imgSource(img)))
+                if (packageVersion('terra') >= as.package_version("1.7.83"))
+                    im_new <- terra::flip(im_new)
+            } else {
+                warning("Don't know how to convert image ", i, " to SpatRaster, ",
+                        "dropping image.")
+                im_new <- NULL
+            }
+            # Use scale factor for extent
+            if (!is.null(im_new) && !is_sfe_img) {
+                ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+                im_new <- new("SpatRasterImage", im_new)
+            }
+            im_new
+        })
+        inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
+        new_imgs <- new_imgs[inds]
+        imgData(spe) <- imgData(spe)[inds,]
+        if (length(new_imgs)) imgData(spe)$data <- new_imgs
+    }
+    sfe <- new("SpatialFeatureExperiment", spe)
+    colGeometries(sfe, withDimnames = FALSE) <- colGeometries
+    rowGeometries(sfe, withDimnames = FALSE) <- rowGeometries
+    annotGeometries(sfe) <- annotGeometries
+    spatialGraphs(sfe) <- spatialGraphs
+    int_metadata(sfe)$unit <- unit
+    int_metadata(sfe)$SFE_version <- packageVersion("SpatialFeatureExperiment")
+    return(sfe)
+}
+
+
 #' SpatialFeatureExperiment coercion methods
 #'
 #' The \code{SpatialFeatureExperiment} class inherits from
@@ -27,6 +103,9 @@
 #' @return A \code{SpatialFeatureExperiment} object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
+#' @importFrom methods slot<-
+#' @importFrom SingleCellExperiment altExp<- reducedDim<-
+#' @importFrom SummarizedExperiment assay<-
 #' @name SpatialFeatureExperiment-coercion
 #' @aliases toSpatialFeatureExperiment
 #' @concept SpatialFeatureExperiment class
@@ -60,7 +139,7 @@ setAs(
             if (is.null(rownames(coords_use))) {
                 rownames(coords_use) <- colnames(from)
             }
-            cg <- .sc2cg(coords_use)
+            cg <- .sc2cg(coords_use) # add `endCapStyle = "SQUARE"` when VisiumHD?
             int_colData(from)[["colGeometries"]] <-
                 make_zero_col_DFrame(nrow(int_colData(from)))
             int_colData(from)$colGeometries$centroids <- cg
@@ -90,11 +169,7 @@ setMethod(
     function(x, colGeometries = NULL, rowGeometries = NULL,
              annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
              annotGeometryType = "POLYGON",
-             spatialGraphs = NULL, spotDiameter = NA, unit = NULL,
-             BPPARAM = deprecated()) {
-        if (is_present(BPPARAM)) {
-            deprecate_warn("1.6.0", "toSpatialFeatureExperiment(BPPARAM = )")
-        }
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
         if (is.null(colGeometries)) {
             colGeometries <- int_colData(x)$colGeometries
         }
@@ -130,11 +205,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                    image_id=NULL,
                    loadImage=TRUE,
                    imgData=NULL,
-                   unit = NULL,
-                   BPPARAM = deprecated()) {
-              if (is_present(BPPARAM)) {
-                  deprecate_warn("1.6.0", "toSpatialFeatureExperiment(BPPARAM = )")
-              }
+                   unit = NULL) {
               spe <- toSpatialExperiment(x, sample_id=sample_id,
                                          spatialCoordsNames=spatialCoordsNames,
                                          spatialCoords=spatialCoords,
@@ -190,7 +261,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 }
 
 # Converter function from Seurat (v4 & v5) object to SpatialFeatureExperiment
-#' @importFrom SummarizedExperiment assays
+#' @importFrom SummarizedExperiment assays assayNames
 #' @importFrom methods slot slotNames
 #' @importFrom SingleCellExperiment SingleCellExperiment mainExpName altExp altExpNames reducedDim
 .seu_to_sfe <-
@@ -202,8 +273,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
            BPPARAM = SerialParam())
   {
     # issue message for packages that need to be installed a priori
-    check_installed(c("tidyverse", "sf", "BiocParallel",
-                      "Matrix", "Seurat", "SeuratObject", "sfheaders"))
+    check_installed(c("dplyr", "tidyr", "Seurat", "SeuratObject"))
     # checks which Seurat version is present
     seu_version <-
       Biobase::package.version("Seurat") |>
@@ -220,8 +290,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
     .DefaultAssay <- SeuratObject::DefaultAssay
 
     # Convert from Seurat to SFE ===== ####
-    # TODO (optional) support non-spatial Seurat to SFE as well? ----
-
+    # TODO (optional): support non-spatial Seurat to SFE as well? ----
     if (!is.null(seu_obj)) {
       flip <- match.arg(flip)
       # use existing Assays
@@ -236,12 +305,17 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       }
 
       # loop for multiple FOVs/tissue sections ----
-      # TODO: (enhancement) consider bplapply ----
+      # TODO (enhancement): consider bplapply ----
       #..ie, when looping over FOVs with large number of cells and molecules
       obj_list <-
         lapply(seq(fov_names), function(fov_section) {
+          # make sure the correct assay is used as Main assay
+          assay_master <-
+            if (length(assays_name) == length(fov_names))
+              assays_name[fov_section]
+            else .DefaultAssay(seu_obj)
           message(">>> Seurat Assays found: ", paste0(assays_name, collapse = ", "), "\n",
-                  ">>> ", .DefaultAssay(seu_obj), " -> will be used as 'Main Experiment'")
+                  ">>> ", assay_master, " -> will be used as 'Main Experiment'")
           # Make `sf` df geometries
           # get spatial S4 FOV object
           fov_seu <- seu_obj[[fov_names[fov_section]]]
@@ -374,6 +448,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           if (length(assays_name) == length(fov_names))
             assays_name[fov_section]
           else .DefaultAssay(seu_obj)
+
           # get slot or layer names
           slot_names <- .GetSlotNames(object_seu = seu_obj,
                                       assay_seu = assay_master,
@@ -469,8 +544,11 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             if (is_Visium == "VisiumV2")
               # set scaling factor -> microns per pixel
               scale_fct <- bin_um / spot_diameter
-            else
-              scale_fct <- .pixel2micron(sfe)
+            else {
+                df_coords <- as.data.frame(spatialCoords(sfe))
+                names(df_coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
+                scale_fct <- .pixel2micron(cbind(as.data.frame(colData(sfe)), df_coords))
+            }
             cg <- spotPoly(sfe)
             cg$geometry <- cg$geometry * scale_fct
             spotPoly(sfe) <- cg
@@ -568,14 +646,16 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # TODO (alternatively): use `MultiAssayExperiment` instead? ----
           # Currently using `altExp` if > 1 Seurat Assays are present ----
           if (length(assays_name) > 1) {
-            # keep assays minus default one
+            # keep other assays, minus the default one
             assays_name <- setdiff(assays_name, .DefaultAssay(seu_obj))
-            # sanity, check if assays cell ids match those in fov_seu
+            # sanity, if default assay cell ids match those in any other assays
             cells_passed <-
               lapply(assays_name, function(i)
                 Seurat::GetAssay(seu_obj, i) |>
-                  SeuratObject::Cells() |>
-                  match(x = _, cell_ids_fov) |>
+                  colnames() |>
+                  match(x = _,
+                        Seurat::GetAssay(seu_obj, .DefaultAssay(seu_obj)) |>
+                          colnames()) |>
                   na.omit() |> any()) |> unlist()
             if (all(cells_passed)) {
               message(">>> Adding Seurat Assay(s) as Alternative Experiment(s): ",
@@ -627,24 +707,31 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
       if (length(obj_list) > 1) {
         message(">>> Combining ", length(obj_list),
                 " SFE object(s) with unique `sample_id`")
-
-        # TODO: issue when one sfe has: ----
-          # assays(2): counts logcounts
-          # and assays(1): counts
-          # Error in .bind_Assays_objects(objects, along.cols = TRUE) :
-          #  the objects to bind must have the same number of assays
-          #
-
+        # Sanity on assays:
+        # the issue when different number of assays are present
+        # see this https://github.com/drisso/SingleCellExperiment/issues/44
+        # thus, we keep only identical assays present in all sfe objects
+        assays_n <-
+          lapply(obj_list, function(i) assayNames(i))
+        # check of assays are identical
+        ident_assays <- do.call(setdiff, arg = assays_n)
+        if (!length(ident_assays) == 0) {
+          message(">>> Only following assay(s) are identical and will be kept:",
+                  paste0("\n", do.call(intersect, arg = assays_n)))
+          obj_list <-
+            lapply(obj_list, function(i) {
+              assay(i, do.call(setdiff, arg = assays_n)) <- NULL
+              # update objects
+              updateObject(i)
+              return(i) })
+          }
         sfe <- do.call(cbind, obj_list)
         return(sfe)
-
-        # TODO (alternatively) return list of objects? (when multiple samples/FOVs) ----
-        #return(obj_list)
       } else if (length(obj_list) == 1) {
-        message("\n", ">>> `SFE` object is ready!")
         return(obj_list[[1]])
       }
     } else { stop("No Seurat object in `x` was found") }
+    message("\n", ">>> `SFE` object is ready!")
   }
 
 # Set formal method for Seurat to SFE

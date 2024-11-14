@@ -1,3 +1,8 @@
+# Version 1.7.1 (07/20/2024)
+* Added image setter, Img<-
+* Implemented spatial aggregation functions to aggregate directly from transcript spot file, from rowGeometry, or from cell geometries in SFE objects
+* Implemented splitByCol to split SFE objects by geometry, splitSamples to split by sample_id, and splitContiguity to split by cotiguity of an annotGeometry
+
 # Version 1.6.1 (05/09/2024)
 * readRDS converts old style SpatRasterImage to the new style
 * readSelectTx and addSelectTx functions to read transcript spots from a few select genes from the parquet output of formatTxSpots or add them to an SFE object
