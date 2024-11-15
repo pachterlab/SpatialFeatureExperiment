@@ -31,7 +31,7 @@
             is_sfe_img <- class(img)[1] %in% c("SpatRasterImage", "ExtImage", "BioFormatsImage")
             if (is_sfe_img) {
                 im_new <- img
-            } else if (is(img, "LoadedSpatialImage")) {
+            } else if (inherits(img, "LoadedSpatialImage")) {
                 im <- imgRaster(img)
                 rgb_v <- col2rgb(im)
                 nrow <- dim(im)[2]
@@ -42,7 +42,7 @@
                 arr <- simplify2array(list(r, g, b))
                 im_new <- rast(arr)
                 terra::RGB(im_new) <- seq_len(3)
-            } else if (is(img, "RemoteSpatialImage") || is(img, "StoredSpatialImage")) {
+            } else if (inherits(img, "RemoteSpatialImage") || inherits(img, "StoredSpatialImage")) {
                 suppressWarnings(im_new <- rast(imgSource(img)))
                 if (packageVersion('terra') >= as.package_version("1.7.83"))
                     im_new <- terra::flip(im_new)
@@ -228,10 +228,10 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 .GetSlotNames <- function(object_seu, assay_seu, fov_number) {
     slot_n <-
         Seurat::GetAssay(object_seu, assay_seu)
-    if (is(slot_n, "Assay")) {
+    if (inherits(slot_n, "Assay")) {
         # Seurat v4 based object
         slot_n <- slotNames(x = slot_n)[1:2]
-    } else if (is(slot_n, "Assay5")) {
+    } else if (inherits(slot_n, "Assay5")) {
         # Seurat v5 based object
         slot_n <- slot(slot_n, name = slotNames(x = slot_n)[1]) |> names()
     }
@@ -252,7 +252,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 
 # internal metadata getter for Seurat and SFE objects
 .getMeta <- function(object = NULL) {
-    if (is(object, "Seurat")) {
+    if (inherits(object, "Seurat")) {
         return(slot(object, "meta.data"))
     } else {
         return(colData(object) |>
@@ -605,7 +605,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
               # subset transcripts keep on
               mols <- mols[mols$ID %in% rownames(sfe),]
             }
-            if (is(mols, "sf")) {
+            if (inherits(mols, "sf")) {
               rownames(mols) <- unique(mols$ID)
               txSpots(sfe, withDimnames = TRUE) <- mols
               # add sample id

@@ -874,19 +874,19 @@ setMethod("addImg", "SpatialFeatureExperiment",
 .get_imgData <- function(img, sample_id, image_id, extent = NULL,
                          scale_fct = 1, flip = FALSE) {
     # ExtImage
-    if (is(img, "Image")) {
-        if (is(img, "ExtImage")) spi <- img else spi <- ExtImage(img, extent)
+    if (inherits(img, "Image")) {
+        if (inherits(img, "ExtImage")) spi <- img else spi <- ExtImage(img, extent)
     } else {
         if (!.path_valid2(img))
             stop("img is not a valid file path.")
         e <- tryCatch(suppressWarnings(rast(img)), error = function(e) e)
-        if (is(e, "error") || grepl("\\.ome\\.tif", img)) {
+        if (inherits(e, "error") || grepl("\\.ome\\.tif", img)) {
             spi <- BioFormatsImage(img, extent)
             if (flip) spi <- mirrorImg(spi, direction = "vertical")
         } else {
             # What if extent is already present?
             w <- tryCatch(rast(img), warning = function(w) w)
-            if (is(w, "warning")) {
+            if (inherits(w, "warning")) {
                 # No extent in tif file
                 suppressWarnings(img <- rast(img))
                 if (!is.null(extent)) ext(img) <- extent[c("xmin", "xmax", "ymin", "ymax")]
