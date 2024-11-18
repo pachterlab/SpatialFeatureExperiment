@@ -721,7 +721,7 @@ findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
     }
     cols <- paste0("index_", sides)
     gm <- as.matrix(df[,..cols])
-    gm <- gm + 1L # Convert to 1 based indexing for spdep
+    gm <- apply(gm, 1, sort) # This is the slowest part
     colnames(gm) <- NULL
     g <- apply(gm, 1, function(x) x[!is.na(x)])
     class(g) <- "nb"
