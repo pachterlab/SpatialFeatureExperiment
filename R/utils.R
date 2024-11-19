@@ -286,7 +286,7 @@ getTechTxFields <- function(tech, data_dir = NULL) {
             # NOTE: can take a while.
             mols <- .rawToChar_df(mols, BPPARAM = BPPARAM)
             # sanity, convert to data.table
-            if (!is(mols, "data.table")) {
+            if (!inherits(mols, "data.table")) {
                 mols <- data.table::as.data.table(mols)
             }
         } else {
