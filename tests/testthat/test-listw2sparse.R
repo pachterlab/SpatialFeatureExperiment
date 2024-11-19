@@ -6,7 +6,7 @@ sfe <- McKellarMuscleData("small")
 g <- findVisiumGraph(sfe)
 
 test_that("listw2sparse gives correct results", {
-    mat <- listw2sparse(g)
+    expect_warning(mat <- listw2sparse(g))
     expect_s4_class(mat, "dgCMatrix")
     expect_equal(nrow(mat), ncol(sfe))
     expect_equal(ncol(mat), ncol(sfe))
@@ -42,7 +42,7 @@ listws <- list(l1, l2)
 names_expect <- c(LETTERS[1:25], letters[1:9])
 test_that("Convert list of listws to one adjacency matrix", {
     mat <- multi_listw2sparse(listws)
-    expect_s4_class(mat, "dgCMatrix")
+    expect_s4_class(mat, "dgRMatrix")
     l_expect <- length(nb1) + length(nb2)
     expect_equal(nrow(mat), l_expect)
     expect_equal(ncol(mat), l_expect)
