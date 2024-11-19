@@ -24,7 +24,15 @@ A subsetted \code{SpatialFeatureExperiment} object.
 \description{
 Note that spatial neighborhood graphs may change meaning after subsetting.
 For example, for a k nearest neighbor graph, after subsetting, some cells
-might no longer have all k nearest neighbors from the original
+might no longer have all k nearest neighbors from the original. The edge
+weights will be recomputed from the binary neighborhood indicator with the
+same normalization style as the original graph, such as "W" for row
+normalization. When distance-based edge weights are used instead of the
+binary indicator, the edge weights will be re-normalized, which is mostly
+some rescaling. This should give the same results as recomputing the distance
+based edge weights for styles "raw", "W", and "B" since the distances
+themselves don't change, but the effects of other more complicated styles of
+re-normalization on spatial statistics should be further investigated.
 }
 \examples{
 # Just like subsetting matrices and SingleCellExperiment

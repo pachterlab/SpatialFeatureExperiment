@@ -4,12 +4,29 @@
     } else TRUE
 }
 
+.subset_listw <- function(x, subset, zero.policy=attr(x, "zero.policy"), ...) {
+    nb <- x$neighbours
+    vlist <- x$weights
+    style <- x$style
+    m_wts <- as_dgRMatrix_listw(x)
+    m_wts <- m_wts[subset, subset]
+    mat2listw(m_wts, style = style, zero.policy = zero.policy)
+}
+
 #' Subsetting SpatialFeatureExperiment objects
 #'
 #' Note that spatial neighborhood graphs may change meaning after subsetting.
 #' For example, for a k nearest neighbor graph, after subsetting, some cells
-#' might no longer have all k nearest neighbors from the original
-#' 
+#' might no longer have all k nearest neighbors from the original. The edge
+#' weights will be recomputed from the binary neighborhood indicator with the
+#' same normalization style as the original graph, such as "W" for row
+#' normalization. When distance-based edge weights are used instead of the
+#' binary indicator, the edge weights will be re-normalized, which is mostly
+#' some rescaling. This should give the same results as recomputing the distance
+#' based edge weights for styles "raw", "W", and "B" since the distances
+#' themselves don't change, but the effects of other more complicated styles of
+#' re-normalization on spatial statistics should be further investigated.
+#'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param i Row indices for subsetting.
 #' @param j column indices for subsetting.
@@ -17,7 +34,8 @@
 #' @param ... Passed to the \code{SingleCellExperiment} method of \code{[}.
 #' @importFrom methods callNextMethod
 #' @importFrom utils getFromNamespace
-#' @importFrom spdep subset.listw
+#' @importFrom spdep mat2listw
+#' @importFrom spatialreg as_dgRMatrix_listw
 #' @return A subsetted \code{SpatialFeatureExperiment} object.
 #' @name SpatialFeatureExperiment-subset
 #' @aliases [,SpatialFeatureExperiment,ANY,ANY,ANY-method
@@ -97,7 +115,9 @@ setMethod(
                     # Not sure what to do differently with rowGraphs yet
                     for (g in seq_along(graphs_sub[[s]][[m]])) {
                         method_info <- attr(graphs_sub[[s]][[m]][[g]], "method")
-                        graphs_sub[[s]][[m]][[g]] <- subset(graphs_sub[[s]][[m]][[g]], j_sample)
+                        gr <- .subset_listw(graphs_sub[[s]][[m]][[g]], j_sample)
+                        attr(gr, "method") <- method_info
+                        graphs_sub[[s]][[m]][[g]] <- gr
                     }
                 }
             }

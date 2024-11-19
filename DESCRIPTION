@@ -37,6 +37,7 @@ Imports:
     sfheaders,
     SingleCellExperiment,
     SpatialExperiment,
+    spatialreg,
     spdep (>= 1.1-7),
     SummarizedExperiment,
     stats,

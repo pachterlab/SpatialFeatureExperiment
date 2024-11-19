@@ -390,7 +390,7 @@
     }
     # I'll refactor to avoid reconstructing graphs After that, the graph params
     # may be used in Voyager to make sure that results with the same name were
-    # comptuted with the same parameters.
+    # computed with the same parameters.
     args <- args[!names(args) %in% c("BPPARAM", "BNPARAM", "row.names")]
     attr(out, "method") <- list(
         FUN = "findSpatialNeighbors",

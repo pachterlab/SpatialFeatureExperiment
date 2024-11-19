@@ -56,6 +56,15 @@ test_that("Correctly subset the graphs", {
     )
 })
 
+test_that("Subset the graph when distance-based edge weights are used", {
+    attr(g_visium$weights, "mode") <- "distance"
+    colGraph(sfe_visium, "foo", "sample01") <- g_visium
+    sfe_visium <- sfe_visium[, -1]
+    expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
+                 ignore_attr = TRUE
+    )
+})
+
 # Need uncropped image
 if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
 mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
