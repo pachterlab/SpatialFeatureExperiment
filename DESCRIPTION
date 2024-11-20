@@ -95,6 +95,7 @@ Suggests:
     testthat (>= 3.0.0),
     tidyr,
     Voyager (>= 1.7.2),
+    withr,
     xml2
 Remotes:
     Voyager=github::pachterlab/voyager@devel

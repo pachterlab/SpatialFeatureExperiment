@@ -25,6 +25,13 @@ test_that("After removing one sample_id, it's also removed in annotGeometries", 
     expect_equal(nrow(int_metadata(sfe2)$annotGeometries$baz), 0)
 })
 
+test_that("row and col graphs are dropped if drop = TRUE", {
+    withr::local_options(SFE_graph_subset = FALSE)
+    expect_message(sfe2 <- sfe2[, 2:5, drop = TRUE], "Dropping all")
+    # Don't have rowGraphs to begin with
+    expect_true(is.null(unlist(as.list(colGraphs(sfe2)))))
+})
+
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
     package = "SpatialFeatureExperiment"
 ))
@@ -48,11 +55,20 @@ test_that("Retain correct spatialGraphs structure when one entire sample is left
     expect_true(is(spatialGraph(sfe_visium1, "foo", 2, "sample01"), "listw"))
 })
 
-test_that("Correctly subset the graphs", {
+test_that("Correctly reconstruct the graphs when they need to be reconstructed", {
     # Remove one item from sample01
+    withr::local_options(SFE_graph_subset = FALSE)
     sfe_visium <- sfe_visium[, -1]
     expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
         ignore_attr = TRUE
+    )
+})
+
+test_that("Correctly subset graphs", {
+    # Remove one item from sample01
+    sfe_visium <- sfe_visium[, -1]
+    expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
+                 ignore_attr = TRUE
     )
 })
 
@@ -63,6 +79,35 @@ test_that("Subset the graph when distance-based edge weights are used", {
     expect_equal(colGraph(sfe_visium, sample_id = "sample01"), g_sub,
                  ignore_attr = TRUE
     )
+})
+
+test_that("Warning message and dropping graphs when reconstruction info is unavailable", {
+    withr::local_options(SFE_graph_subset = FALSE)
+    # Remove one item from sample02
+    expect_warning(
+        sfe_visium <- sfe_visium[, -13],
+        "Graph reconstruction info is missing for sample sample02 colGraph bar"
+    )
+    expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
+})
+
+test_that("Warning message and dropping graphs when package required for reconstruction is not installed", {
+    withr::local_options(SFE_graph_subset = FALSE)
+    attr(g_visium2, "method") <- list(
+        FUN = "findVisiumGraph",
+        package = "foobar",
+        args = list(
+            style = "W",
+            zero.policy = NULL,
+            sample_id = "sample01"
+        )
+    )
+    colGraph(sfe_visium, "bar", "sample02") <- g_visium2
+    expect_warning(
+        sfe_visium <- sfe_visium[, -13],
+        "Package foobar used to construct graph for sample sample02 colGraph bar is not installed"
+    )
+    expect_error(colGraph(sfe_visium, "bar", sample_id = "sample02"))
 })
 
 # Need uncropped image

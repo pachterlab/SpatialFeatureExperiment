@@ -15,11 +15,31 @@
 
 #' Subsetting SpatialFeatureExperiment objects
 #'
-#' Note that spatial neighborhood graphs may change meaning after subsetting.
-#' For example, for a k nearest neighbor graph, after subsetting, some cells
-#' might no longer have all k nearest neighbors from the original. The edge
-#' weights will be recomputed from the binary neighborhood indicator with the
-#' same normalization style as the original graph, such as "W" for row
+#' The SFE method has special treatment for the spatial graphs. In \code{listw},
+#' the neighbors are indicated by indices, which will change after subsetting.
+#' The \code{SFE_graph_subset} option determines whether the graphs are
+#' subsetted or reconstructed. In the default (\code{options(SFE_graph_subset =
+#' TRUE)}), the graphs are subsetted, in which case singletons may be produced.
+#' For \code{options(SFE_graph_subset = FALSE)}, which is the behavior of
+#' versions earlier than Bioc 3.20, the graphs are reconstructed with the
+#' parameters recorded in an attribute of the graphs. This option can result
+#' into different graphs. For example, suppose we start with a k nearest
+#' neighbor graph. After subsetting, cells at the boundary of the region used to
+#' subset the SFE object may lose some of their neighbors. In contrast, when the
+#' graph is reconstructed, these same edge cells will gain other cells that
+#' remain after subsetting as neighbors in the new KNN graph.
+#'
+#' The option \code{SFE_graph_subset} was introduced because subsetting is
+#' usually faster than reconstructing and in some cases such as distance-based
+#' neighbors and Visium spot adjacency give the same results. It was introduced
+#' also because of the development of \code{alabster.sfe} for a
+#' language-agnostic on-disk serialization of SFE objects and some parameters
+#' used to construct graphs have special classes whose \code{alabaster} methods
+#' have not been implemented, such as \code{BPPARAM} and \code{BNPARAM}, so when
+#' reconstructing, the defaults for those arguments will be used.
+#'
+#' The edge weights will be recomputed from the binary neighborhood indicator
+#' with the same normalization style as the original graph, such as "W" for row
 #' normalization. When distance-based edge weights are used instead of the
 #' binary indicator, the edge weights will be re-normalized, which is mostly
 #' some rescaling. This should give the same results as recomputing the distance
@@ -30,7 +50,9 @@
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param i Row indices for subsetting.
 #' @param j column indices for subsetting.
-#' @param drop Ignored as of version 1.9.2.
+#' @param drop Only used if graphs are reconstructed
+#'   (\code{options(SFE_graph_subset = FALSE)}). If \code{TRUE} then
+#'   \code{colGraphs} are dropped but \code{annotGraphs} are kept.
 #' @param ... Passed to the \code{SingleCellExperiment} method of \code{[}.
 #' @importFrom methods callNextMethod
 #' @importFrom utils getFromNamespace
@@ -91,10 +113,22 @@ setMethod(
         }
         # Subset *Graphs based on sample_id and reconstruct row and colGraphs
         if (!is.null(spatialGraphs(x)) && (!missing(j) && !.is0(j))) {
+            do_subset <- getOption("SFE_graph_subset")
             graphs_sub <- int_metadata(x)$spatialGraphs
             graphs_sub <- graphs_sub[, names(graphs_sub) %in% sampleIDs(x),
                 drop = FALSE
             ]
+            if (drop && !do_subset) {
+                message(
+                    "Node indices in the graphs are no longer valid after subsetting. ",
+                    "Dropping all row and col graphs."
+                )
+                spatialGraphs(x) <- graphs_sub
+                spatialGraphs(x, MARGIN = 1) <- NULL
+                spatialGraphs(x, MARGIN = 2) <- NULL
+                validObject(x)
+                return(x)
+            }
             # Check which graphs need to be subsetted
             # Wouldn't need reconstruction if the barcodes within one sample
             # are still in the same order
@@ -115,9 +149,51 @@ setMethod(
                     # Not sure what to do differently with rowGraphs yet
                     for (g in seq_along(graphs_sub[[s]][[m]])) {
                         method_info <- attr(graphs_sub[[s]][[m]][[g]], "method")
-                        gr <- .subset_listw(graphs_sub[[s]][[m]][[g]], j_sample)
-                        attr(gr, "method") <- method_info
-                        graphs_sub[[s]][[m]][[g]] <- gr
+                        if (do_subset) {
+                            gr <- .subset_listw(graphs_sub[[s]][[m]][[g]], j_sample)
+                            attr(gr, "method") <- method_info
+                            graphs_sub[[s]][[m]][[g]] <- gr
+                        } else {
+                            if (is.null(method_info)) {
+                                warning(
+                                    "Graph reconstruction info is missing for sample ",
+                                    names(graphs_sub)[s], " ", .margin_name(m), "Graph ",
+                                    names(graphs_sub[[s]][[m]])[g], ". ",
+                                    "Dropping graph.\n"
+                                )
+                                graphs_sub[[s]][[m]][[g]] <- NULL
+                            } else {
+                                if (requireNamespace(method_info$package[[1]], quietly = TRUE)) {
+                                    fun <- getFromNamespace(method_info$FUN, method_info$package[[1]])
+                                    if ("row.names" %in% names(method_info$args)) {
+                                        method_info$args[["row.names"]] <-
+                                            method_info$args[["row.names"]][j]
+                                    }
+                                    tryCatch(graphs_sub[[s]][[m]][[g]] <-
+                                                 do.call(fun, c(list(x = x), method_info$args)),
+                                             error = function(e) {
+                                                 warning(
+                                                     "Graph reconstruction failed for sample ",
+                                                     names(graphs_sub)[s], " ",
+                                                     .margin_name(m), "Graph ",
+                                                     names(graphs_sub[[s]][[m]])[g],
+                                                     ": ", e, "Dropping graph.\n"
+                                                 )
+                                                 graphs_sub[[s]][[m]][[g]] <- NULL
+                                             }
+                                    )
+                                } else {
+                                    warning(
+                                        "Package ", method_info$package[[1]],
+                                        " used to construct graph for sample ",
+                                        names(graphs_sub)[s], " ", .margin_name(m),
+                                        "Graph ", names(graphs_sub[[s]][[m]])[g],
+                                        " is not installed. ", "Dropping graph.\n"
+                                    )
+                                    graphs_sub[[s]][[m]][[g]] <- NULL
+                                }
+                            }
+                        }
                     }
                 }
             }
