@@ -43,7 +43,7 @@
 
 #' @importFrom Matrix sparseMatrix rowSums colSums
 .nb2listwdist2.nbknn <- function(nb, type = "idw", style = "W", alpha = 1,
-                                 dmax = NULL, ...) {
+                                 dmax = NULL, zero.policy = TRUE, ...) {
     # Code adapted from spdep: https://github.com/r-spatial/spdep/blob/49c202d561da9565b0b70cf7462b7147feff59c2/R/nb2listwdist.R#L1
     distance <- attr(nb, "distance")
     attr(nb, "distance") <- NULL
@@ -117,6 +117,7 @@
                   weights = glist)
     class(listw) <- c("listw", "nb")
     attr(listw, "region.id") <- attr(nb, "region.id")
+    attr(listw, "zero.policy") <- zero.policy
     listw
 }
 
@@ -255,6 +256,7 @@
                   neighbours = nb,
                   weights = vlist)
     attr(listw, "region.id") <- attr(nb, "region.id")
+    attr(listw, "zero.policy") <- zero.policy
     class(listw) <- c("listw", "nb")
     listw
 }
@@ -388,9 +390,6 @@
             alpha = alpha, dmax = dmax
         )
     }
-    # I'll refactor to avoid reconstructing graphs After that, the graph params
-    # may be used in Voyager to make sure that results with the same name were
-    # computed with the same parameters.
     args <- args[!names(args) %in% c("BPPARAM", "BNPARAM", "row.names")]
     attr(out, "method") <- list(
         FUN = "findSpatialNeighbors",
