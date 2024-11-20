@@ -78,6 +78,7 @@ Collate:
     'transformation.R'
     'updateObject.R'
     'validity.R'
+    'zzz.R'
 Suggests: 
     arrow,
     BiocStyle,
