@@ -81,6 +81,17 @@ test_that("Subset the graph when distance-based edge weights are used", {
     )
 })
 
+test_that("When only one cell/spot is left in a sample after subsetting", {
+    expect_message(sfe1 <- sfe_visium[,1:6], "graphs are meaningless, dropping graphs")
+    expect_null(colGraphNames(sfe1, sample_id = "sample02"))
+})
+
+test_that("When only one cell is left, option reconstruct", {
+    withr::local_options(SFE_graph_subset = FALSE)
+    expect_message(sfe1 <- sfe_visium[,1:6], "graphs are meaningless, dropping graphs")
+    expect_null(colGraphNames(sfe1, sample_id = "sample02"))
+})
+
 test_that("Warning message and dropping graphs when reconstruction info is unavailable", {
     withr::local_options(SFE_graph_subset = FALSE)
     # Remove one item from sample02

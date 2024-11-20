@@ -145,6 +145,12 @@ setMethod(
             )
             for (s in which(samples_subset)) {
                 j_sample <- old_sample_compare[[s]] %in% new_sample_colnames[[s]]
+                if (sum(j_sample) == 1) {
+                    message("Only 1 column left in sample ", sample_ids[[s]],
+                            ", graphs are meaningless, dropping graphs.")
+                    graphs_sub[[s]] <- list(row = NULL, col = NULL, annot = NULL)
+                    next
+                }
                 for (m in seq_len(2)) { # Not subsetting annotGraphs
                     # Not sure what to do differently with rowGraphs yet
                     for (g in seq_along(graphs_sub[[s]][[m]])) {
