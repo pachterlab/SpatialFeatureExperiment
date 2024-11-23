@@ -1045,7 +1045,7 @@ readCosMX <- function(data_dir,
 # helper function to convert from raw bytes to character
 .rawToChar_df <- function(input_df, BPPARAM = SerialParam()) {
     convert_ids <-
-        lapply(input_df, function(x) is(x, "arrow_binary")) |> unlist() |> which()
+        lapply(input_df, function(x) inherits(x, "arrow_binary")) |> unlist() |> which()
     if (any(convert_ids)) {
         message(">>> Converting columns with raw bytes (ie 'arrow_binary') to character")
         cols_converted <-
@@ -1059,7 +1059,7 @@ readCosMX <- function(data_dir,
             input_df[,convert_ids][[i]] <- unlist(cols_converted[[i]])
         }
     }
-    if (!is(input_df, "data.table")) {
+    if (!inherits(input_df, "data.table")) {
         input_df <- data.table::as.data.table(input_df)
     }
     return(input_df)

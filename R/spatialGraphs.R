@@ -231,7 +231,7 @@ annotGraphs <- function(x, sample_id = "all", name = "all")
     if (type == "all") {
         if (is.null(value)) {
             df <- .initialize_spatialGraphs(x)
-        } else if (!is(value, "DataFrame")) {
+        } else if (!inherits(value, "DataFrame")) {
             value <- lapply(value, .fill_missing,
                 names_use = c("row", "col", "annot")
             )
@@ -425,7 +425,7 @@ annotGraph <- function(x, type = 1L, sample_id = 1L) {
 .sg_r <- function(x, type = 1L, MARGIN, sample_id = NULL, value) {
     sample_id <- .check_sample_id(x, sample_id)
     if (!is.null(value)) {
-        if (!is(value, "listw")) {
+        if (!inherits(value, "listw")) {
             stop("value must be of class listw.")
         } else if (MARGIN == 1L && length(value$neighbours) != nrow(x)) {
             stop(

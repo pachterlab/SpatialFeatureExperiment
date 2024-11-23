@@ -142,6 +142,15 @@ test_that("Error when dmax is not specified for DPD", {
                  "DPD weights require a positive")
 })
 
+test_that("zero.policy is in the attributes of knn and dnn graph from bioc", {
+    g <- findSpatialNeighbors(sfe_muscle1, method = "knearneigh", k = 6,
+                              zero.policy = TRUE)
+    expect_true(attr(g, "zero.policy"))
+    g2 <- findSpatialNeighbors(sfe_muscle1, method = "dnearneigh", d2 = 350,
+                               zero.policy = TRUE)
+    expect_true(attr(g2, "zero.policy"))
+})
+
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
     package = "SpatialFeatureExperiment"
 ))

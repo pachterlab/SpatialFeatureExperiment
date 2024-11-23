@@ -201,7 +201,7 @@
     out <- lapply(template, function(x) {
         if (is.vector(x)) {
             out <- rep(NA, nrow)
-        } else if (is(x, "sfc")) {
+        } else if (inherits(x, "sfc")) {
             out <- st_sfc(lapply(seq_len(nrow), function(t) st_geometrycollection()))
         } else {
             # Only deal with columns that are themselves simple matrices
@@ -213,13 +213,13 @@
                 dimnames = list(rownames, colnames(x))
             )
             if (is.data.frame(x)) out <- as.data.frame(out)
-            if (is(x, "DFrame")) out <- DataFrame(out)
+            if (inherits(x, "DFrame")) out <- DataFrame(out)
             out <- I(out)
         }
         out
     })
     names(out) <- names(template)
-    S4 <- is(template, "DFrame")
+    S4 <- inherits(template, "DFrame")
     if (sf && S4) stop("Please use S3 data.frame for sf.")
     df_fun <- if (S4) DataFrame else data.frame
     out <- df_fun(out)
@@ -389,7 +389,7 @@
         geometry_type <- annotGeometryName
     }
 
-    if (is(value, "DFrame")) value <- as.list(value)
+    if (inherits(value, "DFrame")) value <- as.list(value)
     value <- .value2df(value, TRUE, feature = feature)
 
     g <- get_geom_fun(x, type = geometry_type, sample_id = "all")

@@ -191,7 +191,7 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
     gene_select <- .id2symbol(sfe, gene_select, swap_rownames)
     mols <- readSelectTx(file, gene_select, z, z_option)
     rownames(mols) <- .symbol2id(sfe, rownames(mols), swap_rownames)
-    if (!is(mols, "sf")) {
+    if (!inherits(mols, "sf")) {
         rowGeometries(sfe, sample_id = sample_id, partial = TRUE) <- mols
     } else {
         txSpots(sfe, sample_id, partial = TRUE) <- mols
@@ -385,7 +385,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                        gene_col = gene_col, cell_col = cell_col,
                        not_in_cell_id = not_in_cell_id, split_col = split_col)
         # If list of list, i.e. colGeometry, or do split
-        if (!is(mols[[1]], "sf")) {
+        if (!inherits(mols[[1]], "sf")) {
             names_use <- lapply(names(mols), function(n) {
                 names_int <- names(mols[[n]])
                 paste0(names_int, "_z", n)
@@ -409,7 +409,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         message(">>> Writing reformatted transcript spots to disk")
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
-        if (is(mols, "sf")) {
+        if (inherits(mols, "sf")) {
             suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
             if (!return) return(file_out)
         } else {
@@ -442,9 +442,9 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
                           min_phred = min_phred, split_col = split_col,
                           flip = flip, z_option = z_option, file_out = file_out,
                           BPPARAM = BPPARAM, return = TRUE)
-    if (is(mols, "sf")) {
+    if (inherits(mols, "sf")) {
         txSpots(sfe, withDimnames = TRUE) <- mols
-    } else if (is(mols, "list")) {
+    } else if (inherits(mols, "list")) {
         rowGeometries(sfe) <- mols
     }
 

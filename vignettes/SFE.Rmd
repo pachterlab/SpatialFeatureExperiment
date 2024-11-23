@@ -55,6 +55,8 @@ library(SFEData)
 library(sf)
 library(Matrix)
 library(RBioFormats)
+library(spdep)
+set.SubgraphOption(FALSE)
 ```
 
 ```{r}
@@ -195,7 +197,7 @@ g
 
 For Visium, spatial neighborhood graph of the hexagonal grid can be found with the known locations of the barcodes.
 ```{r}
-colGraph(sfe, "visium") <- findVisiumGraph(sfe)
+colGraph(sfe, "visium") <- findVisiumGraph(sfe, zero.policy = TRUE)
 ```
 
 ```{r}
@@ -474,15 +476,16 @@ SFE objects can be concatenated with `cbind`, as was done just now to create a t
 sfe_combined <- cbind(sfe1, sfe2)
 ```
 
-The SFE object can also be subsetted like a matrix, like an SCE object. More complexity arises when it comes to the spatial graphs. The `drop` argument of the SFE method `[` determines what to do with the spatial graphs. If `drop = TRUE`, then all spatial graphs will be removed, since the graphs with nodes and edges that have been removed are no longer valid. If `drop = FALSE`, which is the default, then the spatial graphs will be reconstructed with the remaining nodes after subsetting. Reconstruction would only work when the original graphs were constructed with `findSpatialNeighbors` or `findVisiumGraph` in this package, which records the method and parameters used to construct the graphs. If reconstruction fails, then a waning will be issued and the graphs removed.
+The SFE object can also be subsetted like a matrix, like an SCE object. More complexity arises when it comes to the spatial graphs. The `drop` argument of the SFE method `[` determines what to do with the spatial graphs.
 
 ```{r}
-(sfe_subset <- sfe[1:10, 1:10, drop = TRUE])
+(sfe_subset <- sfe[1:10, 1:10])
 ```
 
-```{r, eval=FALSE}
-# Will give warning because graph reconstruction fails
-sfe_subset <- sfe[1:10, 1:10]
+Note that after subsetting, the spatial graphs might have singletons. The `zero.policy` argument in `findVisiumGraph()` and `findSpatialNeighbors()` determines behavior when it comes to singletons. If `zero.policy = TRUE`, then no error or warning and singletons are tolerated. If `NULL`, then there will be a warning. If `FALSE`, then there will be an error.
+
+```{r}
+plot(colGraph(sfe_subset, "visium"), coords = spatialCoords(sfe_subset))
 ```
 
 If images are present, then they will be cropped to the bounding box of the remaining geometries after subsetting.

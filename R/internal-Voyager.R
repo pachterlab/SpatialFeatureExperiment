@@ -13,7 +13,7 @@ NULL
 #' @export
 .value2df <- function(value, use_geometry, feature = NULL) {
     # Should return data frame for one type, each column is for a feature
-    if (!is.data.frame(value) && !is(value, "DFrame")) {
+    if (!is.data.frame(value) && !inherits(value, "DFrame")) {
         df_fun <- if (use_geometry) data.frame else DataFrame
         if (is.list(value)) {
             value <- lapply(

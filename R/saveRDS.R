@@ -32,7 +32,7 @@ setMethod("saveRDS", "SpatialFeatureExperiment",
               else {
                   for (i in seq_len(nrow(imgData(object)))) {
                       img <- int_metadata(object)$imgData$data[[i]]
-                      if (is(img, "SpatRasterImage"))
+                      if (inherits(img, "SpatRasterImage"))
                           img <- new("PackedRasterImage", wrap(img))
                       int_metadata(object)$imgData$data[[i]] <- img
                   }
@@ -53,13 +53,13 @@ setMethod("unwrap", "SpatialFeatureExperiment",
           function(x) {
               for (i in seq_len(nrow(imgData(x)))) {
                   img <- int_metadata(x)$imgData$data[[i]]
-                  if (is(img, "PackedSpatRaster"))
+                  if (inherits(img, "PackedSpatRaster"))
                       img <- SpatRasterImage(unwrap(img))
-                  else if (is(img, "SpatRasterImage")) {
+                  else if (inherits(img, "SpatRasterImage")) {
                       old_slot <- tryCatch(img@image, error = function(e) NULL)
                       if (!is.null(old_slot)) {
-                          if (is(old_slot, "SpatRaster")) img <- old_slot
-                          if (is(old_slot, "PackedSpatRaster")) img <- unwrap(old_slot)
+                          if (inherits(old_slot, "SpatRaster")) img <- old_slot
+                          if (inherits(old_slot, "PackedSpatRaster")) img <- unwrap(old_slot)
                           img <- SpatRasterImage(img)
                       }
                   }

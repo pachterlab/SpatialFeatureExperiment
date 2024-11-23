@@ -82,7 +82,6 @@ test_that("aggregateTxTech for Xenium", {
     expect_true(st_contains(img_bbox, grid_bbox, sparse = FALSE))
 })
 
-try(sfe <- readXenium(fn))
 sfe <- readXenium(fn, add_molecules = TRUE)
 # Deal with logical and categorical variables in colData
 set.seed(29)
@@ -117,9 +116,30 @@ test_that("aggregate for SFE by cells, manually supply `by` argument", {
     expect_true(all(agg$logical >= 0L))
 })
 
+test_that("aggregate for SFE by cells, sf `by` argument, single sample", {
+    grid_sf <- st_sf(geometry = grid2)
+    agg <- aggregate(sfe, by = grid_sf)
+    expect_true(ncol(agg) <= length(grid2) & ncol(agg) > 0)
+    expect_true(all(colSums(counts(agg)) > 0))
+})
+
+test_that("aggregate with sf `by` argument, multiple samples", {
+    grid3 <- rbind(st_sf(geometry = grid2, sample_id = "sample01"),
+                   st_sf(geometry = grid2, sample_id = "sample02"))
+    agg <- aggregate(sfe2, by = grid3)
+    expect_true(ncol(agg) <= nrow(grid3) & ncol(agg) > 0)
+    expect_true(all(colSums(counts(agg)) > 0))
+})
+
+test_that("aggregate when some cells are outside bins", {
+    grid4 <- grid2[seq_len(floor(length(grid2)/2))]
+    agg <- aggregate(sfe, by = grid4)
+    expect_true(ncol(agg) <= length(grid4) & ncol(agg) > 0)
+    expect_true(all(colSums(counts(agg)) > 0))
+})
+
 test_that("aggregate.SFE use a row* function", {
-    #agg2 <- aggregate(sfe, by = grid2, FUN = rowMedians) # doesn't work MatrixGenerics::rowMedians
-    agg2 <- aggregate(sfe, by = grid2, FUN = rowMeans2) # works MatrixGenerics::rowMeans2
+    agg2 <- aggregate(sfe, by = grid2, FUN = rowMedians)
     expect_s4_class(agg2, "SpatialFeatureExperiment")
     # empty grid cells were removed
     expect_true(ncol(agg2) <= length(grid2) & ncol(agg2) > 0)
