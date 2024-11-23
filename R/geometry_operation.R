@@ -342,7 +342,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 }
 
 .bbox2sf <- function(bbox, sample_id) {
-    if (is.vector(bbox) || is(bbox, "bbox")) {
+    if (is.vector(bbox) || inherits(bbox, "bbox")) {
         bbox <- matrix(bbox, ncol = 1, dimnames = list(names(bbox), sample_id[1]))
     } else {
         samples_use <- intersect(colnames(bbox), sample_id)
@@ -431,7 +431,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         if (cover) st_covers else st_intersects
     }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-    if (!is(y, "sf") && !is(y, "sfc") && !is(y, "sfg")) {
+    if (!inherits(y, "sf") && !inherits(y, "sfc") && !inherits(y, "sfg")) {
         # y should be bbox, either named vector or matrix with samples in columns
         .check_bbox(y)
         if (is.matrix(y) && is.null(sample_id)) sample_id <- colnames(y)

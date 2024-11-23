@@ -51,7 +51,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
     if (is.null(by))
         by <- st_make_grid(mols, cellsize = cellsize, square = square,
                            flat_topped = flat_topped)
-    else if (is(by, "sf")) by <- st_geometry(by)
+    else if (inherits(by, "sf")) by <- st_geometry(by)
     grid_sf <- st_sf(grid_id = seq_along(by), geometry = by)
     mols <- st_join(mols, grid_sf) # Took 5.87 minutes for 7171453 spots and 8555 bins
     mols <- st_drop_geometry(mols) |> as.data.table()
@@ -144,7 +144,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
         out_agg <- matrix(unlist(out_agg), ncol = length(inds))
         rownames(out_agg) <- rownames(mat)
     } else stop("Function ", fun_name, " not supported for aggregating SFE.")
-    if (is(out_agg, "dgeMatrix")) out_agg <- as.matrix(out_agg)
+    if (inherits(out_agg, "dgeMatrix")) out_agg <- as.matrix(out_agg)
     out_agg
 }
 
@@ -189,6 +189,10 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
         cat_agg <- matrix(NA, nrow = length(inds), ncol = length(names_not_num))
         colnames(cat_agg) <- names_not_num
         cat_agg <- data.frame(cat_agg)
+        if (nrow(df_bin) != nrow(df)) {
+            df_inds <- data.frame(index = seq_len(nrow(df)))
+            df_bin <- merge(df_inds, df_bin, all.x = TRUE, by = "index")
+        }
         for (n in names_not_num)
             cat_agg[[n]] <- split(df[[n]], df_bin$bin)
         cd_agg <- cbind(cat_agg, cd_agg)
@@ -264,20 +268,22 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
             by <- .make_grid_samples(x, sample_id,
                                      cellsize, square, flat_topped)
         }
-        if (is.list(by) && !is(by, "sfc")) {
+        if (is.list(by) && !inherits(by, "sfc") && !inherits(by, "sf")) {
             if (!any(sample_id %in% names(by)))
                 stop("None of the geometries in `by` correspond to sample_id")
             by <- by[intersect(sample_id, names(by))]
         } else {
-            if (!is(by, "sfc") && !is(by, "sf"))
+            if (!inherits(by, "sfc") && !inherits(by, "sf"))
                 stop("`by` must be either sf or sfc.")
             if (length(sample_id) > 1L) {
-                if (is(by, "sfc") || !"sample_id" %in% names(by))
+                if (inherits(by, "sfc") || !"sample_id" %in% names(by))
                     stop("`by` must be an sf data frame with a column `sample_id`")
                 by <- split(st_geometry(by), by$sample_id)
+            } else if (inherits(by, "sf")) {
+                by <- st_geometry(by)
             }
         }
-        if (is(by, "sfc")) by <- setNames(list(by), sample_id)
+        if (inherits(by, "sfc")) by <- setNames(list(by), sample_id)
         fun_name <- as.character(substitute(FUN))
         sfes <- splitSamples(x) # Output list should have sample IDs as names
         sfes <- lapply(sample_id, function(s) {

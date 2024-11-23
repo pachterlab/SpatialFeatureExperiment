@@ -37,6 +37,7 @@ Imports:
     sfheaders,
     SingleCellExperiment,
     SpatialExperiment,
+    spatialreg,
     spdep (>= 1.1-7),
     SummarizedExperiment,
     stats,
@@ -77,6 +78,7 @@ Collate:
     'transformation.R'
     'updateObject.R'
     'validity.R'
+    'zzz.R'
 Suggests: 
     arrow,
     BiocStyle,
@@ -94,6 +96,7 @@ Suggests:
     testthat (>= 3.0.0),
     tidyr,
     Voyager (>= 1.7.2),
+    withr,
     xml2
 Remotes:
     Voyager=github::pachterlab/voyager@devel

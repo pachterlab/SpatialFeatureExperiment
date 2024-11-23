@@ -24,6 +24,7 @@
 #' g <- findVisiumGraph(sfe)
 #' mat <- listw2sparse(g)
 listw2sparse <- function(listw) {
+    lifecycle::deprecate_warn("1.9.0", "listw2sparse()", "spatialreg::as_dgRMatrix_listw()")
     i <- rep(seq_along(listw$neighbours), times = card(listw$neighbours))
     j <- unlist(listw$neighbours)
     x <- unlist(listw$weights)
@@ -53,7 +54,7 @@ listw2sparse <- function(listw) {
 multi_listw2sparse <- function(listws) {
     slices <- list()
     n <- length(listws)
-    mats <- lapply(listws, listw2sparse)
+    mats <- lapply(listws, as_dgRMatrix_listw)
     ncells <- vapply(mats, nrow, FUN.VALUE = integer(1))
     region_ids <- lapply(listws, function(l) attr(l$neighbours, "region.id"))
     tot <- sum(ncells)
