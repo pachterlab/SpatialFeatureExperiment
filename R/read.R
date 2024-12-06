@@ -986,7 +986,7 @@ readCosMX <- function(data_dir,
                       z_option = c("3d", "split")) {
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
-    fns <- list.files(data_dir, pattern = "\\.csv$", full.names = TRUE)
+    fns <- list.files(data_dir, pattern = "\\.csv.*$", full.names = TRUE)
     fn_metadata <- grep("metadata", fns, value = TRUE)
     fn_mat <- grep("exprMat", fns, value = TRUE)
     fn_polys <- grep("polygons", fns, value = TRUE)
