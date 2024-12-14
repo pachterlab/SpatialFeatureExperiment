@@ -79,7 +79,7 @@ read10xVisiumSFE <- function(samples = "",
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
-    if (packageVersion('terra') >= as.package_version("1.7.83"))
+    if (packageVersion('terra') == as.package_version("1.7.83"))
         flip <- "none"
     if (is_present(load)) {
         deprecate_warn("1.8.0", "read10xVisiumSFE(load)")
@@ -326,7 +326,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
-    if (packageVersion('terra') >= as.package_version("1.7.83"))
+    if (packageVersion('terra') == as.package_version("1.7.83"))
         flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
     bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
@@ -747,7 +747,7 @@ readVizgen <- function(data_dir,
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
-    if (packageVersion('terra') >= as.package_version("1.7.83"))
+    if (packageVersion('terra') == as.package_version("1.7.83"))
         flip <- "none"
     image <- match.arg(image, several.ok = TRUE)
     if ((any(z < 0) || any(z > 6)) && z != "all") {
