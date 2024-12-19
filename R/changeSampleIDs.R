@@ -21,7 +21,8 @@ changeSampleIDs <- function(sfe, replacement) {
         colData(sfe)$sample_id[colData(sfe)$sample_id == original] <-
             replacement[i]
         gs_names <- names(int_metadata(sfe)$spatialGraphs)
-        names(int_metadata(sfe)$spatialGraphs)[gs_names == original] <-
+        if (!is.null(gs_names))
+            names(int_metadata(sfe)$spatialGraphs)[gs_names == original] <-
             replacement[i]
         if (length(int_metadata(sfe)$annotGeometries)) {
             for (n in names(int_metadata(sfe)$annotGeometries)) {

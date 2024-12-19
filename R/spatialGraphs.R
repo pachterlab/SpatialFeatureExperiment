@@ -235,7 +235,7 @@ annotGraphs <- function(x, sample_id = "all", name = "all")
             value <- lapply(value, .fill_missing,
                 names_use = c("row", "col", "annot")
             )
-            df <- DataFrame(lapply(value, I), row.names = c("row", "col", "annot"))
+            df <- DataFrame(lapply(value, I), row.names = c("row", "col", "annot"), check.names = FALSE)
         } else {
             df <- value[c("row", "col", "annot"), , drop = FALSE]
         }

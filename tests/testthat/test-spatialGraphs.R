@@ -38,6 +38,57 @@ test_that("Set all applicable sample_ids and margins", {
     expect_equal(df[3, 2][[1]]$foo, agr2)
 })
 
+test_that("Set all graphs, when sample_ids have illegal names", {
+    sfe2 <- changeSampleIDs(sfe2, replacement = c(sample01 = "s-1", sample02 = "s-2"))
+    sgs <- list(
+        sample01 = list(
+            col = list(foo = cgr1),
+            annot = list(bar = agr1)
+        ),
+        sample02 = list(
+            col = list(bar = cgr2),
+            annot = list(foo = agr2)
+        )
+    )
+    names(sgs) <- c("s-1", "s-2")
+    spatialGraphs(sfe2) <- sgs
+    df <- int_metadata(sfe2)$spatialGraphs
+    expect_true(is(df, "DFrame"))
+    expect_equal(names(df), c("s-1", "s-2"))
+    expect_equal(rownames(df), c("row", "col", "annot"))
+    expect_true(is.null(df[1, 1][[1]]))
+    expect_equal(df[2, 1][[1]]$foo, cgr1)
+    expect_equal(df[2, 2][[1]]$bar, cgr2)
+    expect_equal(df[3, 1][[1]]$bar, agr1)
+    expect_equal(df[3, 2][[1]]$foo, agr2)
+})
+
+test_that("Set all applicable sample_ids in one margin, illegal names", {
+    sfe2 <- changeSampleIDs(sfe2, replacement = c(sample01 = "s-1", sample02 = "s-2"))
+    # spatialGraphs absent
+    sgs <- list(
+        sample01 = list(
+            foo = cgr1,
+            bar = cgr1
+        ),
+        sample02 = list(baz = cgr2)
+    )
+    names(sgs) <- c("s-1", "s-2")
+    spatialGraphs(sfe2, MARGIN = 2L) <- sgs
+    df <- int_metadata(sfe2)$spatialGraphs
+    expect_true(is(df, "DFrame"))
+    expect_equal(names(df), c("s-1", "s-2"))
+    expect_equal(rownames(df), c("row", "col", "annot"))
+    expect_true(is.null(df[1, 1][[1]]))
+    expect_equal(df[2, 1][[1]]$foo, cgr1)
+    expect_equal(df[2, 1][[1]]$bar, cgr1)
+    expect_equal(df[2, 2][[1]]$baz, cgr2)
+    # spatialGraphs present
+    spatialGraphs(sfe2, MARGIN = 3L) <- list("s-2" = list(foo = agr2))
+    df <- int_metadata(sfe2)$spatialGraphs
+    expect_equal(df[3, "s-2"][[1]]$foo, agr2)
+})
+
 test_that("Set all applicable sample_ids in one margin", {
     # spatialGraphs absent
     spatialGraphs(sfe2, MARGIN = 2L) <- list(
@@ -62,7 +113,8 @@ test_that("Set all applicable sample_ids in one margin", {
 })
 
 test_that("Set all applicable margins in one sample_id", {
-    spatialGraphs(sfe2, sample_id = "sample01") <- list(
+    sfe2 <- changeSampleIDs(sfe2, replacement = c(sample01 = "s-1", sample02 = "s-2"))
+    spatialGraphs(sfe2, sample_id = "s-1") <- list(
         col = list(foo = cgr1),
         annot = list(
             bar = agr1,
@@ -71,7 +123,7 @@ test_that("Set all applicable margins in one sample_id", {
     )
     df <- int_metadata(sfe2)$spatialGraphs
     expect_true(is(df, "DFrame"))
-    expect_equal(names(df), c("sample01", "sample02"))
+    expect_equal(names(df), c("s-1", "s-2"))
     expect_equal(rownames(df), c("row", "col", "annot"))
     expect_true(is.null(df[1, 1][[1]]))
     expect_equal(df[2, 1][[1]]$foo, cgr1)
