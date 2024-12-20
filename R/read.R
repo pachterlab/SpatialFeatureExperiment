@@ -986,10 +986,10 @@ readCosMX <- function(data_dir,
                       z_option = c("3d", "split")) {
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
-    fns <- list.files(data_dir, pattern = "\\.csv$", full.names = TRUE)
-    fn_metadata <- grep("metadata", fns, value = TRUE)
-    fn_mat <- grep("exprMat", fns, value = TRUE)
-    fn_polys <- grep("polygons", fns, value = TRUE)
+    fns <- list.files(data_dir, pattern = "\\.csv.*$", full.names = TRUE)
+    fn_metadata <- grep("metadata", fns, value = TRUE)[1]
+    fn_mat <- grep("exprMat", fns, value = TRUE)[1]
+    fn_polys <- grep("polygons", fns, value = TRUE)[1]
 
     meta <- fread(fn_metadata)
     mat <- fread(fn_mat) # TODO: write to h5 or mtx. Consult alabaster.sce
