@@ -216,8 +216,9 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 
     # Probably faster than directly calling st_intersection, since I don't need
     # the actual geometries of the intersections, maybe not
-    tx_coords <- st_coordinates(rg) # Might write another function similar to formatTxTech to skip this
-    tx_point <- df2sf(tx_coords, spatialCoordsNames = c("X", "Y", "Z"))
+    tx_coords <- st_coordinates(rg)
+    if (ncol(tx_coords) > 3L) scn <- c("X", "Y", "Z") else scn <- c("X", "Y")
+    tx_point <- df2sf(tx_coords, spatialCoordsNames = scn)
     tx_ind <- as.data.table(st_drop_geometry(tx_point))
     tx_info <- txSpots(x) |> st_drop_geometry()
     tx_info$L1 <- seq_along(tx_info$gene) # it has to be "gene" if it's from formatTxSpots
@@ -225,8 +226,10 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     tx_point <- st_as_sf(tx_point) |> st_join(grid_sf) # takes a few minutes
     tx_counts <- tx_point |> st_drop_geometry() |> as.data.table()
     tx_counts <- tx_counts[, .N, by = .(gene, L1, grid_id)]
-
-    new_mat <- sparseMatrix(i = tx_counts$L1, j = tx_counts$grid_id, x = tx_counts$N)
+    # When some spots are outside the grids
+    tx_counts <- tx_counts[!is.na(grid_id),]
+    new_mat <- sparseMatrix(i = tx_counts$L1, j = tx_counts$grid_id, x = tx_counts$N,
+                            dims = c(nrow(x), max(tx_counts$grid_id)))
     cgs <- list(bins = grid_sf)
     names(cgs) <- new_geometry_name
     out <- SpatialFeatureExperiment(assays = list(counts = new_mat),
