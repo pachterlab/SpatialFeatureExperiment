@@ -8,15 +8,32 @@ fp <- tempfile()
 fn <- XeniumOutput("v2", file_path = fp)
 grid <- st_make_grid(x = st_as_sfc(st_bbox(c(xmin=0, xmax=1027, ymin=4, ymax=1009))),
                      cellsize = 50)
+gene_names <- read_parquet(file.path(fn, "transcripts.parquet"), col_select = "feature_name")[[1]] |> unique()
 test_that("Directly call aggregateTx to aggregate from file, specify `by`", {
     tx_agged <- aggregateTx(file.path(fn, "transcripts.parquet"), by = grid,
                             spatialCoordsNames = c("x_location", "y_location"),
                             gene_col = "feature_name")
     expect_s4_class(tx_agged, "SpatialFeatureExperiment")
+    expect_true(inherits(counts(tx_agged), "matrix"))
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
     expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
+})
+
+test_that("Directly call aggregateTx, sparse = TRUE", {
+    tx_agged <- aggregateTx(file.path(fn, "transcripts.parquet"), by = grid,
+                            spatialCoordsNames = c("x_location", "y_location"),
+                            gene_col = "feature_name", sparse = TRUE)
+    expect_s4_class(tx_agged, "SpatialFeatureExperiment")
+    expect_s4_class(counts(tx_agged), "dgCMatrix")
+    tx_agged$nCounts <- colSums(counts(tx_agged))
+    # empty cells are removed
+    expect_true(all(tx_agged$nCounts > 0))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
 
 test_that("aggregateTx from file, generate grid", {
@@ -28,6 +45,8 @@ test_that("aggregateTx from file, generate grid", {
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
     expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
 
 test_that("Call aggregateTx for a data frame", {
@@ -40,6 +59,8 @@ test_that("Call aggregateTx for a data frame", {
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
     expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
 
 fn_vizgen <- VizgenOutput("cellpose", file_path = fp)

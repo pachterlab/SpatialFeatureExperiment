@@ -20,6 +20,12 @@
 #'   \code{\link{readXenium}} for options and multiple images can be specified.
 #'   If \code{NULL}, then the default from the read function for the technology
 #'   will be used.
+#' @param sparse Logical, whether the gene count matrix from aggregating
+#'   transcript spots should be sparse. When the bins are large, the matrix will
+#'   not be very sparse so using sparse matrix will not save memory, but when
+#'   the bins are small, sparsity is worth it.
+#' @param BPPARAM bpparam object to specify parallel computing over genes. If a
+#'   lot of memory is used, then stick to `SerialParam()`.
 #' @inheritParams formatTxTech
 #' @inheritParams formatTxSpots
 #' @inheritParams readXenium
@@ -41,28 +47,46 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                         gene_col = "gene",
                         phred_col = "qv", min_phred = 20, flip_geometry = FALSE,
                         cellsize = NULL, square = TRUE, flat_topped = FALSE,
-                        new_geometry_name = "bins", unit = "micron") {
+                        new_geometry_name = "bins", unit = "micron", sparse = FALSE,
+                        BPPARAM = SerialParam()) {
     # This is only for one file, one sample
     if (!is.null(df)) file <- df
     mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
                            min_phred, flip_geometry)
+    if (inherits(mols, "data.table"))
+        mols <- mols[,c(spatialCoordsNames, "gene"), with=FALSE]
+    else mols <- mols[,c(spatialCoordsNames, "gene")]
     mols <- df2sf(mols, spatialCoordsNames = spatialCoordsNames,
                   geometryType = "POINT")
     if (is.null(by))
         by <- st_make_grid(mols, cellsize = cellsize, square = square,
                            flat_topped = flat_topped)
     else if (inherits(by, "sf")) by <- st_geometry(by)
-    grid_sf <- st_sf(grid_id = seq_along(by), geometry = by)
-    mols <- st_join(mols, grid_sf) # Took 5.87 minutes for 7171453 spots and 8555 bins
-    mols <- st_drop_geometry(mols) |> as.data.table()
-    mols <- mols[, .N, by = .(gene, grid_id)]
-    mols$gene <- factor(mols$gene) # The levels are alphabetically arranged
-    mols$gene_index <- as.integer(mols$gene)
-    new_mat <- sparseMatrix(i = mols$gene_index, j = mols$grid_id, x = mols$N)
-    rownames(new_mat) <- levels(mols$gene)
-    colnames(new_mat) <- seq_len(ncol(new_mat))
+    mols <- split(st_geometry(mols), mols[["gene"]])
+    if (sparse) { # TODO: try Arrow dataset, querying one gene at a time, 
+        # then create TileDB right from the beginning
+        # Iterate over the genes, count number of transcripts in each bin for the gene
+        ml <- bplapply(seq_along(mols), function(i) {
+            x <- mols[[i]]
+            ll <- lengths(st_intersects(by, x))
+            j <- which(ll > 0)
+            data.frame(i = i, j = j, x = ll[j])
+        }, BPPARAM = BPPARAM)
+        ml <- data.table::rbindlist(ml)
+        new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(mols), length(by)),
+                                dimnames = list(names(mols), seq_along(by)))
+    } else {
+        ml <- bplapply(mols, function(x) {
+            inds <- st_intersects(by, x)
+            lengths(inds)
+        }, BPPARAM = BPPARAM)
+        new_mat <- matrix(unlist(ml), nrow = length(by), ncol = length(mols),
+                          dimnames = list(seq_along(by), names(mols)))
+        new_mat <- t(new_mat)
+    }
     new_mat <- new_mat[,colSums(new_mat) > 0] # Remove empty grid cells
-    cgs <- list(bins = grid_sf[grid_sf$grid_id %in% mols$grid_id, "geometry"])
+    grid_sf <- st_sf(geometry = by)
+    cgs <- list(bins = grid_sf[colnames(new_mat), "geometry"])
     names(cgs) <- new_geometry_name
     SpatialFeatureExperiment(assays = list(counts = new_mat),
                              colGeometries = cgs, unit = unit)
@@ -77,7 +101,8 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                             min_phred = 20, flip = c("geometry", "image", "none"),
                             max_flip = "50 MB",
                             cellsize = NULL, square = TRUE, flat_topped = FALSE,
-                            new_geometry_name = "bins") {
+                            new_geometry_name = "bins", sparse = FALSE,
+                            BPPARAM = SerialParam()) {
     tech <- match.arg(tech)
     flip <- match.arg(flip)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
@@ -208,33 +233,19 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 }
 
 # Might turn this into an exported function
-.aggregate_sample_tx <- function(x, by, rowGeometryName, new_geometry_name) {
+.aggregate_sample_tx <- function(x, by, rowGeometryName, new_geometry_name, 
+                                 sparse = FALSE,
+                                 BPPARAM = SerialParam()) {
     rg <- rowGeometry(x, rowGeometryName)
     if (!is.null(st_z_range(rg)))
         by <- st_zm(by, drop = FALSE, what = "Z")
+    by <- by[lengths(st_intersects(by, rg)) > 0]
     grid_sf <- st_sf(grid_id = seq_along(by), geometry = by)
-
-    # Probably faster than directly calling st_intersection, since I don't need
-    # the actual geometries of the intersections, maybe not
-    tx_coords <- st_coordinates(rg)
+    tx_coords <- st_coordinates(rg) |> as.data.frame()
     if (ncol(tx_coords) > 3L) scn <- c("X", "Y", "Z") else scn <- c("X", "Y")
-    tx_point <- df2sf(tx_coords, spatialCoordsNames = scn)
-    tx_ind <- as.data.table(st_drop_geometry(tx_point))
-    tx_info <- txSpots(x) |> st_drop_geometry()
-    tx_info$L1 <- seq_along(tx_info$gene) # it has to be "gene" if it's from formatTxSpots
-    tx_point <- merge(tx_point, tx_info, by = "L1") # takes a while
-    tx_point <- st_as_sf(tx_point) |> st_join(grid_sf) # takes a few minutes
-    tx_counts <- tx_point |> st_drop_geometry() |> as.data.table()
-    tx_counts <- tx_counts[, .N, by = .(gene, L1, grid_id)]
-    # When some spots are outside the grids
-    tx_counts <- tx_counts[!is.na(grid_id),]
-    new_mat <- sparseMatrix(i = tx_counts$L1, j = tx_counts$grid_id, x = tx_counts$N,
-                            dims = c(nrow(x), max(tx_counts$grid_id)))
-    cgs <- list(bins = grid_sf)
-    names(cgs) <- new_geometry_name
-    out <- SpatialFeatureExperiment(assays = list(counts = new_mat),
-                             colGeometries = cgs)
-    colnames(out) <- seq_along(by)
+    out <- aggregateTx(df = tx_coords, spatialCoordsNames = scn,
+                       gene_col = "L1", by = by, sparse = sparse,
+                       BPPARAM = BPPARAM)
     rownames(out) <- rownames(x)
     out
 }
@@ -242,6 +253,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 .aggregate_sample <- function(x, by = NULL, FUN = sum, fun_name,
                               colGeometryName = 1L, rowGeometryName = NULL,
                               join = st_intersects, new_geometry_name = "bins",
+                              sparse = FALSE,
                               BPPARAM = SerialParam()) {
     # Here x is an SFE object with one sample
     # by is sfc
@@ -249,61 +261,63 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     # in the generic and I don't want to mess with the `aggregate` function in
     # other packages
     if (!is.null(rowGeometryName)) {
-        .aggregate_sample_tx(x, by, rowGeometryName, new_geometry_name)
+        .aggregate_sample_tx(x, by, rowGeometryName, new_geometry_name, 
+                             sparse = sparse, BPPARAM = BPPARAM)
     } else {
         .aggregate_sample_cell(x, by, FUN, fun_name, colGeometryName, join,
                                new_geometry_name, BPPARAM)
     }
 }
 
-.aggregate_SFE <-
-    function(x, by = NULL, FUN = sum, sample_id = "all",
-             colGeometryName = 1L, rowGeometryName = NULL,
-             cellsize = NULL, square = TRUE, flat_topped = FALSE,
-             new_geometry_name = "bins", join = st_intersects,
-             BPPARAM = SerialParam()) {
-        sample_id <- .check_sample_id(x, sample_id, one = FALSE)
-        if (is.null(by) && is.null(cellsize)) {
-            stop("Either `by` or `cellsize` must be specified.")
-        }
-        # Make grid for multiple samples if `by` is not specified
-        if (is.null(by)) {
-            by <- .make_grid_samples(x, sample_id,
-                                     cellsize, square, flat_topped)
-        }
-        if (is.list(by) && !inherits(by, "sfc") && !inherits(by, "sf")) {
-            if (!any(sample_id %in% names(by)))
-                stop("None of the geometries in `by` correspond to sample_id")
-            by <- by[intersect(sample_id, names(by))]
-        } else {
-            if (!inherits(by, "sfc") && !inherits(by, "sf"))
-                stop("`by` must be either sf or sfc.")
-            if (length(sample_id) > 1L) {
-                if (inherits(by, "sfc") || !"sample_id" %in% names(by))
-                    stop("`by` must be an sf data frame with a column `sample_id`")
-                by <- split(st_geometry(by), by$sample_id)
-            } else if (inherits(by, "sf")) {
-                by <- st_geometry(by)
-            }
-        }
-        if (inherits(by, "sfc")) by <- setNames(list(by), sample_id)
-        fun_name <- as.character(substitute(FUN))
-        sfes <- splitSamples(x) # Output list should have sample IDs as names
-        sfes <- lapply(sample_id, function(s) {
-            .aggregate_sample(sfes[[s]], by = by[[s]], FUN = FUN,
-                              colGeometryName = colGeometryName,
-                              rowGeometryName = rowGeometryName,
-                              join = join, fun_name = fun_name,
-                              new_geometry_name = new_geometry_name)
-        })
-        out <- do.call(cbind, sfes)
-        # Add the original rowGeometries back
-        rowGeometries(out) <- rowGeometries(x, sample_id = sample_id)
-        # Keep imgData
-        id_orig <- imgData(x)
-        imgData(out) <- id_orig[id_orig$sample_id %in% sample_id,]
-        out
+.aggregate_SFE <- function(x, by = NULL, FUN = sum, sample_id = "all",
+                           colGeometryName = 1L, rowGeometryName = NULL,
+                           cellsize = NULL, square = TRUE, flat_topped = FALSE,
+                           new_geometry_name = "bins", join = st_intersects,
+                           sparse = FALSE,
+                           BPPARAM = SerialParam()) {
+    sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    if (is.null(by) && is.null(cellsize)) {
+        stop("Either `by` or `cellsize` must be specified.")
     }
+    # Make grid for multiple samples if `by` is not specified
+    if (is.null(by)) {
+        by <- .make_grid_samples(x, sample_id,
+                                 cellsize, square, flat_topped)
+    }
+    if (is.list(by) && !inherits(by, "sfc") && !inherits(by, "sf")) {
+        if (!any(sample_id %in% names(by)))
+            stop("None of the geometries in `by` correspond to sample_id")
+        by <- by[intersect(sample_id, names(by))]
+    } else {
+        if (!inherits(by, "sfc") && !inherits(by, "sf"))
+            stop("`by` must be either sf or sfc.")
+        if (length(sample_id) > 1L) {
+            if (inherits(by, "sfc") || !"sample_id" %in% names(by))
+                stop("`by` must be an sf data frame with a column `sample_id`")
+            by <- split(st_geometry(by), by$sample_id)
+        } else if (inherits(by, "sf")) {
+            by <- st_geometry(by)
+        }
+    }
+    if (inherits(by, "sfc")) by <- setNames(list(by), sample_id)
+    fun_name <- as.character(substitute(FUN))
+    sfes <- splitSamples(x) # Output list should have sample IDs as names
+    sfes <- lapply(sample_id, function(s) {
+        .aggregate_sample(sfes[[s]], by = by[[s]], FUN = FUN,
+                          colGeometryName = colGeometryName,
+                          rowGeometryName = rowGeometryName,
+                          join = join, fun_name = fun_name,
+                          new_geometry_name = new_geometry_name,
+                          sparse = sparse, BPPARAM = BPPARAM)
+    })
+    out <- do.call(cbind, sfes)
+    # Add the original rowGeometries back
+    rowGeometries(out) <- rowGeometries(x, sample_id = sample_id)
+    # Keep imgData
+    id_orig <- imgData(x)
+    imgData(out) <- id_orig[id_orig$sample_id %in% sample_id,]
+    out
+}
 
 #' Aggregate data in SFE using geometry
 #'
@@ -353,8 +367,9 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 #' @param new_geometry_name Name to give to the new \code{colGeometry} in the
 #'   output. Defaults to "bins".
 #' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
-#'   computing when aggregating data with functions other than sum and mean.
-#'   Defaults to \code{SerialParam()}.
+#'   computing when aggregating data with functions other than sum and mean when
+#'   aggregating cells. When aggregating transcript spots, this specifies
+#'   parallel computing over genes. Defaults to \code{SerialParam()}.
 #' @return An SFE object with \code{colGeometry} the same as the geometry
 #'   specified in \code{by} or same as the grid specified in \code{cellsize}.
 #'   \code{rowGeometries} and \code{rowData} remain the same as in the input
@@ -374,7 +389,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 #' @concept Geometric operations
 #' @examples
 #' # example code
-#'
+#' 
 setMethod("aggregate", "SpatialFeatureExperiment", .aggregate_SFE)
 
 # Function to make grid for multiple samples

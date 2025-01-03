@@ -19,7 +19,9 @@ aggregateTx(
   square = TRUE,
   flat_topped = FALSE,
   new_geometry_name = "bins",
-  unit = "micron"
+  unit = "micron",
+  sparse = FALSE,
+  BPPARAM = SerialParam()
 )
 
 aggregateTxTech(
@@ -35,7 +37,9 @@ aggregateTxTech(
   cellsize = NULL,
   square = TRUE,
   flat_topped = FALSE,
-  new_geometry_name = "bins"
+  new_geometry_name = "bins",
+  sparse = FALSE,
+  BPPARAM = SerialParam()
 )
 }
 \arguments{
@@ -79,6 +83,14 @@ output. Defaults to "bins".}
 
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
+
+\item{sparse}{Logical, whether the gene count matrix from aggregating
+transcript spots should be sparse. When the bins are large, the matrix will
+not be very sparse so using sparse matrix will not save memory, but when
+the bins are small, sparsity is worth it.}
+
+\item{BPPARAM}{bpparam object to specify parallel computing over genes. If a
+lot of memory is used, then stick to `SerialParam()`.}
 
 \item{data_dir}{Top level output directory.}
 

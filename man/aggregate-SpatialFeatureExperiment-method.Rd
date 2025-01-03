@@ -16,6 +16,7 @@
   flat_topped = FALSE,
   new_geometry_name = "bins",
   join = st_intersects,
+  sparse = FALSE,
   BPPARAM = SerialParam()
 )
 }
@@ -59,8 +60,9 @@ output. Defaults to "bins".}
 \item{join}{logical spatial predicate function to use if \code{by} is a simple features object or geometry; see \link[sf]{st_join}}
 
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
-computing when aggregating data with functions other than sum and mean.
-Defaults to \code{SerialParam()}.}
+computing when aggregating data with functions other than sum and mean when
+aggregating cells. When aggregating transcript spots, this specifies
+parallel computing over genes. Defaults to \code{SerialParam()}.}
 }
 \value{
 An SFE object with \code{colGeometry} the same as the geometry
