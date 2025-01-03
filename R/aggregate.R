@@ -26,6 +26,7 @@
 #'   the bins are small, sparsity is worth it.
 #' @param BPPARAM bpparam object to specify parallel computing over genes. If a
 #'   lot of memory is used, then stick to `SerialParam()`.
+#' @param .orig_nrows Only used internally in the SFE method of \code{aggregate}
 #' @inheritParams formatTxTech
 #' @inheritParams formatTxSpots
 #' @inheritParams readXenium
@@ -40,6 +41,7 @@
 #'   each geometry. Geometries with no spot are removed.
 #' @importFrom data.table as.data.table
 #' @importFrom sf st_make_grid
+#' @importFrom rlang %||%
 #' @concept Geometric operations
 #' @export
 aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
@@ -48,7 +50,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                         phred_col = "qv", min_phred = 20, flip_geometry = FALSE,
                         cellsize = NULL, square = TRUE, flat_topped = FALSE,
                         new_geometry_name = "bins", unit = "micron", sparse = FALSE,
-                        BPPARAM = SerialParam()) {
+                        BPPARAM = SerialParam(), .orig_nrows = NULL) {
     # This is only for one file, one sample
     if (!is.null(df)) file <- df
     mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
@@ -66,15 +68,33 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
     if (sparse) { # TODO: try Arrow dataset, querying one gene at a time, 
         # then create TileDB right from the beginning
         # Iterate over the genes, count number of transcripts in each bin for the gene
-        ml <- bplapply(seq_along(mols), function(i) {
-            x <- mols[[i]]
-            ll <- lengths(st_intersects(by, x))
-            j <- which(ll > 0)
-            data.frame(i = i, j = j, x = ll[j])
-        }, BPPARAM = BPPARAM)
+        
+        # Special case from .aggregate_SFE, where numeric L1 is used for genes
+        if (gene_col == "L1") {
+            ml <- bplapply(names(mols), function(i) {
+                x <- mols[[i]]
+                ll <- lengths(st_intersects(by, x))
+                j <- which(ll > 0) # When the spots fall outside all bins
+                if (!length(j)) return(NULL)
+                data.frame(i = as.integer(i), j = j, x = ll[j])
+            }, BPPARAM = BPPARAM)
+        } else {
+            ml <- bplapply(seq_along(mols), function(i) {
+                x <- mols[[i]]
+                ll <- lengths(st_intersects(by, x))
+                j <- which(ll > 0)
+                data.frame(i = i, j = j, x = ll[j])
+            }, BPPARAM = BPPARAM)
+        }
         ml <- data.table::rbindlist(ml)
-        new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(mols), length(by)),
-                                dimnames = list(names(mols), seq_along(by)))
+        if (gene_col == "L1") {
+            nrows_use <- .orig_nrows %||% as.integer(tail(names(mols), 1))
+            new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(nrows_use, length(by)),
+                                    dimnames = list(as.character(seq_len(nrows_use)), seq_along(by)))
+        } else {
+            new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(mols), length(by)),
+                                    dimnames = list(names(mols), seq_along(by)))
+        }
     } else {
         ml <- bplapply(mols, function(x) {
             inds <- st_intersects(by, x)
@@ -89,7 +109,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
     cgs <- list(bins = grid_sf[colnames(new_mat), "geometry"])
     names(cgs) <- new_geometry_name
     SpatialFeatureExperiment(assays = list(counts = new_mat),
-                             colGeometries = cgs, unit = unit)
+                             colGeometries = cgs, unit = unit, sample_id = sample_id)
 }
 
 #' @rdname aggregateTx
@@ -234,18 +254,22 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 
 # Might turn this into an exported function
 .aggregate_sample_tx <- function(x, by, rowGeometryName, new_geometry_name, 
-                                 sparse = FALSE,
-                                 BPPARAM = SerialParam()) {
+                                 sparse = FALSE, BPPARAM = SerialParam(),
+                                 .orig_nrows = NULL) {
     rg <- rowGeometry(x, rowGeometryName)
     if (!is.null(st_z_range(rg)))
-        by <- st_zm(by, drop = FALSE, what = "Z")
-    by <- by[lengths(st_intersects(by, rg)) > 0]
+        rg <- st_zm(rg)
+    if (st_geometry_type(rg, by_geometry = FALSE) == "GEOMETRY") {
+        # Happens after cropping and producing empty geometries
+        rg <- st_cast(rg, "MULTIPOINT") |> st_zm()
+    }
     grid_sf <- st_sf(grid_id = seq_along(by), geometry = by)
     tx_coords <- st_coordinates(rg) |> as.data.frame()
-    if (ncol(tx_coords) > 3L) scn <- c("X", "Y", "Z") else scn <- c("X", "Y")
+    scn <- c("X", "Y")
     out <- aggregateTx(df = tx_coords, spatialCoordsNames = scn,
                        gene_col = "L1", by = by, sparse = sparse,
-                       BPPARAM = BPPARAM)
+                       BPPARAM = BPPARAM, .orig_nrows = .orig_nrows,
+                       sample_id = sampleIDs(x))
     rownames(out) <- rownames(x)
     out
 }
@@ -254,7 +278,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                               colGeometryName = 1L, rowGeometryName = NULL,
                               join = st_intersects, new_geometry_name = "bins",
                               sparse = FALSE,
-                              BPPARAM = SerialParam()) {
+                              BPPARAM = SerialParam(), .orig_nrows = NULL) {
     # Here x is an SFE object with one sample
     # by is sfc
     # Can't do S4 method with signature for `by` because the argument `by` isn't
@@ -262,7 +286,8 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     # other packages
     if (!is.null(rowGeometryName)) {
         .aggregate_sample_tx(x, by, rowGeometryName, new_geometry_name, 
-                             sparse = sparse, BPPARAM = BPPARAM)
+                             sparse = sparse, BPPARAM = BPPARAM, 
+                             .orig_nrows = .orig_nrows)
     } else {
         .aggregate_sample_cell(x, by, FUN, fun_name, colGeometryName, join,
                                new_geometry_name, BPPARAM)
@@ -302,13 +327,19 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
     if (inherits(by, "sfc")) by <- setNames(list(by), sample_id)
     fun_name <- as.character(substitute(FUN))
     sfes <- splitSamples(x) # Output list should have sample IDs as names
+    if (!is.null(rowGeometryName)) {
+        any_empty <- vapply(sfes, function(x) any(st_is_empty(rowGeometry(x, rowGeometryName))),
+                            FUN.VALUE = logical(1)) |> any()
+        if (any_empty) sparse <- TRUE
+    }
     sfes <- lapply(sample_id, function(s) {
         .aggregate_sample(sfes[[s]], by = by[[s]], FUN = FUN,
                           colGeometryName = colGeometryName,
                           rowGeometryName = rowGeometryName,
                           join = join, fun_name = fun_name,
                           new_geometry_name = new_geometry_name,
-                          sparse = sparse, BPPARAM = BPPARAM)
+                          sparse = sparse, BPPARAM = BPPARAM, 
+                          .orig_nrows = nrow(sfes[[s]]))
     })
     out <- do.call(cbind, sfes)
     # Add the original rowGeometries back

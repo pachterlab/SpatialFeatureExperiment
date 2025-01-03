@@ -209,5 +209,25 @@ test_that("aggregate for SFE, multiple samples", {
     expect_equal(sampleIDs(sfe2), sampleIDs(agg2))
 })
 
+test_that("aggregate for SFE using txSpots, multiple samples", {
+    agg2 <- aggregate(sfe2, cellsize = 50, rowGeometryName = "txSpots")
+    expect_equal(sampleIDs(agg2), sampleIDs(sfe2))
+    expect_equal(nrow(agg2), nrow(sfe2))
+    expect_equal(rowGeometries(agg2), rowGeometries(sfe2))
+})
+
+test_that("Empty geometries in rowGeometry", {
+    sfe <- readXenium(fn, add_molecules = TRUE)
+    bbox2 <- c(xmin=700, xmax=850, ymin=-800, ymax=-650)
+    sfe_sub <- crop(sfe, bbox2)
+    
+    txSpots(sfe_sub) <- st_cast(txSpots(sfe_sub), "MULTIPOINT") |> st_zm()
+    sfe_agg_cell <- aggregate(sfe_sub, cellSeg(sfe_sub), rowGeometryName = "txSpots")
+    expect_s4_class(counts(sfe_agg_cell), "dgCMatrix")
+    expect_true(ncol(sfe_agg_cell) <= ncol(sfe_sub)) # some cells don't have transcripts here
+    expect_equal(nrow(sfe_agg_cell), nrow(sfe_sub))
+    expect_equal(rowGeometries(sfe_agg_cell), rowGeometries(sfe_sub))
+})
+
 unlink(fn, recursive = TRUE)
 unlink(fn_vizgen, recursive = TRUE)

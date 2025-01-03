@@ -435,6 +435,8 @@ NULL
     if (length(sampleIDs(x)) > 1L && !grepl(paste0(sample_id, "$"), type)) {
         type <- paste(type, sample_id, sep = "_")
     }
+    if (length(sampleIDs(x)) == 1L && !type %in% rg_names)
+        type <- paste(type, sample_id, sep = "_")
     type
 }
 
@@ -548,7 +550,7 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
 #' @export
 `rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
                               partial = FALSE, translate = TRUE, value) {
-    check_names <- !identical(sample_id, "all") && length(sampleIDs(x)) > 1L
+    check_names <- !identical(sample_id, "all") && length(setdiff(sampleIDs(x), sample_id))
     sample_id0 <- sample_id
     sample_id <- .check_sample_id(x, sample_id, one = FALSE, mustWork = FALSE)
     existing <- rowGeometries(x, sample_id = "all")
