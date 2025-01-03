@@ -65,7 +65,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                            flat_topped = flat_topped)
     else if (inherits(by, "sf")) by <- st_geometry(by)
     mols <- split(st_geometry(mols), mols[["gene"]])
-    if (sparse) { # TODO: try Arrow dataset, querying one gene at a time, 
+    if (sparse) { # TODO: This uses a lot of memory. Try Arrow dataset, querying one gene at a time, 
         # then create TileDB right from the beginning
         # Iterate over the genes, count number of transcripts in each bin for the gene
         
@@ -158,7 +158,8 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                 phred_col = "qv", min_phred = min_phred,
                 flip_geometry = (flip == "geometry"),
                 cellsize = cellsize, square = square, flat_topped = flat_topped,
-                new_geometry_name = new_geometry_name)
+                new_geometry_name = new_geometry_name, BPPARAM = BPPARAM, 
+                sparse = sparse)
     imgData(sfe) <- img_df
     sfe
 }
