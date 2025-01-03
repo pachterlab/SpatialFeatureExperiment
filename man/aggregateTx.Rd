@@ -21,7 +21,8 @@ aggregateTx(
   new_geometry_name = "bins",
   unit = "micron",
   sparse = FALSE,
-  BPPARAM = SerialParam()
+  BPPARAM = SerialParam(),
+  .orig_nrows = NULL
 )
 
 aggregateTxTech(
@@ -91,6 +92,8 @@ the bins are small, sparsity is worth it.}
 
 \item{BPPARAM}{bpparam object to specify parallel computing over genes. If a
 lot of memory is used, then stick to `SerialParam()`.}
+
+\item{.orig_nrows}{Only used internally in the SFE method of \code{aggregate}}
 
 \item{data_dir}{Top level output directory.}
 

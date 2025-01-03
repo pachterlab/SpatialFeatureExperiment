@@ -59,6 +59,11 @@ output. Defaults to "bins".}
 
 \item{join}{logical spatial predicate function to use if \code{by} is a simple features object or geometry; see \link[sf]{st_join}}
 
+\item{sparse}{Logical, whether the gene count matrix from aggregating
+transcript spots should be sparse. When the bins are large, the matrix will
+not be very sparse so using sparse matrix will not save memory, but when
+the bins are small, sparsity is worth it.}
+
 \item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
 computing when aggregating data with functions other than sum and mean when
 aggregating cells. When aggregating transcript spots, this specifies

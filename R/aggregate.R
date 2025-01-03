@@ -374,6 +374,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 #'
 #' @inheritParams sf::st_make_grid
 #' @inheritParams sf::aggregate
+#' @inheritParams aggregateTx
 #' @param x An SFE object to be aggregated.
 #' @param by A \code{sf} data frame whose geometry column is used for
 #'   aggregation or \code{sfc} or for multiple samples a list of \code{sfc}
