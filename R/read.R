@@ -1024,6 +1024,7 @@ readCosMX <- function(data_dir,
     }
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
+                                    sample_id = sample_id,
                                     spatialCoordsNames = c("CenterX_global_px", "CenterY_global_px"),
                                     unit = "full_res_image_pixel")
     # sanity on geometries

@@ -494,6 +494,13 @@ test_that("readCosMX, not reading transcript spots", {
     unlink(dir_use, recursive = TRUE)
 })
 
+test_that("readCosMX, set sample_id", {
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
+    sfe <- readCosMX(dir_use, z = 1L, sample_id = "foo")
+    expect_equal(sampleIDs(sfe), "foo")
+})
+
 test_that("readCosMX, reading spots, 1 z-plane", {
     fp <- tempfile()
     dir_use <- CosMXOutput(file_path = fp)

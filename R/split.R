@@ -104,3 +104,5 @@ splitContiguity <- function(x, colGeometryName = 1L,
     }
     splitByCol(x, ag_union, colGeometryName = colGeometryName, cover = cover)
 }
+
+# TODO: split by graph components
