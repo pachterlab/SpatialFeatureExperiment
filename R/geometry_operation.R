@@ -463,6 +463,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
             " was/were removed by the cropping."
         )
     }
+    samples_use <- intersect(samples_use, sampleIDs(out))
     if (!"col" %in% keep_whole) {
         # colGeometries should have already been subsetted here
         # Also actually crop all geometries for the samples of interest.
