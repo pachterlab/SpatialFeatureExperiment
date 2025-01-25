@@ -470,7 +470,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             inds <- which(areas > min_area)
             polys <- polys[inds, ]
         }
-        dupl_inds <- which(polys[[cell_ID]] |> duplicated())
+        dupl_inds <- which(polys$ID_row |> duplicated())
         # filter polygons with multiple pieces in single cell segmentation
         if (length(dupl_inds)) {
             warning("There are ", length(dupl_inds), " cells with multiple", " pieces in cell segmentation", 
@@ -479,26 +479,27 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
                     paste(dupl_inds |> head(10),
                           collapse = ", "),
                     ". The largest piece is kept.")
-            dupl_cells <- polys[[cell_ID]][dupl_inds]
+            dupl_cells <- polys$ID_row[dupl_inds]
             # areas of polygons with multiple pieces
             dupl_areas <- areas[which(names(areas) %in% polys$ID_row[dupl_inds])]
             if (!is.null(min_area))
                 # filter with minimal area
                 dupl_areas <- dupl_areas[dupl_areas > min_area]
             # get clean polygons
+            dupl_ids <- unique(names(dupl_areas))
             add_geo <-
                 # this can take time if not parallelized and many artifacts to be removed
-                bplapply(seq_along(names(dupl_areas) |> unique()), 
-                         function(i) {
+                bplapply(dupl_ids, 
+                         function(n) {
                              which_keep <- 
-                                 dupl_areas[names(dupl_areas) %in% unique(names(dupl_areas))[i]] |> 
+                                 dupl_areas[names(dupl_areas) == n] |> 
                                  which.max()
-                             polys[polys[[cell_ID]] %in% dupl_cells[i], ] |> 
+                             polys[polys$ID_row == n, ] |> 
                                  st_geometry() |> _[[which_keep]]
                          }, BPPARAM = BPPARAM) |> st_sfc()
             # add clean geometries
             polys_add <- 
-                polys[polys[[cell_ID]] %in% dupl_cells, ] |> 
+                polys[polys$ID_row %in% dupl_cells, ] |> 
                 st_drop_geometry() |>
                 dplyr::distinct(!!rlang::sym(cell_ID),
                                 .keep_all = TRUE)
@@ -507,7 +508,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             colnames(polys_add) <- colnames(polys)
             polys <- 
                 # data.table is faster than rbind or dplyr::bind_rows
-                data.table::rbindlist(list(polys[!polys[[cell_ID]] %in% dupl_cells,], 
+                data.table::rbindlist(list(polys[!polys$ID_row %in% dupl_cells,], 
                                            polys_add)) |> 
                 as.data.frame() |> st_as_sf()
             # sort by ID_row
