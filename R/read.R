@@ -436,7 +436,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
                 " cells with (nested) polygon lists", "\n",
                 ">>> ..applying filtering") }
     # add sequence of numbers as temporary column
-    polys$ID_row <- seq_len(length.out = nrow(polys))
+    polys$ID_row <- as.character(seq_len(length.out = nrow(polys)))
     polys.ID_row <- polys$ID_row
     # remove empty elements
     polys <- polys[!st_is_empty(polys), ]
