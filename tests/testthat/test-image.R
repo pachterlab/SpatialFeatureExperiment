@@ -198,7 +198,7 @@ test_that("mirrorImg, SpatRasterImage method", {
     expect_equal(dim(img_m2), c(13,8,3))
     # check content
     if (packageVersion('terra') == as.package_version("1.7.83") ||
-        packageVersion('terra') == as.package_version("1.8.10"))
+        packageVersion('terra') >= as.package_version("1.8.10"))
         expect_equal(imgRaster(img_m2)[4,3,2][[1]], 190)
 
     # Use filename
@@ -245,7 +245,7 @@ test_that("scaleImg, SpatRasterImage method, EBI behind the scene", {
 test_that("affineImg, SpatRasterImage method, EBI behind the scene", {
     suppressWarnings(spi <- SpatRasterImage(rast(img_path)))
     if (packageVersion('terra') == as.package_version("1.7.83") ||
-        packageVersion('terra') == as.package_version("1.8.10"))
+        packageVersion('terra') >= as.package_version("1.8.10"))
         spi <- mirrorImg(spi, "vertical")
     # Should rotate clockwise somewhat, squished to be flatter, shear to the right
     M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)

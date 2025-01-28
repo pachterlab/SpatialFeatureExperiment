@@ -45,7 +45,7 @@
             } else if (inherits(img, "RemoteSpatialImage") || inherits(img, "StoredSpatialImage")) {
                 suppressWarnings(im_new <- rast(imgSource(img)))
                 if (packageVersion('terra') == as.package_version("1.7.83") ||
-                    packageVersion('terra') == as.package_version("1.8.10"))
+                    packageVersion('terra') >= as.package_version("1.8.10"))
                     im_new <- terra::flip(im_new)
             } else {
                 warning("Don't know how to convert image ", i, " to SpatRaster, ",
