@@ -487,16 +487,12 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
                 dupl_areas <- dupl_areas[dupl_areas > min_area]
             # get clean polygons
             dupl_ids <- unique(names(dupl_areas))
-            add_geo <-
-                # this can take time if not parallelized and many artifacts to be removed
-                bplapply(dupl_ids, 
-                         function(n) {
-                             which_keep <- 
-                                 dupl_areas[names(dupl_areas) == n] |> 
-                                 which.max()
-                             polys[polys$ID_row == n, ] |> 
-                                 st_geometry() |> _[[which_keep]]
-                         }, BPPARAM = BPPARAM) |> st_sfc()
+            dupl_area_dt <- data.table::data.table(area = dupl_areas, name = names(dupl_areas))
+            poly_df <- polys[polys$ID_row %in% unique(names(dupl_areas)),]
+            stopifnot("poly_df and dupl_areas must have identical sorting" = all(poly_df$ID_row == dupl_area_dt$name))
+            # ^ Will this always hold? TODO sort dupl_area_dt accordingly if not
+            id_max_dt <- dupl_area_dt[,gmax := max(area), by = name][, gi := seq_len(.N), by = name][, i := .I][area == gmax]
+            add_geo <- poly_df[id_max_dt$i,] |> st_geometry() |> st_sfc()
             # add clean geometries
             polys_add <- 
                 polys[polys$ID_row %in% dupl_cells, ] |> 
