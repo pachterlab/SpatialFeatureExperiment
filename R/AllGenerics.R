@@ -232,6 +232,8 @@ setGeneric(".mirror_img", function(x, direction, bbox_all, ...) standardGeneric(
 
 setGeneric(".rotate_img", function(x, degrees, bbox_all, ...) standardGeneric(".rotate_img"))
 
+setGeneric(".scale_img", function(x, factor, bbox_all, ...) standardGeneric(".scale_img"))
+
 #' @export
 setGeneric("scaleImg", function(x, factor, ...) standardGeneric("scaleImg"))
 

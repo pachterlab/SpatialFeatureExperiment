@@ -277,14 +277,14 @@ sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
               scale_fct = 0.023)
 test_that("imgRaster, SpatRasterImage", {
     img <- imgRaster(getImg(sfe))
-    expect_s4_class(img, "raster")
+    expect_s3_class(img, "raster")
 })
 
 test_that("imgRaster, loaded from RDS", {
     saveRDS(sfe, "baz.rds")
     sfe_read <- readRDS("baz.rds")
     img <- imgRaster(getImg(sfe))
-    expect_s4_class(img, "raster")
+    expect_s3_class(img, "raster")
     unlink("baz.rds")
 })
 
@@ -586,7 +586,7 @@ test_that("Convert BioFormatsImage to ExtImage after translation", {
     ext_exp[c("xmin", "xmax")] <- ext_exp[c("xmin", "xmax")] + v[1]
     ext_exp[c("ymin", "ymax")] <- ext_exp[c("ymin", "ymax")] + v[2]
     expect_equal(ext_sub, ext_exp)
-    expect_equal(ebi, ebi_sub)
+    expect_equal(as(ebi, "Image"), as(ebi_sub, "Image"))
 })
 
 test_that("Convert BFI to EBI after transformation, full extent", {

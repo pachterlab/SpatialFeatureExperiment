@@ -25,6 +25,7 @@ Other image methods:
 \code{\link{SFE-image}},
 \code{\link{affineImg}()},
 \code{\link{cropImg}()},
+\code{\link{dim,ExtImage-method}},
 \code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},

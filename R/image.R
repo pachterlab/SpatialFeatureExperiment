@@ -485,6 +485,7 @@ ExtImage <- function(img, ext = NULL) {
 
 .toExtImage2 <- function(x, maxcell = 1e7, channel = NULL) {
     # 1e7 comes from the number of pixels in resolution = 4L in the ome.tiff
+    x <- as(x, "SpatRaster")
     if (dim(x)[3] == 3L) {
         names(x) <- c("r", "g", "b")
         # Remove RGB settings, better plot without it
@@ -499,7 +500,7 @@ ExtImage <- function(img, ext = NULL) {
         out <- terra::as.array(x) |> aperm(c(2,1,3)) |> Image(colormode = "Color")
     else
         out <- terra::as.array(x)[,,1] |> t() |> Image(colormode = "Grayscale")
-    ExtImage(out, ext(x))
+    ExtImage(out, as.vector(ext(x)))
 }
 
 #' Convert images to ExtImage
@@ -676,6 +677,25 @@ setMethod("dim", "BioFormatsImage", function(x) {
     meta <- RBioFormats::read.metadata(imgSource(x)) |>
         coreMetadata(series = 1L)
     c(X=meta$sizeX, Y=meta$sizeY, C=meta$sizeC, Z=meta$sizeZ, "T"=meta$sizeT)
+})
+
+#' Find dimensions of ExtImage
+#' 
+#' This method exists to make the output of \code{dim()} for \code{ExtImage}
+#' consistent with that of \code{Image} which \code{ExtImage} inherits from,
+#' overriding the \code{VirtualSpatialImage} method.
+#' 
+#' @param x A \code{\link{ExtImage}} object.
+#' @return An integer vector. As in \code{EBImage}, the first element indicates
+#' number of pixels in the x direction, or number of columns in the image, and
+#' the second element indicates the number of pixels in the y direction. This is
+#' unlike array indexing.
+#' 
+#' @concept Image methods
+#' @family image methods
+#' @export
+setMethod("dim", "ExtImage", function(x) {
+    dim(as(x, "Image"))
 })
 
 #' Image setter
@@ -987,7 +1007,7 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 #' In SFE, S4 classes inheriting from \code{VirtualSpatialImage} have been
 #' implemented to make these image classes compatible with
 #' \code{SpatialExperiment}.
-#'
+#' @inheritParams terra::as.raster
 #' @param x An object of class \code{*Image} as implemented in this package.
 #' @param resolution Resolution to read in from OME-TIFF, defaults to 4, which
 #'   is a medium resolution in Xenium.
@@ -999,17 +1019,23 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 #' @aliases imgRaster,SpatRasterImage-method imgRaster,BioFormatsImage-method
 #'   imgRaster,ExtImage-method
 #' @concept Image methods
+#' @importFrom terra as.raster
 #' @family image methods
 NULL
 
+#' @rdname imgRaster
 #' @export
-setMethod("imgRaster", "SpatRasterImage", terra::as.raster)
+setMethod("imgRaster", "SpatRasterImage", function(x, maxcell=1e7, 
+                                                   col=terra::map.pal("viridis", 100)) 
+    as.raster(x, maxcell=maxcell, col=col))
 
+#' @rdname imgRaster
 #' @export
 setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
     toExtImage(x, resolution) |> imgRaster()
 })
 
+#' @rdname imgRaster
 #' @export
 setMethod("imgRaster", "ExtImage", function(x) as.raster(as(x, "Image")))
 
@@ -1160,7 +1186,7 @@ setMethod(".mirror_img", "SpatRasterImage",
                    bbox_all = NULL, filename = "", maxcell = NULL) {
               direction <- match.arg(direction)
               if (!is.null(maxcell)) x <- .resample_spat(x, maxcell)
-              x <- terra::flip(x, direction = direction,
+              x <- terra::flip(as(x,"SpatRaster"), direction = direction,
                                filename = filename) |> SpatRasterImage()
               # Shift extent for overall bbox
               if (!is.null(bbox_all)) {
@@ -1327,11 +1353,18 @@ setMethod("translateImg", "ExtImage", function(x, v, ...) {
 })
 
 # Scale------------------
-.scale_ext <- function(x, factor, bbox_all = ext(x), ...) {
-    ext(x) <- .transform_bbox(ext(x), list(name="scale", factor=factor),
-                              bbox_all = bbox_all)
-    x
-}
+setMethod(".scale_img", "AlignedSpatialImage", 
+          function(x, factor, bbox_all = ext(x), ...) {
+              ext(x) <- .transform_bbox(ext(x), list(name="scale", factor=factor),
+                                        bbox_all = bbox_all)
+              x
+          })
+
+setMethod(".scale_img", "BioFormatsImage", 
+          function(x, factor, bbox_all = ext(x), ...) {
+              .combine_transforms(x, list(name="scale", factor=factor),
+                                  bbox = bbox_all)
+          })
 #' Scale image
 #'
 #' This function scales the image about its center. After scaling, the center
@@ -1352,7 +1385,13 @@ NULL
 #' @rdname scaleImg
 #' @export
 setMethod("scaleImg", "AlignedSpatialImage",
-          function(x, factor, ...) .scale_ext(x, factor))
+          function(x, factor, ...) .scale_img(x, factor, bbox_all = ext(x)))
+
+#' @rdname scaleImg
+#' @export
+setMethod("scaleImg", "BioFormatsImage", 
+          function(x, factor, ...) .scale_img(x, factor, bbox_all = ext(x))
+    )
 
 # Affine ------------
 

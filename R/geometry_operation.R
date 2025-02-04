@@ -664,7 +664,7 @@ translate <- function(sfe, sample_id = "all", v) {
 #' @export
 scale <- function(sfe, sample_id = "all", factor) {
     .transform_samples(sfe, sample_id, geometry_fun = .scale_geometry,
-                       img_fun = .scale_ext, factor = factor)
+                       img_fun = .scale_img, factor = factor)
 }
 
 #' @rdname SFE-transform

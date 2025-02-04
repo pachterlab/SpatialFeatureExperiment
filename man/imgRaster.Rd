@@ -6,8 +6,19 @@
 \alias{imgRaster,BioFormatsImage-method}
 \alias{imgRaster,ExtImage-method}
 \title{Get the image from *Image class}
+\usage{
+\S4method{imgRaster}{SpatRasterImage}(x, maxcell = 1e+07, col = terra::map.pal("viridis", 100))
+
+\S4method{imgRaster}{BioFormatsImage}(x, resolution = 4L)
+
+\S4method{imgRaster}{ExtImage}(x)
+}
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
+
+\item{maxcell}{positive integer. Maximum number of cells to use for the plot}
+
+\item{col}{vector of colors. The default is \code{map.pal("viridis", 100)}}
 
 \item{resolution}{Resolution to read in from OME-TIFF, defaults to 4, which
 is a medium resolution in Xenium.}
@@ -28,6 +39,7 @@ Other image methods:
 \code{\link{affineImg}()},
 \code{\link{cropImg}()},
 \code{\link{dim,BioFormatsImage-method}},
+\code{\link{dim,ExtImage-method}},
 \code{\link{ext}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},
