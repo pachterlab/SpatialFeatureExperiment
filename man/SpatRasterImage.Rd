@@ -12,7 +12,7 @@ SpatRasterImage(img)
 \S4method{show}{SpatRasterImage}(object)
 }
 \arguments{
-\item{img}{A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.}
+\item{img}{A \code{\link[terra]{SpatRaster}} or \code{PackedSpatRaster} object.}
 
 \item{object}{A \code{SpatRasterImage} object.}
 }
@@ -23,7 +23,7 @@ A \code{SpatRasterImage} object.
 \code{SpatialFeatureExperiment} and the \code{Voyager} package work with
 images differently from \code{SpatialExperiment}. In SFE and
 \code{Voyager}'s, plotting functions for SFE objects, the images can be read
-with \code{\link{rast}} and represented as \code{SpatRaster}, so the image is
+with \code{\link[terra]{rast}} and represented as \code{SpatRaster}, so the image is
 not entirely loaded into memory unless necessary. Plotting will not load a
 large image into memory; rather the image will be downsampled and the
 downsampled version is plotted. A \code{SpatRasterImage} object (as of Bioc

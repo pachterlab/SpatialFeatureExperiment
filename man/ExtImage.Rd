@@ -26,7 +26,7 @@ size and the number of pixels.}
 An \code{ExtImage} object.
 }
 \description{
-This is a thin wrapper around the \code{\link{Image}} class in the
+This is a thin wrapper around the \code{\link[EBImage]{Image}} class in the
 \code{EBImage} package so it inherits from \code{VirtualSpatialImage} to be
 compatible with \code{SpatialExperiment} from which SFE inherits. An
 \code{ext} field is added to specify the spatial extent of the image in

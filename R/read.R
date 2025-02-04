@@ -38,6 +38,7 @@
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
+#' @importFrom SpatialExperiment spatialCoordsNames<-
 #' @concept Read data into SFE
 #' @importFrom DropletUtils read10xCounts
 #' @note It is assumed that the images have not been cropped. Otherwise the
@@ -418,6 +419,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @importFrom sf st_is_empty st_drop_geometry
 #' @importFrom BiocParallel bplapply
 #' @importFrom utils head
+#' @importFrom data.table :=
 .filter_polygons <- function(polys, min_area,
                              is_Xenium = FALSE, # indicate if input tech is Xenium or not
                              BPPARAM = SerialParam()) {
@@ -651,7 +653,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' The coordinates are in microns. Cell centroids are read into
 #' \code{\link{colGeometry}} "centroids", and cell segmentations are read into
 #' \code{colGeometry} "cellSeg". The image(s) (polyT, DAPI, and cell boundaries)
-#' are also read as \code{\link{SpatRaster}} objects so they are not loaded into
+#' are also read as \code{\link[terra]{SpatRaster}} objects so they are not loaded into
 #' memory unless necessary. Because the image's origin is the top left while the
 #' geometry's origin is bottom left, either the image or the geometry needs to
 #' be flipped. Because the image accompanying MERFISH datasets are usually very
@@ -688,11 +690,11 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @param use_cellpose Whether to read the parquet files from CellPose cell
 #'   segmentation. If \code{FALSE}, cell segmentation will be read from the HDF5
 #'   files. Note that reading HDF5 files for numerous FOVs is very slow.
-#' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
 #'   processing backend and number of threads to use for parallelizable tasks:
 #'   \enumerate{ \item To load cell segmentation from HDF5 files from different
 #'   fields of view (FOVs) with multiple cores. A progress bar can be configured
-#'   in the \code{\link{BiocParallelParam}} object. When there are numerous
+#'   in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
 #'   FOVs, reading in the geometries can be time consuming, so we recommend
 #'   using a server and larger number of threads. This argument is not used if
 #'   \code{use_cellpose = TRUE} and the parquet file is present.

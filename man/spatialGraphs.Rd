@@ -93,7 +93,7 @@ correspond to \code{annotGeometries}.}
 useful when multiple pieces of tissues are in the same SFE object (say for
 a joint dimension reduction and clustering) and the spatial neighborhood is
 only meaningful within the same piece of tissue. See the \code{sample_id}
-argument in \code{\link{SpatialExperiment}}.}
+argument in \code{\link[SpatialExperiment]{SpatialExperiment}}.}
 
 \item{name}{Name of the graphs to add to each sample_id; used in the
 \code{spatialGraphs} replacement method as it must be character while

@@ -1,7 +1,7 @@
 #' The SpatialFeatureExperiment class
 #'
-#' This class inherits from the \code{\link{SpatialExperiment}} (SPE) class,
-#' which in turn inherits from \code{\link{SingleCellExperiment}} (SCE).
+#' This class inherits from the \code{\link[SpatialExperiment]{SpatialExperiment}} (SPE) class,
+#' which in turn inherits from \code{\link[SingleCellExperiment]{SingleCellExperiment}} (SCE).
 #' \code{SpatialFeatureExperiment} stores geometries of spots or cells in
 #' \code{sf} objects which form columns of a \code{DataFrame} which is in turn a
 #' column of the \code{int_colData} \code{DataFrame} of the underlying SCE
@@ -72,10 +72,10 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   \code{*Geometries} arguments have ordinary data frames, to identify the
 #'   columns in the ordinary data frames that specify the spatial coordinates.
 #'   If \code{colGeometries} is not specified, then this argument will behave as
-#'   in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+#'   in \code{\link[SpatialExperiment]{SpatialExperiment}}, but \code{colGeometries} will be given
 #'   precedence if provided.
 #' @param spatialCoords A numeric matrix containing columns of spatial
-#'   coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+#'   coordinates, as in \code{\link[SpatialExperiment]{SpatialExperiment}}. The coordinates are
 #'   centroids of the entities represented by the columns of the gene count
 #'   matrix. If \code{colGeometries} is also specified, then it will be given
 #'   priority and a warning is issued. Otherwise, the \code{sf} representation
@@ -87,8 +87,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
 #' @param unit Unit the coordinates are in, either microns or pixels in full
 #'   resolution image.
-#' @param ... Additional arguments passed to the \code{\link{SpatialExperiment}}
-#'   and \code{\link{SingleCellExperiment}} constructors.
+#' @param ... Additional arguments passed to the \code{\link[SpatialExperiment]{SpatialExperiment}}
+#'   and \code{\link[SingleCellExperiment]{SingleCellExperiment}} constructors.
 #' @return A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
 #'   is specified, then a \code{colGeometry} called "centroids" will be made,
 #'   which is essentially the spatial coordinates as sf POINTs. If

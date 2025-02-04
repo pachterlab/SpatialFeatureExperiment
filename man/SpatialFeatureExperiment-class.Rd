@@ -5,8 +5,8 @@
 \alias{SpatialFeatureExperiment-class}
 \title{The SpatialFeatureExperiment class}
 \description{
-This class inherits from the \code{\link{SpatialExperiment}} (SPE) class,
-which in turn inherits from \code{\link{SingleCellExperiment}} (SCE).
+This class inherits from the \code{\link[SpatialExperiment]{SpatialExperiment}} (SPE) class,
+which in turn inherits from \code{\link[SingleCellExperiment]{SingleCellExperiment}} (SCE).
 \code{SpatialFeatureExperiment} stores geometries of spots or cells in
 \code{sf} objects which form columns of a \code{DataFrame} which is in turn a
 column of the \code{int_colData} \code{DataFrame} of the underlying SCE

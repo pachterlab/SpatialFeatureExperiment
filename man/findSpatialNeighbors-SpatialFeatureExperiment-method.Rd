@@ -62,14 +62,14 @@ supports multithreading.}
 
 \item{dmax}{Only relevant when \code{dist_type = "dpd"}.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object for multithreading.
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object for multithreading.
 Only used for k nearest neighbor and distance based neighbor with
 \code{nn_method = "bioc"}.}
 
-\item{BNPARAM}{A \code{\link{BiocNeighborParam}} object specifying the
+\item{BNPARAM}{A \code{\link[BiocNeighbors]{BiocNeighborParam}} object specifying the
 algorithm to find k nearest neighbors and distance based neighbors with
 \code{nn_method = "bioc"}. For distance based neighbors, only
-\code{\link{KmknnParam}} and \code{\link{VptreeParam}} are applicable.}
+\code{\link[BiocNeighbors]{KmknnParam}} and \code{\link[BiocNeighbors]{VptreeParam}} are applicable.}
 
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 
@@ -101,7 +101,7 @@ rows of the gene count matrix in the SFE object or spatial entities in the
 \code{listw} is used in many methods that facilitate the spatial neighborhood
 graph in the \code{spdep}, \code{spatialreg}, and \code{adespatial}. The edge
 weights of the graph in the \code{listw} object are by default style W (see
-\code{\link{nb2listw}}) and the unweighted neighbor list is in the
+\code{\link[spdep]{nb2listw}}) and the unweighted neighbor list is in the
 \code{neighbours} field of the \code{listw} object.
 }
 \note{

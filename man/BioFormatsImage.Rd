@@ -54,7 +54,7 @@ is designed for OME-TIFF from Xenium and has not been tested on other formats
 that can be read with \code{BioFormats}. The image is not loaded into memory,
 and when it is, the the \code{BioFormatsImage} object is converted into
 \code{\link{ExtImage}} because the loaded image is of a class that inherits
-from \code{\link{Image}}. The \code{\link{ExtImage}} class is a thin wrapper
+from \code{\link[EBImage]{Image}}. The \code{\link{ExtImage}} class is a thin wrapper
 inheriting from \code{VirtualSpatialImage} so it's compatible with
 \code{SpatialExperiment} from which SFE is derived. This class might
 drastically change as it matures, say to accommodate other formats supported

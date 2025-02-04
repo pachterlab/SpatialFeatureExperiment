@@ -23,7 +23,7 @@ annotOp(
 samples.}
 
 \item{op}{A binary operation function for the geometries. Defaults to
-\code{\link{st_intersection}}.}
+\code{\link[sf]{st_intersection}}.}
 }
 \value{
 A \code{sf} data frame with \code{geometry} column containing the

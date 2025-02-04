@@ -32,7 +32,7 @@ spatial method.}
 \code{colGeometryName} is specified.}
 
 \item{reducedDimName}{Name of a dimension reduction, can be seen in
-\code{\link{reducedDimNames}}. \code{colGeometryName} and
+\code{\link[SingleCellExperiment]{reducedDimNames}}. \code{colGeometryName} and
 \code{annotGeometryName} have precedence over \code{reducedDimName}.}
 }
 \value{

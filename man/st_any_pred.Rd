@@ -21,7 +21,7 @@ st_n_intersects(x, y)
 \item{y}{Another object of class \code{sf}, \code{sfc}, or \code{sfg}.}
 
 \item{pred}{A geometric binary predicate function, such as
-\code{\link{st_intersects}}. It should return an object of class
+\code{\link[sf]{st_intersects}}. It should return an object of class
 \code{sgbp}, for sparse predicates.}
 
 \item{yx}{Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For

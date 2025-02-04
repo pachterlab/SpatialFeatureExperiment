@@ -422,7 +422,7 @@
 #' \code{listw} is used in many methods that facilitate the spatial neighborhood
 #' graph in the \code{spdep}, \code{spatialreg}, and \code{adespatial}. The edge
 #' weights of the graph in the \code{listw} object are by default style W (see
-#' \code{\link{nb2listw}}) and the unweighted neighbor list is in the
+#' \code{\link[spdep]{nb2listw}}) and the unweighted neighbor list is in the
 #' \code{neighbours} field of the \code{listw} object.
 #'
 #' @inheritParams spdep::nb2listw
@@ -448,13 +448,13 @@
 #' \code{BiocNeighbors} are used. For "spdep", methods from the \code{spdep}
 #' package are used. The "bioc" option is more scalable to larger datasets and
 #' supports multithreading.
-#' @param BPPARAM A \code{\link{BiocParallelParam}} object for multithreading.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object for multithreading.
 #' Only used for k nearest neighbor and distance based neighbor with
 #' \code{nn_method = "bioc"}.
-#' @param BNPARAM A \code{\link{BiocNeighborParam}} object specifying the
+#' @param BNPARAM A \code{\link[BiocNeighbors]{BiocNeighborParam}} object specifying the
 #' algorithm to find k nearest neighbors and distance based neighbors with
 #' \code{nn_method = "bioc"}. For distance based neighbors, only
-#' \code{\link{KmknnParam}} and \code{\link{VptreeParam}} are applicable.
+#' \code{\link[BiocNeighbors]{KmknnParam}} and \code{\link[BiocNeighbors]{VptreeParam}} are applicable.
 #' @param alpha Only relevant when \code{dist_type = "dpd"}.
 #' @param dmax Only relevant when \code{dist_type = "dpd"}.
 #' @param ... Extra arguments passed to the \code{spdep} function stated in the

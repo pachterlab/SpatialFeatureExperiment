@@ -25,7 +25,7 @@ reducedDimFeatureData(sfe, dimred)
 annotGeometry. Defaults to 2, colGeometry.}
 
 \item{dimred}{Name of a dimension reduction, can be seen in
-\code{\link{reducedDimNames}}.}
+\code{\link{[SingleCellExperiment]reducedDimNames}}.}
 }
 \value{
 A \code{DataFrame}.

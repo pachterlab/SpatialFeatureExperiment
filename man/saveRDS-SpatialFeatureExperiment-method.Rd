@@ -39,7 +39,7 @@ Invisibly \code{NULL}.
 }
 \description{
 Saving SFE objects as RDS files is complicated by the \code{SpatRaster} class
-of the images. If present, the images need to be wrapped with the \code{\link{wrap}}
+of the images. If present, the images need to be wrapped with the \code{\link[terra]{wrap}}
 function in \code{terra} before serializing the SFE object. Otherwise the
 images will be invalid pointers when the RDS is reloaded. If the image does
 not fit in memory and its file source is unknown, then it will be written to

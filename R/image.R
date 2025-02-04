@@ -11,7 +11,7 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' \code{SpatialFeatureExperiment} and the \code{Voyager} package work with
 #' images differently from \code{SpatialExperiment}. In SFE and
 #' \code{Voyager}'s, plotting functions for SFE objects, the images can be read
-#' with \code{\link{rast}} and represented as \code{SpatRaster}, so the image is
+#' with \code{\link[terra]{rast}} and represented as \code{SpatRaster}, so the image is
 #' not entirely loaded into memory unless necessary. Plotting will not load a
 #' large image into memory; rather the image will be downsampled and the
 #' downsampled version is plotted. A \code{SpatRasterImage} object (as of Bioc
@@ -19,7 +19,7 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' inheriting from \code{VirtualSpatialImage} as required by
 #' \code{SpatialExperiment}.
 #'
-#' @param img A \code{\link{SpatRaster}} or \code{PackedSpatRaster} object.
+#' @param img A \code{\link[terra]{SpatRaster}} or \code{PackedSpatRaster} object.
 #' @param object A \code{SpatRasterImage} object.
 #' @return A \code{SpatRasterImage} object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
@@ -87,7 +87,7 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #' that can be read with \code{BioFormats}. The image is not loaded into memory,
 #' and when it is, the the \code{BioFormatsImage} object is converted into
 #' \code{\link{ExtImage}} because the loaded image is of a class that inherits
-#' from \code{\link{Image}}. The \code{\link{ExtImage}} class is a thin wrapper
+#' from \code{\link[EBImage]{Image}}. The \code{\link{ExtImage}} class is a thin wrapper
 #' inheriting from \code{VirtualSpatialImage} so it's compatible with
 #' \code{SpatialExperiment} from which SFE is derived. This class might
 #' drastically change as it matures, say to accommodate other formats supported
@@ -308,7 +308,7 @@ setReplaceMethod("transformation", "BioFormatsImage", function(x, value) {
 
 #' Use the EBImage \code{Image} class in SFE objects
 #'
-#' This is a thin wrapper around the \code{\link{Image}} class in the
+#' This is a thin wrapper around the \code{\link[EBImage]{Image}} class in the
 #' \code{EBImage} package so it inherits from \code{VirtualSpatialImage} to be
 #' compatible with \code{SpatialExperiment} from which SFE inherits. An
 #' \code{ext} field is added to specify the spatial extent of the image in
@@ -701,7 +701,7 @@ setMethod("dim", "ExtImage", function(x) {
 #' Image setter
 #'
 #' Modify or replace images stored in a \code{SpatialExperiment} object. This is
-#' different from \code{\link{addImg}} which adds the image from files and can't
+#' different from \code{\link[SpatialExperiment]{addImg}} which adds the image from files and can't
 #' replace existing images, which is there to be consistent with
 #' \code{SpatialExperiment}. This setter here can replace existing images with
 #' another object that inherits from \code{VirtualSpatialImage}, including

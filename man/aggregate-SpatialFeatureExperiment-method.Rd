@@ -64,7 +64,7 @@ transcript spots should be sparse. When the bins are large, the matrix will
 not be very sparse so using sparse matrix will not save memory, but when
 the bins are small, sparsity is worth it.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
 computing when aggregating data with functions other than sum and mean when
 aggregating cells. When aggregating transcript spots, this specifies
 parallel computing over genes. Defaults to \code{SerialParam()}.}

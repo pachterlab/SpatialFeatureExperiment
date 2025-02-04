@@ -37,11 +37,11 @@ object.}
 \item{split_cell_comps}{Logical, whether to split transcript spot geometries
 by cell compartment. Only relevant when `add_molecules = TRUE`.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
   \enumerate{ \item To load cell segmentation from HDF5 files from different
   fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
   FOVs, reading in the geometries can be time consuming, so we recommend
   using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.

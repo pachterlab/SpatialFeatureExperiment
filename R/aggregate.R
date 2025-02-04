@@ -42,6 +42,7 @@
 #' @importFrom data.table as.data.table
 #' @importFrom sf st_make_grid
 #' @importFrom rlang %||%
+#' @importFrom utils tail
 #' @concept Geometric operations
 #' @export
 aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
@@ -399,7 +400,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
 #' @param rowGeometryName Which \code{rowGeometry} to spatially aggregate
 #' @param new_geometry_name Name to give to the new \code{colGeometry} in the
 #'   output. Defaults to "bins".
-#' @param BPPARAM A \code{\link{BiocParallelParam}} object specifying parallel
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
 #'   computing when aggregating data with functions other than sum and mean when
 #'   aggregating cells. When aggregating transcript spots, this specifies
 #'   parallel computing over genes. Defaults to \code{SerialParam()}.

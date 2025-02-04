@@ -35,7 +35,7 @@
 #'   useful when multiple pieces of tissues are in the same SFE object (say for
 #'   a joint dimension reduction and clustering) and the spatial neighborhood is
 #'   only meaningful within the same piece of tissue. See the \code{sample_id}
-#'   argument in \code{\link{SpatialExperiment}}.
+#'   argument in \code{\link[SpatialExperiment]{SpatialExperiment}}.
 #' @name spatialGraphs
 #' @concept Getters and setters
 #' @return Getters for multiple graphs return a named list. Getters for

@@ -94,7 +94,7 @@ versions, there must be a column "group" to identify each MULTI geometry.}
 \code{*Geometries} arguments have ordinary data frames, to identify the
 columns in the ordinary data frames that specify the spatial coordinates.
 If \code{colGeometries} is not specified, then this argument will behave as
-in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+in \code{\link[SpatialExperiment]{SpatialExperiment}}, but \code{colGeometries} will be given
 precedence if provided.}
 
 \item{annotGeometryType}{Character vector specifying geometry type of each
@@ -121,7 +121,7 @@ be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not al
 Default = \code{sample01}.}
 
 \item{spatialCoords}{A numeric matrix containing columns of spatial
-coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+coordinates, as in \code{\link[SpatialExperiment]{SpatialExperiment}}. The coordinates are
 centroids of the entities represented by the columns of the gene count
 matrix. If \code{colGeometries} is also specified, then it will be given
 priority and a warning is issued. Otherwise, the \code{sf} representation

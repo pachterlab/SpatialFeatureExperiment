@@ -63,11 +63,11 @@ object.}
 segmentation. If \code{FALSE}, cell segmentation will be read from the HDF5
 files. Note that reading HDF5 files for numerous FOVs is very slow.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
   \enumerate{ \item To load cell segmentation from HDF5 files from different
   fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
   FOVs, reading in the geometries can be time consuming, so we recommend
   using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.
@@ -98,7 +98,7 @@ This function reads the standard Vizgen MERFISH output into an SFE object.
 The coordinates are in microns. Cell centroids are read into
 \code{\link{colGeometry}} "centroids", and cell segmentations are read into
 \code{colGeometry} "cellSeg". The image(s) (polyT, DAPI, and cell boundaries)
-are also read as \code{\link{SpatRaster}} objects so they are not loaded into
+are also read as \code{\link[terra]{SpatRaster}} objects so they are not loaded into
 memory unless necessary. Because the image's origin is the top left while the
 geometry's origin is bottom left, either the image or the geometry needs to
 be flipped. Because the image accompanying MERFISH datasets are usually very

@@ -12,7 +12,7 @@
 #' @param verbose Logical scalar indicating whether a message should be emitted
 #'   as the object is updated.
 #' @return An updated version of \code{object}.
-#' @seealso \code{\link{objectVersion}}, which is used to determine if the
+#' @seealso \code{\link[SingleCellExperiment]{objectVersion}}, which is used to determine if the
 #'   object is up-to-date.
 #' @importFrom BiocGenerics updateObject
 #' @export

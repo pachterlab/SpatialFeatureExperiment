@@ -102,7 +102,7 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{BPPARAM}{\code{\link{BiocParallelParam}} object to specify
+\item{BPPARAM}{\code{\link[BiocParallel]{BiocParallelParam}} object to specify
 multithreading to convert raw char in some parquet files to R objects. Not
 used otherwise.}
 

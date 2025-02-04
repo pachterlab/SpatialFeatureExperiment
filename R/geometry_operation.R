@@ -11,7 +11,7 @@
 #' @param x An object of class \code{sf}, \code{sfc}, or \code{sfg}.
 #' @param y Another object of class \code{sf}, \code{sfc}, or \code{sfg}.
 #' @param pred A geometric binary predicate function, such as
-#'   \code{\link{st_intersects}}. It should return an object of class
+#'   \code{\link[sf]{st_intersects}}. It should return an object of class
 #'   \code{sgbp}, for sparse predicates.
 #' @param yx Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
 #'   symmetric predicates, the results should be the same. When x has a large
@@ -172,7 +172,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' @param sample_id Which sample(s) to operate on. Can be "all" to indicate all
 #'   samples.
 #' @param pred Predicate function to use, defaults to
-#'   \code{\link{st_intersects}}.
+#'   \code{\link[sf]{st_intersects}}.
 #' @return For \code{annotPred}, a logical vector of the same length as the
 #'   number of columns in the sample(s) of interest, with barcodes (or
 #'   corresponding column names of sfe) as names. For \code{annotNPred}, a
@@ -224,7 +224,7 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'
 #' @inheritParams annotPred
 #' @param op A binary operation function for the geometries. Defaults to
-#' \code{\link{st_intersection}}.
+#' \code{\link[sf]{st_intersection}}.
 #' @return A \code{sf} data frame with \code{geometry} column containing the
 #' geometries and corresponding column names of sfe as row names. There is no
 #' guarantee that the returned geometries are valid or preserve the geometry
@@ -386,7 +386,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   indicated in \code{y}, then the same geometry or bounding box is used to
 #'   subset all samples specified in the \code{sample_id} argument.
 #' @param op A geometric operation function to crop the geometries in the SFE
-#'   object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
+#'   object. Only \code{\link[sf]{st_intersection}} and \code{\link[sf]{st_difference}}
 #'   are allowed. If "intersection", then only things inside \code{y} is kept
 #'   after cropping. If "difference", then only things outside \code{y} is kept.
 #' @param keep_whole Character vector, can be one or more of "col" and "annot"

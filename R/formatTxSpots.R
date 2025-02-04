@@ -265,7 +265,7 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #'   3D geometries will always be constructed since there are no z-planes to
 #'   speak of. This argument does not apply when `spatialCoordsNames` has length
 #'   2.
-#' @param BPPARAM \code{\link{BiocParallelParam}} object to specify
+#' @param BPPARAM \code{\link[BiocParallel]{BiocParallelParam}} object to specify
 #'   multithreading to convert raw char in some parquet files to R objects. Not
 #'   used otherwise.
 #' @param sample_id Which sample in the SFE object the transcript spots should

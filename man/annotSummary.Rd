@@ -30,7 +30,7 @@ or "barcode".}
 samples.}
 
 \item{pred}{Predicate function to use, defaults to
-\code{\link{st_intersects}}.}
+\code{\link[sf]{st_intersects}}.}
 
 \item{summary_fun}{Function for the summary, defaults to \code{mean}.}
 }
