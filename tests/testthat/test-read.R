@@ -114,11 +114,11 @@ test_that("Image is properly aligned in micron space", {
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
     cg$geometry <- st_centroid(cg$geometry)
-    img_lo <- getImg(sfe, image_id = "lowres") |> imgRaster()
+    img_lo <- getImg(sfe, image_id = "lowres")
     img_lo <- terra::mean(img_lo)
     v_lo <- terra::extract(img_lo, cg)
     expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
-    img_hi <- getImg(sfe, image_id = "hires") |> imgRaster()
+    img_hi <- getImg(sfe, image_id = "hires")
     img_hi <- terra::mean(img_hi)
     v_hi <- terra::extract(img_hi, cg)
     expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
@@ -202,7 +202,7 @@ test_that("readVizgen flip geometry, use cellpose", {
     expect_equal(imgData(sfe)$image_id,
                  paste0(c(paste0("Cellbound", 1:3), "DAPI", "PolyT"),
                        "_z3"))
-    img <- imgRaster(getImg(sfe, image_id = "PolyT_z3"))
+    img <- getImg(sfe, image_id = "PolyT_z3")
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     # Shouldn't be many cells in that empty space if properly aligned
@@ -243,7 +243,7 @@ test_that("readVizgen flip geometry, don't use cellpose", {
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "geometry")
     expect_equal(unit(sfe), "micron")
-    img <- imgRaster(getImg(sfe))
+    img <- getImg(sfe)
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     expect_true(sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE) < 10)
@@ -267,7 +267,7 @@ test_that("readVizgen flip image", {
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     expect_equal(unit(sfe), "micron")
-    img <- imgRaster(getImg(sfe))
+    img <- getImg(sfe)
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     expect_true(sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE) < 10)
@@ -283,7 +283,7 @@ test_that("readVizgen don't flip image when image is too large", {
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image", max_flip = "0.02 MB")
     suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z3.tif")))
-    img <- imgRaster(getImg(sfe))
+    img <- getImg(sfe)
     # Make sure image was not flipped
     expect_equal(terra::values(img), terra::values(img_orig))
     cg <- SpatialFeatureExperiment::centroids(sfe)
@@ -297,12 +297,12 @@ test_that("Don't flip image if it's GeoTIFF", {
     dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
-    terra::writeRaster(imgRaster(getImg(sfe)),
+    terra::writeRaster(getImg(sfe),
                        filename = file.path(dir_use, "images", "mosaic_DAPI_z3.tif"),
                        overwrite = TRUE)
     sfe2 <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "DAPI",
                        flip = "image")
-    expect_equal(terra::values(imgRaster(getImg(sfe))), terra::values(imgRaster(getImg(sfe2))))
+    expect_equal(terra::values(getImg(sfe)), terra::values(getImg(sfe2)))
     unlink(dir_use, recursive = TRUE)
 })
 
@@ -395,7 +395,7 @@ test_that("Version with Cellpose directory", {
     expect_equal(imgData(sfe)$image_id,
                  paste0(c(paste0("Cellbound", 1:3), "DAPI", "PolyT"),
                         "_z3"))
-    img <- imgRaster(getImg(sfe, image_id = "PolyT_z3"))
+    img <- getImg(sfe, image_id = "PolyT_z3")
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     # Shouldn't be many cells in that empty space if properly aligned

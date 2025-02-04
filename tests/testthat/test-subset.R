@@ -171,13 +171,13 @@ test_that("Images are cropped after subsetting, multiple samples", {
     cg <- st_centroid(st_geometry(spotPoly(sfe3, sample_id = "all")))
     nCounts <- Matrix::colSums(counts(sfe3))
     # For sample 1
-    img1 <- getImg(sfe3, sample_id = "ob") |> imgRaster()
+    img1 <- getImg(sfe3, sample_id = "ob")
     bbox_geom <- st_bbox(spotPoly(sfe3, "ob")) |> st_as_sfc()
     bbox_img <- as.vector(ext(img1)) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 
     # For sample 2
-    img2 <- getImg(sfe3, sample_id = "kidney") |> imgRaster()
+    img2 <- getImg(sfe3, sample_id = "kidney")
     bbox_geom <- st_bbox(spotPoly(sfe3, "kidney")) |> st_as_sfc()
     bbox_img <- as.vector(ext(img2)) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))

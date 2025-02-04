@@ -39,13 +39,13 @@ test_that("Convert SPE to SFE, loaded images", {
     expect_s4_class(img2, "SpatRasterImage")
     expect_equal(dim(img1), dim(img2)[1:2])
     v1 <- col2rgb(imgRaster(img1))
-    v2 <- terra::values(imgRaster(img2))
+    v2 <- terra::values(img2)
     v2 <- t(v2)
     dimnames(v1) <- dimnames(v2) <- NULL
     expect_equal(v1, v2)
 
     bbox <- st_bbox(centroids(sfe))
-    bbox_img <- as.vector(ext(imgRaster(img2))) # That the image is properly scaled
+    bbox_img <- as.vector(ext(img2)) # That the image is properly scaled
     diffs1 <- bbox[3:4] - bbox[1:2]
     diffs2 <- bbox_img[c(2,4)] - bbox_img[c(1,3)]
     expect_true(all(diffs1 / diffs2 > (1-1/min(dim(img1)))))
@@ -57,15 +57,15 @@ test_that("Convert SPE to SFE, stored images", {
     img1 <- getImg(spe)
     img2 <- getImg(sfe)
     expect_s4_class(img2, "SpatRasterImage")
-    expect_equal(dim(imgRaster(img1)), dim(img2)[1:2])
+    expect_equal(dim(img1), dim(img2)[1:2])
     v1 <- col2rgb(imgRaster(img1))
-    v2 <- terra::values(imgRaster(img2))
+    v2 <- terra::values(img2)
     v2 <- t(v2)
     dimnames(v1) <- dimnames(v2) <- NULL
     expect_equal(v1, v2)
 
     bbox <- st_bbox(centroids(sfe))
-    bbox_img <- as.vector(ext(imgRaster(img2)))
+    bbox_img <- as.vector(ext(img2))
     diffs1 <- bbox[3:4] - bbox[1:2]
     diffs2 <- bbox_img[c(2,4)] - bbox_img[c(1,3)]
     expect_true(all(diffs1 / diffs2 > (1-1/min(dim(img1)))))

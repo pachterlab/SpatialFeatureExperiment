@@ -544,7 +544,7 @@ test_that("When no cells/spots left after cropping", {
 test_that("Image is shifted after removing empty space", {
     sfe2 <- removeEmptySpace(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -562,12 +562,12 @@ test_that("Image is cropped after cropping SFE object", {
         st_bbox() |> st_as_sfc()
     sfe2 <- SpatialFeatureExperiment::crop(sfe, bbox_use)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2, image_id = "hires"))
+    img <- getImg(sfe2, image_id = "hires")
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean, use = "complete.obs")) > 0.4)
     bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    bbox_img <- ext(img) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
     expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.99)
 })
@@ -576,7 +576,7 @@ test_that("Image is cropped after cropping SFE object", {
 test_that("Transpose SFE object with image", {
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -593,7 +593,7 @@ test_that("Transpose SFE object with image, after cropping image", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2, image_id = "hires"))
+    img <- getImg(sfe2, image_id = "hires")
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -604,7 +604,7 @@ test_that("Transpose SFE object with image, after cropping image", {
     bbox_img_orig_sf <- bbox_img_orig |> st_bbox() |> st_as_sfc()
     bbox_cg <- st_bbox(spotPoly(sfe2))
     bbox_cg_sf <- bbox_cg |> st_as_sfc()
-    bbox_img <- as.vector(ext(img))
+    bbox_img <- ext(img)
     bbox_img_sf <- bbox_img |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_cg_sf, bbox_img_sf, sparse = FALSE))
     expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
@@ -621,7 +621,7 @@ test_that("Transpose SFE object with image, after cropping image", {
 test_that("Mirror SFE object with image, vertical", {
     sfe2 <- mirror(sfe, direction = "vertical")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -638,7 +638,7 @@ test_that("Mirror SFE object with image after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- mirror(sfe, direction = "vertical")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2, image_id = "hires"))
+    img <- getImg(sfe2, image_id = "hires")
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -649,7 +649,7 @@ test_that("Mirror SFE object with image after cropping", {
     bbox_img_orig_sf <- bbox_img_orig |> st_bbox() |> st_as_sfc()
     bbox_cg <- st_bbox(spotPoly(sfe2))
     bbox_cg_sf <- bbox_cg |> st_as_sfc()
-    bbox_img <- as.vector(ext(img))
+    bbox_img <- ext(img)
     bbox_img_sf <- bbox_img |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_cg_sf, bbox_img_sf, sparse = FALSE))
     expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
@@ -666,7 +666,7 @@ test_that("Mirror SFE object with image after cropping", {
 test_that("Mirror SFE object with image, horizontal", {
     sfe2 <- mirror(sfe, direction = "horizontal")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -682,7 +682,7 @@ test_that("Mirror SFE object with image, horizontal", {
 test_that("Rotate SFE object with image", {
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -706,7 +706,7 @@ test_that("Rotate SFE object with image after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -729,7 +729,7 @@ test_that("Rotate SFE object with image after cropping", {
 test_that("Scale SFE object with image", {
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> imgRaster()
+    img <- getImg(sfe2)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -753,7 +753,7 @@ test_that("Scale SFE object with image after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> imgRaster()
+    img <- getImg(sfe2)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -778,7 +778,7 @@ test_that("General affine transformation of SFE object with image", {
     v <- c(0, 300)
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -804,7 +804,7 @@ test_that("Affine transformation of SFE object with image, after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -850,7 +850,7 @@ test_that("Translate SFE object with image", {
     expect_equal(bbox_tr, bbox_exp)
 
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -906,9 +906,9 @@ test_that("Transpose SFE object with BioFormatsImage", {
 
 test_that("Mirror SFE object with BFI, vertical", {
     sfe2 <- mirror(sfe, direction = "vertical")
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
     expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
@@ -930,9 +930,9 @@ test_that("Mirror SFE object with BFI, vertical", {
 
 test_that("Mirror SFE object with BFI, horizontal", {
     sfe2 <- mirror(sfe, direction = "horizontal")
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
     expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
@@ -954,9 +954,9 @@ test_that("Mirror SFE object with BFI, horizontal", {
 
 test_that("Rotate SFE object with BFI", {
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
     expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
@@ -971,9 +971,9 @@ test_that("Rotate SFE object with BFI", {
 
 test_that("Scale SFE object with BFI", {
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
     expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
@@ -997,9 +997,9 @@ test_that("General affine transformation of SFE object with BFI", {
     M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
     v <- c(0, 300)
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
     expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 

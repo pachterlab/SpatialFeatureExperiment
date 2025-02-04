@@ -560,7 +560,7 @@ NULL
 #' @export
 setMethod("toSpatRasterImage", "ExtImage",
           function(x, save_geotiff = TRUE, file_out = "img.tiff", overwrite = FALSE) {
-    m <- as.array(imgRaster(x))
+    m <- as.array(x)
     if (length(dim(m)) == 3L) m <- aperm(m, c(2,1,3))
     else m <- t(m)
     r <- rast(m, extent = ext(x))
@@ -599,7 +599,7 @@ setMethod("toSpatRasterImage", "BioFormatsImage",
 #'   specifying the extent to use.
 #' @note For \code{SpatRasterImage}, the image may be may not be loaded into
 #' memory. You can check if the image is loaded into memory with
-#' \code{terra::inMemory(imgRaster(x))}, and check the original file path with
+#' \code{terra::inMemory(x)}, and check the original file path with
 #' \code{\link{imgSource}}. If the image is not loaded into memory, then the
 #' original file must be present at the path indicated by
 #' \code{\link{imgSource}} in order for any code using the image to work, which
@@ -986,21 +986,14 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 #'
 #' In SFE, S4 classes inheriting from \code{VirtualSpatialImage} have been
 #' implemented to make these image classes compatible with
-#' \code{SpatialExperiment}. The \code{imgRaster} methods in SFE are meant to
-#' extract the original image from the \code{*Image} classes, such as
-#' \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-#' \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
-#' image of the specified resolution will be read into memory as
-#' \code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
+#' \code{SpatialExperiment}.
 #'
 #' @param x An object of class \code{*Image} as implemented in this package.
 #' @param resolution Resolution to read in from OME-TIFF, defaults to 4, which
 #'   is a medium resolution in Xenium.
-#' @return \code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-#'   \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
-#'   image of the specified resolution will be read into memory as
-#'   \code{AnnotatedImage} and \code{ExtImage}, which both inherit from
-#'   \code{EBImage::Image}.
+#' @return Since version 1.9.8, \code{imgRaster} will return an array of hex
+#'   colors, or the raster object, as required by \code{SpatialExperiment}. This
+#'   will break older SFE code calling \code{imgRaster}.
 #' @export
 #' @name imgRaster
 #' @aliases imgRaster,SpatRasterImage-method imgRaster,BioFormatsImage-method
@@ -1010,7 +1003,7 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 NULL
 
 #' @export
-setMethod("imgRaster", "SpatRasterImage", function(x) as(x, "SpatRaster"))
+setMethod("imgRaster", "SpatRasterImage", terra::as.raster)
 
 #' @export
 setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
@@ -1018,11 +1011,7 @@ setMethod("imgRaster", "BioFormatsImage", function(x, resolution = 4L) {
 })
 
 #' @export
-setMethod("imgRaster", "ExtImage", function(x) as(x, "Image"))
-
-# TODO: imgRaster setter function since here I want to allow image processing
-# like adjusting brightness and contrast, blurring, sharpening, opening, closing, and so on
-# but what if it changes the extent?
+setMethod("imgRaster", "ExtImage", function(x) as.raster(as(x, "Image")))
 
 # imgSource--------------
 
@@ -1171,8 +1160,8 @@ setMethod(".mirror_img", "SpatRasterImage",
                    bbox_all = NULL, filename = "", maxcell = NULL) {
               direction <- match.arg(direction)
               if (!is.null(maxcell)) x <- .resample_spat(x, maxcell)
-              x <- terra::flip(imgRaster(x), direction = direction,
-                                     filename = filename) |> SpatRasterImage()
+              x <- terra::flip(x, direction = direction,
+                               filename = filename) |> SpatRasterImage()
               # Shift extent for overall bbox
               if (!is.null(bbox_all)) {
                   ext(x) <- .transform_bbox(ext(x),
@@ -1317,8 +1306,7 @@ NULL
 #' @rdname translateImg
 #' @export
 setMethod("translateImg", "SpatRasterImage", function(x, v, ...) {
-    img <- imgRaster(x)
-    img <- shift(img, dx = v[1], dy = v[2]) |> SpatRasterImage()
+    img <- shift(x, dx = v[1], dy = v[2]) |> SpatRasterImage()
     x <- img
     x
 })

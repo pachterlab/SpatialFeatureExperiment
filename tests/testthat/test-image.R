@@ -57,7 +57,7 @@ test_that("transposeImg, SFE method, SpatRasterImage", {
     img <- getImg(sfe)
     sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "lowres")
     img_t2 <- getImg(sfe, sample_id = "Vis5A", image_id = "lowres")
-    expect_equal(dim(imgRaster(img))[1:2], dim(imgRaster(img_t2))[2:1])
+    expect_equal(dim(img)[1:2], dim(img_t2)[2:1])
 })
 
 test_that("transposeImg, SFE method, BioFormatsImage", {
@@ -76,7 +76,7 @@ test_that("transposeImg, SFE method, ExtImage", {
     img <- getImg(sfe, image_id = "ebi")
     sfe <- transposeImg(sfe, sample_id = "Vis5A", image_id = "ebi")
     img_t2 <- getImg(sfe, sample_id = "Vis5A", image_id = "ebi")
-    expect_equal(dim(imgRaster(img))[1:2], dim(imgRaster(img_t2))[2:1])
+    expect_equal(dim(img)[1:2], dim(img_t2)[2:1])
 })
 
 test_that("mirrorImg, SFE method, SpatRasterImage", {
@@ -84,11 +84,11 @@ test_that("mirrorImg, SFE method, SpatRasterImage", {
                   scale_fct = 0.023)
     img <- getImg(sfe)
     img_m <- mirrorImg(img)
-    mat1 <- terra::as.array(terra::mean(imgRaster(img)))[,,1]
+    mat1 <- terra::as.array(terra::mean(img))[,,1]
     # SFE method
     sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
     img_m2 <- getImg(sfe)
-    mat3 <- terra::as.array(terra::mean(imgRaster(img_m2)))[,,1]
+    mat3 <- terra::as.array(terra::mean(img_m2))[,,1]
     mat3_rev <- apply(mat3, 2, rev)
     expect_equal(mat1, mat3_rev)
 })
@@ -167,7 +167,7 @@ test_that("transposeImg, SpatRasterImage method", {
     # SpatRasterImage method
     img_t <- transposeImg(img)
     expect_s4_class(img_t, "SpatRasterImage")
-    expect_equal(dim(imgRaster(img))[1:2], dim(imgRaster(img_t))[2:1])
+    expect_equal(dim(img)[1:2], dim(img_t)[2:1])
 
     # Use maxcell
     img_t2 <- transposeImg(img, maxcell = 100)
@@ -188,8 +188,8 @@ test_that("transposeImg, SpatRasterImage method", {
 test_that("mirrorImg, SpatRasterImage method", {
     img <- SpatRasterImage(suppressWarnings(rast(img_path)))
     img_m <- mirrorImg(img)
-    mat1 <- terra::as.array(terra::mean(imgRaster(img)))[,,1]
-    mat2 <- terra::as.array(terra::mean(imgRaster(img_m)))[,,1]
+    mat1 <- terra::as.array(terra::mean(img))[,,1]
+    mat2 <- terra::as.array(terra::mean(img_m))[,,1]
     mat2_rev <- apply(mat2, 2, rev)
     expect_equal(mat1, mat2_rev)
 
@@ -199,7 +199,7 @@ test_that("mirrorImg, SpatRasterImage method", {
     # check content
     if (packageVersion('terra') == as.package_version("1.7.83") ||
         packageVersion('terra') >= as.package_version("1.8.10"))
-        expect_equal(imgRaster(img_m2)[4,3,2][[1]], 190)
+        expect_equal(img_m2[4,3,2][[1]], 190)
 
     # Use filename
     fn <- normalizePath(file.path(getwd(), "foo.tif"), mustWork = FALSE)
@@ -255,12 +255,12 @@ test_that("affineImg, SpatRasterImage method, EBI behind the scene", {
     ext_exp <- st_bbox(ext_exp * t(M) + v) |> as.vector()
     expect_equal(ext_exp, unname(ext(ebi)[c("xmin", "ymin", "xmax", "ymax")]))
     # check content
-    expect_equal(imgRaster(ebi)[6,3,2] |> as.numeric(), 191)
+    expect_equal(ebi[6,3,2] |> as.numeric(), 191)
     # The resulting image tightly bounds the rotated image
-    expect_true(any(imgRaster(ebi)[1,,] > 0))
-    expect_true(any(imgRaster(ebi)[,1,] > 0))
-    expect_true(any(imgRaster(ebi)[dim(ebi)[1],,] > 0))
-    expect_true(any(imgRaster(ebi)[,dim(ebi)[2],] > 0))
+    expect_true(any(ebi[1,,] > 0))
+    expect_true(any(ebi[,1,] > 0))
+    expect_true(any(ebi[dim(ebi)[1],,] > 0))
+    expect_true(any(ebi[,dim(ebi)[2],] > 0))
 })
 
 test_that("translateImg, SpatRasterImage method", {
@@ -275,16 +275,16 @@ test_that("translateImg, SpatRasterImage method", {
 
 sfe <- addImg(sfe, img_path, sample_id = "Vis5A", image_id = "lowres",
               scale_fct = 0.023)
-test_that("imgRaster, trivial", {
+test_that("imgRaster, SpatRasterImage", {
     img <- imgRaster(getImg(sfe))
-    expect_s4_class(img, "SpatRaster")
+    expect_s4_class(img, "raster")
 })
 
 test_that("imgRaster, loaded from RDS", {
     saveRDS(sfe, "baz.rds")
     sfe_read <- readRDS("baz.rds")
     img <- imgRaster(getImg(sfe))
-    expect_s4_class(img, "SpatRaster")
+    expect_s4_class(img, "raster")
     unlink("baz.rds")
 })
 
@@ -297,8 +297,8 @@ test_that("Convert SpatRasterImage to ExtImage, RGB", {
     ebi <- toExtImage(spi)
     expect_s4_class(ebi, "ExtImage")
     expect_equal(ext(spi), ext(ebi))
-    expect_equal(imgRaster(spi) |> terra::as.array(),
-                 imgRaster(ebi) |> as.array() |> aperm(c(2,1,3)))
+    expect_equal(terra::as.array(spi),
+                 as.array(ebi) |> aperm(c(2,1,3)))
 })
 
 fp <- tempfile()
@@ -309,9 +309,9 @@ test_that("Convert SpatRasterImage to ExtImage, grayscale", {
     suppressWarnings(spi <- SpatRasterImage(rast(fn)))
     ebi <- toExtImage(spi)
     expect_equal(ext(spi), ext(ebi))
-    m1 <- imgRaster(spi) |> terra::as.array()
+    m1 <- terra::as.array(spi)
     m1 <- m1[,,1]
-    expect_equal(m1, imgRaster(ebi) |> as.array() |> t())
+    expect_equal(m1, as.array(ebi) |> t())
 })
 
 test_that("Crop SpatRasterImage", {
@@ -386,7 +386,7 @@ test_that("Convert BioFormatsImage to ExtImage, full extent", {
     ebi <- toExtImage(bfi, resolution = 1L)
     expect_s4_class(ebi, "ExtImage")
     expect_equal(ext(ebi), ext_expect[c("xmin", "xmax", "ymin", "ymax")])
-    dim_img <- dim(imgRaster(ebi))
+    dim_img <- dim(ebi)
     expect_equal(dim_img, c(sizeX_full, sizeY_full))
 })
 
@@ -403,10 +403,10 @@ test_that("Convert BioFormatsImage to ExtImage, not full extent", {
     expect_true(st_area(ext_sf_ebi) / st_area(ext_sf_bfi) < 1.005)
     # pixel range
     dim_expect <- c(588, 589)
-    expect_equal(dim(imgRaster(ebi)), dim_expect)
+    expect_equal(dim(ebi), dim_expect)
     # Check content, rather crude, check that it includes that big bright patch
-    expect_true(sum(imgRaster(ebi) > 1e4) > 400)
-    expect_true(all(imgRaster(ebi)[199:222,440:448]))
+    expect_true(sum(ebi > 1e4) > 400)
+    expect_true(all(ebi[199:222,440:448]))
 })
 
 test_that("Convert BioFormatsImage to ExtImage, not resolution 1", {
@@ -421,10 +421,10 @@ test_that("Convert BioFormatsImage to ExtImage, not resolution 1", {
     expect_true(st_area(ext_sf_ebi) / st_area(ext_sf_bfi) < 1.01)
     # pixel range
     dim_expect <- c(196, 196)
-    expect_equal(dim(imgRaster(ebi)), dim_expect)
+    expect_equal(dim(ebi), dim_expect)
     # Check content, rather crude, check that it includes that big bright patch
-    expect_true(sum(imgRaster(ebi) > 1e4) > 50)
-    expect_true(all(imgRaster(ebi)[67:75,148:151]))
+    expect_true(sum(ebi > 1e4) > 50)
+    expect_true(all(ebi[67:75,148:151]))
 })
 
 test_that("When physical pixel size is absent from metadata", {
@@ -586,7 +586,7 @@ test_that("Convert BioFormatsImage to ExtImage after translation", {
     ext_exp[c("xmin", "xmax")] <- ext_exp[c("xmin", "xmax")] + v[1]
     ext_exp[c("ymin", "ymax")] <- ext_exp[c("ymin", "ymax")] + v[2]
     expect_equal(ext_sub, ext_exp)
-    expect_equal(imgRaster(ebi), imgRaster(ebi_sub))
+    expect_equal(ebi, ebi_sub)
 })
 
 test_that("Convert BFI to EBI after transformation, full extent", {
@@ -594,7 +594,7 @@ test_that("Convert BFI to EBI after transformation, full extent", {
     bfi2 <- transposeImg(bfi)
     ebi <- toExtImage(bfi2, resolution = 1L)
     expect_equal(ext(ebi), ext(bfi2))
-    expect_equal(imgRaster(ebi), toExtImage(bfi, resolution = 1L) |> imgRaster() |> EBImage::transpose())
+    expect_equal(as(ebi, "Image"), toExtImage(bfi, resolution = 1L) |> as("Image") |> EBImage::transpose())
 })
 
 test_that("Convert BFI to EBI after transformation, not full extent", {
@@ -607,7 +607,7 @@ test_that("Convert BFI to EBI after transformation, not full extent", {
     expect_true(st_covers(ext_sf1, ext_sf2, sparse = FALSE))
     expect_true(st_area(ext_sf1)/st_area(ext_sf2) < 1.005)
     # check content
-    expect_equal(imgRaster(ebi), toExtImage(bfi, resolution = 1L) |> imgRaster() |> EBImage::flop())
+    expect_equal(as(ebi, "Image"), toExtImage(bfi, resolution = 1L) |> as("Image") |> EBImage::flop())
 })
 
 test_that("Crop BioFormatsImage", {
@@ -646,7 +646,7 @@ test_that("transpose, check ext", {
     expect_s4_class(ebi, "ExtImage")
     ext_ebi <- ext(ebi)
     expect_true(ext_ebi["ymax"] > ext_ebi["xmax"])
-    expect_equal(imgRaster(ebi), ebi0 |> imgRaster() |> EBImage::transpose())
+    expect_equal(as(ebi, "Image"), ebi0 |> as("Image") |> EBImage::transpose())
 })
 
 test_that("mirror, vertical", {
@@ -656,7 +656,7 @@ test_that("mirror, vertical", {
     ebi <- mirrorImg(ebi0, direction = "vertical")
     ext_ebi <- ext(ebi)
     expect_equal(ext_ebi, ext(ebi0))
-    expect_equal(imgRaster(ebi), EBImage::flip(imgRaster(ebi0)))
+    expect_equal(as(ebi, "Image"), EBImage::flip(as(ebi0, "Image")))
 })
 
 test_that("mirror, horizontal", {
@@ -666,7 +666,7 @@ test_that("mirror, horizontal", {
     ebi <- mirrorImg(ebi0, direction = "horizontal")
     ext_ebi <- ext(ebi)
     expect_equal(ext_ebi, ext(ebi0))
-    expect_equal(imgRaster(ebi), EBImage::flop(imgRaster(ebi0)))
+    expect_equal(as(ebi, "Image"), EBImage::flop(as(ebi0, "Image")))
 })
 
 test_that("translateImg, ExtImage method", {
@@ -692,7 +692,7 @@ test_that("Crop ExtImage", {
     expect_true(st_area(ext_sf2) / st_area(ext_sf1) < 1.005)
     # pixel range
     dim_expect <- c(588, 589)
-    expect_equal(dim(imgRaster(ebi_sub)), round(dim_expect))
+    expect_equal(dim(ebi_sub), round(dim_expect))
 })
 
 # Image setter-------

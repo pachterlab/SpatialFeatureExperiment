@@ -13,21 +13,14 @@
 is a medium resolution in Xenium.}
 }
 \value{
-\code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-  \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
-  image of the specified resolution will be read into memory as
-  \code{AnnotatedImage} and \code{ExtImage}, which both inherit from
-  \code{EBImage::Image}.
+Since version 1.9.8, \code{imgRaster} will return an array of hex
+  colors, or the raster object, as required by \code{SpatialExperiment}. This
+  will break older SFE code calling \code{imgRaster}.
 }
 \description{
 In SFE, S4 classes inheriting from \code{VirtualSpatialImage} have been
 implemented to make these image classes compatible with
-\code{SpatialExperiment}. The \code{imgRaster} methods in SFE are meant to
-extract the original image from the \code{*Image} classes, such as
-\code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-\code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
-image of the specified resolution will be read into memory as
-\code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
+\code{SpatialExperiment}.
 }
 \seealso{
 Other image methods: 
