@@ -20,7 +20,7 @@
 #' @param MARGIN Integer, 1 means rowGeometry, 2 means colGeometry, and 3 means
 #'   annotGeometry. Defaults to 2, colGeometry.
 #' @param dimred Name of a dimension reduction, can be seen in
-#'   \code{\link{[SingleCellExperiment]reducedDimNames}}.
+#'   \code{\link[SingleCellExperiment]{reducedDimNames}}.
 #' @concept Getters and setters
 #' @return A \code{DataFrame}.
 #' @seealso getParams
