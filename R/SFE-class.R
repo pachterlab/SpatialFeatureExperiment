@@ -142,6 +142,7 @@ SpatialFeatureExperiment <- function(assays,
                                      spatialGraphs = NULL,
                                      unit = c("full_res_image_pixel", "micron"),
                                      ...) {
+    unit <- match.arg(unit)
     if (!length(colData)) {
         colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
     }
