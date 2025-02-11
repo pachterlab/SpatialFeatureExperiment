@@ -591,10 +591,11 @@ setMethod(
     }
     # So adjacent spots are equidistant
     coords_use$row <- coords_use$row * sqrt(3)
-    g <- dnearneigh(as.matrix(coords_use),
+    g <- .dnn_bioc(as.matrix(coords_use),
         d1 = 1.9, d2 = 2.1,
         row.names = bcs_use
     )
+    attr(g, "distance") <- NULL
     out <- nb2listw(g, style = style, zero.policy = zero.policy)
     attr(out, "method") <- list(
         FUN = "findVisiumGraph",
