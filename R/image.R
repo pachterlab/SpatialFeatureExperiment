@@ -1510,22 +1510,3 @@ setMethod("cropImg", "ExtImage", function(x, bbox) {
     ext(x) <- .shift_ext(bbox_new, origin)
     x
 })
-
-.crop_imgs <- function(x, bboxes) {
-    # Crop all images across samples in an SFE object
-    if (nrow(imgData(x))) {
-        samples <- sort(sampleIDs(x))
-        imgData(x) <- imgData(x)[order(imgData(x)$sample_id),]
-        if (length(samples) == 1L) {
-            bboxes <- matrix(bboxes, ncol = 1, dimnames = list(names(bboxes), samples))
-        }
-        new_imgs <- lapply(samples, function(s) {
-            img_data <- imgData(x)$data[imgData(x)$sample_id == s]
-            bbox_use <- bboxes[c("xmin", "xmax", "ymin", "ymax"),s]
-            lapply(img_data, cropImg, bbox = bbox_use)
-        })
-        new_imgs <- unlist(new_imgs, recursive = FALSE)
-        imgData(x)$data <- I(new_imgs)
-    }
-    x
-}

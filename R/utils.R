@@ -314,3 +314,21 @@ getTechTxFields <- function(tech, data_dir = NULL) {
     }
     mols
 }
+
+.size_str2num <- function(x) {
+    x <- toupper(x)
+    unit <- gsub("^[0-9.]+\\s?", "", x)
+    if (!unit %in% c("MB", "GB"))
+        stop("x must be in either MB or GB.")
+    x <- as.numeric(gsub("\\s?[A-Z.]+$", "", x))
+    switch (unit,
+            MB = x * 1024^2,
+            GB = x * 1024^3
+    )
+}
+
+.get_bbox_prop <- function(bbox, img) {
+    tot_area <- ext(img) |> st_bbox() |> st_as_sfc() |> st_area()
+    bb_area <- bbox |> st_bbox() |> st_as_sfc() |> st_area()
+    bb_area/tot_area
+}

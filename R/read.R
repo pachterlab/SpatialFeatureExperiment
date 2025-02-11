@@ -539,15 +539,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 }
 
 .if_flip_img <- function(fn, max_flip) {
-    max_flip <- toupper(max_flip)
-    unit <- gsub("^[0-9.]+\\s?", "", max_flip)
-    if (!unit %in% c("MB", "GB"))
-        stop("max_flip must be in either MB or GB.")
-    max_flip <- as.numeric(gsub("\\s?[A-Z.]+$", "", max_flip))
-    max_flip <- switch (unit,
-                        MB = max_flip * 1024^2,
-                        GB = max_flip * 1024^3
-    )
+    max_flip <- .size_str2num(max_flip)
     size <- file.info(fn)[["size"]] # NA if file doesn't exist
     size < max_flip
 }

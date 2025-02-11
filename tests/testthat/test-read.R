@@ -279,7 +279,7 @@ test_that("readVizgen don't flip image when image is too large", {
     dir_use <- VizgenOutput("hdf5", file_path = fp)
     expect_error(readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                             flip = "image", max_flip = "0.02 TB"),
-                 "max_flip must be in either MB or GB")
+                 "must be in either MB or GB")
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image", max_flip = "0.02 MB")
     suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z3.tif")))

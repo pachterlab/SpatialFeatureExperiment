@@ -239,3 +239,17 @@ test_that("Still works when using logical vector of all FALSE", {
     expect_equal(annotGeometryNames(sfe0), annotGeometryNames(sfe1))
     expect_equal(nrow(annotGeometry(sfe0, "foo")), 0)
 })
+
+sfe1 <- read10xVisiumSFE("ob", sample_id = "ob", unit = "micron")
+test_that("Don't crop when subsetting by setting SFE_subset_crop", {
+    options(SFE_subset_crop = FALSE)
+    expect_message(sfe_sub <- sfe1[,seq_len(1000)], "SFE_subset_crop option set to FALSE")
+    expect_equal(bbox(sfe_sub, include_images = TRUE), bbox(sfe1, include_images = TRUE))
+})
+
+test_that("Don't crop when image is too large", {
+    options(SFE_subset_crop = TRUE)
+    options(SFE_subset_crop_max = "0.1MB")
+    expect_message(sfe_sub <- sfe1[,seq_len(1000)], "Some images are larger than")
+    expect_equal(bbox(sfe_sub, include_images = TRUE), bbox(sfe1, include_images = TRUE))
+})

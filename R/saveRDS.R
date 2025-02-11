@@ -53,7 +53,7 @@ setMethod("unwrap", "SpatialFeatureExperiment",
           function(x) {
               for (i in seq_len(nrow(imgData(x)))) {
                   img <- int_metadata(x)$imgData$data[[i]]
-                  if (inherits(img, "PackedSpatRaster"))
+                  if (inherits(img, "PackedRasterImage"))
                       img <- SpatRasterImage(unwrap(img))
                   else if (inherits(img, "SpatRasterImage")) {
                       old_slot <- tryCatch(img@image, error = function(e) NULL)
