@@ -585,7 +585,7 @@ setMethod(
     if (is.na(coords_use) |> any()) {
       # use "array_" cols from colData
       coords_use <- 
-        colData(x)[, grep("array_", names(colData(x)))] |> 
+        colData(x)[colData(x)$sample_id == sample_id, grep("array_", names(colData(x)))] |> 
         as.data.frame() |> suppressWarnings()
         colnames(coords_use) <- gsub("array_", "", colnames(coords_use))
     }
