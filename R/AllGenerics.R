@@ -246,7 +246,9 @@ setGeneric("affineImg", function(x, M, v, ...) standardGeneric("affineImg"))
 #' @export
 setGeneric("cropImg", function(x, bbox, ...) standardGeneric("cropImg"))
 
-if (!isGeneric("saveRDS")) {setGeneric("saveRDS", function (object, file="", ascii=FALSE, version=NULL, compress=TRUE, refhook=NULL) standardGeneric("saveRDS"))}
+if (!isGeneric("readRDS")) {
+    setGeneric("readRDS", function(file, refhook = NULL) standardGeneric("readRDS"))
+}
 
 #' @export
 setGeneric("toExtImage", function(x, ...) standardGeneric("toExtImage"))
