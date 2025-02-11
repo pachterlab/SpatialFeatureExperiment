@@ -85,7 +85,7 @@ setMethod("unwrap", "SpatialFeatureExperiment",
 #' @param object An SFE object
 #' @return TRUE or FALSE
 #' @importFrom BiocGenerics containsOutOfMemoryData
-#' @export
+#' @exportMethod containsOutOfMemoryData
 #' @concept Utilities
 #' @examples
 #' outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
