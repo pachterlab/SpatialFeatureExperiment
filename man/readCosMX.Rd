@@ -73,7 +73,8 @@ An SFE object. Cell polygons are written to
 }
 \description{
 This function reads the standard CosMX output into an SFE object, as in
-"Basic Data Files" on the Nanostring website.
+"Basic Data Files" on the Nanostring website. For new version of CosMX, these
+files are the flat files in the AtoMX output.
 }
 \examples{
 fp <- tempfile()

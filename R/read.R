@@ -949,7 +949,8 @@ readVizgen <- function(data_dir,
 #' Read CosMX data into SFE
 #'
 #' This function reads the standard CosMX output into an SFE object, as in
-#' "Basic Data Files" on the Nanostring website.
+#' "Basic Data Files" on the Nanostring website. For new version of CosMX, these
+#' files are the flat files in the AtoMX output.
 #'
 #' @inheritParams readVizgen
 #' @param z Integer z index or "all" to indicate which z-planes to read for the
@@ -986,7 +987,7 @@ readCosMX <- function(data_dir,
     fn_polys <- grep("polygons", fns, value = TRUE)[1]
 
     meta <- fread(fn_metadata)
-    mat <- fread(fn_mat) # TODO: write to h5 or mtx. Consult alabaster.sce
+    mat <- fread(fn_mat)
     
 
     meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")

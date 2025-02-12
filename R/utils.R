@@ -253,7 +253,7 @@ getTechTxFields <- function(tech, data_dir = NULL) {
             tech,
             Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
             CosMX = grep("tx_file.csv",
-                         list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
+                         list.files(data_dir, pattern = "\\.csv.*$", full.names = TRUE),
                          value = TRUE),
             Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
         )
