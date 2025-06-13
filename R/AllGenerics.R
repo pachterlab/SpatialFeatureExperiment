@@ -276,3 +276,8 @@ setGeneric("Img<-", function(x, sample_id = 1L, image_id, scale_fct = 1, value) 
 
 #' @export
 setGeneric("splitByCol", function(x, f, ...) standardGeneric("splitByCol"))
+
+#' @export
+setGeneric("findDebrisCells", function(x, max_cells = 5, distance_cutoff = 50,
+                                       BNPARAM = NULL, BPPARAM = SerialParam()) 
+    standardGeneric("findDebrisCells"))

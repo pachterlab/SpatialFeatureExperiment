@@ -482,6 +482,7 @@
 #'   and then its edges weighted based on distance in this function.
 #' @concept Spatial neighborhood graph
 #' @export
+#' @name findSpatialNeighbors
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
