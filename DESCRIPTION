@@ -58,6 +58,7 @@ Collate:
     'changeSampleIDs.R'
     'coerce.R'
     'data.R'
+    'debris.R'
     'df2sf.R'
     'dimGeometries.R'
     'featureData.R'
@@ -75,6 +76,7 @@ Collate:
     'spatialGraphs.R'
     'split.R'
     'subset.R'
+    'tissue_boundary.R'
     'transformation.R'
     'updateObject.R'
     'validity.R'
@@ -83,6 +85,7 @@ Suggests:
     arrow,
     BiocStyle,
     dplyr,
+    gmp,
     knitr,
     RBioFormats,
     rhdf5,
