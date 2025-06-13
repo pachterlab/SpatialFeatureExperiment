@@ -22,6 +22,8 @@ aggregateTx(
   unit = "micron",
   sparse = FALSE,
   BPPARAM = SerialParam(),
+  save_memory = FALSE,
+  progressbar = FALSE,
   .orig_nrows = NULL
 )
 
@@ -40,7 +42,9 @@ aggregateTxTech(
   flat_topped = FALSE,
   new_geometry_name = "bins",
   sparse = FALSE,
-  BPPARAM = SerialParam()
+  BPPARAM = SerialParam(),
+  save_memory = FALSE,
+  progressbar = FALSE
 )
 }
 \arguments{
@@ -91,7 +95,14 @@ not be very sparse so using sparse matrix will not save memory, but when
 the bins are small, sparsity is worth it.}
 
 \item{BPPARAM}{bpparam object to specify parallel computing over genes. If a
-lot of memory is used, then stick to `SerialParam()`.}
+lot of memory is used, then stick to `SerialParam()`. If \code{save_memory
+= TRUE}, then this argument is ignored because the operation is not thread
+safe; \code{SerialParam()} will always be used.}
+
+\item{save_memory}{Logical, if TRUE, then the transcript spots will not all
+be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
+link to the data and then transcript spots of one gene is loaded into
+memory at a time.}
 
 \item{.orig_nrows}{Only used internally in the SFE method of \code{aggregate}}
 
@@ -113,6 +124,10 @@ preserved. This is consistent with \code{readVizgen} and \code{readXenium}.}
 \item{max_flip}{Maximum size of the image allowed to flip the image. Because
 the image will be loaded into memory to be flipped. If the image is larger
 than this size then the coordinates will be flipped instead.}
+
+\item{pregressbar}{Logical, whether to show progress bar. This argument is
+only used when \code{save_memory = TRUE} because otherwise the
+\code{progressbar} argument can be specified in \code{BPPARAM}.}
 }
 \value{
 A SFE object with count matrix for number of spots of each gene in

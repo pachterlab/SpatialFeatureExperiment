@@ -16,21 +16,21 @@
 \arguments{
 \item{object}{A \code{SpatialFeatureExperiment} object.}
 
-\item{file}{a \link[base]{connection} or the name of the file where the \R object
-    is saved to or read from.}
+\item{file}{a \link[base]{connection} or the path name of the file where the
+    \R object is saved to or read from.}
 
 \item{ascii}{a logical.  If \code{TRUE} or \code{NA}, an ASCII
     representation is written; otherwise (default), a binary one is used.
     See the comments in the help for \code{\link[base]{save}}.}
 
 \item{version}{the workspace format version to use.  \code{NULL}
-    specifies the current default version (3). The only other supported
+    specifies the current default version (3).  The only other supported
     value is 2, the default from \R 1.4.0 to \R 3.5.0.}
 
 \item{compress}{a logical specifying whether saving to a named file is
     to use \code{"gzip"} compression, or one of \code{"gzip"},
-    \code{"bzip2"} or \code{"xz"} to indicate the type of compression to
-    be used.  Ignored if \code{file} is a connection.}
+    \code{"bzip2"}, \code{"xz"} or \code{"zstd"} to indicate the type of
+    compression to be used.  Ignored if \code{file} is a connection.}
 
 \item{refhook}{a hook function for handling reference objects.}
 }

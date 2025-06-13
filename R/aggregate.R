@@ -25,7 +25,16 @@
 #'   not be very sparse so using sparse matrix will not save memory, but when
 #'   the bins are small, sparsity is worth it.
 #' @param BPPARAM bpparam object to specify parallel computing over genes. If a
-#'   lot of memory is used, then stick to `SerialParam()`.
+#'   lot of memory is used, then stick to `SerialParam()`. If \code{save_memory
+#'   = TRUE}, then this argument is ignored because the operation is not thread
+#'   safe; \code{SerialParam()} will always be used.
+#' @param save_memory Logical, if TRUE, then the transcript spots will not all
+#'   be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
+#'   link to the data and then transcript spots of one gene is loaded into
+#'   memory at a time.
+#' @param pregressbar Logical, whether to show progress bar. This argument is
+#'   only used when \code{save_memory = TRUE} because otherwise the
+#'   \code{progressbar} argument can be specified in \code{BPPARAM}.
 #' @param .orig_nrows Only used internally in the SFE method of \code{aggregate}
 #' @inheritParams formatTxTech
 #' @inheritParams formatTxSpots
@@ -51,60 +60,115 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                         phred_col = "qv", min_phred = 20, flip_geometry = FALSE,
                         cellsize = NULL, square = TRUE, flat_topped = FALSE,
                         new_geometry_name = "bins", unit = "micron", sparse = FALSE,
-                        BPPARAM = SerialParam(), .orig_nrows = NULL) {
+                        BPPARAM = SerialParam(), save_memory = FALSE,
+                        progressbar = FALSE,
+                        .orig_nrows = NULL) {
     # This is only for one file, one sample
-    if (!is.null(df)) file <- df
+    if (!is.null(df)) {
+        file <- df
+        save_memory <- FALSE
+    }
     mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
-                           min_phred, flip_geometry)
-    if (inherits(mols, "data.table"))
-        mols <- mols[,c(spatialCoordsNames, "gene"), with=FALSE]
-    else mols <- mols[,c(spatialCoordsNames, "gene")]
-    mols <- df2sf(mols, spatialCoordsNames = spatialCoordsNames,
-                  geometryType = "POINT")
-    if (is.null(by))
-        by <- st_make_grid(mols, cellsize = cellsize, square = square,
-                           flat_topped = flat_topped)
-    else if (inherits(by, "sf")) by <- st_geometry(by)
-    mols <- split(st_geometry(mols), mols[["gene"]])
-    if (sparse) { # TODO: This uses a lot of memory. Try Arrow dataset, querying one gene at a time, 
-        # then create TileDB right from the beginning
-        # Iterate over the genes, count number of transcripts in each bin for the gene
-        
-        # Special case from .aggregate_SFE, where numeric L1 is used for genes
-        if (gene_col == "L1") {
-            ml <- bplapply(names(mols), function(i) {
-                x <- mols[[i]]
-                ll <- lengths(st_intersects(by, x))
-                j <- which(ll > 0) # When the spots fall outside all bins
-                if (!length(j)) return(NULL)
-                data.frame(i = as.integer(i), j = j, x = ll[j])
-            }, BPPARAM = BPPARAM)
+                           min_phred, flip_geometry, save_memory = save_memory)
+    if (!save_memory) {
+        if (inherits(mols, "data.table"))
+            mols <- mols[,c(spatialCoordsNames, "gene"), with=FALSE]
+        else mols <- mols[,c(spatialCoordsNames, "gene")]
+        mols <- df2sf(mols, spatialCoordsNames = spatialCoordsNames,
+                      geometryType = "POINT")
+    }
+    if (is.null(by)) {
+        if (save_memory) {
+            mols_bbox <- mols |> 
+                dplyr::summarize(xmin = min(!!sym(spatialCoordsNames[1])),
+                                 xmax = max(!!sym(spatialCoordsNames[1])),
+                                 ymin = min(!!sym(spatialCoordsNames[2])),
+                                 ymax = max(!!sym(spatialCoordsNames[2]))) |> 
+                dplyr::collect() |> unlist() |> st_bbox()
+            by <- st_make_grid(mols_bbox, cellsize = cellsize, square = square,
+                               flat_topped = flat_topped)
         } else {
-            ml <- bplapply(seq_along(mols), function(i) {
-                x <- mols[[i]]
-                ll <- lengths(st_intersects(by, x))
-                j <- which(ll > 0)
-                data.frame(i = i, j = j, x = ll[j])
-            }, BPPARAM = BPPARAM)
+            by <- st_make_grid(mols, cellsize = cellsize, square = square,
+                               flat_topped = flat_topped)
         }
-        ml <- data.table::rbindlist(ml)
-        if (gene_col == "L1") {
-            nrows_use <- .orig_nrows %||% as.integer(tail(names(mols), 1))
-            new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(nrows_use, length(by)),
-                                    dimnames = list(as.character(seq_len(nrows_use)), seq_along(by)))
+    } else if (inherits(by, "sf")) by <- st_geometry(by)
+    if (save_memory) {
+        # TODO: Add argument to write this stuff to disk on the fly gene by gene
+        # never having the whole matrix in memory
+        # Not urgent, since usually the matrix isn't that big anyway after aggregation
+        # TODO: Add argument to set max size loaded into memory. Then instead of
+        # one gene at a time, we can do groups of genes and parallelize within the group
+        # which would really help for less expressed genes. Each point takes a bout 20 bytes or so.
+        # This way it can run faster since each filter operation takes a while
+        # for csv.gz.
+        genes_use <- mols |> 
+            dplyr::select(gene) |> dplyr::distinct() |> 
+            dplyr::pull(gene, as_vector = TRUE)
+        ml <- bplapply(seq_along(genes_use), function(i) {
+            x <- mols |> 
+                dplyr::filter(gene == genes_use[[i]]) |> 
+                dplyr::select(gene, dplyr::any_of(spatialCoordsNames)) |> 
+                dplyr::collect()
+            x <- df2sf(x, spatialCoordsNames = spatialCoordsNames,
+                       geometryType = "POINT")
+            if (sparse) {
+                ll <- lengths(st_intersects(by, x))
+                j <- which(ll > 0) # Need to deal with special case of all 0's when by doesn't cover the whole area
+                data.frame(i = i, j = j, x = ll[j])
+            } else {
+                inds <- st_intersects(by, x)
+                lengths(inds)
+            }
+        }, BPPARAM = SerialParam(progressbar = progressbar))
+        if (sparse) {
+            ml <- data.table::rbindlist(ml)
+            new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(genes_use), length(by)),
+                                    dimnames = list(genes_use, seq_along(by)))
         } else {
-            new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(mols), length(by)),
-                                    dimnames = list(names(mols), seq_along(by)))
+            new_mat <- matrix(unlist(ml), nrow = length(by), ncol = length(genes_use),
+                              dimnames = list(seq_along(by), genes_use))
+            new_mat <- t(new_mat)
         }
     } else {
-        ml <- bplapply(mols, function(x) {
-            inds <- st_intersects(by, x)
-            lengths(inds)
-        }, BPPARAM = BPPARAM)
-        new_mat <- matrix(unlist(ml), nrow = length(by), ncol = length(mols),
-                          dimnames = list(seq_along(by), names(mols)))
-        new_mat <- t(new_mat)
+        mols <- split(st_geometry(mols), mols[["gene"]])
+        if (sparse) {
+            # Special case from .aggregate_SFE, where numeric L1 is used for genes
+            if (gene_col == "L1") {
+                ml <- bplapply(names(mols), function(i) {
+                    x <- mols[[i]]
+                    ll <- lengths(st_intersects(by, x))
+                    j <- which(ll > 0) # When the spots fall outside all bins
+                    if (!length(j)) return(NULL)
+                    data.frame(i = as.integer(i), j = j, x = ll[j])
+                }, BPPARAM = BPPARAM)
+            } else {
+                ml <- bplapply(seq_along(mols), function(i) {
+                    x <- mols[[i]]
+                    ll <- lengths(st_intersects(by, x))
+                    j <- which(ll > 0)
+                    data.frame(i = i, j = j, x = ll[j])
+                }, BPPARAM = BPPARAM)
+            }
+            ml <- data.table::rbindlist(ml)
+            if (gene_col == "L1") {
+                nrows_use <- .orig_nrows %||% as.integer(tail(names(mols), 1))
+                new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(nrows_use, length(by)),
+                                        dimnames = list(as.character(seq_len(nrows_use)), seq_along(by)))
+            } else {
+                new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(mols), length(by)),
+                                        dimnames = list(names(mols), seq_along(by)))
+            }
+        } else {
+            ml <- bplapply(mols, function(x) {
+                inds <- st_intersects(by, x)
+                lengths(inds)
+            }, BPPARAM = BPPARAM)
+            new_mat <- matrix(unlist(ml), nrow = length(by), ncol = length(mols),
+                              dimnames = list(seq_along(by), names(mols)))
+            new_mat <- t(new_mat)
+        }
     }
+    
     new_mat <- new_mat[,colSums(new_mat) > 0] # Remove empty grid cells
     grid_sf <- st_sf(geometry = by)
     cgs <- list(bins = grid_sf[colnames(new_mat), "geometry"])
@@ -123,7 +187,8 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                             max_flip = "50 MB",
                             cellsize = NULL, square = TRUE, flat_topped = FALSE,
                             new_geometry_name = "bins", sparse = FALSE,
-                            BPPARAM = SerialParam()) {
+                            BPPARAM = SerialParam(), 
+                            save_memory = FALSE, progressbar = FALSE) {
     tech <- match.arg(tech)
     flip <- match.arg(flip)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
@@ -160,7 +225,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                 flip_geometry = (flip == "geometry"),
                 cellsize = cellsize, square = square, flat_topped = flat_topped,
                 new_geometry_name = new_geometry_name, BPPARAM = BPPARAM, 
-                sparse = sparse)
+                sparse = sparse, save_memory = save_memory, progressbar = progressbar)
     imgData(sfe) <- img_df
     sfe
 }
