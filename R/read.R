@@ -73,7 +73,7 @@ read10xVisiumSFE <- function(samples = "",
                              data = c("filtered", "raw"),
                              images = c("lowres", "hires"),
                              unit = c("full_res_image_pixel", "micron"),
-                             style = "W", zero.policy = NULL, load = deprecated(),
+                             style = "W", zero.policy = NULL,
                              row.names = c("id", "symbol"),
                              flip = c("geometry", "image", "none")) {
     type <- match.arg(type)
@@ -83,9 +83,6 @@ read10xVisiumSFE <- function(samples = "",
     if (packageVersion('terra') == as.package_version("1.7.83") ||
         packageVersion('terra') >= as.package_version("1.8.10"))
         flip <- "none"
-    if (is_present(load)) {
-        deprecate_warn("1.8.0", "read10xVisiumSFE(load)")
-    }
     images <- match.arg(images, several.ok = TRUE)
     row.names <- match.arg(row.names)
     enrichment_feature <- switch(row.names,

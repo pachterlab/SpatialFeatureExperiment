@@ -5,33 +5,6 @@ library(sf)
 sfe <- McKellarMuscleData("small")
 g <- findVisiumGraph(sfe)
 
-test_that("listw2sparse gives correct results", {
-    expect_warning(mat <- listw2sparse(g))
-    expect_s4_class(mat, "dgCMatrix")
-    expect_equal(nrow(mat), ncol(sfe))
-    expect_equal(ncol(mat), ncol(sfe))
-    expect_equal(Matrix::rowSums(mat > 0), card(g$neighbours), ignore_attr = TRUE)
-    m2 <- listw2mat(g)
-    expect_equal(as.matrix(mat), m2, ignore_attr = TRUE)
-    expect_equal(rownames(mat), rownames(m2))
-    expect_equal(rownames(mat), colnames(mat))
-})
-
-# Add a singleton to g
-g_single <- g
-g_single$neighbours <- c(g_single$neighbours, 0L)
-class(g_single$neighbours) <- "nb"
-attr(g_single, "region.id") <- c(attr(g_single, "region.id"), "foo")
-g_single$weights <- c(g_single$weights, list(NULL))
-
-test_that("Deal with singletons in listw2sparse", {
-    mat <- listw2mat(g_single)
-    n <- length(g_single$neighbours)
-    expect_equal(nrow(mat), n)
-    expect_equal(ncol(mat), n)
-    expect_equal(Matrix::rowSums(mat)[n], 0, ignore_attr = TRUE)
-})
-
 nb1 <- grid2nb(d = c(5,5))
 nb2 <- grid2nb(d = c(3,3))
 attr(nb1, "region.id") <- LETTERS[1:25]
