@@ -5,9 +5,9 @@
 \title{Read 10X Visium data as SpatialFeatureExperiment}
 \usage{
 read10xVisiumSFE(
-  samples = "",
-  dirs = file.path(samples, "outs"),
-  sample_id = paste0("sample", sprintf("\%02d", seq_along(samples))),
+  samples = deprecated(),
+  dirs = NULL,
+  sample_id = paste0("sample", sprintf("\%02d", seq_along(dirs))),
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
   images = c("lowres", "hires"),
@@ -29,10 +29,7 @@ Alternatively, each string may contain a prefix of names for the three-file syst
 where the rest of the name of each file follows the standard 10X output.}
 
 \item{dirs}{Directory for each sample that contains the \code{spatial} and
-\code{raw/filtered_featues_bc_matrix} directories. By default, the
-\code{outs} directory under the directory specified in the \code{samples}
-argument, as in Space Ranger output. Change the \code{dirs} argument if you
-have moved or renamed the output directory.}
+\code{raw/filtered_featues_bc_matrix} directories.}
 
 \item{sample_id}{Which sample(s) in the SFE object to use for the graph. Can
 also be "all", which means this function will compute the graph for all
@@ -66,10 +63,7 @@ Originally the Visium spots are in pixels in full res image. Either the
 image or the geometry needs to be flipped for them match in the Cartesian
 coordinate system.}
 
-\item{sample}{To be consistent with \code{SpatialExperiment::read10xVisium},
-one or more directories with Space Ranger output for a Visium sample. It is
-assumed to have the \code{outs} directory in it but this can be overridden
-with the \code{dirs} argument.}
+\item{sample}{Deprecated, use the \code{dirs} argument instead.}
 
 \item{load}{Deprecated. Not used, kept for backward compatibility for now.}
 }
@@ -95,11 +89,11 @@ It is assumed that the images have not been cropped. Otherwise the
 dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 
 sample_ids <- c("sample01", "sample02")
-samples <- file.path(dir, sample_ids)
+samples <- file.path(dir, sample_ids, "outs")
 
 list.files(samples[1])
 list.files(file.path(samples[1], "spatial"))
-(sfe <- read10xVisiumSFE(samples, sample_id = sample_ids,
+(sfe <- read10xVisiumSFE(dirs = samples, sample_id = sample_ids,
     type = "sparse", data = "filtered",
     load = FALSE
 ))

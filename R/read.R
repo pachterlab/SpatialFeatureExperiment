@@ -12,18 +12,12 @@
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams DropletUtils::read10xCounts
 #' @inheritParams SpatialExperiment::read10xVisium
-#' @param sample To be consistent with \code{SpatialExperiment::read10xVisium},
-#'   one or more directories with Space Ranger output for a Visium sample. It is
-#'   assumed to have the \code{outs} directory in it but this can be overridden
-#'   with the \code{dirs} argument.
+#' @param sample Deprecated, use the \code{dirs} argument instead.
 #' @param type Either "HDF5", and the matrix will be represented as
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
 #' @param dirs Directory for each sample that contains the \code{spatial} and
-#'   \code{raw/filtered_featues_bc_matrix} directories. By default, the
-#'   \code{outs} directory under the directory specified in the \code{samples}
-#'   argument, as in Space Ranger output. Change the \code{dirs} argument if you
-#'   have moved or renamed the output directory.
+#'   \code{raw/filtered_featues_bc_matrix} directories.
 #' @param unit Whether to use pixels in full resolution image or microns as the
 #'   unit. If using microns, then spacing between spots in pixels will be used
 #'   to convert the coordinates into microns, as the spacing is known to be 100
@@ -51,22 +45,22 @@
 #' dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 #'
 #' sample_ids <- c("sample01", "sample02")
-#' samples <- file.path(dir, sample_ids)
+#' samples <- file.path(dir, sample_ids, "outs")
 #'
 #' list.files(samples[1])
 #' list.files(file.path(samples[1], "spatial"))
-#' (sfe <- read10xVisiumSFE(samples, sample_id = sample_ids,
+#' (sfe <- read10xVisiumSFE(dirs = samples, sample_id = sample_ids,
 #'     type = "sparse", data = "filtered",
 #'     load = FALSE
 #' ))
 #' 
-read10xVisiumSFE <- function(samples = "",
-                             dirs = file.path(samples, "outs"),
+read10xVisiumSFE <- function(samples = deprecated(),
+                             dirs = NULL,
                              sample_id = paste0(
                                  "sample",
                                  sprintf(
                                      "%02d",
-                                     seq_along(samples)
+                                     seq_along(dirs)
                                  )
                              ),
                              type = c("HDF5", "sparse"),
@@ -76,6 +70,11 @@ read10xVisiumSFE <- function(samples = "",
                              style = "W", zero.policy = NULL,
                              row.names = c("id", "symbol"),
                              flip = c("geometry", "image", "none")) {
+    if (is_present(samples)) {
+        deprecate_warn("1.12.0", "read10xVisiumSFE(samples)",
+                       "read10xVisiuimSFE(dirs)")
+        dirs <- dirs %||% file.path(samples, "outs")
+    }
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
@@ -89,7 +88,7 @@ read10xVisiumSFE <- function(samples = "",
                                  id = "Feature.ID",
                                  symbol = "Feature.Name")
     # Read one sample at a time, in order to get spot diameter one sample at a time
-    sfes <- lapply(seq_along(samples), function(i) {
+    sfes <- lapply(seq_along(dirs), function(i) {
         o <- .read10xVisium(dirs[i], sample_id[i],
                             type, data, images, 
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,

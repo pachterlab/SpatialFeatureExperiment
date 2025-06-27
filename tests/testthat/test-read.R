@@ -19,7 +19,7 @@ sp_enr2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
 pos2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
                            "tissue_positions.csv"))
 
-samples <- file.path(outdir, paste0("sample0", 1:2))
+samples <- file.path(outdir, paste0("sample0", 1:2), "outs")
 
 rd1 <- sp_enr1[,4:9]
 rd2 <- sp_enr2[,4:9]
@@ -31,7 +31,7 @@ rd_expect <- cbind(Feature.Type = sp_enr1$Feature.Type, rd1, rd2)
 cd_expect <- rbind(bc_flou1, bc_flou2)[, 3:8]
 
 test_that("Correctly read Space Ranger output", {
-    sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
+    sfe <- read10xVisiumSFE(dirs = samples, type = "sparse", data = "filtered")
     # Very basic one
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), c("sample01", "sample02"))
@@ -45,33 +45,33 @@ test_that("Correctly read Space Ranger output", {
 })
 
 test_that("Correctly add visium graph when there's 1 sample", {
-    sfe <- read10xVisiumSFE(samples[1], type = "sparse", data = "filtered")
+    sfe <- read10xVisiumSFE(dirs = samples[1], type = "sparse", data = "filtered")
     expect_equal(colGraphNames(sfe, "sample01"), "visium")
 })
 
 # Need uncropped image
-if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
-mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create(file.path("ob"), recursive = TRUE)
+mat_fn <- file.path("ob", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("ob", "outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
-    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
+                  destfile = file.path("ob", "spatial.tar.gz"))
+    untar(file.path("ob", "spatial.tar.gz"), exdir = file.path("ob"))
 }
 
-if (!dir.exists("kidney")) dir.create(file.path("kidney", "outs"), recursive = TRUE)
-mat_fn <- file.path("kidney", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("kidney")) dir.create(file.path("kidney"), recursive = TRUE)
+mat_fn <- file.path("kidney", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("kidney", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("kidney", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("kidney", "outs", "spatial"))) {
+if (!dir.exists(file.path("kidney", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
-                  destfile = file.path("kidney", "outs", "spatial.tar.gz"))
-    untar(file.path("kidney", "outs", "spatial.tar.gz"), exdir = file.path("kidney", "outs"))
+                  destfile = file.path("kidney", "spatial.tar.gz"))
+    untar(file.path("kidney", "spatial.tar.gz"), exdir = file.path("kidney"))
 }
 
 library(terra)
@@ -80,7 +80,7 @@ library(SingleCellExperiment)
 library(SpatialExperiment)
 
 test_that("Image is properly aligned in pixel space", {
-    sfe <- read10xVisiumSFE("ob")
+    sfe <- read10xVisiumSFE(dirs = "ob")
     expect_equal(unit(sfe), "full_res_image_pixel")
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
@@ -103,13 +103,13 @@ test_that("Image is properly aligned in pixel space", {
 })
 
 test_that("Read when one out of multiple images are desired", {
-    sfe <- read10xVisiumSFE("ob", images = "lowres")
+    sfe <- read10xVisiumSFE(dirs = "ob", images = "lowres")
     expect_equal(nrow(imgData(sfe)), 1L)
     expect_equal(imgData(sfe)$image_id, "lowres")
 })
 
 test_that("Image is properly aligned in micron space", {
-    sfe <- read10xVisiumSFE("ob", unit = "micron")
+    sfe <- read10xVisiumSFE(dirs = "ob", unit = "micron")
     expect_equal(unit(sfe), "micron")
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
@@ -133,7 +133,7 @@ test_that("Image is properly aligned in micron space", {
 })
 
 test_that("Micron spot spacing works when there're singletons", {
-    sfe <- read10xVisiumSFE("kidney", unit = "micron", zero.policy = TRUE)
+    sfe <- read10xVisiumSFE(dirs = "kidney", unit = "micron", zero.policy = TRUE)
     expect_equal(unit(sfe), "micron")
 })
 
