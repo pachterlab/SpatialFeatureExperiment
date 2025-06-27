@@ -15,7 +15,8 @@ read10xVisiumSFE(
   style = "W",
   zero.policy = NULL,
   row.names = c("id", "symbol"),
-  flip = c("geometry", "image", "none")
+  flip = c("geometry", "image", "none"),
+  read_spatial_enrichment = TRUE
 )
 }
 \arguments{
@@ -62,6 +63,10 @@ greater y coordinates going up, while in images, greater y values go down.
 Originally the Visium spots are in pixels in full res image. Either the
 image or the geometry needs to be flipped for them match in the Cartesian
 coordinate system.}
+
+\item{read_spatial_enrichment}{Logical, whether to read the
+`spatial_enrichment.csv` file from Visium output if the file is present and
+add its contents to `rowData`.}
 
 \item{sample}{Deprecated, use the \code{dirs} argument instead.}
 

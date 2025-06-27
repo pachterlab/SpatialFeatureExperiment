@@ -29,6 +29,9 @@
 #'   Originally the Visium spots are in pixels in full res image. Either the
 #'   image or the geometry needs to be flipped for them match in the Cartesian
 #'   coordinate system.
+#' @param read_spatial_enrichment Logical, whether to read the
+#'   `spatial_enrichment.csv` file from Visium output if the file is present and
+#'   add its contents to `rowData`.
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
@@ -69,7 +72,8 @@ read10xVisiumSFE <- function(samples = deprecated(),
                              unit = c("full_res_image_pixel", "micron"),
                              style = "W", zero.policy = NULL,
                              row.names = c("id", "symbol"),
-                             flip = c("geometry", "image", "none")) {
+                             flip = c("geometry", "image", "none"),
+                             read_spatial_enrichment = TRUE) {
     if (is_present(samples)) {
         deprecate_warn("1.12.0", "read10xVisiumSFE(samples)",
                        "read10xVisiuimSFE(dirs)")
@@ -95,7 +99,7 @@ read10xVisiumSFE <- function(samples = deprecated(),
                             unit = unit, zero.policy = zero.policy, style = style)
         # Add spatial enrichment if present
         fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
-        if (file.exists(fn)) {
+        if (file.exists(fn) && read_spatial_enrichment) {
             enrichment <- read.csv(fn)
             row_inds <- match(rownames(o), enrichment[[enrichment_feature]])
             # Let me not worry about different samples having different genes for now
