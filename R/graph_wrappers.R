@@ -556,18 +556,19 @@ setMethod(
             poly2nb = poly2nb
         )
         if (length(sample_id) == 1L) {
-            out <- .comp_graph_sample(
+            tryCatch(out <- .comp_graph_sample(
                 x, sample_id, type, MARGIN, method,
                 dist_type, args, extra_args_use, glist,
                 style, zero.policy, alpha, dmax, fun_use, return_sf
-            )
+            ), error = function(e) stop(method, ": ", e$message, call. = FALSE))
+            
         } else {
             out <- lapply(sample_id, function(s) {
-                .comp_graph_sample(
+                tryCatch(.comp_graph_sample(
                     x, s, type, MARGIN, method, dist_type,
                     args, extra_args_use, glist, style,
                     zero.policy, alpha, dmax, fun_use, return_sf
-                )
+                ), error = function(e) stop(method, ": ", e$message, call. = FALSE))
             })
             names(out) <- sample_id
         }

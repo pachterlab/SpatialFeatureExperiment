@@ -172,3 +172,12 @@ test_that("Correct Visium HD graph", {
     g <- findVisiumHDGraph(sfe)
     expect_s3_class(g, "listw")
 })
+
+test_that("Show method name in error message", {
+    mat <- matrix(rnorm(9), 3, 3)
+    # Get duplicated coordinates
+    coords <- cbind(c(1,2,1), c(1,2,1))
+    sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
+                                    spatialCoords = coords)
+    expect_error(findSpatialNeighbors(sfe), "tri2nb")
+})
