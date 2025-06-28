@@ -8,6 +8,9 @@
 #' SFE object by \code{sample_id} so each sample will become a separate SFE
 #' object. The \code{splitContiguity} function splits the SFE object by
 #' contiguity of an \code{annotGeometry}, which by default is "tissueBoundary".
+#' The \code{splitComponent} function splits the SFE object by graph component,
+#' so if there are disconnected components in the graph, then each component 
+#' will become a new SFE object.
 #'
 #' @inheritParams crop
 #' @param x An SFE object
@@ -25,6 +28,13 @@
 #' @param min_area Minimum area in the same unit as the geometry coordinates
 #'   (squared) for each piece to be considered a separate piece when splitting
 #'   by contiguity. Only pieces that are large enough are considered.
+#' @param colGraphName Name of graph to use for \code{splitComponent}. We
+#' recommend distance based neighbors (`dnearneigh` in 
+#' \code{\link{findSpatialNeighbors}}), and recommend NOT using k nearest
+#' neighbors (`knearneigh`) or triangulation (`tri2nb`).
+#' @param min_cells Minimum number of cells per graph component; components with
+#' fewer than this number of cells are considered debris and removed.
+#' 
 #' @return A list of SFE objects.
 #' @concept Geometric operations
 #' @name splitByCol
@@ -105,4 +115,18 @@ splitContiguity <- function(x, colGeometryName = 1L,
     splitByCol(x, ag_union, colGeometryName = colGeometryName, cover = cover)
 }
 
-# TODO: split by graph components
+#' @importFrom spdep n.comp.nb
+#' @importFrom S4Vectors split
+#' @rdname splitByCol
+#' @export
+splitComponent <- function(x, colGraphName = 1L, min_cells = 100) {
+    g <- colGraph(x, colGraphName)
+    comps <- n.comp.nb(g$neighbours)
+    n_cells <- table(comps$comp.id)
+    sfes <- split(x, comps$comp.id)
+    if (any(n_cells < min_cells)) {
+        inds <- n_cells >= min_cells
+        sfes <- sfes[inds]
+    }
+    sfes
+}

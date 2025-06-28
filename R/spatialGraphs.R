@@ -14,7 +14,10 @@
 #' Spatial neighborhood graphs as \code{spdep}'s \code{listw} objects are stored
 #' in the \code{int_metadata} of the SFE object. The \code{listw} class is used
 #' because \code{spdep} has many useful methods that rely on the neighborhood
-#' graph as \code{listw}.
+#' graph as \code{listw}. See the
+#' \href{https://r-spatial.github.io/spdep/reference/index.html}{\code{spdep}
+#' doumentation website} for functions to edit the spatial neighborhood graph,
+#' or the \code{nb} object within the \code{listw}.
 #'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param value A \code{listw} object (\code{*Graph}), or a named list of list
@@ -38,9 +41,9 @@
 #'   argument in \code{\link[SpatialExperiment]{SpatialExperiment}}.
 #' @name spatialGraphs
 #' @concept Getters and setters
-#' @return Getters for multiple graphs return a named list. Getters for
-#'   names return a character vector of the names. Getters for single graphs
-#'   return a \code{listw} object. Setters return an SFE object.
+#' @return Getters for multiple graphs return a named list. Getters for names
+#'   return a character vector of the names. Getters for single graphs return a
+#'   \code{listw} object. Setters return an SFE object.
 #' @aliases rowGraphs rowGraphs<- spatialGraph spatialGraph<- spatialGraphNames
 #'   colGraphs colGraphs<- spatialGraphNames<- spatialGraphs<- annotGraphs
 #'   annotGraphs<-
