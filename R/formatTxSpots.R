@@ -388,7 +388,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
     gene_col <- "gene"
     # Check z
     use_z <- length(spatialCoordsNames) == 3L
-    if (!spatialCoordsNames %in% names(mols)) { # z column not found
+    if (!spatialCoordsNames[3] %in% names(mols)) { # z column not found
         spatialCoordsNames <- spatialCoordsNames[-3]
         use_z <- FALSE
     }
@@ -434,6 +434,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         } else {
             inds <- mols[[spatialCoordsNames[3]]] %in% z
             mols <- mols[inds,, drop = FALSE] # faster with data.table
+            if (length(z) == 1L) spatialCoordsNames <- spatialCoordsNames[-3]
         }
     }
     message(">>> Converting transcript spots to geometry")

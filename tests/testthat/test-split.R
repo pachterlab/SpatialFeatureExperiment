@@ -87,7 +87,7 @@ test_that("Split by contiguity of an annotGeometry", {
 })
 
 test_that("Split by graph component", {
-    colGraph(sfe, "dnn") <- findSptialNeighbors(sfe, method = "dnearneigh", d2 = 25)
+    colGraph(sfe, "dnn") <- findSpatialNeighbors(sfe, method = "dnearneigh", d2 = 25)
     sfes <- splitComponent(sfe, colGraphName = "dnn")
     classes <- vapply(sfes, class, FUN.VALUE = character(1))
     expect_true(all(classes == "SpatialFeatureExperiment"))

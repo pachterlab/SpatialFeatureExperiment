@@ -74,6 +74,7 @@ read10xVisiumSFE <- function(samples = deprecated(),
                              row.names = c("id", "symbol"),
                              flip = c("geometry", "image", "none"),
                              read_spatial_enrichment = TRUE) {
+    check_installed("DropletUtils")
     if (is_present(samples)) {
         deprecate_warn("1.12.0", "read10xVisiumSFE(samples)",
                        "read10xVisiuimSFE(dirs)")
@@ -146,15 +147,12 @@ read10xVisiumSFE <- function(samples = deprecated(),
            add_graph = TRUE, unit = c("full_res_image_pixel", "micron"),
            rotate_hd = FALSE, zero.policy = TRUE, style = "W",
            add_centroids = FALSE) {
-    if (!requireNamespace("DropletUtils", quietly = TRUE)) {
-      warning("DropletUtils package must be installed to use read10xVisium()")
-    }
     type <- match.arg(type)
     data <- match.arg(data)
     imgs <- c("lowres", "hires", "detected", "aligned")
     imgs <- match.arg(images, imgs, several.ok = TRUE)
     if (!VisiumHD) {
-        if (basename(sample) != "outs" && "outs" %in% list.files(sample))
+        if (basename(sample) != "outs" && "outs" %in% list.files(sample, include.dirs = TRUE))
             sample <- file.path(sample, "outs")
     }
     message(paste0(">>> 10X ", ifelse(VisiumHD, "VisiumHD", "Visium"),
