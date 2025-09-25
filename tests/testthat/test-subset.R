@@ -122,28 +122,28 @@ test_that("Warning message and dropping graphs when package required for reconst
 })
 
 # Need uncropped image
-if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
-mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create("ob", recursive = TRUE)
+mat_fn <- file.path("ob", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("ob", "outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
-    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
+                  destfile = file.path("ob", "spatial.tar.gz"))
+    untar(file.path("ob", "spatial.tar.gz"), exdir = "ob")
 }
 
-if (!dir.exists("kidney")) dir.create(file.path("kidney", "outs"), recursive = TRUE)
-mat_fn <- file.path("kidney", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("kidney")) dir.create("kidney", recursive = TRUE)
+mat_fn <- file.path("kidney", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("kidney", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("kidney", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("kidney", "outs", "spatial"))) {
+if (!dir.exists(file.path("kidney", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
-                  destfile = file.path("kidney", "outs", "spatial.tar.gz"))
-    untar(file.path("kidney", "outs", "spatial.tar.gz"), exdir = file.path("kidney", "outs"))
+                  destfile = file.path("kidney", "spatial.tar.gz"))
+    untar(file.path("kidney", "spatial.tar.gz"), exdir = "kidney")
 }
 
 library(sf)
@@ -151,8 +151,8 @@ library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
 library(S4Vectors)
-sfe1 <- read10xVisiumSFE("ob", sample_id = "ob", unit = "micron")
-sfe2 <- read10xVisiumSFE("kidney", sample_id = "kidney", zero.policy = TRUE,
+sfe1 <- read10xVisiumSFE(dirs = "ob", sample_id = "ob", unit = "micron")
+sfe2 <- read10xVisiumSFE(dirs = "kidney", sample_id = "kidney", zero.policy = TRUE,
                          unit = "micron")
 
 genes_use <- intersect(rownames(sfe1), rownames(sfe2))
@@ -240,7 +240,7 @@ test_that("Still works when using logical vector of all FALSE", {
     expect_equal(nrow(annotGeometry(sfe0, "foo")), 0)
 })
 
-sfe1 <- read10xVisiumSFE("ob", sample_id = "ob", unit = "micron")
+sfe1 <- read10xVisiumSFE(dirs = "ob", sample_id = "ob", unit = "micron")
 test_that("Don't crop when subsetting by setting SFE_subset_crop", {
     options(SFE_subset_crop = FALSE)
     expect_message(sfe_sub <- sfe1[,seq_len(1000)], "SFE_subset_crop option set to FALSE")
