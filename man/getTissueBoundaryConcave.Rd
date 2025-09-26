@@ -17,6 +17,9 @@ getTissueBoundaryConcave(
 
 \item{sample_id}{Sample id(s) whose tissue boundaries are to be found.}
 
+\item{colGeometryName}{Name of the \code{colGeometry} to use to infer the
+concave hull.}
+
 \item{ratio}{numeric; fraction convex: 1 returns the convex hulls, 0 maximally concave hulls}
 
 \item{allow_holes}{logical; if \code{TRUE}, the resulting concave hull may have holes}

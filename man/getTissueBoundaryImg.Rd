@@ -23,6 +23,8 @@ getTissueBoundaryImg(
 
 \item{sample_id}{Sample id(s) whose tissue boundaries are to be found.}
 
+\item{image_id}{ID of image to use to get boundary.}
+
 \item{image_type}{Character, either "brightfield" or "fluorescent"}
 
 \item{channel}{Channel to use for tissue segmentation. If \code{NULL} use

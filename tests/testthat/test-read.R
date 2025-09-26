@@ -50,7 +50,7 @@ test_that("Correctly add visium graph when there's 1 sample", {
 })
 
 # Need uncropped image
-if (!dir.exists("ob")) dir.create(file.path("ob"), recursive = TRUE)
+if (!dir.exists("ob")) dir.create("ob", recursive = TRUE)
 mat_fn <- file.path("ob", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
@@ -59,10 +59,10 @@ if (!file.exists(mat_fn))
 if (!dir.exists(file.path("ob", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
                   destfile = file.path("ob", "spatial.tar.gz"))
-    untar(file.path("ob", "spatial.tar.gz"), exdir = file.path("ob"))
+    untar(file.path("ob", "spatial.tar.gz"), exdir = "ob")
 }
 
-if (!dir.exists("kidney")) dir.create(file.path("kidney"), recursive = TRUE)
+if (!dir.exists("kidney")) dir.create("kidney", recursive = TRUE)
 mat_fn <- file.path("kidney", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
@@ -71,7 +71,7 @@ if (!file.exists(mat_fn))
 if (!dir.exists(file.path("kidney", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
                   destfile = file.path("kidney", "spatial.tar.gz"))
-    untar(file.path("kidney", "spatial.tar.gz"), exdir = file.path("kidney"))
+    untar(file.path("kidney", "spatial.tar.gz"), exdir = "kidney")
 }
 
 library(terra)

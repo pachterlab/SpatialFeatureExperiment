@@ -483,6 +483,7 @@
 #' @concept Spatial neighborhood graph
 #' @export
 #' @name findSpatialNeighbors
+#' @aliases findSpatialNeighbors,SpatialFeatureExperiment-method
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")

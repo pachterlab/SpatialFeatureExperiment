@@ -32,7 +32,7 @@
 #'   be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
 #'   link to the data and then transcript spots of one gene is loaded into
 #'   memory at a time.
-#' @param pregressbar Logical, whether to show progress bar. This argument is
+#' @param progressbar Logical, whether to show progress bar. This argument is
 #'   only used when \code{save_memory = TRUE} because otherwise the
 #'   \code{progressbar} argument can be specified in \code{BPPARAM}.
 #' @param .orig_nrows Only used internally in the SFE method of \code{aggregate}

@@ -1,6 +1,6 @@
 outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
 samples <- file.path(outdir, paste0("sample0", 1:2))
-sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
+sfe <- read10xVisiumSFE(dirs = samples, type = "sparse", data = "filtered")
 
 test_that("Save SFE with SpatRaster images as RDS", {
     expect_warning(saveRDS(sfe, "foo.rds"), "This object contains out of memory data")

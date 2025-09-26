@@ -49,7 +49,8 @@ microns. This is used to plot scale bar.}
 
 \item{zero.policy}{default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors}
 
-\item{row.names}{String specifying whether to use Ensembl IDs ("ID") or gene symbols ("Symbol") as row names. If using symbols, the Ensembl ID will be appended to disambiguate in case the same symbol corresponds to multiple Ensembl IDs.}
+\item{row.names}{String specifying whether to use Ensembl IDs ("ID") or gene symbols ("Symbol") as row names. 
+For symbols, the Ensembl ID will be appended to disambiguate rows where the same symbol corresponds to multiple Ensembl IDs.}
 
 \item{flip}{Whether to flip the geometries or the images, because in
 \code{sf} and \code{terra}, the geometries use the Cartesian coordinates

@@ -118,6 +118,10 @@ be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
 link to the data and then transcript spots of one gene is loaded into
 memory at a time.}
 
+\item{progressbar}{Logical, whether to show progress bar. This argument is
+only used when \code{save_memory = TRUE} because otherwise the
+\code{progressbar} argument can be specified in \code{BPPARAM}.}
+
 \item{partition}{Whether to partition the output by gene.}
 
 \item{sfe}{A `SpatialFeatureExperiment` object.}

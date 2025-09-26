@@ -3,6 +3,7 @@ library(SingleCellExperiment)
 library(DropletUtils)
 library(sf)
 library(SFEData)
+library(VisiumIO)
 
 dir <- system.file("extdata/sample01", package = "SpatialFeatureExperiment")
 
@@ -20,7 +21,7 @@ test_that("Convert SPE and SCE to SFE, no images", {
     colData(sce) <- cbind(colData(sce), coords[,c("pxl_col_in_fullres", "pxl_row_in_fullres")])
     sfe4 <- toSpatialFeatureExperiment(sce, spatialCoordsNames = c("pxl_col_in_fullres",
                                                                    "pxl_row_in_fullres"))
-    sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered", flip = "image")
+    sfe <- read10xVisiumSFE(dirs = dir, type = "sparse", data = "filtered", flip = "image")
     centroids_check <- st_centroid(st_geometry(spotPoly(sfe)))
 
     expect_s4_class(sfe1, "SpatialFeatureExperiment")
@@ -32,7 +33,8 @@ test_that("Convert SPE and SCE to SFE, no images", {
 })
 
 test_that("Convert SPE to SFE, loaded images", {
-    spe <- read10xVisium(dir, load = TRUE, type = "sparse")
+    spe <- TENxVisium(spacerangerOut = dir, processing = "filtered",
+                      images = c("lowres", "hires")) |> import()
     sfe <- toSpatialFeatureExperiment(spe)
     img1 <- getImg(spe)
     img2 <- getImg(sfe)
@@ -52,7 +54,8 @@ test_that("Convert SPE to SFE, loaded images", {
 })
 
 test_that("Convert SPE to SFE, stored images", {
-    spe <- read10xVisium(dir, load = FALSE, type = "sparse")
+    spe <- TENxVisium(spacerangerOut = dir, processing = "filtered",
+                      images = c("lowres", "hires")) |> import()
     sfe <- toSpatialFeatureExperiment(spe)
     img1 <- getImg(spe)
     img2 <- getImg(sfe)
@@ -72,7 +75,8 @@ test_that("Convert SPE to SFE, stored images", {
 })
 
 test_that("Convert SPE to SFE, with SpatRaster image", {
-    spe <- read10xVisium(dir, load = FALSE, type = "sparse")
+    spe <- TENxVisium(spacerangerOut = dir, processing = "filtered",
+                      images = c("lowres", "hires")) |> import()
     suppressWarnings(Img(spe, image_id = "lowres") <- rast(imgSource(getImg(spe))) |> SpatRasterImage())
     sfe <- toSpatialFeatureExperiment(spe)
     expect_true(is(getImg(sfe), "SpatRaster"))

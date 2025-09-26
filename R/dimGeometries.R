@@ -617,8 +617,17 @@ txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' @concept Geometric operations
 #' @export
 #' @examples
-#' library(SpatialExperiment)
-#' example(read10xVisium)
+#' library(VisiumIO)
+#' # From examples of TENxVisium()
+#' sample_dir <- system.file(
+#' file.path("extdata", "10xVisium", "section1"),
+#' package = "VisiumIO"
+#' )
+#' ## using spacerangerOut folder
+#' tv <- TENxVisium(
+#'     spacerangerOut = sample_dir, processing = "raw", images = "lowres"
+#' )
+#' spe <- import(tv)
 #' # There can't be suplicate barcodes
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)

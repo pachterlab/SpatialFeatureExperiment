@@ -30,21 +30,17 @@ setMethod("saveRDS", "SpatialFeatureExperiment",
                   warning("This object contains out of memory data that may
                           break when the RDS file is moved.")
               }
-              if (!nrow(imgData(object)))
-                  base::saveRDS(object, file = file, ascii = ascii,
-                                version = version, compress = compress,
-                                refhook = refhook)
-              else {
+              if (nrow(imgData(object))) {
                   for (i in seq_len(nrow(imgData(object)))) {
                       img <- int_metadata(object)$imgData$data[[i]]
                       if (inherits(img, "SpatRasterImage"))
                           img <- new("PackedRasterImage", wrap(img))
                       int_metadata(object)$imgData$data[[i]] <- img
                   }
-                  base::saveRDS(object, file = file, ascii = ascii,
-                                version = version, compress = compress,
-                                refhook = refhook)
               }
+              base::saveRDS(object, file = file, ascii = ascii,
+                            version = version, compress = compress,
+                            refhook = refhook)
           })
 # From terra
 setMethod("readRDS", signature(file="character"),

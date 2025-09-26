@@ -104,6 +104,10 @@ be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
 link to the data and then transcript spots of one gene is loaded into
 memory at a time.}
 
+\item{progressbar}{Logical, whether to show progress bar. This argument is
+only used when \code{save_memory = TRUE} because otherwise the
+\code{progressbar} argument can be specified in \code{BPPARAM}.}
+
 \item{.orig_nrows}{Only used internally in the SFE method of \code{aggregate}}
 
 \item{data_dir}{Top level output directory.}
@@ -124,10 +128,6 @@ preserved. This is consistent with \code{readVizgen} and \code{readXenium}.}
 \item{max_flip}{Maximum size of the image allowed to flip the image. Because
 the image will be loaded into memory to be flipped. If the image is larger
 than this size then the coordinates will be flipped instead.}
-
-\item{pregressbar}{Logical, whether to show progress bar. This argument is
-only used when \code{save_memory = TRUE} because otherwise the
-\code{progressbar} argument can be specified in \code{BPPARAM}.}
 }
 \value{
 A SFE object with count matrix for number of spots of each gene in

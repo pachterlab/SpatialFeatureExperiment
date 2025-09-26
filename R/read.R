@@ -22,7 +22,6 @@
 #'   unit. If using microns, then spacing between spots in pixels will be used
 #'   to convert the coordinates into microns, as the spacing is known to be 100
 #'   microns. This is used to plot scale bar.
-#' @param load Deprecated. Not used, kept for backward compatibility for now.
 #' @param flip Whether to flip the geometries or the images, because in
 #'   \code{sf} and \code{terra}, the geometries use the Cartesian coordinates
 #'   greater y coordinates going up, while in images, greater y values go down.
@@ -53,8 +52,7 @@
 #' list.files(samples[1])
 #' list.files(file.path(samples[1], "spatial"))
 #' (sfe <- read10xVisiumSFE(dirs = samples, sample_id = sample_ids,
-#'     type = "sparse", data = "filtered",
-#'     load = FALSE
+#'     type = "sparse", data = "filtered"
 #' ))
 #' 
 read10xVisiumSFE <- function(samples = deprecated(),

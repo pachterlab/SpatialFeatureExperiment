@@ -56,6 +56,7 @@
 #'
 #' @param sfe An SFE object with images
 #' @param sample_id Sample id(s) whose tissue boundaries are to be found.
+#' @param image_id ID of image to use to get boundary.
 #' @param image_type Character, either "brightfield" or "fluorescent"
 #' @param channel Channel to use for tissue segmentation. If \code{NULL} use
 #'   average of all channels.
@@ -124,6 +125,8 @@ getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
 #' 
 #' @inheritParams getTissueBoundaryImg
 #' @inheritParams sf::st_concave_hull
+#' @param colGeometryName Name of the \code{colGeometry} to use to infer the
+#' concave hull.
 #' @return A \code{sf} data frame with columns \code{sample_id} and
 #'   \code{geometry}.
 #' @export
