@@ -384,3 +384,10 @@ getTechTxFields <- function(tech, data_dir = NULL) {
     bb_area <- bbox |> st_bbox() |> st_as_sfc() |> st_area()
     bb_area/tot_area
 }
+
+.terra_flip <- function() {
+    suppressWarnings(img <- rast(system.file(file.path("extdata", "sample01", 
+                                                       "outs", "spatial", 
+                                                       "tissue_lowres_image.png"))))
+    as.vector(img[18,5,2] > 200)
+}

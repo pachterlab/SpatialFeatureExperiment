@@ -82,9 +82,7 @@ read10xVisiumSFE <- function(samples = deprecated(),
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
-    if (packageVersion('terra') == as.package_version("1.7.83") ||
-        packageVersion('terra') >= as.package_version("1.8.10"))
-        flip <- "none"
+    if (.terra_flip()) flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
     row.names <- match.arg(row.names)
     enrichment_feature <- switch(row.names,
@@ -324,9 +322,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
-    if (packageVersion('terra') == as.package_version("1.7.83") ||
-        packageVersion('terra') >= as.package_version("1.8.10"))
-        flip <- "none"
+    if (.terra_flip()) flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
     bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
                           several.ok = TRUE) |> 
@@ -736,9 +732,7 @@ readVizgen <- function(data_dir,
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
-    if (packageVersion('terra') == as.package_version("1.7.83") ||
-        packageVersion('terra') >= as.package_version("1.8.10"))
-        flip <- "none"
+    if (.terra_flip()) flip <- "none"
     image <- match.arg(image, several.ok = TRUE)
     if ((any(z < 0) || any(z > 6)) && z != "all") {
         stop("z must be beween 0 and 6 (inclusive).")
