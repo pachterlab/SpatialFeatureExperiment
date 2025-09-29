@@ -10,7 +10,9 @@ test_that("Read MERFISH transcript spots into rowGeometries", {
     # Check that the spots are flipped and aligned with the image
     img <- getImg(sfe)
     v <- terra::extract(img, rg)
-    expect_true(sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE) < 10)
+    y <- sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE)
+    cat("# Spots in empty space:", y, "\n")
+    expect_true(y < 10)
     unlink(dir_use, recursive = TRUE)
 })
 
