@@ -388,6 +388,7 @@ getTechTxFields <- function(tech, data_dir = NULL) {
 .terra_flip <- function() {
     suppressWarnings(img <- rast(system.file(file.path("extdata", "sample01", 
                                                        "outs", "spatial", 
-                                                       "tissue_lowres_image.png"))))
-    as.vector(img[18,5,2] > 200)
+                                                       "tissue_lowres_image.png"),
+                                             package = "SpatialFeatureExperiment")))
+    as.vector(img[18,4,2] > 200)
 }
