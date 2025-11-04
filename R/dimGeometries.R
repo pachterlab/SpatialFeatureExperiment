@@ -625,7 +625,7 @@ txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' )
 #' ## using spacerangerOut folder
 #' tv <- TENxVisium(
-#'     spacerangerOut = sample_dir, processing = "raw", images = "lowres"
+#'     spacerangerOut = file.path(sample_dir, "outs"), processing = "raw", images = "lowres"
 #' )
 #' spe <- import(tv)
 #' # There can't be suplicate barcodes

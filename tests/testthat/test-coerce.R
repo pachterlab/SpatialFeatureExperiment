@@ -33,7 +33,7 @@ test_that("Convert SPE and SCE to SFE, no images", {
 })
 
 test_that("Convert SPE to SFE, loaded images", {
-    spe <- TENxVisium(spacerangerOut = dir, processing = "filtered",
+    spe <- TENxVisium(spacerangerOut = file.path(dir, "outs"), processing = "filtered",
                       images = c("lowres", "hires")) |> import()
     sfe <- toSpatialFeatureExperiment(spe)
     img1 <- getImg(spe)
@@ -54,7 +54,7 @@ test_that("Convert SPE to SFE, loaded images", {
 })
 
 test_that("Convert SPE to SFE, stored images", {
-    spe <- TENxVisium(spacerangerOut = dir, processing = "filtered",
+    spe <- TENxVisium(spacerangerOut = file.path(dir, "outs"), processing = "filtered",
                       images = c("lowres", "hires")) |> import()
     sfe <- toSpatialFeatureExperiment(spe)
     img1 <- getImg(spe)
@@ -75,7 +75,7 @@ test_that("Convert SPE to SFE, stored images", {
 })
 
 test_that("Convert SPE to SFE, with SpatRaster image", {
-    spe <- TENxVisium(spacerangerOut = dir, processing = "filtered",
+    spe <- TENxVisium(spacerangerOut = file.path(dir, "outs"), processing = "filtered",
                       images = c("lowres", "hires")) |> import()
     suppressWarnings(Img(spe, image_id = "lowres") <- rast(imgSource(getImg(spe))) |> SpatRasterImage())
     sfe <- toSpatialFeatureExperiment(spe)

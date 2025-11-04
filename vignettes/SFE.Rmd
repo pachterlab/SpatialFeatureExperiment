@@ -438,7 +438,7 @@ A read function for Visium HD is in progress. Contribution for Akoya, Molecular 
 ## Coercion from `SpatialExperiment`
 SPE objects can be coerced into SFE objects. If column geometries or spot diameter are not specified, then a column geometry called "centroids" will be created.
 ```{r}
-spe <- TENxVisium(spacerangerOut = samples[1], processing = "filtered",
+spe <- TENxVisium(spacerangerOut = file.path(samples[1], "outs"), processing = "filtered",
                   images = c("lowres", "hires")) |> import()
 ```
 
