@@ -43,7 +43,7 @@
 
 #' @importFrom Matrix sparseMatrix rowSums colSums
 .nb2listwdist2.nbknn <- function(nb, type = "idw", style = "W", alpha = 1,
-                                 dmax = NULL, ...) {
+                                 dmax = NULL, zero.policy = TRUE, ...) {
     # Code adapted from spdep: https://github.com/r-spatial/spdep/blob/49c202d561da9565b0b70cf7462b7147feff59c2/R/nb2listwdist.R#L1
     distance <- attr(nb, "distance")
     attr(nb, "distance") <- NULL
@@ -117,6 +117,7 @@
                   weights = glist)
     class(listw) <- c("listw", "nb")
     attr(listw, "region.id") <- attr(nb, "region.id")
+    attr(listw, "zero.policy") <- zero.policy
     listw
 }
 
@@ -255,6 +256,7 @@
                   neighbours = nb,
                   weights = vlist)
     attr(listw, "region.id") <- attr(nb, "region.id")
+    attr(listw, "zero.policy") <- zero.policy
     class(listw) <- c("listw", "nb")
     listw
 }
@@ -388,11 +390,11 @@
             alpha = alpha, dmax = dmax
         )
     }
-
+    args <- args[!names(args) %in% c("BPPARAM", "BNPARAM", "row.names")]
     attr(out, "method") <- list(
         FUN = "findSpatialNeighbors",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = c(
             method = method, args,
             dist_type = dist_type,
@@ -420,7 +422,7 @@
 #' \code{listw} is used in many methods that facilitate the spatial neighborhood
 #' graph in the \code{spdep}, \code{spatialreg}, and \code{adespatial}. The edge
 #' weights of the graph in the \code{listw} object are by default style W (see
-#' \code{\link{nb2listw}}) and the unweighted neighbor list is in the
+#' \code{\link[spdep]{nb2listw}}) and the unweighted neighbor list is in the
 #' \code{neighbours} field of the \code{listw} object.
 #'
 #' @inheritParams spdep::nb2listw
@@ -446,13 +448,13 @@
 #' \code{BiocNeighbors} are used. For "spdep", methods from the \code{spdep}
 #' package are used. The "bioc" option is more scalable to larger datasets and
 #' supports multithreading.
-#' @param BPPARAM A \code{\link{BiocParallelParam}} object for multithreading.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object for multithreading.
 #' Only used for k nearest neighbor and distance based neighbor with
 #' \code{nn_method = "bioc"}.
-#' @param BNPARAM A \code{\link{BiocNeighborParam}} object specifying the
+#' @param BNPARAM A \code{\link[BiocNeighbors]{BiocNeighborParam}} object specifying the
 #' algorithm to find k nearest neighbors and distance based neighbors with
 #' \code{nn_method = "bioc"}. For distance based neighbors, only
-#' \code{\link{KmknnParam}} and \code{\link{VptreeParam}} are applicable.
+#' \code{\link[BiocNeighbors]{KmknnParam}} and \code{\link[BiocNeighbors]{VptreeParam}} are applicable.
 #' @param alpha Only relevant when \code{dist_type = "dpd"}.
 #' @param dmax Only relevant when \code{dist_type = "dpd"}.
 #' @param ... Extra arguments passed to the \code{spdep} function stated in the
@@ -480,6 +482,8 @@
 #'   and then its edges weighted based on distance in this function.
 #' @concept Spatial neighborhood graph
 #' @export
+#' @name findSpatialNeighbors
+#' @aliases findSpatialNeighbors,SpatialFeatureExperiment-method
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
@@ -553,18 +557,19 @@ setMethod(
             poly2nb = poly2nb
         )
         if (length(sample_id) == 1L) {
-            out <- .comp_graph_sample(
+            tryCatch(out <- .comp_graph_sample(
                 x, sample_id, type, MARGIN, method,
                 dist_type, args, extra_args_use, glist,
                 style, zero.policy, alpha, dmax, fun_use, return_sf
-            )
+            ), error = function(e) stop(method, ": ", e$message, call. = FALSE))
+            
         } else {
             out <- lapply(sample_id, function(s) {
-                .comp_graph_sample(
+                tryCatch(.comp_graph_sample(
                     x, s, type, MARGIN, method, dist_type,
                     args, extra_args_use, glist, style,
                     zero.policy, alpha, dmax, fun_use, return_sf
-                )
+                ), error = function(e) stop(method, ": ", e$message, call. = FALSE))
             })
             names(out) <- sample_id
         }
@@ -583,21 +588,22 @@ setMethod(
     if (is.na(coords_use) |> any()) {
       # use "array_" cols from colData
       coords_use <- 
-        colData(x)[, grep("array_", names(colData(x)))] |> 
+        colData(x)[colData(x)$sample_id == sample_id, grep("array_", names(colData(x)))] |> 
         as.data.frame() |> suppressWarnings()
         colnames(coords_use) <- gsub("array_", "", colnames(coords_use))
     }
     # So adjacent spots are equidistant
     coords_use$row <- coords_use$row * sqrt(3)
-    g <- dnearneigh(as.matrix(coords_use),
+    g <- .dnn_bioc(as.matrix(coords_use),
         d1 = 1.9, d2 = 2.1,
         row.names = bcs_use
     )
+    attr(g, "distance") <- NULL
     out <- nb2listw(g, style = style, zero.policy = zero.policy)
     attr(out, "method") <- list(
         FUN = "findVisiumGraph",
         package = list("SpatialFeatureExperiment",
-                       packageVersion("SpatialFeatureExperiment")),
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
         args = list(
             style = style,
             zero.policy = zero.policy,
@@ -656,4 +662,82 @@ findVisiumGraph <- function(x, sample_id = "all", style = "W",
         names(out) <- sample_id
     }
     return(out)
+}
+
+.add_side_inds <- function(df, side = c("l", "r", "t", "b", "tl", "tr", "bl", "br")) {
+    side <- match.arg(side)
+    name_use <- paste0("index_", side)
+    df2 <- df[,c("index", "array_col", "array_row")]
+    names(df2)[1] <- name_use
+    if (side == "l") {
+        df2$array_col <- df2$array_col - 1L
+    } else if (side == "r") {
+        df2$array_col <- df2$array_col + 1L
+    } else if (side == "t") {
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "b") {
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "tl") {
+        df2$array_col <- df2$array_col - 1L
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "tr") {
+        df2$array_col <- df2$array_col + 1L
+        df2$array_row <- df2$array_row - 1L
+    } else if (side == "bl") {
+        df2$array_col <- df2$array_col - 1L
+        df2$array_row <- df2$array_row + 1L
+    } else if (side == "br") {
+        df2$array_col <- df2$array_col + 1L
+        df2$array_row <- df2$array_row + 1L
+    }
+    merge(df, df2, by = c("array_row", "array_col"), all.x = TRUE)
+}
+
+#' Find Visium HD spatial neighborhood graph
+#'
+#' Visium HD spots are arranged in a square grid. This function finds either a
+#' rook or a queen spatial neighborhood graph for the spots. \code{colData} of
+#' the SFE object must have columns \code{array_row} and \code{array_col}.
+#' 
+#' @inheritParams spdep::nb2listw
+#' @param x An SFE object with Visium HD data with one sample with the required
+#'   information in its \code{colData}.
+#' @param queen Logical. Default is \code{FALSE}, using rook neighbors.
+#' @concept Spatial neighborhood graph
+#' @return A \code{listw} object for the graph.
+#' @export
+findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
+                              zero.policy = TRUE) {
+    df <- as.data.frame(colData(x))
+    df$index <- seq_along(df$barcode)
+    cols_use <- c("index", "array_row", "array_col")
+    df <- df[,cols_use]
+    df <- as.data.table(df)
+    
+    if (queen) {
+        sides <- c("l", "r", "t", "b", "tl", "tr", "bl", "br")
+    } else {
+        sides <- c("l", "r", "t", "b")
+    }
+    for (s in sides) {
+        df <- .add_side_inds(df, s)
+    }
+    cols <- paste0("index_", sides)
+    gm <- as.matrix(df[,..cols])
+    gm <- apply(gm, 1, sort) # This is the slowest part
+    colnames(gm) <- NULL
+    g <- apply(gm, 1, function(x) x[!is.na(x)])
+    class(g) <- "nb"
+    out <- nb2listw(g, style = style, zero.policy = TRUE)
+    attr(out, "method") <- list(
+        FUN = "findVisiumHDGraph",
+        package = list("SpatialFeatureExperiment",
+                       packageVersion("SpatialFeatureExperiment") |> as.character()),
+        args = list(
+            style = style,
+            zero.policy = zero.policy,
+            sample_id = sampleIDs(x)
+        )
+    )
+    out
 }

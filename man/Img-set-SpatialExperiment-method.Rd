@@ -29,7 +29,7 @@ SFE object with the new image added.
 }
 \description{
 Modify or replace images stored in a \code{SpatialExperiment} object. This is
-different from \code{\link{addImg}} which adds the image from files and can't
+different from \code{\link[SpatialExperiment]{addImg}} which adds the image from files and can't
 replace existing images, which is there to be consistent with
 \code{SpatialExperiment}. This setter here can replace existing images with
 another object that inherits from \code{VirtualSpatialImage}, including

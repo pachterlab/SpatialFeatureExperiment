@@ -41,7 +41,7 @@ These functions get or set the extent for S4 image classes inheriting from
 \note{
 For \code{SpatRasterImage}, the image may be may not be loaded into
 memory. You can check if the image is loaded into memory with
-\code{terra::inMemory(imgRaster(x))}, and check the original file path with
+\code{terra::inMemory(x)}, and check the original file path with
 \code{\link{imgSource}}. If the image is not loaded into memory, then the
 original file must be present at the path indicated by
 \code{\link{imgSource}} in order for any code using the image to work, which
@@ -57,6 +57,7 @@ Other image methods:
 \code{\link{affineImg}()},
 \code{\link{cropImg}()},
 \code{\link{dim,BioFormatsImage-method}},
+\code{\link{dim,ExtImage-method}},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},

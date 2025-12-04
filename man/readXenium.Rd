@@ -7,6 +7,7 @@
 readXenium(
   data_dir,
   sample_id = "sample01",
+  min_area = NULL,
   image = c("morphology_focus", "morphology_mip"),
   segmentations = c("cell", "nucleus"),
   row.names = c("id", "symbol"),
@@ -26,6 +27,10 @@ readXenium(
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
 be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not already present.
 Default = \code{sample01}.}
+
+\item{min_area}{Minimum cell area in square microns or pixel units (eg for CosMX).
+Anything smaller will be considered artifact or debris and removed. 
+Default to `NULL`, ie no filtering of polygons.}
 
 \item{image}{Which image(s) to load, can be "morphology_mip",
 "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
@@ -61,11 +66,11 @@ object.}
 conventional threshold indicating "acceptable", meaning that there's 1%
 chance that the spot was decoded in error.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
   \enumerate{ \item To load cell segmentation from HDF5 files from different
   fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
   FOVs, reading in the geometries can be time consuming, so we recommend
   using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.

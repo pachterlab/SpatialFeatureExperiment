@@ -16,20 +16,54 @@
 
 \item{...}{Passed to the \code{SingleCellExperiment} method of \code{[}.}
 
-\item{drop}{Logical. If \code{FALSE}, then a warning will be issued that the
-node indices in the graphs are no longer valid so the row and col graphs
-affected by subsetting are dropped. At present, this only works with the
-wrapper functions in this package that take in SFE objects and records the
-info required to reconstruct the graphs. While this argument is ignored for
-\code{SummarizedExperiment}}
+\item{drop}{Only used if graphs are reconstructed
+(\code{options(SFE_graph_subset = FALSE)}). If \code{TRUE} then
+\code{colGraphs} are dropped but \code{annotGraphs} are kept.}
 }
 \value{
 A subsetted \code{SpatialFeatureExperiment} object.
 }
 \description{
-The method for SFE reconstructs the spatial graphs when the SFE object is
-subsetted as the \code{listw} objects encodes the nodes with indices which
-are no longer valid after subsetting as some nodes are no longer present.
+The SFE method has special treatment for the spatial graphs. In \code{listw},
+the neighbors are indicated by indices, which will change after subsetting.
+The \code{SFE_graph_subset} option determines whether the graphs are
+subsetted or reconstructed. In the default (\code{options(SFE_graph_subset =
+TRUE)}), the graphs are subsetted, in which case singletons may be produced.
+For \code{options(SFE_graph_subset = FALSE)}, which is the behavior of
+versions earlier than Bioc 3.20, the graphs are reconstructed with the
+parameters recorded in an attribute of the graphs. This option can result
+into different graphs. For example, suppose we start with a k nearest
+neighbor graph. After subsetting, cells at the boundary of the region used to
+subset the SFE object may lose some of their neighbors. In contrast, when the
+graph is reconstructed, these same edge cells will gain other cells that
+remain after subsetting as neighbors in the new KNN graph.
+}
+\details{
+The option \code{SFE_graph_subset} was introduced because subsetting is
+usually faster than reconstructing and in some cases such as distance-based
+neighbors and Visium spot adjacency give the same results. It was introduced
+also because of the development of \code{alabster.sfe} for a
+language-agnostic on-disk serialization of SFE objects and some parameters
+used to construct graphs have special classes whose \code{alabaster} methods
+have not been implemented, such as \code{BPPARAM} and \code{BNPARAM}, so when
+reconstructing, the defaults for those arguments will be used.
+
+The edge weights will be recomputed from the binary neighborhood indicator
+with the same normalization style as the original graph, such as "W" for row
+normalization. When distance-based edge weights are used instead of the
+binary indicator, the edge weights will be re-normalized, which is mostly
+some rescaling. This should give the same results as recomputing the distance
+based edge weights for styles "raw", "W", and "B" since the distances
+themselves don't change, but the effects of other more complicated styles of
+re-normalization on spatial statistics should be further investigated.
+
+By default, upon subsetting, the images are cropped to the bounding box of 
+the remaining cells. However, when the image is large and the bounding box 
+contains most of the original image, cropping is slow. Cropping can be
+disabled by \code{options(SFE_subset_crop = FALSE)}. Also, when the remaining
+part of the image is larger than a threshold, the image will not be cropped;
+the threshold can be set with the \code{SFE_subset_crop_max} option, such as
+\code{options(SFE_subset_crop_max = "100MB")}.
 }
 \examples{
 # Just like subsetting matrices and SingleCellExperiment

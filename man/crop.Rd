@@ -34,7 +34,7 @@ indicated in \code{y}, then the same geometry or bounding box is used to
 subset all samples specified in the \code{sample_id} argument.}
 
 \item{op}{A geometric operation function to crop the geometries in the SFE
-object. Only \code{\link{st_intersection}} and \code{\link{st_difference}}
+object. Only \code{\link[sf]{st_intersection}} and \code{\link[sf]{st_difference}}
 are allowed. If "intersection", then only things inside \code{y} is kept
 after cropping. If "difference", then only things outside \code{y} is kept.}
 

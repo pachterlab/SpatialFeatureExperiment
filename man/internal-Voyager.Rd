@@ -9,6 +9,7 @@
 \alias{.check_sample_id}
 \alias{.rm_empty_geometries}
 \alias{.check_rg}
+\alias{.ext_}
 \title{Internal functions also used in Voyager}
 \usage{
 .value2df(value, use_geometry, feature = NULL)
@@ -24,6 +25,8 @@
 .rm_empty_geometries(g, MARGIN)
 
 .check_rg(type, x, sample_id)
+
+.ext_(x)
 }
 \value{
 Internal

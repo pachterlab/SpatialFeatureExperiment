@@ -1,9 +1,9 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.7.1
+Version: 1.12.1
 Authors@R: 
-    c(person("Lambda", "Moses", email = "dlu2@caltech.edu", 
+    c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
     role = c("aut", "cre"),
     comment = c(ORCID = "0000-0002-7092-9427")),
     person("Alik", "Huseynov",
@@ -20,7 +20,7 @@ Description: A new S4 class integrating Simple Features with the R package sf
     be used.
 Imports:
     Biobase,
-    BiocGenerics,
+    BiocGenerics (>= 0.51.2),
     BiocNeighbors,
     BiocParallel,
     data.table,
@@ -37,6 +37,7 @@ Imports:
     sfheaders,
     SingleCellExperiment,
     SpatialExperiment,
+    spatialreg,
     spdep (>= 1.1-7),
     SummarizedExperiment,
     stats,
@@ -45,7 +46,7 @@ Imports:
     zeallot
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Collate: 
     'AllGenerics.R'
     'utils.R'
@@ -57,6 +58,7 @@ Collate:
     'changeSampleIDs.R'
     'coerce.R'
     'data.R'
+    'debris.R'
     'df2sf.R'
     'dimGeometries.R'
     'featureData.R'
@@ -66,6 +68,7 @@ Collate:
     'image.R'
     'int_dimData.R'
     'internal-Voyager.R'
+    'listw2sparse.R'
     'localResults.R'
     'read.R'
     'reexports.R'
@@ -73,13 +76,16 @@ Collate:
     'spatialGraphs.R'
     'split.R'
     'subset.R'
+    'tissue_boundary.R'
     'transformation.R'
     'updateObject.R'
     'validity.R'
+    'zzz.R'
 Suggests: 
     arrow,
     BiocStyle,
     dplyr,
+    gmp,
     knitr,
     RBioFormats,
     rhdf5,
@@ -92,10 +98,12 @@ Suggests:
     sparseMatrixStats,
     testthat (>= 3.0.0),
     tidyr,
-    Voyager,
+    VisiumIO,
+    Voyager (>= 1.7.2),
+    withr,
     xml2
 Remotes:
-    Voyager=github::pachterlab/voyager
+    Voyager=github::pachterlab/voyager@devel
 Config/testthat/edition: 3
 Depends: 
     R (>= 4.2.0)

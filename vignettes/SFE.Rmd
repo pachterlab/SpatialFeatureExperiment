@@ -55,6 +55,9 @@ library(SFEData)
 library(sf)
 library(Matrix)
 library(RBioFormats)
+library(spdep)
+library(VisiumIO)
+set.SubgraphOption(FALSE)
 ```
 
 ```{r}
@@ -195,7 +198,7 @@ g
 
 For Visium, spatial neighborhood graph of the hexagonal grid can be found with the known locations of the barcodes.
 ```{r}
-colGraph(sfe, "visium") <- findVisiumGraph(sfe)
+colGraph(sfe, "visium") <- findVisiumGraph(sfe, zero.policy = TRUE)
 ```
 
 ```{r}
@@ -372,7 +375,7 @@ At present, this is merely a string and SFE doesn't perform unit conversion.
 Unlike in `SpatialExperiment`, SFE reads the images as `terra::SpatRaster` objects, so the images are not loaded into memory unless necessary. Also, with `terra`, if a larger image is associated with the SFE object, it will not be fully loaded into memory when plotted; rather, it's downsampled.
 
 ```{r}
-class(imgRaster(getImg(sfe3)))
+class(getImg(sfe3))
 ```
 
 ## Vizgen MERFISH output
@@ -435,8 +438,8 @@ A read function for Visium HD is in progress. Contribution for Akoya, Molecular 
 ## Coercion from `SpatialExperiment`
 SPE objects can be coerced into SFE objects. If column geometries or spot diameter are not specified, then a column geometry called "centroids" will be created.
 ```{r}
-spe <- read10xVisium(samples, sample_ids, type = "sparse", data = "filtered", 
-  images = "hires", load = FALSE)
+spe <- TENxVisium(spacerangerOut = file.path(samples[1], "outs"), processing = "filtered",
+                  images = c("lowres", "hires")) |> import()
 ```
 
 For the coercion, column names must not be duplicate.
@@ -474,15 +477,16 @@ SFE objects can be concatenated with `cbind`, as was done just now to create a t
 sfe_combined <- cbind(sfe1, sfe2)
 ```
 
-The SFE object can also be subsetted like a matrix, like an SCE object. More complexity arises when it comes to the spatial graphs. The `drop` argument of the SFE method `[` determines what to do with the spatial graphs. If `drop = TRUE`, then all spatial graphs will be removed, since the graphs with nodes and edges that have been removed are no longer valid. If `drop = FALSE`, which is the default, then the spatial graphs will be reconstructed with the remaining nodes after subsetting. Reconstruction would only work when the original graphs were constructed with `findSpatialNeighbors` or `findVisiumGraph` in this package, which records the method and parameters used to construct the graphs. If reconstruction fails, then a waning will be issued and the graphs removed.
+The SFE object can also be subsetted like a matrix, like an SCE object. More complexity arises when it comes to the spatial graphs. The `drop` argument of the SFE method `[` determines what to do with the spatial graphs.
 
 ```{r}
-(sfe_subset <- sfe[1:10, 1:10, drop = TRUE])
+(sfe_subset <- sfe[1:10, 1:10])
 ```
 
-```{r, eval=FALSE}
-# Will give warning because graph reconstruction fails
-sfe_subset <- sfe[1:10, 1:10]
+Note that after subsetting, the spatial graphs might have singletons. The `zero.policy` argument in `findVisiumGraph()` and `findSpatialNeighbors()` determines behavior when it comes to singletons. If `zero.policy = TRUE`, then no error or warning and singletons are tolerated. If `NULL`, then there will be a warning. If `FALSE`, then there will be an error.
+
+```{r}
+plot(colGraph(sfe_subset, "visium"), coords = spatialCoords(sfe_subset))
 ```
 
 If images are present, then they will be cropped to the bounding box of the remaining geometries after subsetting.
@@ -557,14 +561,14 @@ When an image is transposed, it is flipped about the line going from top left to
 
 ```{r, fig.width=1, fig.height=1}
 img <- getImg(sfe3, image_id = "hires")
-plot(imgRaster(img))
-plot(transposeImg(img) |> imgRaster())
+plot(img)
+plot(transposeImg(img))
 ```
 
 Arguments for the SFE method of `mirrorImg()` differ from those of the SPE method, to match  `terra::flip()`:
 ```{r, fig.width=1, fig.height=1}
-plot(mirrorImg(img, direction = "vertical") |> imgRaster())
-plot(mirrorImg(img, direction = "horizontal") |> imgRaster())
+plot(mirrorImg(img, direction = "vertical"))
+plot(mirrorImg(img, direction = "horizontal"))
 ```
 
 Here we apply the transformation to an SFE object, where the image specified by the sample and image IDs are transformed:

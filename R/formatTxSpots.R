@@ -1,37 +1,82 @@
-.mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, not_in_cell_id) {
+.mols2geo <- function(mols, dest, spatialCoordsNames, gene_col, cell_col, 
+                      not_in_cell_id, save_memory = FALSE, dir_out = NULL,
+                      unique_genes = NULL, progressbar = FALSE) {
     # For one part of the split, e.g. cell compartment
     if (dest == "rowGeometry") {
-        # Should have genes as row names
-        # RAM concerns for parallel processing, wish I can stream
-        mols <- df2sf(mols, geometryType = "MULTIPOINT",
-                      spatialCoordsNames = spatialCoordsNames,
-                      group_col = gene_col)
+        if (save_memory) {
+            if (progressbar) {
+                pb <- txtProgressBar(style = 3, max = length(unique_genes))
+            }
+            # Should use bigger partitions than genes since each gene's file may be too small
+            # for efficiency. Put minimum partition size to group genes. Put all
+            # controls in its own partition
+            for (i in seq_along(unique_genes)) {
+                g <- unique_genes[i]
+                fp <- file.path(dir_out, paste0("gene=", g))
+                dir.create(fp)
+                df <- mols |> 
+                    dplyr::rename(gene = .data[[gene_col]]) |> 
+                    dplyr::filter(gene == g) |> 
+                    dplyr::select(!!!syms(spatialCoordsNames)) |> 
+                    dplyr::collect()
+                geometry <- sf::st_multipoint(as.matrix(df)) |> st_sfc() |> sf::st_as_binary()
+                df <- data.frame(gene = g)
+                attr(geometry, "class") <- c("arrow_binary", "vctrs_vctr", attr(geometry, "class"), "list")
+                df$geometry <- geometry
+                write_parquet(df, file.path(fp, "part-0.parquet"))
+                if (progressbar) setTxtProgressBar(pb, i)
+            }
+            if (progressbar) close(pb)
+        } else {
+            # Should have genes as row names
+            mols <- df2sf(mols, geometryType = "MULTIPOINT",
+                          spatialCoordsNames = spatialCoordsNames,
+                          group_col = gene_col)
+        }
     } else {
-        mols <- split(mols, mols[[gene_col]])
-        mols <- lapply(mols, df2sf, geometryType = "MULTIPOINT",
-                       spatialCoordsNames = spatialCoordsNames,
-                       group_col = cell_col)
-        names(mols) <- paste(names(mols), "spots", sep = "_")
+        if (save_memory) {
+            
+        } else {
+            mols <- split(mols, mols[[gene_col]])
+            mols <- lapply(mols, df2sf, geometryType = "MULTIPOINT",
+                           spatialCoordsNames = spatialCoordsNames,
+                           group_col = cell_col)
+            names(mols) <- paste(names(mols), "spots", sep = "_")
+        }
     }
     mols
 }
 
 .mols2geo_split <- function(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                            not_in_cell_id, split_col) {
+                            not_in_cell_id, split_col, save_memory = FALSE,
+                            dir_out = NULL) {
     if (!is.null(split_col) && split_col %in% names(mols)) {
-        mols <- split(mols, mols[[split_col]])
-        mols <- lapply(mols, .mols2geo, dest = dest,
-                       spatialCoordsNames = spatialCoordsNames,
-                       gene_col = gene_col, cell_col = cell_col,
-                       not_in_cell_id = not_in_cell_id)
-        if (dest == "colGeometry") {
-            # Will be a nested list
-            mols <- unlist(mols, recursive = FALSE)
-            # names will be something like nucleus.Gapdh if split by compartment
+        # Split by something else in addition to genes
+        if (save_memory) {
+            grps <- mols |> 
+                dplyr::select(grp = .data[[split_col]]) |> dplyr::distinct() |> 
+                dplyr::pull(grp, as_vector = TRUE)
+            for (g in grps) {
+                # I wonder if the MULTIPOINT does more harm than good
+                # Might just do POINT after I add support for things other than sf
+                # But for now just do MULTIPOINT
+                
+            }
+        } else {
+            mols <- split(mols, mols[[split_col]])
+            mols <- lapply(mols, .mols2geo, dest = dest,
+                           spatialCoordsNames = spatialCoordsNames,
+                           gene_col = gene_col, cell_col = cell_col,
+                           not_in_cell_id = not_in_cell_id)
+            if (dest == "colGeometry") {
+                # Will be a nested list
+                mols <- unlist(mols, recursive = FALSE)
+                # names will be something like nucleus.Gapdh if split by compartment
+            }
         }
     } else {
         mols <- .mols2geo(mols, dest, spatialCoordsNames, gene_col, cell_col,
-                          not_in_cell_id)
+                          not_in_cell_id, save_memory = save_memory, dir_out = dir_out)
     }
     mols
 }
@@ -136,6 +181,7 @@
 #' }
 readSelectTx <- function(file, gene_select, z = "all",
                          z_option = c("3d", "split")) {
+    # TODO: do away with GDAL
     if (!gdalParquetAvailable()) {
         stop("GDAL Parquet driver is required to selectively read genes.")
     }
@@ -191,7 +237,7 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
     gene_select <- .id2symbol(sfe, gene_select, swap_rownames)
     mols <- readSelectTx(file, gene_select, z, z_option)
     rownames(mols) <- .symbol2id(sfe, rownames(mols), swap_rownames)
-    if (!is(mols, "sf")) {
+    if (!inherits(mols, "sf")) {
         rowGeometries(sfe, sample_id = sample_id, partial = TRUE) <- mols
     } else {
         txSpots(sfe, sample_id, partial = TRUE) <- mols
@@ -211,7 +257,8 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' use `formatTxSpots` to write the re-formatted data to disk. Then read the
 #' specific subset and add them separately to the SFE object with the setter
 #' functions.
-#'
+#' 
+#' @inheritParams aggregateTx
 #' @param sfe A `SpatialFeatureExperiment` object.
 #' @param file File with the transcript spot coordinates. Should be one row per
 #'   spot when read into R and should have columns for coordinates on each axis,
@@ -265,11 +312,12 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #'   3D geometries will always be constructed since there are no z-planes to
 #'   speak of. This argument does not apply when `spatialCoordsNames` has length
 #'   2.
-#' @param BPPARAM \code{\link{BiocParallelParam}} object to specify
+#' @param BPPARAM \code{\link[BiocParallel]{BiocParallelParam}} object to specify
 #'   multithreading to convert raw char in some parquet files to R objects. Not
 #'   used otherwise.
 #' @param sample_id Which sample in the SFE object the transcript spots should
 #'   be added to.
+#' @param partition Whether to partition the output by gene.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
@@ -316,7 +364,8 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           not_in_cell_id = c("-1", "UNASSIGNED"),
                           z_option = c("3d", "split"), flip = FALSE,
                           file_out = NULL, BPPARAM = SerialParam(),
-                          return = TRUE) {
+                          return = TRUE, save_memory = FALSE, progressbar = FALSE,
+                          partition = FALSE) {
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
     z_option <- match.arg(z_option)
@@ -334,82 +383,121 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         stop("z must either be numeric or be 'all' indicating all z-planes.")
     }
     mols <- .check_tx_file(file, spatialCoordsNames, gene_col, phred_col,
-                           min_phred, flip, BPPARAM)
+                           min_phred, flip, BPPARAM, save_memory = save_memory)
+    if (save_memory) return <- FALSE
     gene_col <- "gene"
     # Check z
     use_z <- length(spatialCoordsNames) == 3L
+    if (!spatialCoordsNames[3] %in% names(mols)) { # z column not found
+        spatialCoordsNames <- spatialCoordsNames[-3]
+        use_z <- FALSE
+    }
     if (use_z) {
-        zs <- mols[[spatialCoordsNames[3]]]
-        if (is.null(zs)) { # z column not found
-            spatialCoordsNames <- spatialCoordsNames[-3]
-            use_z <- FALSE
+        is_z_int <- if (inherits(mols, "Dataset")) {
+            sch <- mols$schema[[spatialCoordsNames[3]]]$ToString()
+            grepl(pattern = "int", sch)
+        } else {
+            zs <- mols[[spatialCoordsNames[3]]]
+            all(floor(zs) == zs)
         }
-        if (all(floor(zs) == zs)) { # integer z values
-            if (z != "all") {
-                if (all(!z %in% unique(zs)))
-                    stop("z plane(s) specified not found.")
-                inds <- mols[[spatialCoordsNames[3]]] %in% z
-                mols <- mols[inds,, drop = FALSE]
-                if (length(z) == 1L) {
-                    spatialCoordsNames <- spatialCoordsNames[-3]
-                    use_z <- FALSE
-                }
+        if (is_z_int) { # integer z values
+            z_rng <- if (inherits(mols, "Dataset")) {
+                mols |> 
+                    dplyr::summarize(rng = max(.data[[spatialCoordsNames[3]]]) - 
+                                         min(.data[[spatialCoordsNames[3]]])) |> 
+                    dplyr::collect() |> dplyr::pull(rng)
+            } else {
+                max(zs) - min(zs)
+            }
+            if (z_rng < sqrt(.Machine$double.eps)) {
+                spatialCoordsNames <- spatialCoordsNames[-3]
+                use_z <- FALSE
             }
         } else {
             z <- "all" # Non-integer z values
             z_option <- "3d"
         }
     }
+    if (use_z && z != "all") {
+        z_unique <- if (inherits(mols, "Dataset")) {
+            mols |> dplyr::select(z = .data[[spatialCoordsNames[3]]]) |> 
+                dplyr::distinct() |> dplyr::pull(z, as_vector = TRUE)
+        } else {
+            unique(zs)
+        }
+        if (all(!z %in% z_unique))
+            stop("z plane(s) specified not found.")
+        if (inherits(mols, "Dataset")) {
+            z__ <- z # To avoid colliding with column name
+            mols <- mols |> 
+                dplyr::filter(.data[[spatialCoordsNames[3]]] %in% z__)
+        } else {
+            inds <- mols[[spatialCoordsNames[3]]] %in% z
+            mols <- mols[inds,, drop = FALSE] # faster with data.table
+            if (length(z) == 1L) spatialCoordsNames <- spatialCoordsNames[-3]
+        }
+    }
     message(">>> Converting transcript spots to geometry")
     if (dest == "colGeometry") {
         if (!length(cell_col) || any(!cell_col %in% names(mols)))
             stop("Column indicating cell ID not found.")
-        mols <- mols[!mols[[cell_col[1]]] %in% not_in_cell_id,]
-        if (length(cell_col) > 1L) {
-            if (!is.data.table(mols)) ..cell_col <- cell_col
-            cell_col_use <- do.call(paste, c(mols[,..cell_col], sep = "_"))
-            mols$cell_id_ <- cell_col_use
-            mols[,cell_col] <- NULL
-            cell_col <- "cell_id_"
+        if (inherits(mols, "Dataset")) {
+            # The base R way doesn't seem to help with data.table performance
+            # So I'll just replace it with dplyr
+        } else {
+            mols <- mols[!mols[[cell_col[1]]] %in% not_in_cell_id,]
+            if (length(cell_col) > 1L) {
+                if (!is.data.table(mols)) ..cell_col <- cell_col
+                cell_col_use <- do.call(paste, c(mols[,..cell_col], sep = "_"))
+                mols$cell_id_ <- cell_col_use
+                mols[,cell_col] <- NULL
+                cell_col <- "cell_id_"
+            }
+            mols[,cell_col] <- as.character(mols[[cell_col]])
         }
-        mols[,cell_col] <- as.character(mols[[cell_col]])
     }
     if (!is.null(file_out)) {
         file_out <- normalizePath(file_out, mustWork = FALSE)
         file_dir <- file_path_sans_ext(file_out)
     }
     if (z_option == "split" && use_z) {
-        mols <- split(mols, mols[[spatialCoordsNames[3]]])
-        mols <- lapply(mols, .mols2geo_split, dest = dest,
-                       spatialCoordsNames = spatialCoordsNames[1:2],
-                       gene_col = gene_col, cell_col = cell_col,
-                       not_in_cell_id = not_in_cell_id, split_col = split_col)
-        # If list of list, i.e. colGeometry, or do split
-        if (!is(mols[[1]], "sf")) {
-            names_use <- lapply(names(mols), function(n) {
-                names_int <- names(mols[[n]])
-                paste0(names_int, "_z", n)
-            }) |> unlist()
-            mols <- unlist(mols, recursive = FALSE)
-            names(mols) <- names_use
-        } else if (!is.null(file_out)) {
-            names(mols) <- paste0(basename(file_dir), "_z", names(mols))
+        if (save_memory) {
+            # Rewrite to write to disk on the fly
         } else {
-            names(mols) <-
-                file_path_sans_ext(file) |>
-                basename() |>
-                paste0("_z", names(mols))
+            mols <- split(mols, mols[[spatialCoordsNames[3]]])
+            mols <- lapply(mols, .mols2geo_split, dest = dest,
+                           spatialCoordsNames = spatialCoordsNames[1:2],
+                           gene_col = gene_col, cell_col = cell_col,
+                           not_in_cell_id = not_in_cell_id, split_col = split_col)
+            # If list of list, i.e. colGeometry, or do split
+            if (!inherits(mols[[1]], "sf")) {
+                names_use <- lapply(names(mols), function(n) {
+                    names_int <- names(mols[[n]])
+                    paste0(names_int, "_z", n)
+                }) |> unlist()
+                mols <- unlist(mols, recursive = FALSE)
+                names(mols) <- names_use
+            } else if (!is.null(file_out)) {
+                names(mols) <- paste0(basename(file_dir), "_z", names(mols))
+            } else {
+                names(mols) <-
+                    file_path_sans_ext(file) |>
+                    basename() |>
+                    paste0("_z", names(mols))
+            }
         }
+        
     } else {
         mols <- .mols2geo_split(mols, dest, spatialCoordsNames, gene_col, cell_col,
                                 not_in_cell_id, split_col)
     }
 
-    if (!is.null(file_out)) {
+    if (!is.null(file_out) && !save_memory) {
         message(">>> Writing reformatted transcript spots to disk")
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
-        if (is(mols, "sf")) {
+        if (inherits(mols, "sf")) {
+            # Partition
             suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
             if (!return) return(file_out)
         } else {
@@ -442,9 +530,9 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
                           min_phred = min_phred, split_col = split_col,
                           flip = flip, z_option = z_option, file_out = file_out,
                           BPPARAM = BPPARAM, return = TRUE)
-    if (is(mols, "sf")) {
+    if (inherits(mols, "sf")) {
         txSpots(sfe, withDimnames = TRUE) <- mols
-    } else if (is(mols, "list")) {
+    } else if (inherits(mols, "list")) {
         rowGeometries(sfe) <- mols
     }
 

@@ -1,7 +1,7 @@
 # Validity of SFE object
 .check_geometries <- function(gs, name_show) {
     msgs <- lapply(seq_along(gs), function(i) {
-        if (!is(gs[[i]], "sf")) {
+        if (!inherits(gs[[i]], "sf")) {
             paste0(
                 "Item ", i, " in ", name_show, " is ", class(gs[[i]])[1],
                 " rather than sf.\n"
@@ -130,7 +130,7 @@
     if (is.null(sg)) {
         return(character(0))
     }
-    if (is(sg, "DataFrame")) {
+    if (inherits(sg, "DataFrame")) {
         if (!setequal(rownames(sg), c("row", "col", "annot"))) {
             return("Row names of spatialGraphs must be 'row', 'col', and 'annot'.\n")
         }

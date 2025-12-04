@@ -2,6 +2,8 @@ library(SpatialExperiment)
 library(SingleCellExperiment)
 library(DropletUtils)
 library(sf)
+library(SFEData)
+library(VisiumIO)
 
 dir <- system.file("extdata/sample01", package = "SpatialFeatureExperiment")
 
@@ -19,7 +21,7 @@ test_that("Convert SPE and SCE to SFE, no images", {
     colData(sce) <- cbind(colData(sce), coords[,c("pxl_col_in_fullres", "pxl_row_in_fullres")])
     sfe4 <- toSpatialFeatureExperiment(sce, spatialCoordsNames = c("pxl_col_in_fullres",
                                                                    "pxl_row_in_fullres"))
-    sfe <- read10xVisiumSFE(dir, type = "sparse", data = "filtered")
+    sfe <- read10xVisiumSFE(dirs = dir, type = "sparse", data = "filtered", flip = "image")
     centroids_check <- st_centroid(st_geometry(spotPoly(sfe)))
 
     expect_s4_class(sfe1, "SpatialFeatureExperiment")
@@ -31,41 +33,61 @@ test_that("Convert SPE and SCE to SFE, no images", {
 })
 
 test_that("Convert SPE to SFE, loaded images", {
-    spe <- read10xVisium(dir, load = TRUE, type = "sparse")
+    spe <- TENxVisium(spacerangerOut = file.path(dir, "outs"), processing = "filtered",
+                      images = c("lowres", "hires")) |> import()
     sfe <- toSpatialFeatureExperiment(spe)
     img1 <- getImg(spe)
     img2 <- getImg(sfe)
     expect_s4_class(img2, "SpatRasterImage")
     expect_equal(dim(img1), dim(img2)[1:2])
     v1 <- col2rgb(imgRaster(img1))
-    v2 <- terra::values(imgRaster(img2))
+    v2 <- terra::values(img2)
     v2 <- t(v2)
     dimnames(v1) <- dimnames(v2) <- NULL
     expect_equal(v1, v2)
 
     bbox <- st_bbox(centroids(sfe))
-    bbox_img <- as.vector(ext(imgRaster(img2))) # That the image is properly scaled
+    bbox_img <- as.vector(ext(img2)) # That the image is properly scaled
     diffs1 <- bbox[3:4] - bbox[1:2]
     diffs2 <- bbox_img[c(2,4)] - bbox_img[c(1,3)]
     expect_true(all(diffs1 / diffs2 > (1-1/min(dim(img1)))))
 })
 
 test_that("Convert SPE to SFE, stored images", {
-    spe <- read10xVisium(dir, load = FALSE, type = "sparse")
+    spe <- TENxVisium(spacerangerOut = file.path(dir, "outs"), processing = "filtered",
+                      images = c("lowres", "hires")) |> import()
     sfe <- toSpatialFeatureExperiment(spe)
     img1 <- getImg(spe)
     img2 <- getImg(sfe)
     expect_s4_class(img2, "SpatRasterImage")
-    expect_equal(dim(imgRaster(img1)), dim(img2)[1:2])
+    expect_equal(dim(img1), dim(img2)[1:2])
     v1 <- col2rgb(imgRaster(img1))
-    v2 <- terra::values(imgRaster(img2))
+    v2 <- terra::values(img2)
     v2 <- t(v2)
     dimnames(v1) <- dimnames(v2) <- NULL
     expect_equal(v1, v2)
 
     bbox <- st_bbox(centroids(sfe))
-    bbox_img <- as.vector(ext(imgRaster(img2)))
+    bbox_img <- as.vector(ext(img2))
     diffs1 <- bbox[3:4] - bbox[1:2]
     diffs2 <- bbox_img[c(2,4)] - bbox_img[c(1,3)]
     expect_true(all(diffs1 / diffs2 > (1-1/min(dim(img1)))))
+})
+
+test_that("Convert SPE to SFE, with SpatRaster image", {
+    spe <- TENxVisium(spacerangerOut = file.path(dir, "outs"), processing = "filtered",
+                      images = c("lowres", "hires")) |> import()
+    suppressWarnings(Img(spe, image_id = "lowres") <- rast(imgSource(getImg(spe))) |> SpatRasterImage())
+    sfe <- toSpatialFeatureExperiment(spe)
+    expect_true(is(getImg(sfe), "SpatRaster"))
+    expect_equal(getImg(spe), getImg(sfe))
+})
+
+test_that("Convert SPE to SFE, when the SPE has BioFormatsImage", {
+    fp <- tempfile()
+    xenium <- XeniumOutput("v1")
+    sfe <- readXenium(xenium)
+    spe <- as(sfe, "SpatialExperiment")
+    sfe2 <- toSpatialFeatureExperiment(spe)
+    expect_s4_class(getImg(sfe2), "BioFormatsImage")
 })

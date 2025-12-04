@@ -22,25 +22,31 @@ SpatialFeatureExperiment(
 )
 }
 \arguments{
-\item{assays}{A \code{list} or \code{SimpleList} of matrix-like elements,
+\item{assays}{
+    A \code{list} or \code{SimpleList} of matrix-like elements,
     or a matrix-like object (e.g. an ordinary matrix, a data frame,
     a \link[S4Vectors]{DataFrame} object from the \pkg{S4Vectors} package,
-    a \link[Matrix]{sparseMatrix} derivative from the \pkg{Matrix} package,
-    a \link[DelayedArray]{DelayedMatrix} object from the \pkg{DelayedArray}
-    package, etc...).
+    a \link[SparseArray]{SparseMatrix} derivative from the \pkg{SparseArray}
+    package, a \link[Matrix]{sparseMatrix} derivative from the \pkg{Matrix}
+    package, a \link[DelayedArray]{DelayedMatrix} object from the
+    \pkg{DelayedArray} package, etc...).
     All elements of the list must have the same dimensions, and dimension
     names (if present) must be consistent across elements and with the row
-    names of \code{rowRanges} and \code{colData}.}
+    names of \code{rowRanges} and \code{colData}.
+  }
 
-\item{colData}{An optional \link{DataFrame} describing the
-    samples. Row names, if present, become the column names of the
-    RangedSummarizedExperiment.}
+\item{colData}{
+    An optional \link{DataFrame} describing the samples. Row names on
+    \code{colData}, if present, become the column names of the returned object.
+  }
 
-\item{rowData}{A \link[S4Vectors]{DataFrame} object describing 
-    the rows. Row names, if present, become the row names of the
-    SummarizedExperiment object. The number of rows of the
-    \link[S4Vectors]{DataFrame} must equal the number of rows of the
-    matrices in \code{assays}.}
+\item{rowData}{
+    \code{NULL} (the default) or a \link[S4Vectors]{DataFrame} object
+    describing the rows. Row names, if present, become the row names of
+    the constructed SummarizedExperiment object. The number of rows of
+    the \link[S4Vectors]{DataFrame} must equal the number of rows of the
+    matrices in \code{assays}.
+  }
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -51,11 +57,11 @@ Default = \code{sample01}.}
 \code{*Geometries} arguments have ordinary data frames, to identify the
 columns in the ordinary data frames that specify the spatial coordinates.
 If \code{colGeometries} is not specified, then this argument will behave as
-in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+in \code{\link[SpatialExperiment]{SpatialExperiment}}, but \code{colGeometries} will be given
 precedence if provided.}
 
 \item{spatialCoords}{A numeric matrix containing columns of spatial
-coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+coordinates, as in \code{\link[SpatialExperiment]{SpatialExperiment}}. The coordinates are
 centroids of the entities represented by the columns of the gene count
 matrix. If \code{colGeometries} is also specified, then it will be given
 priority and a warning is issued. Otherwise, the \code{sf} representation
@@ -118,8 +124,8 @@ for spatial neighborhood graphs.}
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
 
-\item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
-and \code{\link{SingleCellExperiment}} constructors.}
+\item{...}{Additional arguments passed to the \code{\link[SpatialExperiment]{SpatialExperiment}}
+and \code{\link[SingleCellExperiment]{SingleCellExperiment}} constructors.}
 }
 \value{
 A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}

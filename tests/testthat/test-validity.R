@@ -59,3 +59,6 @@ test_that("The spatialGraphs field must have the right structure", {
     int_metadata(sfe)$spatialGraphs <- df
     expect_error(validObject(sfe), "Row names")
 })
+
+unlink("ob", recursive = TRUE)
+unlink("kidney", recursive = TRUE)

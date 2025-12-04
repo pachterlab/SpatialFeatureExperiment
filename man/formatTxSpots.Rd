@@ -20,7 +20,10 @@ formatTxSpots(
   flip = FALSE,
   file_out = NULL,
   BPPARAM = SerialParam(),
-  return = TRUE
+  return = TRUE,
+  save_memory = FALSE,
+  progressbar = FALSE,
+  partition = FALSE
 )
 
 addTxSpots(
@@ -102,13 +105,24 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{BPPARAM}{\code{\link{BiocParallelParam}} object to specify
+\item{BPPARAM}{\code{\link[BiocParallel]{BiocParallelParam}} object to specify
 multithreading to convert raw char in some parquet files to R objects. Not
 used otherwise.}
 
 \item{return}{Logical, whether to return the geometries in memory. This does
 not depend on whether the geometries are written to file. Always `FALSE`
 when `dest = "colGeometry"`.}
+
+\item{save_memory}{Logical, if TRUE, then the transcript spots will not all
+be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
+link to the data and then transcript spots of one gene is loaded into
+memory at a time.}
+
+\item{progressbar}{Logical, whether to show progress bar. This argument is
+only used when \code{save_memory = TRUE} because otherwise the
+\code{progressbar} argument can be specified in \code{BPPARAM}.}
+
+\item{partition}{Whether to partition the output by gene.}
 
 \item{sfe}{A `SpatialFeatureExperiment` object.}
 

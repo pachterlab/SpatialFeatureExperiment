@@ -1,3 +1,5 @@
+library(spdep)
+set.SubgraphOption(FALSE) # I don't care in this case
 # Unit test spdep and Visium graph wrappers
 sfe2 <- readRDS(system.file("extdata/sfe_multi_sample.rds",
     package = "SpatialFeatureExperiment"
@@ -6,7 +8,7 @@ cgr1 <- readRDS(system.file("extdata/colgraph1.rds",
     package = "SpatialFeatureExperiment"
 ))
 
-test_that("Get the correct graph and attr for reconstruction", {
+test_that("Get the correct graph and attr", {
     g <- findSpatialNeighbors(sfe2, sample_id = "sample01",
         type = "spatialCoords",
         MARGIN = 2, method = "tri2nb"
@@ -16,10 +18,10 @@ test_that("Get the correct graph and attr for reconstruction", {
     expect_equal(names(attrs_reconst), c("FUN", "package", "args"))
     expect_equal(attrs_reconst$FUN, "findSpatialNeighbors")
     expect_equal(attrs_reconst$package[[1]], "SpatialFeatureExperiment")
-    expect_equal(attrs_reconst$package[[2]], packageVersion("SpatialFeatureExperiment"))
+    expect_equal(attrs_reconst$package[[2]], as.character(packageVersion("SpatialFeatureExperiment")))
     expect_equal(attrs_reconst$args$dist_type, "none")
     expect_equal(attrs_reconst$args$style, "W")
-    expect_true("row.names" %in% names(attrs_reconst$args))
+    expect_false("row.names" %in% names(attrs_reconst$args))
     expect_equal(attrs_reconst$args$method, "tri2nb")
 })
 
@@ -140,6 +142,15 @@ test_that("Error when dmax is not specified for DPD", {
                  "DPD weights require a positive")
 })
 
+test_that("zero.policy is in the attributes of knn and dnn graph from bioc", {
+    g <- findSpatialNeighbors(sfe_muscle1, method = "knearneigh", k = 6,
+                              zero.policy = TRUE)
+    expect_true(attr(g, "zero.policy"))
+    g2 <- findSpatialNeighbors(sfe_muscle1, method = "dnearneigh", d2 = 350,
+                               zero.policy = TRUE)
+    expect_true(attr(g2, "zero.policy"))
+})
+
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
     package = "SpatialFeatureExperiment"
 ))
@@ -152,4 +163,21 @@ test_that("Correct Visium graph", {
     attrs_reconst <- attr(g, "method")
     expect_equal(attrs_reconst$FUN, "findVisiumGraph")
     expect_equal(attrs_reconst$args$style, "W")
+})
+
+test_that("Correct Visium HD graph", {
+    testthat::skip()
+    dir <- "~/WoundAnalysis/Visium-HD data/YVW01_binned_outputs/"
+    sfe <- readVisiumHD(dir, bin_size = 16)
+    g <- findVisiumHDGraph(sfe)
+    expect_s3_class(g, "listw")
+})
+
+test_that("Show method name in error message", {
+    mat <- matrix(rnorm(9), 3, 3)
+    # Get duplicated coordinates
+    coords <- cbind(c(1,2,1), c(1,2,1))
+    sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
+                                    spatialCoords = coords)
+    expect_error(findSpatialNeighbors(sfe), "tri2nb")
 })

@@ -7,8 +7,16 @@ pts = st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
 pol = st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
 
 test_that("trivial, st_any_intersects", {
-    o <- st_any_intersects(pts, pol)
+    o <- st_any_intersects(pts, pol, sparse = FALSE)
     expect_equal(o, c(TRUE, TRUE, FALSE))
+    o <- st_any_intersects(pts, pol, sparse = TRUE)
+    expect_equal(o, c(1L, 2L))
+})
+
+test_that("Swap x and y for st_intersects", {
+    o1 <- st_any_intersects(pts, pol, sparse = TRUE)
+    o2 <- st_any_intersects(pts, pol, sparse = TRUE, yx = TRUE)
+    expect_equal(o1, o2)
 })
 
 test_that("trivial, st_n_intersects", {
@@ -46,23 +54,23 @@ rg_use <- st_sf(geometry = st_sfc(st_multipoint(rg1), st_multipoint(rg2)),
 rowGeometry(sfe_visium, "points", sample_id = "sample01", withDimnames = FALSE) <- rg_use
 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
-    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "all")
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all")
     cg <- spotPoly(sfe_cropped, "all")
-    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by)))
+    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by, sparse = FALSE)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
     rg <- rowGeometry(sfe_cropped)
-    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by)))
+    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by, sparse = FALSE)))
 })
 
 test_that("Only crop one sample out of two, with sf", {
-    expect_error(crop(sfe_visium, y = bbox_sf, sample_id = "sample02"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample02"),
                  "No bounding boxes for samples specified.")
-    sfe_cropped2 <- crop(sfe_visium, y = bbox_sf, sample_id = "sample01")
+    sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample01")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped2, "sample02"), bbox_use,
-                                 pred = st_covered_by
+                                 pred = st_covered_by, sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped2, "sample02"),
@@ -71,15 +79,15 @@ test_that("Only crop one sample out of two, with sf", {
 })
 
 test_that("Using a bounding box to crop SFE objects, current way, expected errors", {
-    expect_error(crop(sfe_visium, y = "foobar", sample_id = "sample01"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = "foobar", sample_id = "sample01"),
                  "bbox must be a numeric vector or matrix.")
-    expect_error(crop(sfe_visium, y = c(meow = 1, purr = 2), sample_id = "sample01"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = c(meow = 1, purr = 2), sample_id = "sample01"),
                  "must be a vector of length 4")
     m <- matrix(1:8, ncol = 2)
-    expect_error(crop(sfe_visium, y = m, sample_id = "sample01"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample01"),
                  "must have rownames xmin, xmax")
     rownames(m) <- c("xmin", "ymin", "xmax", "ymax")
-    expect_error(crop(sfe_visium, y = m, sample_id = "sample01"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample01"),
                  "must have colnames")
 })
 
@@ -88,14 +96,14 @@ test_that("Using a bounding box to crop SFE objects, current way, one sample", {
     m <- matrix(c(1, 3, 1, 6), ncol = 1,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 "sample01"))
-    expect_error(crop(sfe_visium, y = m, sample_id = "sample02"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample02"),
                  "No bounding boxes for samples specified.")
-    sfe_cropped <- crop(sfe_visium, y = m)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use,
-                                 pred = st_covered_by
+                                 pred = st_covered_by, sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped, "sample02"),
@@ -109,19 +117,19 @@ test_that("Using a bounding box to crop SFE objects, current way, all samples", 
     m <- matrix(c(1, 3, 1, 6, 1, 3, 5, 9), ncol = 2,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 c("sample01", "sample02")))
-    sfe_cropped <- crop(sfe_visium, y = m)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use2,
-                                pred = st_covered_by
+                                pred = st_covered_by, sparse = FALSE
     )))
 })
 
 test_that("When a geometry is broken into multiple pieces", {
     notch <- st_as_sfc(st_bbox(c(xmin = 0, xmax = 1.5, ymin = 1.7, ymax = 1.9)))
     bbox_use3 <- st_difference(bbox_use, notch)
-    sfe_cropped3 <- crop(sfe_visium, bbox_use3, sample_id = "sample01")
+    sfe_cropped3 <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use3, sample_id = "sample01")
     cg <- spotPoly(sfe_cropped3, "all")
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "MULTIPOLYGON")
 })
@@ -130,7 +138,7 @@ test_that("When a sample is removed by cropping", {
     m <- matrix(c(1, 3, 1, 6, 6, 9, 10, 13), ncol = 2,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 c("sample01", "sample02")))
-    expect_warning(sfe_cropped <- crop(sfe_visium, m), "were removed")
+    expect_warning(sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, m), "were removed")
     expect_equal(sampleIDs(sfe_cropped), "sample01")
 })
 
@@ -138,15 +146,15 @@ test_that("Keep whole colGeometry items", {
     # In case you don't want small slivers or broken into multiple pieces
     # rowGeometries, annotGeometries, and images should be cropped by the actual
     # bbox of the remaining items of the colGeometry
-    sfe_cropped <- crop(sfe_visium, bbox_cg, sample_id = "sample01",
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_cg, sample_id = "sample01",
                         keep_whole = "col")
     cg2 <- colGeometry(sfe_cropped, sample_id = "sample01")
     # colGeometry not cropped
     expect_equal(cg, cg2)
-    # annotGeometry cropped by bbox of colGeometry
+    # annotGeometry cropped
     cg_bbox <- st_bbox(cg) |> st_as_sfc()
     ag2 <- annotGeometry(sfe_cropped, sample_id = "sample01")
-    expect_true(st_equals(ag2, cg_bbox, sparse = FALSE))
+    expect_true(st_equals(ag2, st_as_sfc(bbox_cg), sparse = FALSE))
     # rowGeometry
     rg_check <- rowGeometry(sfe_cropped, "points", sample_id = "sample01")
     rg_bbox2 <- st_bbox(rg_check) |> st_as_sfc()
@@ -165,7 +173,7 @@ test_that("Keep whole annotGeometry items", {
     ag_use <- st_buffer(ag_use, 0.5)
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
-    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
                         keep_whole = "annot")
     expect_true(st_covered_by(spotPoly(sfe_cropped, "sample01"), st_as_sfc(bbox_use),
                               sparse = FALSE) |> all())
@@ -185,7 +193,7 @@ test_that("Use st_difference for cropping, not cover", {
     ag_use <- st_buffer(ag_use, 0.5)
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
-    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
                         op = st_difference)
     cg2 <- spotPoly(sfe_cropped, "sample01")
     ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
@@ -205,7 +213,7 @@ test_that("Use st_difference for cropping, cover", {
     ag_use <- st_buffer(ag_use, 0.5)
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
-    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
                         op = st_difference, cover = TRUE,
                         keep_whole = c("col", "annot"))
     cg2 <- spotPoly(sfe_cropped, "sample01")
@@ -229,7 +237,7 @@ test_that("Only cells/spots covered by y if keep whole", {
     ag_use <- st_buffer(ag_use, 0.5)
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
-    sfe_cropped <- crop(sfe_visium, bbox_use, sample_id = "sample01",
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
                         keep_whole = c("col", "annot"), cover = TRUE)
     cg2 <- spotPoly(sfe_cropped, "sample01")
     expect_true(all(st_covered_by(cg2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
@@ -241,7 +249,7 @@ test_that("Only cells/spots covered by y if keep whole", {
 
 test_that("Error when other spatial operations are specified", {
     bbox_use <- c(xmin = 2.5, xmax = 3.5, ymin = 1.75, ymax = 2.5)
-    expect_error(crop(sfe_visium, bbox_use, sample_id = "sample01",
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
                       op = st_sym_difference),
                  "op must be either st_intersection or st_difference")
 })
@@ -252,7 +260,7 @@ test_that("Crop 3D geometry", {
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
-    sfe_cropped <- crop(sfe, bbox1)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe, bbox1)
     bbox_new <- bbox(sfe_cropped)
     expect_true(st_covered_by(st_as_sfc(st_bbox(bbox_new)), st_as_sfc(st_bbox(bbox1)),
                               sparse = FALSE))
@@ -289,7 +297,7 @@ test_that("annotOp", {
         rownames(out),
         colnames(sfe_visium)[colData(sfe_visium)$sample_id == "sample01"]
     )
-    p <- st_any_pred(out, bbox_use, st_covered_by)
+    p <- st_any_pred(out, bbox_use, st_covered_by, sparse = FALSE)
     expect_true(all(p[c(1, 2, 5)]))
     expect_false(any(p[3:4]))
 })
@@ -484,23 +492,23 @@ test_that("annotSummary", {
 
 # Operations when there're images=================
 # Need uncropped image
-if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
-mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create("ob", recursive = TRUE)
+mat_fn <- file.path("ob", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("ob", "outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
-    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
+                  destfile = file.path("ob", "spatial.tar.gz"))
+    untar(file.path("ob", "spatial.tar.gz"), exdir = "ob")
 }
 
 library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
 library(S4Vectors)
-sfe <- read10xVisiumSFE("ob")
+sfe <- read10xVisiumSFE(dirs = "ob")
 
 test_that("bbox when images are included", {
     bbox_tot <- bbox(sfe, include_image = TRUE) |> st_bbox() |> st_as_sfc()
@@ -536,12 +544,12 @@ test_that("When no cells/spots left after cropping", {
 test_that("Image is shifted after removing empty space", {
     sfe2 <- removeEmptySpace(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
     bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    bbox_img <- ext(img) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
     expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.97)
 })
@@ -554,12 +562,12 @@ test_that("Image is cropped after cropping SFE object", {
         st_bbox() |> st_as_sfc()
     sfe2 <- SpatialFeatureExperiment::crop(sfe, bbox_use)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2, image_id = "hires"))
+    img <- getImg(sfe2, image_id = "hires")
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean, use = "complete.obs")) > 0.4)
     bbox_geom <- st_bbox(spotPoly(sfe2)) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img)) |> st_bbox() |> st_as_sfc()
+    bbox_img <- ext(img) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
     expect_true(st_area(bbox_geom) / st_area(bbox_img) > 0.99)
 })
@@ -568,7 +576,7 @@ test_that("Image is cropped after cropping SFE object", {
 test_that("Transpose SFE object with image", {
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -585,7 +593,7 @@ test_that("Transpose SFE object with image, after cropping image", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- transpose(sfe)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2, image_id = "hires"))
+    img <- getImg(sfe2, image_id = "hires")
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -596,7 +604,7 @@ test_that("Transpose SFE object with image, after cropping image", {
     bbox_img_orig_sf <- bbox_img_orig |> st_bbox() |> st_as_sfc()
     bbox_cg <- st_bbox(spotPoly(sfe2))
     bbox_cg_sf <- bbox_cg |> st_as_sfc()
-    bbox_img <- as.vector(ext(img))
+    bbox_img <- ext(img)
     bbox_img_sf <- bbox_img |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_cg_sf, bbox_img_sf, sparse = FALSE))
     expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
@@ -613,7 +621,7 @@ test_that("Transpose SFE object with image, after cropping image", {
 test_that("Mirror SFE object with image, vertical", {
     sfe2 <- mirror(sfe, direction = "vertical")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -630,7 +638,7 @@ test_that("Mirror SFE object with image after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- mirror(sfe, direction = "vertical")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2, image_id = "hires"))
+    img <- getImg(sfe2, image_id = "hires")
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -641,7 +649,7 @@ test_that("Mirror SFE object with image after cropping", {
     bbox_img_orig_sf <- bbox_img_orig |> st_bbox() |> st_as_sfc()
     bbox_cg <- st_bbox(spotPoly(sfe2))
     bbox_cg_sf <- bbox_cg |> st_as_sfc()
-    bbox_img <- as.vector(ext(img))
+    bbox_img <- ext(img)
     bbox_img_sf <- bbox_img |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_cg_sf, bbox_img_sf, sparse = FALSE))
     expect_equal(bbox_img_orig[["ymax"]] - bbox_cg_orig[["ymax"]],
@@ -658,7 +666,7 @@ test_that("Mirror SFE object with image after cropping", {
 test_that("Mirror SFE object with image, horizontal", {
     sfe2 <- mirror(sfe, direction = "horizontal")
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -674,7 +682,7 @@ test_that("Mirror SFE object with image, horizontal", {
 test_that("Rotate SFE object with image", {
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -698,7 +706,7 @@ test_that("Rotate SFE object with image after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -721,7 +729,7 @@ test_that("Rotate SFE object with image after cropping", {
 test_that("Scale SFE object with image", {
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> imgRaster()
+    img <- getImg(sfe2)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -745,7 +753,7 @@ test_that("Scale SFE object with image after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> imgRaster()
+    img <- getImg(sfe2)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -770,7 +778,7 @@ test_that("General affine transformation of SFE object with image", {
     v <- c(0, 300)
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -796,7 +804,7 @@ test_that("Affine transformation of SFE object with image, after cropping", {
     sfe <- sfe[,sfe$in_tissue]
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE) |> imgRaster()
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
 
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
@@ -842,7 +850,7 @@ test_that("Translate SFE object with image", {
     expect_equal(bbox_tr, bbox_exp)
 
     cg <- df2sf(spatialCoords(sfe2), spatialCoordsNames(sfe2))
-    img <- imgRaster(getImg(sfe2))
+    img <- getImg(sfe2)
     v <- terra::extract(terra::mean(img), cg)
     nCounts <- Matrix::colSums(counts(sfe2))
     expect_true(abs(cor(nCounts, v$mean)) > 0.4)
@@ -860,7 +868,6 @@ library(RBioFormats)
 library(EBImage)
 fp <- tempfile()
 xenium_path <- XeniumOutput(file_path = fp)
-try(sfe <- readXenium(xenium_path))
 sfe <- readXenium(xenium_path, add_molecules = TRUE)
 set.seed(29)
 annotGeometry(sfe, "foo") <- ag <-
@@ -877,9 +884,9 @@ test_that("Transpose SFE object with BioFormatsImage", {
     spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
     # Due to the way XOA v1 segmentation works, the cell centroid is often
     # outside the nucleus. So I use nuclei centroids
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
-
+    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)$geometry) |> vect())
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9) # NA's from cells that don't have nuclei
+    cat("Actual mean: ", mean(v$lyr.1, na.rm = TRUE))
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
     bbox_cg <- st_bbox(cellSeg(sfe2))
@@ -898,11 +905,11 @@ test_that("Transpose SFE object with BioFormatsImage", {
 
 test_that("Mirror SFE object with BFI, vertical", {
     sfe2 <- mirror(sfe, direction = "vertical")
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -922,11 +929,11 @@ test_that("Mirror SFE object with BFI, vertical", {
 
 test_that("Mirror SFE object with BFI, horizontal", {
     sfe2 <- mirror(sfe, direction = "horizontal")
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -946,11 +953,11 @@ test_that("Mirror SFE object with BFI, horizontal", {
 
 test_that("Rotate SFE object with BFI", {
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
     bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
@@ -963,11 +970,11 @@ test_that("Rotate SFE object with BFI", {
 
 test_that("Scale SFE object with BFI", {
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -989,11 +996,11 @@ test_that("General affine transformation of SFE object with BFI", {
     M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
     v <- c(0, 300)
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
-    img <- imgRaster(getImg(sfe2), resolution = 1L)
+    img <- toExtImage(getImg(sfe2), resolution = 1L)
     mask <- img > 500
-    spi <- ExtImage(mask, ext = ext(getImg(sfe2))) |> toSpatRasterImage(save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
     bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
@@ -1015,8 +1022,8 @@ test_that("Transpose SFE object with ExtImage", {
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
     # Due to the way XOA v1 segmentation works, the cell centroid is often
     # outside the nucleus. So I use nuclei centroids
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -1039,8 +1046,8 @@ test_that("Mirror SFE object with ExtImage, vertical", {
 
     mask <- getImg(sfe2, image_id = "exi") > 500
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -1062,8 +1069,8 @@ test_that("Mirror SFE object with ExtImage, horizontal", {
     sfe2 <- mirror(sfe, direction = "horizontal")
     mask <- getImg(sfe2, image_id = "exi") > 500
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -1085,8 +1092,8 @@ test_that("Rotate SFE object with ExtImage", {
     sfe2 <- SpatialFeatureExperiment::rotate(sfe, degrees = 45)
     mask <- getImg(sfe2, image_id = "exi") > 500
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
     bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()
@@ -1101,8 +1108,8 @@ test_that("Scale SFE object with ExtImage", {
     sfe2 <- SpatialFeatureExperiment::scale(sfe, factor = 1.5)
     mask <- getImg(sfe2, image_id = "exi") > 500
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_cg_orig <- st_bbox(cellSeg(sfe))
     bbox_img_orig <- ext(getImg(sfe))
@@ -1126,8 +1133,8 @@ test_that("General affine transformation of SFE object with ExtImage", {
     sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
     mask <- getImg(sfe2, image_id = "exi") > 500
     spi <- toSpatRasterImage(mask, save_geotiff = FALSE)
-    v <- terra::extract(spi, st_centroid(nucSeg(sfe2)))
-    expect_true(mean(v$lyr.1) > 0.9)
+    v <- terra::extract(spi, vect(st_centroid(nucSeg(sfe2)$geometry)))
+    expect_true(mean(v$lyr.1, na.rm = TRUE) > 0.9)
 
     bbox_rg <- st_bbox(txSpots(sfe2)) |> st_as_sfc()
     bbox_cg <- st_bbox(cellSeg(sfe2)) |> st_as_sfc()

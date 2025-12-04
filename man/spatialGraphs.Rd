@@ -93,7 +93,7 @@ correspond to \code{annotGeometries}.}
 useful when multiple pieces of tissues are in the same SFE object (say for
 a joint dimension reduction and clustering) and the spatial neighborhood is
 only meaningful within the same piece of tissue. See the \code{sample_id}
-argument in \code{\link{SpatialExperiment}}.}
+argument in \code{\link[SpatialExperiment]{SpatialExperiment}}.}
 
 \item{name}{Name of the graphs to add to each sample_id; used in the
 \code{spatialGraphs} replacement method as it must be character while
@@ -110,15 +110,18 @@ the *Graph to query or replace. If missing, then the first item in the
 *Graph will be returned or replaced.}
 }
 \value{
-Getters for multiple graphs return a named list. Getters for
-  names return a character vector of the names. Getters for single graphs
-  return a \code{listw} object. Setters return an SFE object.
+Getters for multiple graphs return a named list. Getters for names
+  return a character vector of the names. Getters for single graphs return a
+  \code{listw} object. Setters return an SFE object.
 }
 \description{
 Spatial neighborhood graphs as \code{spdep}'s \code{listw} objects are stored
 in the \code{int_metadata} of the SFE object. The \code{listw} class is used
 because \code{spdep} has many useful methods that rely on the neighborhood
-graph as \code{listw}.
+graph as \code{listw}. See the
+\href{https://r-spatial.github.io/spdep/reference/index.html}{\code{spdep}
+doumentation website} for functions to edit the spatial neighborhood graph,
+or the \code{nb} object within the \code{listw}.
 }
 \examples{
 library(SFEData)

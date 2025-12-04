@@ -1,0 +1,28 @@
+library(SFEData)
+library(spdep)
+library(sf)
+
+sfe <- McKellarMuscleData("small")
+g <- findVisiumGraph(sfe)
+
+nb1 <- grid2nb(d = c(5,5))
+nb2 <- grid2nb(d = c(3,3))
+attr(nb1, "region.id") <- LETTERS[1:25]
+attr(nb2, "region.id") <- letters[1:9]
+l1 <- nb2listw(nb1)
+l2 <- nb2listw(nb2)
+listws <- list(l1, l2)
+names_expect <- c(LETTERS[1:25], letters[1:9])
+test_that("Convert list of listws to one adjacency matrix", {
+    mat <- multi_listw2sparse(listws)
+    expect_s4_class(mat, "dgRMatrix")
+    l_expect <- length(nb1) + length(nb2)
+    expect_equal(nrow(mat), l_expect)
+    expect_equal(ncol(mat), l_expect)
+    expect_equal(rownames(mat), names_expect)
+    expect_equal(colnames(mat), names_expect)
+    expect_equal(as.matrix(mat[1:25,1:25]), listw2mat(l1), ignore_attr = TRUE)
+    expect_equal(as.matrix(mat[26:34,26:34]), listw2mat(l2), ignore_attr = TRUE)
+    expect_equal(sum(mat[26:34, 1:25]), 0)
+    expect_equal(sum(mat[1:25, 26:34]), 0)
+})

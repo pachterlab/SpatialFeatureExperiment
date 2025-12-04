@@ -181,8 +181,7 @@
     P <- matrix(c(1,0,0,-1), nrow = 2)
     M2 <- P %*% M %*% P
     v <- center_new - M2 %*% center_old
-    out <- EBImage::affine(imgRaster(img), t(cbind(M2, v)),
-                           output.dim = dim_new_px)
+    out <- EBImage::affine(img, t(cbind(M2, v)), output.dim = dim_new_px)
     ExtImage(img = out, ext = bbox_new)
 }
 

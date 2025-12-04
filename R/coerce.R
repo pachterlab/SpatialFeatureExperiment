@@ -1,3 +1,78 @@
+#' @importFrom grDevices col2rgb
+.spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
+                        spatialCoordsNames, annotGeometryType, spatialGraphs,
+                        spotDiameter, unit, endCapStyle = "ROUND", 
+                        add_centroids = FALSE) {
+    if (is.null(colGeometries)) {
+        cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
+        colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter, 
+                                           endCapStyle = endCapStyle))
+        names(colGeometries) <- cg_name
+        if (add_centroids && cg_name != "centroids") {
+            colGeometries$centroids <- .sc2cg(spatialCoords(spe))
+        }
+    }
+    if (!is.null(rowGeometries)) {
+        rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
+                                     spotDiameter = NA, geometryType = "MULTIPOINT"
+        )
+    }
+    if (!is.null(annotGeometries)) {
+        annotGeometries <- .df2sf_list(annotGeometries, spatialCoordsNames,
+                                       spotDiameter = NA,
+                                       geometryType = annotGeometryType
+        )
+    }
+    if (nrow(imgData(spe))) {
+        # Convert to SpatRaster
+        img_data <- imgData(spe)$data
+        new_imgs <- lapply(seq_along(img_data), function(i) {
+            img <- img_data[[i]]
+            is_sfe_img <- class(img)[1] %in% c("SpatRasterImage", "ExtImage", "BioFormatsImage")
+            if (is_sfe_img) {
+                im_new <- img
+            } else if (inherits(img, "LoadedSpatialImage")) {
+                im <- imgRaster(img)
+                rgb_v <- col2rgb(im)
+                nrow <- dim(im)[2]
+                ncol <- dim(im)[1]
+                r <- t(matrix(rgb_v["red",], nrow = nrow, ncol = ncol))
+                g <- t(matrix(rgb_v["green",], nrow = nrow, ncol = ncol))
+                b <- t(matrix(rgb_v["blue",], nrow = nrow, ncol = ncol))
+                arr <- simplify2array(list(r, g, b))
+                im_new <- rast(arr)
+                terra::RGB(im_new) <- seq_len(3)
+            } else if (inherits(img, "RemoteSpatialImage") || inherits(img, "StoredSpatialImage")) {
+                suppressWarnings(im_new <- rast(imgSource(img)))
+                if (.terra_flip()) im_new <- terra::flip(im_new)
+            } else {
+                warning("Don't know how to convert image ", i, " to SpatRaster, ",
+                        "dropping image.")
+                im_new <- NULL
+            }
+            # Use scale factor for extent
+            if (!is.null(im_new) && !is_sfe_img) {
+                ext(im_new) <- as.vector(ext(im_new))/imgData(spe)$scaleFactor[i]
+                im_new <- new("SpatRasterImage", im_new)
+            }
+            im_new
+        })
+        inds <- !vapply(new_imgs, is.null, FUN.VALUE = logical(1))
+        new_imgs <- new_imgs[inds]
+        imgData(spe) <- imgData(spe)[inds,]
+        if (length(new_imgs)) imgData(spe)$data <- new_imgs
+    }
+    sfe <- new("SpatialFeatureExperiment", spe)
+    colGeometries(sfe, withDimnames = FALSE) <- colGeometries
+    rowGeometries(sfe, withDimnames = FALSE) <- rowGeometries
+    annotGeometries(sfe) <- annotGeometries
+    spatialGraphs(sfe) <- spatialGraphs
+    int_metadata(sfe)$unit <- unit
+    int_metadata(sfe)$SFE_version <- packageVersion("SpatialFeatureExperiment")
+    return(sfe)
+}
+
+
 #' SpatialFeatureExperiment coercion methods
 #'
 #' The \code{SpatialFeatureExperiment} class inherits from
@@ -34,8 +109,17 @@
 #' @aliases toSpatialFeatureExperiment
 #' @concept SpatialFeatureExperiment class
 #' @examples
-#' library(SpatialExperiment)
-#' example(read10xVisium)
+#' library(VisiumIO)
+#' # From examples of TENxVisium()
+#' sample_dir <- system.file(
+#' file.path("extdata", "10xVisium", "section1"),
+#' package = "VisiumIO"
+#' )
+#' ## using spacerangerOut folder
+#' tv <- TENxVisium(
+#'     spacerangerOut = file.path(sample_dir, "outs"), processing = "raw", images = "lowres"
+#' )
+#' spe <- import(tv)
 #' # There can't be duplicate barcodes
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)
@@ -63,7 +147,7 @@ setAs(
             if (is.null(rownames(coords_use))) {
                 rownames(coords_use) <- colnames(from)
             }
-            cg <- .sc2cg(coords_use)
+            cg <- .sc2cg(coords_use) # add `endCapStyle = "SQUARE"` when VisiumHD?
             int_colData(from)[["colGeometries"]] <-
                 make_zero_col_DFrame(nrow(int_colData(from)))
             int_colData(from)$colGeometries$centroids <- cg
@@ -152,10 +236,10 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 .GetSlotNames <- function(object_seu, assay_seu, fov_number) {
     slot_n <-
         Seurat::GetAssay(object_seu, assay_seu)
-    if (is(slot_n, "Assay")) {
+    if (inherits(slot_n, "Assay")) {
         # Seurat v4 based object
         slot_n <- slotNames(x = slot_n)[1:2]
-    } else if (is(slot_n, "Assay5")) {
+    } else if (inherits(slot_n, "Assay5")) {
         # Seurat v5 based object
         slot_n <- slot(slot_n, name = slotNames(x = slot_n)[1]) |> names()
     }
@@ -176,7 +260,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 
 # internal metadata getter for Seurat and SFE objects
 .getMeta <- function(object = NULL) {
-    if (is(object, "Seurat")) {
+    if (inherits(object, "Seurat")) {
         return(slot(object, "meta.data"))
     } else {
         return(colData(object) |>
@@ -468,8 +552,11 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
             if (is_Visium == "VisiumV2")
               # set scaling factor -> microns per pixel
               scale_fct <- bin_um / spot_diameter
-            else
-              scale_fct <- .pixel2micron(sfe)
+            else {
+                df_coords <- as.data.frame(spatialCoords(sfe))
+                names(df_coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
+                scale_fct <- .pixel2micron(cbind(as.data.frame(colData(sfe)), df_coords))
+            }
             cg <- spotPoly(sfe)
             cg$geometry <- cg$geometry * scale_fct
             spotPoly(sfe) <- cg
@@ -526,7 +613,7 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
               # subset transcripts keep on
               mols <- mols[mols$ID %in% rownames(sfe),]
             }
-            if (is(mols, "sf")) {
+            if (inherits(mols, "sf")) {
               rownames(mols) <- unique(mols$ID)
               txSpots(sfe, withDimnames = TRUE) <- mols
               # add sample id

@@ -7,6 +7,7 @@
 \alias{splitByCol,SpatialFeatureExperiment,list-method}
 \alias{splitSamples}
 \alias{splitContiguity}
+\alias{splitComponent}
 \title{Split SFE object with categorical vector or geometry}
 \usage{
 \S4method{splitByCol}{SpatialFeatureExperiment,sf}(x, f, sample_id = "all", colGeometryName = 1L, cover = FALSE)
@@ -24,6 +25,8 @@ splitContiguity(
   min_area = 0,
   cover = FALSE
 )
+
+splitComponent(x, colGraphName = 1L, min_cells = 100)
 }
 \arguments{
 \item{x}{An SFE object}
@@ -51,6 +54,14 @@ contiguity.}
 \item{min_area}{Minimum area in the same unit as the geometry coordinates
 (squared) for each piece to be considered a separate piece when splitting
 by contiguity. Only pieces that are large enough are considered.}
+
+\item{colGraphName}{Name of graph to use for \code{splitComponent}. We
+recommend distance based neighbors (`dnearneigh` in 
+\code{\link{findSpatialNeighbors}}), and recommend NOT using k nearest
+neighbors (`knearneigh`) or triangulation (`tri2nb`).}
+
+\item{min_cells}{Minimum number of cells per graph component; components with
+fewer than this number of cells are considered debris and removed.}
 }
 \value{
 A list of SFE objects.
@@ -62,6 +73,9 @@ become a separate SFE object). The \code{splitSamples} function splits the
 SFE object by \code{sample_id} so each sample will become a separate SFE
 object. The \code{splitContiguity} function splits the SFE object by
 contiguity of an \code{annotGeometry}, which by default is "tissueBoundary".
+The \code{splitComponent} function splits the SFE object by graph component,
+so if there are disconnected components in the graph, then each component 
+will become a new SFE object.
 }
 \examples{
 # example code

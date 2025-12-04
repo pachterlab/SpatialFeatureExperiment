@@ -44,6 +44,7 @@ Other image methods:
 \code{\link{SFE-image}},
 \code{\link{cropImg}()},
 \code{\link{dim,BioFormatsImage-method}},
+\code{\link{dim,ExtImage-method}},
 \code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},
