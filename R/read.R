@@ -1162,6 +1162,7 @@ readCosMX <- function(data_dir,
     colnames(mat) <- cell_ids
 
     poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
+
     if (file.exists(poly_sf_fn)) {
         message(">>> File cell_boundaries_sf.parquet found")
         polys <- sfarrow::st_read_parquet(poly_sf_fn)
@@ -1185,6 +1186,20 @@ readCosMX <- function(data_dir,
           }
         )
     }
+
+    meta <- fread(fn_metadata) |>
+      dplyr::mutate(cell_ID = paste(cell_ID, fov, sep = "_")) |>
+      dplyr::filter(cell_ID %in% polys$cellID)
+    mat <- fread(fn_mat) |> # TODO: write to h5 or mtx. Consult alabaster.sce
+      dplyr::mutate(cell_ID = paste(cell_ID, fov, sep = "_")) |>
+      dplyr::filter(cell_ID %in% polys$cellID)
+ 
+    mat <- mat[match(meta$cell_ID, mat$cell_ID),]
+    cell_ids <- mat$cell_ID
+    mat <- mat[,3:ncol(mat)] |>
+        as.matrix() |>
+        as("CsparseMatrix") |> Matrix::t()
+    colnames(mat) <- cell_ids
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
                                     sample_id = sample_id,
