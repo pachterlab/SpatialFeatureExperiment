@@ -58,7 +58,7 @@
 #'     type = "sparse", data = "filtered",
 #'     load = FALSE
 #' ))
-#' 
+#'
 read10xVisiumSFE <- function(samples = "",
                              dirs = file.path(samples, "outs"),
                              sample_id = paste0(
@@ -93,7 +93,7 @@ read10xVisiumSFE <- function(samples = "",
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(samples), function(i) {
         o <- .read10xVisium(dirs[i], sample_id[i],
-                            type, data, images, 
+                            type, data, images,
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,
                             unit = unit, zero.policy = zero.policy, style = style)
         # Add spatial enrichment if present
@@ -158,7 +158,7 @@ read10xVisiumSFE <- function(samples = "",
     }
     message(paste0(">>> 10X ", ifelse(VisiumHD, "VisiumHD", "Visium"),
                    " data will be loaded: ", basename(sample), "\n"))
-    
+
     fns <- paste0(data, "_feature_bc_matrix", switch(type, HDF5 = ".h5", ""))
     counts <- file.path(sample, fns)
     dir <- file.path(sample, "spatial")
@@ -166,7 +166,7 @@ read10xVisiumSFE <- function(samples = "",
     if (VisiumHD) {
         xyz <- file.path(dir, "tissue_positions.parquet")
     } else {
-        xyz <- file.path(rep(dir, each = length(suffix)), 
+        xyz <- file.path(rep(dir, each = length(suffix)),
                          sprintf("tissue_positions%s.csv", suffix))
     }
     xyz <- xyz[file.exists(xyz)]
@@ -188,7 +188,7 @@ read10xVisiumSFE <- function(samples = "",
         fromJSON(file = file.path(sample, "spatial", "scalefactors_json.json"))
     names_use <- paste("tissue", images, "scalef", sep = "_")
     scale_imgs <- unlist(scalefactors[names_use])
-    
+
     if (VisiumHD) {
         spd <-
             arrow::read_parquet(xyz) |>
@@ -199,7 +199,7 @@ read10xVisiumSFE <- function(samples = "",
                         col.names = c("barcode", "in_tissue", "array_row", "array_col",
                                       "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
         spd$in_tissue <- as.logical(spd$in_tissue)
-        
+
     }
     # Convert to microns and set extent for image
     if (unit == "micron") {
@@ -218,7 +218,7 @@ read10xVisiumSFE <- function(samples = "",
         scale_imgs <- scalefactors[names_use]
         spot_diam <- scalefactors$spot_diameter_fullres
     }
-    
+
     # Set up ImgData
     img_dfs <- lapply(seq_along(img_fns), function(j) {
         .get_imgData(img_fns[j], sample_id = sample_id,
@@ -235,7 +235,7 @@ read10xVisiumSFE <- function(samples = "",
         e <- ext(img_df$data[[ind]]) # All scaled
         spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
     }
-    
+
     # When used internally, this function only reads one matrix/sample at a time
     sce <- DropletUtils::read10xCounts(samples = counts,
                                        sample.names = sample_id,
@@ -271,7 +271,7 @@ read10xVisiumSFE <- function(samples = "",
         message(paste0(">>> Adding spatial neighborhood graph to ",
                        sample_id, "\n"))
         if (VisiumHD) {
-            colGraph(sfe, "visiumhd") <- 
+            colGraph(sfe, "visiumhd") <-
                 findVisiumHDGraph(sfe, style = style, zero.policy = zero.policy)
         } else {
             colGraph(sfe, "visium") <-
@@ -313,8 +313,8 @@ read10xVisiumSFE <- function(samples = "",
 #' @export
 #' @examples
 #' #
-readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L), 
-                         sample_id = NULL, 
+readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
+                         sample_id = NULL,
                          type = c("HDF5", "sparse"),
                          data = c("filtered", "raw"),
                          images = c("lowres", "hires"),
@@ -332,8 +332,8 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
         flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
     bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
-                          several.ok = TRUE) |> 
-        as.integer() |> 
+                          several.ok = TRUE) |>
+        as.integer() |>
         sort()
     row.names <- match.arg(row.names)
     dirs_check <- c(data_dir, list.files(data_dir, full.names = TRUE))
@@ -354,10 +354,10 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
         stop("Length of sample_id does not match number of resolutions found")
     }
     sfes <- lapply(seq_along(samples), function(i) {
-        .read10xVisium(samples[i], sample_id[i], type = type, data = data, 
+        .read10xVisium(samples[i], sample_id[i], type = type, data = data,
                        images = images, row.names = row.names, flip = flip,
                        add_graph = add_graph, VisiumHD = TRUE, unit = unit,
-                       style = style, zero.policy = zero.policy, 
+                       style = style, zero.policy = zero.policy,
                        add_centroids = TRUE, rotate_hd = rotate)
     })
     if (length(sfes) == 1L) return(sfes[[1]])
@@ -384,7 +384,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 .get_row_angle <- function(r, df) {
     # Check alignment
     df2 <- df[df$array_row == r,]
-    if (max(df2$pxl_row_in_fullres) - min(df2$pxl_row_in_fullres) > 1000) 
+    if (max(df2$pxl_row_in_fullres) - min(df2$pxl_row_in_fullres) > 1000)
         df2 <- df[df$array_col == r,] # In this case array_col matches with pxl_row
     ind1 <- which.max(df2$pxl_col_in_fullres)
     ind2 <- which.min(df2$pxl_col_in_fullres)
@@ -421,7 +421,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 .filter_polygons <- function(polys, min_area,
                              is_Xenium = FALSE, # indicate if input tech is Xenium or not
                              BPPARAM = SerialParam()) {
-    # Sanity check: 
+    # Sanity check:
     #..on `min_area` arg
     if (!is.null(min_area)) {
         if (!is.numeric(min_area) || min_area <= 0)
@@ -441,22 +441,22 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     # remove empty elements
     polys <- polys[!st_is_empty(polys), ]
     empty.inds <- which(!polys.ID_row %in% polys$ID_row)
-    if (length(empty.inds)) { 
+    if (length(empty.inds)) {
         message(">>> ..removing ", length(empty.inds), " empty polygons") }
     # check if polys are from Xenium tech
-    is_xen <- 
-        grepl("cell_id|label_id", names(polys)) |> 
+    is_xen <-
+        grepl("cell_id|label_id", names(polys)) |>
         any() |> all(is_Xenium)
     # check if not all are TRUE
     if (!is_xen && is_Xenium) {
-        warning("Provided segmentations data for `.filter_polygons` indicates Xenium technology,", "\n", 
+        warning("Provided segmentations data for `.filter_polygons` indicates Xenium technology,", "\n",
                 "However, it doesn't contain `cell_id` and/or `label_id` columns")
     }
     # identify which column contains tech-specific cell ids
     # ie, "cell_id" for Xenium; "cellID" for CosMX; "EntityID" for Vizgen
-    cell_ID <- grep("cell_id|cellID|EntityID", 
+    cell_ID <- grep("cell_id|cellID|EntityID",
                     colnames(polys), value = TRUE)
-    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON" && 
+    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON" &&
         !is_Xenium) {
         # convert sf df to polygons directly
         message(">>> Casting MULTIPOLYGON geometry to POLYGON")
@@ -473,7 +473,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
         dupl_inds <- which(polys$ID_row |> duplicated())
         # filter polygons with multiple pieces in single cell segmentation
         if (length(dupl_inds)) {
-            warning("There are ", length(dupl_inds), " cells with multiple", " pieces in cell segmentation", 
+            warning("There are ", length(dupl_inds), " cells with multiple", " pieces in cell segmentation",
                     if (!is.null(min_area)) " larger than `min_area`,",
                     " whose first 10 indices are: ",
                     paste(dupl_inds |> head(10),
@@ -489,27 +489,27 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             dupl_ids <- unique(names(dupl_areas))
             add_geo <-
                 # this can take time if not parallelized and many artifacts to be removed
-                bplapply(dupl_ids, 
+                bplapply(dupl_ids,
                          function(n) {
-                             which_keep <- 
-                                 dupl_areas[names(dupl_areas) == n] |> 
+                             which_keep <-
+                                 dupl_areas[names(dupl_areas) == n] |>
                                  which.max()
-                             polys[polys$ID_row == n, ] |> 
+                             polys[polys$ID_row == n, ] |>
                                  st_geometry() |> _[[which_keep]]
                          }, BPPARAM = BPPARAM) |> st_sfc()
             # add clean geometries
-            polys_add <- 
-                polys[polys$ID_row %in% dupl_cells, ] |> 
+            polys_add <-
+                polys[polys$ID_row %in% dupl_cells, ] |>
                 st_drop_geometry() |>
                 dplyr::distinct(!!rlang::sym(cell_ID),
                                 .keep_all = TRUE)
             polys_add$Geometry <- add_geo
             # combine polygon dfs
             colnames(polys_add) <- colnames(polys)
-            polys <- 
+            polys <-
                 # data.table is faster than rbind or dplyr::bind_rows
-                data.table::rbindlist(list(polys[!polys$ID_row %in% dupl_cells,], 
-                                           polys_add)) |> 
+                data.table::rbindlist(list(polys[!polys$ID_row %in% dupl_cells,],
+                                           polys_add)) |>
                 as.data.frame() |> st_as_sf()
             # sort by ID_row
             polys <- dplyr::arrange(polys, -dplyr::desc(ID_row))
@@ -524,7 +524,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             # filter areas larger than `min_area`
             inds <- which(areas > min_area)
             if (any(inds)) {
-                message(">>> Removing ", c(length(areas) - length(inds)), 
+                message(">>> Removing ", c(length(areas) - length(inds)),
                         " cells with area < ", min_area)
                 }
             polys <- polys[inds, ]
@@ -682,7 +682,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @param image Which image(s) to load, can be "DAPI", "PolyT", "Cellbound" or
 #'   any combination of them.
 #' @param min_area Minimum cell area in square microns or pixel units (eg for CosMX).
-#'   Anything smaller will be considered artifact or debris and removed. 
+#'   Anything smaller will be considered artifact or debris and removed.
 #'   Default to `NULL`, ie no filtering of polygons.
 #' @param filter_counts Logical, whether to keep cells with counts \code{> 0}.
 #' @param add_molecules Logical, whether to add transcripts coordinates to an
@@ -846,7 +846,14 @@ readVizgen <- function(data_dir,
             polys$Type <- "cell"
             parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
             if (!file.exists(parq_file)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+              tryCatch(
+                {
+                  suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+                },
+                error = function(e) {
+                  message(sprintf(" Could not write %s: %s", parq_file, e$message))
+                }
+              )
             }
         } else if (length(fns) == 0) {
             warning("No '.hdf5' files present, check input directory -> `data_dir`")
@@ -997,7 +1004,7 @@ readCosMX <- function(data_dir,
 
     meta <- fread(fn_metadata)
     mat <- fread(fn_mat) # TODO: write to h5 or mtx. Consult alabaster.sce
-    
+
 
     meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")
     mat$cell_ID <- paste(mat$cell_ID, mat$fov, sep = "_")
@@ -1024,7 +1031,14 @@ readCosMX <- function(data_dir,
         polys <- polys[match(meta$cell_ID, polys$cellID),]
         polys <- .filter_polygons(polys, min_area,
                                   BPPARAM = BPPARAM)
-        suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
+        tryCatch(
+          {
+            suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
+          },
+          error = function(e) {
+            message(sprintf(" Could not write %s: %s", poly_sf_fn, e$message))
+          }
+        )
     }
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
@@ -1327,7 +1341,14 @@ readXenium <- function(data_dir,
             fn_out <- file.path(data_dir, fn_out)
             message(">>> Saving geometries to parquet files")
             for (i in seq_along(polys)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+              tryCatch(
+                {
+                  suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+                },
+                error = function(e) {
+                  message(sprintf(" Could not write %s: %s", fn_out[[i]], e$message))
+                }
+              )
             }
         }
         # add names to polys list
