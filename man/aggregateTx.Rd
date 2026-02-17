@@ -23,7 +23,6 @@ aggregateTx(
   sparse = FALSE,
   BPPARAM = SerialParam(),
   save_memory = FALSE,
-  progressbar = FALSE,
   .orig_nrows = NULL
 )
 
@@ -95,18 +94,14 @@ not be very sparse so using sparse matrix will not save memory, but when
 the bins are small, sparsity is worth it.}
 
 \item{BPPARAM}{bpparam object to specify parallel computing over genes. If a
-lot of memory is used, then stick to `SerialParam()`. If \code{save_memory
-= TRUE}, then this argument is ignored because the operation is not thread
-safe; \code{SerialParam()} will always be used.}
+lot of memory is used, then stick to `SerialParam()`. Using multicore in
+the R level when `save_memory = TRUE` works and results into faster
+computation.}
 
 \item{save_memory}{Logical, if TRUE, then the transcript spots will not all
 be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
 link to the data and then transcript spots of one gene is loaded into
 memory at a time.}
-
-\item{progressbar}{Logical, whether to show progress bar. This argument is
-only used when \code{save_memory = TRUE} because otherwise the
-\code{progressbar} argument can be specified in \code{BPPARAM}.}
 
 \item{.orig_nrows}{Only used internally in the SFE method of \code{aggregate}}
 
