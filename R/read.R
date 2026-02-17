@@ -12,7 +12,6 @@
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams DropletUtils::read10xCounts
 #' @inheritParams SpatialExperiment::read10xVisium
-#' @param sample Deprecated, use the \code{dirs} argument instead.
 #' @param type Either "HDF5", and the matrix will be represented as
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
@@ -55,8 +54,7 @@
 #'     type = "sparse", data = "filtered"
 #' ))
 #' 
-read10xVisiumSFE <- function(samples = deprecated(),
-                             dirs = NULL,
+read10xVisiumSFE <- function(dirs = NULL,
                              sample_id = paste0(
                                  "sample",
                                  sprintf(
