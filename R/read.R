@@ -1261,7 +1261,15 @@ readCosMX <- function(data_dir,
             warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
                     " don't exist, or have non-standard file name(s).")
         }
-    } else { # For now there's only v2. We'll see what v3 will be like
+    } else if (major_version == 4L) { 
+        stains <- c("dapi", "atp1a1_cd45_e-cadherin", "18s", "alphasma_vimentin") 
+        img_fn <- paste0("ch000", 0:3, "_", stains, ".ome.tif") 
+        img_fn <- file.path(data_dir, "morphology_focus", img_fn) 
+        if_exists <- dir.exists(file.path(data_dir, "morphology_focus")) 
+        if (!if_exists) { 
+            warning("morphology_focus images not found") 
+        }
+    } else {
         img_fn <- paste0("morphology_focus_000", 0:3, ".ome.tif")
         img_fn <- file.path(data_dir, "morphology_focus", img_fn)
         # When any of the images indicated in the XML metadata is absent RBioFormats
