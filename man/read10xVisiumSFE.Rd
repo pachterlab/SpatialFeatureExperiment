@@ -5,7 +5,7 @@
 \title{Read 10X Visium data as SpatialFeatureExperiment}
 \usage{
 read10xVisiumSFE(
-  dirs = NULL,
+  dirs,
   sample_id = paste0("sample", sprintf("\%02d", seq_along(dirs))),
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),

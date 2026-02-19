@@ -497,15 +497,24 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
         if (inherits(mols, "sf")) {
-            # Partition
+          tryCatch({
             suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
+          }, error = function(e) {
+            message(sprintf(" Could not write %s: %s", file_out, e$message))
+          })
             if (!return) return(file_out)
         } else {
             if (!dir.exists(file_dir)) dir.create(file_dir)
             suppressWarnings({
                 bplapply(names(mols), function(n) {
                     name_use <- gsub("/", ".", n)
-                    suppressWarnings(sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet"))))
+                    tryCatch({
+                      suppressWarnings(
+                        sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet")))
+                      )
+                    }, error = function(e) {
+                      message(sprintf(" Could not write %s: %s", n, e$message))
+                    })
                 }, BPPARAM = SerialParam(progressbar = TRUE))
             })
             if (!return) return(file_dir)
