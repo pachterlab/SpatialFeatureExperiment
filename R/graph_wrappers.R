@@ -724,9 +724,10 @@ findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
     }
     cols <- paste0("index_", sides)
     gm <- as.matrix(df[,..cols])
-    gm <- apply(gm, 1, sort) # This is the slowest part
-    colnames(gm) <- NULL
-    g <- apply(gm, 1, function(x) x[!is.na(x)])
+    # This is the slowest part; it removes NA's and creates a list
+    g <- apply(gm, 1, sort, simplify = FALSE)
+    singletons <- which(lengths(g) == 0L)
+    if (length(singletons)) g[singletons] <- 0L
     class(g) <- "nb"
     out <- nb2listw(g, style = style, zero.policy = TRUE)
     attr(out, "method") <- list(
