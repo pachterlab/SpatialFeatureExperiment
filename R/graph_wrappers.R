@@ -709,6 +709,9 @@ findVisiumGraph <- function(x, sample_id = "all", style = "W",
 findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
                               zero.policy = TRUE) {
     df <- as.data.frame(colData(x))
+    if (any(!c("barcode", "array_row", "array_col") %in% names(df))) {
+        stop("Columns 'barcode', 'array_row', and 'array_col' are required.")
+    }
     df$index <- seq_along(df$barcode)
     cols_use <- c("index", "array_row", "array_col")
     df <- df[,cols_use]

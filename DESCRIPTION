@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.13.0
+Version: 1.13.1
 Authors@R: 
     c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
     role = c("aut", "cre"),
@@ -87,6 +87,7 @@ Suggests:
     dplyr,
     gmp,
     knitr,
+    OSTA.data,
     RBioFormats,
     rhdf5,
     rmarkdown,
@@ -106,7 +107,7 @@ Remotes:
     Voyager=github::pachterlab/voyager@devel
 Config/testthat/edition: 3
 Depends: 
-    R (>= 4.2.0)
+    R (>= 4.3.0)
 VignetteBuilder: knitr
 biocViews:
     DataRepresentation,

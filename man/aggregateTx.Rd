@@ -42,8 +42,7 @@ aggregateTxTech(
   new_geometry_name = "bins",
   sparse = FALSE,
   BPPARAM = SerialParam(),
-  save_memory = FALSE,
-  progressbar = FALSE
+  save_memory = FALSE
 )
 }
 \arguments{

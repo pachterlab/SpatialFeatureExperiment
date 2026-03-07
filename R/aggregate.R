@@ -184,7 +184,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                             cellsize = NULL, square = TRUE, flat_topped = FALSE,
                             new_geometry_name = "bins", sparse = FALSE,
                             BPPARAM = SerialParam(), 
-                            save_memory = FALSE, progressbar = FALSE) {
+                            save_memory = FALSE) {
     tech <- match.arg(tech)
     flip <- match.arg(flip)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
@@ -221,7 +221,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                 flip_geometry = (flip == "geometry"),
                 cellsize = cellsize, square = square, flat_topped = flat_topped,
                 new_geometry_name = new_geometry_name, BPPARAM = BPPARAM, 
-                sparse = sparse, save_memory = save_memory, progressbar = progressbar)
+                sparse = sparse, save_memory = save_memory)
     imgData(sfe) <- img_df
     sfe
 }

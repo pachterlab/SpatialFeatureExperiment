@@ -6,22 +6,22 @@
 \usage{
 readVisiumHD(
   data_dir,
-  bin_size = c(2L, 8L, 16L),
-  sample_id = NULL,
+  bin_size = 8L,
+  sample_id = "sample01",
+  use_cellseg = TRUE,
   type = c("HDF5", "sparse"),
   data = c("filtered", "raw"),
   images = c("lowres", "hires"),
   unit = c("full_res_image_pixel", "micron"),
   style = "W",
-  zero.policy = NULL,
+  zero.policy = TRUE,
   row.names = c("id", "symbol"),
   flip = c("geometry", "image"),
-  add_graph = FALSE,
-  rotate = FALSE
+  add_graph = FALSE
 )
 }
 \arguments{
-\item{data_dir}{Directory}
+\item{data_dir}{Directory with Visium HD output}
 
 \item{bin_size}{One or more resolutions to load, must be 2, 8, or 16. Can be
 either integer or character.}
@@ -29,6 +29,11 @@ either integer or character.}
 \item{sample_id}{Which sample(s) in the SFE object to use for the graph. Can
 also be "all", which means this function will compute the graph for all
 samples independently.}
+
+\item{use_cellseg}{Logical, whether to use cell segmentation if present. Only
+applicable when the \code{segmented_outputs} directory is present. If TRUE
+and the directory is present, then \code{bin_size} will be ignored and cell
+segmentations will be used instead.}
 
 \item{type}{Either "HDF5", and the matrix will be represented as
 \code{TENxMatrix}, or "sparse", and the matrix will be read as a
@@ -59,17 +64,10 @@ Originally the Visium spots are in pixels in full res image. Either the
 image or the geometry needs to be flipped for them match in the Cartesian
 coordinate system.}
 
-\item{add_graph}{\code{c(local)}, if to add spatial neighborhood graph for
-spots and only if \code{c(data = "filtered")}. Default is \code{c(TRUE)}.
+\item{add_graph}{Logical, if to add spatial neighborhood graph for
+spots and only if \code{c(data = "filtered")}. Default is \code{FALSE}.
 This is optional because for larger datasets, the graph can take a while to
 compute.}
-
-\item{rotate}{Logical, whether to rotate the geometry, because usually the
-grid of spots is slightly, but just very slightly, rotated from the perfect
-horizontal line. The spots can be rotated so the square polygons are more
-accurate, because for computational efficiency, \code{st_buffer} is used to
-create the polygons which are not rotated. This is optional because the
-rotation is very slight.}
 }
 \value{
 An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
@@ -86,5 +84,17 @@ An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
 This function reads Visium HD Space Ranger output into R.
 }
 \examples{
-#
+library(OSTA.data)
+id <- "VisiumHD_HumanColon_Oliveira"
+pa <- OSTA.data_load(id)
+dir.create(dir <- tempfile())
+unzip(pa, exdir=dir)
+
+# Use binned output
+sfe1 <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
+
+# Use cell segmentations
+sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
+
+unlink(dir, recursive = TRUE)
 }

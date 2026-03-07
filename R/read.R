@@ -71,11 +71,6 @@ read10xVisiumSFE <- function(dirs,
                              flip = c("geometry", "image", "none"),
                              read_spatial_enrichment = TRUE) {
     check_installed("DropletUtils")
-    if (is_present(samples)) {
-        deprecate_warn("1.12.0", "read10xVisiumSFE(samples)",
-                       "read10xVisiuimSFE(dirs)")
-        dirs <- dirs %||% file.path(samples, "outs")
-    }
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
@@ -91,7 +86,8 @@ read10xVisiumSFE <- function(dirs,
         o <- .read10xVisium(dirs[i], sample_id[i],
                             type, data, images,
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,
-                            unit = unit, zero.policy = zero.policy, style = style)
+                            unit = unit, zero.policy = zero.policy, style = style,
+                            use_cellseg = FALSE)
         # Add spatial enrichment if present
         fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
         if (file.exists(fn) && read_spatial_enrichment) {
@@ -131,7 +127,7 @@ read10xVisiumSFE <- function(dirs,
 # and for SFE specific needs
 # This internal function reads one sample, and for HD one bin size
 .read10xVisium <-
-  function(sample = "", # eg, path to "./binned_outputs"
+  function(sample = "", # eg, path to "./binned_outputs" or "segmented_outputs"
            sample_id = "sample01",
            type = c("HDF5", "sparse"),
            data = c("filtered", "raw"),
@@ -140,7 +136,7 @@ read10xVisiumSFE <- function(dirs,
            VisiumHD = FALSE, flip = c("geometry", "image"),
            add_graph = TRUE, unit = c("full_res_image_pixel", "micron"),
            rotate_hd = FALSE, zero.policy = TRUE, style = "W",
-           add_centroids = FALSE) {
+           add_centroids = FALSE, use_cellseg = TRUE) {
     type <- match.arg(type)
     data <- match.arg(data)
     imgs <- c("lowres", "hires", "detected", "aligned")
@@ -151,18 +147,11 @@ read10xVisiumSFE <- function(dirs,
     }
     message(paste0(">>> 10X ", ifelse(VisiumHD, "VisiumHD", "Visium"),
                    " data will be loaded: ", basename(sample), "\n"))
-
-    fns <- paste0(data, "_feature_bc_matrix", switch(type, HDF5 = ".h5", ""))
+    mid <- ifelse(use_cellseg, "cell", "bc")
+    fns <- paste0(data, sprintf("_feature_%s_matrix", mid), switch(type, HDF5 = ".h5", ""))
     counts <- file.path(sample, fns)
     dir <- file.path(sample, "spatial")
-    suffix <- c("", "_list")
-    if (VisiumHD) {
-        xyz <- file.path(dir, "tissue_positions.parquet")
-    } else {
-        xyz <- file.path(rep(dir, each = length(suffix)),
-                         sprintf("tissue_positions%s.csv", suffix))
-    }
-    xyz <- xyz[file.exists(xyz)]
+    
     sfs <- file.path(dir, "scalefactors_json.json")
     img_fns <- c(lowres = "tissue_lowres_image.png", hires = "tissue_hires_image.png",
                  detected = "detected_tissue_image.jpg", aligned = "aligned_fiducials.jpg")
@@ -181,19 +170,30 @@ read10xVisiumSFE <- function(dirs,
         fromJSON(file = file.path(sample, "spatial", "scalefactors_json.json"))
     names_use <- paste("tissue", images, "scalef", sep = "_")
     scale_imgs <- unlist(scalefactors[names_use])
-
-    if (VisiumHD) {
-        spd <-
-            arrow::read_parquet(xyz) |>
-            as.data.frame()
-        rownames(spd) <- spd$barcode
-    } else {
-        spd <- read.csv(xyz,
-                        col.names = c("barcode", "in_tissue", "array_row", "array_col",
-                                      "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
-        spd$in_tissue <- as.logical(spd$in_tissue)
-
+    
+    if (!use_cellseg) {
+        suffix <- c("", "_list")
+        if (VisiumHD) {
+            xyz <- file.path(dir, "tissue_positions.parquet")
+        } else {
+            xyz <- file.path(rep(dir, each = length(suffix)),
+                             sprintf("tissue_positions%s.csv", suffix))
+        }
+        xyz <- xyz[file.exists(xyz)]
+        if (VisiumHD) {
+            spd <-
+                arrow::read_parquet(xyz) |>
+                as.data.frame()
+            rownames(spd) <- spd$barcode
+        } else {
+            spd <- read.csv(xyz,
+                            col.names = c("barcode", "in_tissue", "array_row", "array_col",
+                                          "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
+            spd$in_tissue <- as.logical(spd$in_tissue)
+            
+        }
     }
+    
     # Convert to microns and set extent for image
     if (unit == "micron") {
         message(">>> Converting pixels to microns")
@@ -204,9 +204,6 @@ read10xVisiumSFE <- function(dirs,
             scale_fct <- .pixel2micron(spd)
         # Scale factors for images
         scale_imgs <- scale_imgs / scale_fct
-        spd$pxl_row_in_fullres <- spd$pxl_row_in_fullres * scale_fct
-        spd$pxl_col_in_fullres <- spd$pxl_col_in_fullres * scale_fct
-        spot_diam <- scalefactors$spot_diameter_fullres * scale_fct
     } else {
         scale_imgs <- scalefactors[names_use]
         spot_diam <- scalefactors$spot_diameter_fullres
@@ -226,37 +223,78 @@ read10xVisiumSFE <- function(dirs,
         ind <- which.max(img_df$scaleFactor)
         sfct <- img_df$scaleFactor[ind]
         e <- ext(img_df$data[[ind]]) # All scaled
-        spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
     }
 
     # When used internally, this function only reads one matrix/sample at a time
-    sce <- DropletUtils::read10xCounts(samples = counts,
+    sce <- DropletUtils::read10xCounts(samples = counts, 
                                        sample.names = sample_id,
                                        col.names = TRUE,
                                        row.names = row.names)
-    obs <- intersect(colnames(sce), rownames(spd))
-    sce <- sce[, obs]
-    spd <- spd[obs, ]
-    spe <- SpatialExperiment(assays = assays(sce), rowData = DataFrame(symbol = rowData(sce)$Symbol),
-                             sample_id = sample_id, colData = DataFrame(spd),
-                             spatialCoordsNames = c("pxl_col_in_fullres", "pxl_row_in_fullres"))
-    if (VisiumHD && rotate_hd) {
-        # Rotate Visium HD array to make grid accurate
-        rs <- sample(unique(spd$array_col), 10)
-        ths <- vapply(rs, .get_row_angle, df = spd, FUN.VALUE = numeric(1))
-        theta <- mean(ths)
-        m <- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), 2)
-        spatialCoords(spe) <- spatialCoords(spe) %*% m
-        img_df$data <- lapply(img_df$data, rotateImg, degrees = theta/pi*180, maxcell = 1e9)
+    if (use_cellseg) {
+        colnames(sce) <- sub("cellid_0*([0-9]+)-.*", "\\1", sce$Barcode)
+        cell_seg <- st_read(file.path(sample, "cell_segmentations.geojson"), 
+                            crs = NA, agr = "constant", quiet = TRUE)
+        nuc_seg <- st_read(file.path(sample, "nucleus_segmentations.geojson"), 
+                           crs = NA, agr = "constant", quiet = TRUE)
+        rownames(cell_seg) <- cell_seg$cell_id
+        rownames(nuc_seg) <- nuc_seg$cell_id
+        centroids <- st_centroid(cell_seg)
+        centroids$cell_id <- as.character(centroids$cell_id)
+        common_cells <- intersect(centroids$cell_id, colnames(sce))
+        
+        cell_seg <- cell_seg[cell_seg$cell_id %in% common_cells, ]
+        nuc_seg <- nuc_seg[nuc_seg$cell_id %in% common_cells, ]
+        centroids <- centroids[centroids$cell_id %in% common_cells, ]
+        sce <- sce[, colnames(sce) %in% common_cells]
+        
+        # # Sanity check on ordering of cell ids
+        # all(as.character(centroids$cell_id) == colnames(vhdcellsce))
+        
+        if (flip == "geometry") {
+            centroids <- .flip_sf_Y(centroids, type = "POINT", e_ymax = e["ymax"])
+            cell_seg <- .flip_sf_Y(cell_seg, type = "POLYGON", e_ymax = e["ymax"])
+            nuc_seg <- .flip_sf_Y(nuc_seg, type = "POLYGON", e_ymax = e["ymax"])
+        }
+        if (unit == "micron") {
+            st_geometry(centroids) <- st_geometry(centroids) * scale_fct
+            st_geometry(cell_seg) <- st_geometry(cell_seg) * scale_fct
+            st_geometry(nuc_seg) <- st_geometry(nuc_seg) * scale_fct
+        }
+        # Extract coordinates
+        coords <- st_coordinates(centroids)
+        colnames(coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
+        sfe <- toSpatialFeatureExperiment(sce, 
+                                          colGeometries = list(centroids = centroids,
+                                                               cellSeg = cell_seg,
+                                                               nucSeg = nuc_seg),
+                                          spatialCoordsNames = NULL,
+                                          sample_id = sample_id,
+                                          spatialCoords = coords,
+                                          unit = unit)
+    } else {
+        if (flip == "geometry") {
+            spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
+        }
+        if (unit == "micron") {
+            spd$pxl_row_in_fullres <- spd$pxl_row_in_fullres * scale_fct
+            spd$pxl_col_in_fullres <- spd$pxl_col_in_fullres * scale_fct
+            spot_diam <- scalefactors$spot_diameter_fullres * scale_fct
+        }
+        obs <- intersect(colnames(sce), rownames(spd))
+        sce <- sce[, obs]
+        spd <- spd[obs, ]
+        spe <- SpatialExperiment(assays = assays(sce), rowData = DataFrame(symbol = rowData(sce)$Symbol),
+                                 sample_id = sample_id, colData = DataFrame(spd),
+                                 spatialCoordsNames = c("pxl_col_in_fullres", "pxl_row_in_fullres"))
+        sfe <- .spe_to_sfe(spe,
+                           colGeometries = NULL, rowGeometries = NULL,
+                           annotGeometries = NULL, spatialCoordsNames = NULL,
+                           annotGeometryType = NULL, spatialGraphs = NULL,
+                           spotDiameter = spot_diam,
+                           unit = unit, endCapStyle = if (VisiumHD) "SQUARE" else "ROUND",
+                           add_centroids = add_centroids)
     }
-    sfe <- .spe_to_sfe(spe,
-                       colGeometries = NULL, rowGeometries = NULL,
-                       annotGeometries = NULL, spatialCoordsNames = NULL,
-                       annotGeometryType = NULL, spatialGraphs = NULL,
-                       spotDiameter = spot_diam,
-                       unit = unit, endCapStyle = if (VisiumHD) "SQUARE" else "ROUND",
-                       add_centroids = add_centroids
-    )
+    
     if (unit == "microns") spatialCoordsNames(sfe) <- c("x", "y")
     imgData(sfe) <- img_df
     # Create Visium graph for filtered data
@@ -264,8 +302,13 @@ read10xVisiumSFE <- function(dirs,
         message(paste0(">>> Adding spatial neighborhood graph to ",
                        sample_id, "\n"))
         if (VisiumHD) {
-            colGraph(sfe, "visiumhd") <-
-                findVisiumHDGraph(sfe, style = style, zero.policy = zero.policy)
+            if (use_cellseg) {
+                colGraph(sfe, "knn5") <- 
+                    findSpatialNeighbors(sfe, method = "knearneigh", k = 5)
+            } else {
+                colGraph(sfe, "visiumhd") <-
+                    findVisiumHDGraph(sfe, style = style, zero.policy = zero.policy)
+            }
         } else {
             colGraph(sfe, "visium") <-
                 findVisiumGraph(sfe, sample_id = "all",
@@ -281,19 +324,17 @@ read10xVisiumSFE <- function(dirs,
 #' This function reads Visium HD Space Ranger output into R.
 #'
 #' @inheritParams read10xVisiumSFE
-#' @param data_dir Directory
+#' @param data_dir Directory with Visium HD output
 #' @param bin_size One or more resolutions to load, must be 2, 8, or 16. Can be
 #'   either integer or character.
-#' @param add_graph \code{c(local)}, if to add spatial neighborhood graph for
-#'   spots and only if \code{c(data = "filtered")}. Default is \code{c(TRUE)}.
+#' @param use_cellseg Logical, whether to use cell segmentation if present. Only
+#'   applicable when the \code{segmented_outputs} directory is present. If TRUE
+#'   and the directory is present, then \code{bin_size} will be ignored and cell
+#'   segmentations will be used instead.
+#' @param add_graph Logical, if to add spatial neighborhood graph for
+#'   spots and only if \code{c(data = "filtered")}. Default is \code{FALSE}.
 #'   This is optional because for larger datasets, the graph can take a while to
 #'   compute.
-#' @param rotate Logical, whether to rotate the geometry, because usually the
-#'   grid of spots is slightly, but just very slightly, rotated from the perfect
-#'   horizontal line. The spots can be rotated so the square polygons are more
-#'   accurate, because for computational efficiency, \code{st_buffer} is used to
-#'   create the polygons which are not rotated. This is optional because the
-#'   rotation is very slight.
 #' @return An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
 #'   objects each element of which is for one bin size. They're not concatenated
 #'   since it might not make sense to perform joint analyses on the different
@@ -305,51 +346,71 @@ read10xVisiumSFE <- function(dirs,
 #'   \code{\link[Voyager]{plotSpatialFeature}}.
 #' @export
 #' @examples
-#' #
-readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
-                         sample_id = NULL,
+#' library(OSTA.data)
+#' id <- "VisiumHD_HumanColon_Oliveira"
+#' pa <- OSTA.data_load(id)
+#' dir.create(dir <- tempfile())
+#' unzip(pa, exdir=dir)
+#' 
+#' # Use binned output
+#' sfe1 <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
+#' 
+#' # Use cell segmentations
+#' sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
+#' 
+#' unlink(dir, recursive = TRUE)
+readVisiumHD <- function(data_dir, bin_size = 8L,
+                         sample_id = "sample01", use_cellseg = TRUE,
                          type = c("HDF5", "sparse"),
                          data = c("filtered", "raw"),
                          images = c("lowres", "hires"),
                          unit = c("full_res_image_pixel", "micron"),
-                         style = "W", zero.policy = NULL,
+                         style = "W", zero.policy = TRUE,
                          row.names = c("id", "symbol"),
                          flip = c("geometry", "image"),
-                         add_graph = FALSE, rotate = FALSE) {
+                         add_graph = FALSE) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
     if (.terra_flip()) flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
-    bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
-                          several.ok = TRUE) |>
-        as.integer() |>
-        sort()
     row.names <- match.arg(row.names)
-    dirs_check <- c(data_dir, list.files(data_dir, full.names = TRUE))
-    dirs_check <- normalizePath(dirs_check)
-    sanity_passed <-
-        grep("binned_out|square|um$", dirs_check) |> any()
-    if (sanity_passed) {
-        # match sample names with bin_size
+    if (use_cellseg) {
+        samples <- file.path(data_dir, "segmented_outputs")
+        if (!dir.exists(samples)) {
+            warning("segmented_outputs directory not found. Using bin_size and binned outputs instead.")
+            use_cellseg <- FALSE
+        }
+    }
+    if (!use_cellseg) {
+        bo <- normalizePath(file.path(data_dir, "binned_outputs"), mustWork = TRUE)
+        dirs_check <- list.files(bo, full.names = TRUE, include.dirs = TRUE)
+        bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
+                              several.ok = TRUE) |>
+            as.integer() |>
+            sort()
         samples <- grep(paste0(paste0(bin_size, collapse = "|"), "um$"), dirs_check, value = TRUE)
-    } else {
-        stop("data_dir should contain or be `square_0xxum`")
+        found <- dir.exists(samples)
+        if (!any(found))
+            stop("Binned output for bin size ", paste0(bin_size, collapse = ", "), "not found")
+        samples <- samples[found]
+        if (is.null(sample_id)) sample_id <- basename(samples)
+        if (length(sample_id) == 1L && length(samples) > 1L) {
+            sample_id <- paste0(sample_id, "_", bin_size, "um")
+        }
+        if (length(sample_id) != length(samples)) {
+            stop("Length of sample_id does not match number of resolutions found")
+        }
     }
-    if (is.null(sample_id)) sample_id <- basename(samples)
-    if (length(sample_id) == 1L && length(samples) > 1L) {
-        sample_id <- paste0(sample_id, "_", bin_size, "um")
-    }
-    if (length(sample_id) != length(samples)) {
-        stop("Length of sample_id does not match number of resolutions found")
-    }
+    
     sfes <- lapply(seq_along(samples), function(i) {
         .read10xVisium(samples[i], sample_id[i], type = type, data = data,
                        images = images, row.names = row.names, flip = flip,
                        add_graph = add_graph, VisiumHD = TRUE, unit = unit,
                        style = style, zero.policy = zero.policy,
-                       add_centroids = TRUE, rotate_hd = rotate)
+                       add_centroids = TRUE, 
+                       use_cellseg = use_cellseg)
     })
     if (length(sfes) == 1L) return(sfes[[1]])
     sfes
@@ -360,146 +421,21 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @param sf a sf object read from a `.geojson` file.
 #' @param type "POINT" for cell centroid, or "POLYGON" for cell segmentation 
 #' mask. Default is "POINT".
-#' @param img_height total length along the Y axis of the image. Obtained by 
-#' reading in `hires` or `lowre`s `.png` under `/spatial` folder with 
-#' `magick::image_read()`.
-#' @param scalef scaling factor from `/spatial/scalefactors_json.json` file
-#'
+#' @param e_ymax The ymax in the extent of the image
 #' @returns a sf object with Y-axis of the points or polygons flipped.
-#'
-#' @examples
-#' geo_data_flipped <- flip_sf_Y(sf = geo_data, type = "POLYGON", 
-#'                               img_height = 3886, scalef = 0.079)
 #' @noRd
-flip_sf_Y <- function(sf, type = "POINT", img_height, scalef){
-  st_geometry(sf) <- st_sfc( 
-    lapply(st_geometry(sf), function(geom) {
-      coords <- st_coordinates(geom)
-      coords[, 2] <- img_height/scalef - coords[, 2] 
-      if(type == "POINT"){
-        st_point(coords)
-      }else{ # type == "POLYGON"
-        st_polygon(list(matrix(coords[, 1:2], ncol = 2)))
-      }
-    }),
-    crs = st_crs(sf)
-  )
+.flip_sf_Y <- function(sf, type = "POINT", e_ymax){
+    coords <- st_coordinates(sf)
+    coords[, 2] <- e_ymax - coords[, 2] 
+    if (type == "POINT"){
+        g <- st_point(coords)
+    } else { # type == "POLYGON"
+        g <- sfheaders::sf_polygon(coords, x = "X", y = "Y", polygon_id = "L2")
+    }
+  st_geometry(sf) <- st_sfc(g, crs = st_crs(sf))
   
   return(sf)
 }
-
-
-#' Reader for Visium HD cell segmented output.
-#'
-#' @param td path to unzipped Visium HD data download with `/segmented_outputs`
-#' @param res "hires" or "lowres" for what .png to read in. 
-#'
-#' @returns a `SpatialFeatureExperiment` object.
-#'
-#' @examples
-#' vhdsfe <- readVisiumHDCellSeg(td = "~/Desktop", res = "hires")
-readVisiumHDCellSeg <- function(td, res){
-  if(res == "hires"){
-    png_name = "tissue_hires_image.png"
-    scalef_name = "tissue_hires_scalef"
-  }else{ # res = "lowres"
-    png_name = "tissue_lowres_image.png"
-    scalef_name = "tissue_lowres_scalef"
-  }
-  
-  ## Coord ---------------------------------------------------------------
-  # Read the GeoJSON file of cell segmentation
-  geo_data <- st_read(file.path(td, "segmented_outputs", 
-                                "cell_segmentations.geojson"))
-  scalef <- rjson::fromJSON(file = file.path(td, "segmented_outputs", "spatial", 
-                                             "scalefactors_json.json"))
-  image <- image_read(file.path(td, "segmented_outputs", 
-                                "spatial", png_name))
-  info <- image_info(image)
-  
-  # Get centroid
-  st_crs(geo_data) <- NA
-  rownames(geo_data) <- geo_data$cell_id
-  centroids <- st_centroid(geo_data)
-  centroids$cell_id <- as.character(centroids$cell_id)
-  
-  
-  ## Countmat ------------------------------------------------------------
-  countmat_file <- file.path(td, "segmented_outputs", 
-                             "filtered_feature_cell_matrix.h5")
-  vhdcellsce <- DropletUtils::read10xCounts(countmat_file, col.names = TRUE)
-  
-  colnames(vhdcellsce) <- sub("cellid_0*([0-9]+)-.*", "\\1", vhdcellsce$Barcode)
-  
-  rownames(vhdcellsce) <- rowData(vhdcellsce)$Symbol
-  rownames(vhdcellsce) <- make.unique(rownames(vhdcellsce))
-  
-  
-  ## Matching coordinates with count matrix ------------------------------
-  # Subset to common cells
-  common_cells <- intersect(centroids$cell_id, colnames(vhdcellsce))
-  
-  geo_data <- geo_data[geo_data$cell_id %in% common_cells, ]
-  centroids <- centroids[centroids$cell_id %in% common_cells, ]
-  vhdcellsce <- vhdcellsce[, colnames(vhdcellsce) %in% common_cells]
-  
-  # # Sanity check on ordering of cell ids
-  # all(as.character(centroids$cell_id) == colnames(vhdcellsce))
-  
-  # Extract coordinates
-  coords <- st_coordinates(centroids)
-  colnames(coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
-  
-  
-  ## Construct SPE -------------------------------------------------------
-  vhd <- SpatialExperiment(
-    assays = list(counts = as(counts(vhdcellsce), "dgCMatrix")),
-    rowData = rowData(vhdcellsce),
-    colData = cbind(colData(vhdcellsce), coords),
-    spatialCoordsNames = colnames(coords),
-    scaleFactors = scalef$tissue_hires_scalef, 
-    imageSources = file.path(td, "segmented_outputs", "spatial", png_name), 
-    loadImage = TRUE
-  )
-  imgData(vhd)$image_id <- res
-  
-  # vhd
-  
-  ## Coerce to SFE -------------------------------------------------------
-  vhdsfe <- toSpatialFeatureExperiment(vhd)
-  # vhdsfe
-  
-  ## Add polygons to colGeometries
-  colGeometries(vhdsfe)$cellSeg <- geo_data
-  
-  
-  # Flip Y in colGeometries -------------------------------------------------
-  # Flip Centroid Y
-  centroids <- colGeometries(vhdsfe)$centroids
-  colGeometries(vhdsfe)$updatecentroids <- 
-    flip_sf_Y(centroids, type = "POINT", img_height = info$height, 
-              scalef = imgData(vhdsfe)$scaleFactor) 
-  
-  # Flip Cellseg Y
-  cellSeg <- colGeometries(vhdsfe)$cellSeg
-  colGeometries(vhdsfe)$updatecellSeg <- 
-    flip_sf_Y(cellSeg, type = "POLYGON", img_height = info$height, 
-              scalef = imgData(vhdsfe)$scaleFactor) 
-  
-  # Flip Centroid Y in `spatialCoords()`
-  spatialCoords(vhdsfe)[, "pxl_row_in_fullres"] <- 
-    info$height/imgData(vhdsfe)$scaleFactor - 
-    spatialCoords(vhdsfe)[, "pxl_row_in_fullres"]
-  
-  # Add high res coords to `colData()`
-  vhdsfe[[paste0("pxl_col_in_", res)]] <- 
-    spatialCoords(vhdsfe)[, "pxl_col_in_fullres"] * imgData(vhdsfe)$scaleFactor
-  vhdsfe[[paste0("pxl_row_in_", res)]] <- 
-    spatialCoords(vhdsfe)[, "pxl_row_in_fullres"] * imgData(vhdsfe)$scaleFactor
-  
-  return(vhdsfe)
-}
-
 
 #' @importFrom sf st_nearest_feature st_distance
 #' @importFrom stats median

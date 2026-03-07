@@ -38,6 +38,7 @@
     if (image_type == "brightfield") {
         mask <- img < otsu(img)
     } else {
+        check_installed("gmp")
         fctx <- .get_factor(dim(img)[1])
         fcty <- .get_factor(dim(img)[2])
         img <- clahe(img, nx = fctx, ny = fcty)

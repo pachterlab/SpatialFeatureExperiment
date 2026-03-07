@@ -32,7 +32,8 @@
     \code{"bzip2"}, \code{"xz"} or \code{"zstd"} to indicate the type of
     compression to be used.  Ignored if \code{file} is a connection.}
 
-\item{refhook}{a hook function for handling reference objects.}
+\item{refhook}{a hook function for handling reference objects.
+                 See \code{\link[base]{unserialize}}.}
 }
 \value{
 Invisibly \code{NULL}.
