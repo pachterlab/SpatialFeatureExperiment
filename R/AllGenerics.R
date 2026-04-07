@@ -281,3 +281,7 @@ setGeneric("splitByCol", function(x, f, ...) standardGeneric("splitByCol"))
 setGeneric("findDebrisCells", function(x, max_cells = 5, distance_cutoff = 50,
                                        BNPARAM = NULL, BPPARAM = SerialParam()) 
     standardGeneric("findDebrisCells"))
+
+#' @export
+setGeneric("rotateMinRect", function(x, orientation = c("horizontal", "vertical"), ...) 
+    standardGeneric("rotateMinRect"))
