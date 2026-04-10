@@ -232,6 +232,8 @@ setGeneric(".mirror_img", function(x, direction, bbox_all, ...) standardGeneric(
 
 setGeneric(".rotate_img", function(x, degrees, bbox_all, ...) standardGeneric(".rotate_img"))
 
+setGeneric(".scale_img", function(x, factor, bbox_all, ...) standardGeneric(".scale_img"))
+
 #' @export
 setGeneric("scaleImg", function(x, factor, ...) standardGeneric("scaleImg"))
 
@@ -244,7 +246,9 @@ setGeneric("affineImg", function(x, M, v, ...) standardGeneric("affineImg"))
 #' @export
 setGeneric("cropImg", function(x, bbox, ...) standardGeneric("cropImg"))
 
-if (!isGeneric("saveRDS")) {setGeneric("saveRDS", function (object, file="", ascii=FALSE, version=NULL, compress=TRUE, refhook=NULL) standardGeneric("saveRDS"))}
+if (!isGeneric("readRDS")) {
+    setGeneric("readRDS", function(file, refhook = NULL) standardGeneric("readRDS"))
+}
 
 #' @export
 setGeneric("toExtImage", function(x, ...) standardGeneric("toExtImage"))
@@ -272,3 +276,18 @@ setGeneric("Img<-", function(x, sample_id = 1L, image_id, scale_fct = 1, value) 
 
 #' @export
 setGeneric("splitByCol", function(x, f, ...) standardGeneric("splitByCol"))
+
+#' @export
+setGeneric("findDebrisCells", function(x, max_cells = 5, distance_cutoff = 50,
+                                       BNPARAM = NULL, BPPARAM = SerialParam()) 
+    standardGeneric("findDebrisCells"))
+
+#' @export
+setGeneric("rotateMinRect", function(x, orientation = c("horizontal", "vertical"), ...) 
+    standardGeneric("rotateMinRect"))
+
+#' @export
+setGeneric("splitComponent", function(x, ...) standardGeneric("splitComponent"))
+
+#' @export
+setGeneric("getTissueBoundaryConcave", function(x, ...) standardGeneric("getTissueBoundaryConcave"))

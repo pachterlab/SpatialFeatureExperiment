@@ -46,6 +46,14 @@
 #' based edge weights for styles "raw", "W", and "B" since the distances
 #' themselves don't change, but the effects of other more complicated styles of
 #' re-normalization on spatial statistics should be further investigated.
+#' 
+#' By default, upon subsetting, the images are cropped to the bounding box of 
+#' the remaining cells. However, when the image is large and the bounding box 
+#' contains most of the original image, cropping is slow. Cropping can be
+#' disabled by \code{options(SFE_subset_crop = FALSE)}. Also, when the remaining
+#' part of the image is larger than a threshold, the image will not be cropped;
+#' the threshold can be set with the \code{SFE_subset_crop_max} option, such as
+#' \code{options(SFE_subset_crop_max = "100MB")}.
 #'
 #' @param x A \code{SpatialFeatureExperiment} object.
 #' @param i Row indices for subsetting.
@@ -210,3 +218,48 @@ setMethod(
         return(x)
     }
 )
+
+.find_if_crop <- function(x, sample_id, bbox) {
+    imgs <- imgData(x)[imgData(x)$sample_id == sample_id,]
+    not_crop <- vapply(seq_len(nrow(imgs)), function(i) {
+        img <- imgs$data[[i]]
+        if (!inherits(img, "SpatRasterImage")) return(FALSE)
+        fn <- imgSource(img)
+        if (is.na(fn)) return(FALSE)
+        size <- file.info(fn)[["size"]]
+        bbox_prop <- .get_bbox_prop(bbox, img)
+        th <- .size_str2num(getOption("SFE_subset_crop_max"))
+        if (size * bbox_prop > th) return(TRUE) else FALSE
+    }, FUN.VALUE = logical(1))
+    if (any(not_crop))
+        message("Some images are larger than ", 
+                getOption("SFE_subset_crop_max"),
+                " not cropping. Change threshold with the SFE_subset_crop_max option.")
+    getOption("SFE_subset_crop") & !any(not_crop)
+}
+
+.crop_imgs <- function(x, bboxes) {
+    # Crop all images across samples in an SFE object
+    if (nrow(imgData(x))) {
+        if (!getOption("SFE_subset_crop"))
+            message("SFE_subset_crop option set to FALSE, not cropping images")
+        samples <- sort(sampleIDs(x))
+        imgData(x) <- imgData(x)[order(imgData(x)$sample_id),]
+        if (length(samples) == 1L) {
+            bboxes <- matrix(bboxes, ncol = 1, dimnames = list(names(bboxes), samples))
+        }
+        do_crop <- vapply(samples, function(s) {
+            .find_if_crop(x, s, bboxes[,s])
+        }, FUN.VALUE = logical(1)) |> all()
+        if (do_crop) {
+            new_imgs <- lapply(samples, function(s) {
+                bbox_use <- bboxes[c("xmin", "xmax", "ymin", "ymax"),s]
+                img_data <- imgData(x)$data[imgData(x)$sample_id == s]
+                lapply(img_data, cropImg, bbox = bbox_use)
+            })
+            new_imgs <- unlist(new_imgs, recursive = FALSE)
+            imgData(x)$data <- I(new_imgs)
+        }
+    }
+    x
+}

@@ -6,28 +6,32 @@
 \alias{imgRaster,BioFormatsImage-method}
 \alias{imgRaster,ExtImage-method}
 \title{Get the image from *Image class}
+\usage{
+\S4method{imgRaster}{SpatRasterImage}(x, maxcell = 1e+07, col = terra::map.pal("viridis", 100))
+
+\S4method{imgRaster}{BioFormatsImage}(x, resolution = 4L)
+
+\S4method{imgRaster}{ExtImage}(x)
+}
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
+
+\item{maxcell}{positive integer. Maximum number of cells to use for the plot}
+
+\item{col}{vector of colors. The default is \code{map.pal("viridis", 100)}}
 
 \item{resolution}{Resolution to read in from OME-TIFF, defaults to 4, which
 is a medium resolution in Xenium.}
 }
 \value{
-\code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-  \code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
-  image of the specified resolution will be read into memory as
-  \code{AnnotatedImage} and \code{ExtImage}, which both inherit from
-  \code{EBImage::Image}.
+Since version 1.9.8, \code{imgRaster} will return an array of hex
+  colors, or the raster object, as required by \code{SpatialExperiment}. This
+  will break older SFE code calling \code{imgRaster}.
 }
 \description{
 In SFE, S4 classes inheriting from \code{VirtualSpatialImage} have been
 implemented to make these image classes compatible with
-\code{SpatialExperiment}. The \code{imgRaster} methods in SFE are meant to
-extract the original image from the \code{*Image} classes, such as
-\code{SpatRaster} from \code{SpatRasterImage}, and \code{Image} from
-\code{ExtImage} and \code{BioFormatsImage}. For \code{BioFormatsImage}, the
-image of the specified resolution will be read into memory as
-\code{AnnotatedImage}, which inherits from \code{EBImage::Image}.
+\code{SpatialExperiment}.
 }
 \seealso{
 Other image methods: 
@@ -35,6 +39,7 @@ Other image methods:
 \code{\link{affineImg}()},
 \code{\link{cropImg}()},
 \code{\link{dim,BioFormatsImage-method}},
+\code{\link{dim,ExtImage-method}},
 \code{\link{ext}()},
 \code{\link{imgSource}()},
 \code{\link{mirrorImg}()},

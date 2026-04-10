@@ -71,8 +71,8 @@ will load \code{BioFormatsImage} into memory.
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData("small")
-sfe2 <- transpose(sfe)
-sfe3 <- mirror(sfe)
+sfe2 <- SpatialFeatureExperiment::transpose(sfe)
+sfe3 <- SpatialFeatureExperiment::mirror(sfe)
 
 }
 \concept{Geometric operations}

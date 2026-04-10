@@ -20,6 +20,7 @@ test_that("Not supplying colGeometries, supplying coordinates in colData", {
         colData = coords1,
         spatialCoordsNames = c("col", "row")
     )
+    expect_equal(unit(sfe), "full_res_image_pixel")
     expect_equal(colGeometryNames(sfe), "centroids")
     expect_equal(as.character(st_geometry_type(colGeometry(sfe),
         by_geometry = FALSE

@@ -227,6 +227,7 @@ gdalParquetAvailable <- function() {
 #' \item{\code{cell_col}}{Column name for cell IDs.}
 #' \item{\code{fn}}{File path of the transcript spot file.}
 #' }
+#' @concept Utilities
 #' @export
 #' @concept Utilities
 getTechTxFields <- function(tech, data_dir = NULL) {
@@ -254,8 +255,8 @@ getTechTxFields <- function(tech, data_dir = NULL) {
             tech,
             Vizgen = .check_vizgen_fns(data_dir, "detected_transcripts.csv"),
             CosMX = grep("tx_file.csv",
-                         list.files(data_dir, pattern = "\\.csv$", full.names = TRUE),
-                         value = TRUE),
+                         list.files(data_dir, pattern = "\\.csv.*$", full.names = TRUE),
+                         value = TRUE)[1],
             Xenium = .check_xenium_fns(data_dir, "transcripts", .no_raw_bytes(data_dir))
         )
     }
@@ -273,45 +274,28 @@ getTechTxFields <- function(tech, data_dir = NULL) {
     features
 }
 
-.check_tx_file <- function(file, spatialCoordsNames, gene_col, phred_col,
-                           min_phred, flip, BPPARAM = SerialParam()) {
-    if (is.character(file)) {
-        ext <- file_ext(file)
-        if (!ext %in% c("csv", "gz", "tsv", "txt", "parquet")) {
-            stop("The file must be one of csv, gz, tsv, txt, or parquet")
-        }
-        if (ext == "parquet") {
-            check_installed("arrow")
-            mols <- arrow::read_parquet(file)
-            # convert cols with raw bytes to character
-            # NOTE: can take a while.
-            mols <- .rawToChar_df(mols, BPPARAM = BPPARAM)
-            # sanity, convert to data.table
-            if (!inherits(mols, "data.table")) {
-                mols <- data.table::as.data.table(mols)
-            }
-        } else {
-            mols <- fread(file)
-        }
-    } else mols <- file
+.size_str2num <- function(x) {
+    x <- toupper(x)
+    unit <- gsub("^[0-9.]+\\s?", "", x)
+    if (!unit %in% c("MB", "GB"))
+        stop("x must be in either MB or GB.")
+    x <- as.numeric(gsub("\\s?[A-Z.]+$", "", x))
+    switch (unit,
+            MB = x * 1024^2,
+            GB = x * 1024^3
+    )
+}
 
-    names(mols)[names(mols) == gene_col] <- "gene"
-    gene_col <- "gene"
-    ind <- !spatialCoordsNames[1:2] %in% names(mols)
-    if (any(ind)) {
-        col_offending <- setdiff(spatialCoordsNames[1:2], names(mols))
-        ax <- c("x", "y")
-        stop(paste(ax[ind], collapse = ", "), " coordinate column(s) ",
-             paste(col_offending, collapse = ", "), " not found.")
-    }
-    spatialCoordsNames <- intersect(spatialCoordsNames, names(mols))
-    if (flip) {
-        y_name <- spatialCoordsNames[2]
-        if (!is.data.table(mols)) ..y_name <- y_name
-        mols[,y_name] <- -mols[,..y_name]
-    }
-    if (phred_col %in% names(mols) && !is.null(min_phred)) {
-        mols <- mols[mols[[phred_col]] >= min_phred,]
-    }
-    mols
+.get_bbox_prop <- function(bbox, img) {
+    tot_area <- ext(img) |> st_bbox() |> st_as_sfc() |> st_area()
+    bb_area <- bbox |> st_bbox() |> st_as_sfc() |> st_area()
+    bb_area/tot_area
+}
+
+.terra_flip <- function() {
+    suppressWarnings(img <- rast(system.file(file.path("extdata", "sample01", 
+                                                       "outs", "spatial", 
+                                                       "tissue_lowres_image.png"),
+                                             package = "SpatialFeatureExperiment")))
+    as.vector(img[18,4,2] > 200)
 }

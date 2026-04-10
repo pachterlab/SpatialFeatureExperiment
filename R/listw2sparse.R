@@ -6,35 +6,6 @@
     out
 }
 
-#' Convert listw into sparse adjacency matrix
-#'
-#' Edge weights are used in the adjacency matrix. Because most elements of the
-#' matrix are 0, using sparse matrix greatly reduces memory use.
-#'
-#' @param listw A \code{listw} object for spatial neighborhood graph.
-#' @return A sparse \code{dgCMatrix}, whose row represents each cell or spot and
-#'   whose columns represent the neighbors. The matrix does not have to be
-#'   symmetric. If \code{region.id} is present in the \code{listw} object, then
-#'   it will be the row and column names of the output matrix.
-#' @export
-#' @importFrom Matrix sparseMatrix
-#' @concept Spatial neighborhood graph
-#' @examples
-#' library(SFEData)
-#' sfe <- McKellarMuscleData("small")
-#' g <- findVisiumGraph(sfe)
-#' mat <- listw2sparse(g)
-listw2sparse <- function(listw) {
-    lifecycle::deprecate_warn("1.9.0", "listw2sparse()", "spatialreg::as_dgRMatrix_listw()")
-    i <- rep(seq_along(listw$neighbours), times = card(listw$neighbours))
-    j <- unlist(listw$neighbours)
-    x <- unlist(listw$weights)
-    n <- length(listw$neighbours)
-    region_id <- attr(listw$neighbours, "region.id")
-    sparseMatrix(i = i, j = j, x = x, dims = rep(n, 2),
-                 dimnames = list(region_id, region_id))
-}
-
 #' Convert multiple listw graphs into a single sparse adjacency matrix
 #'
 #' Each sample in the SFE object has a separate spatial neighborhood graph.
@@ -48,11 +19,8 @@ listw2sparse <- function(listw) {
 #' with the original spatial neighborhood graphs of the samples on the diagonal.
 #' When the input is an SFE object, the rows and columns will match the column
 #' names of the SFE object.
+#' @concept Utilities
 #' @export
-#' @concept Spatial neighborhood graph
-#' @examples
-#' # example code
-#'
 multi_listw2sparse <- function(listws) {
     slices <- list()
     n <- length(listws)

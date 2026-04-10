@@ -8,15 +8,32 @@ fp <- tempfile()
 fn <- XeniumOutput("v2", file_path = fp)
 grid <- st_make_grid(x = st_as_sfc(st_bbox(c(xmin=0, xmax=1027, ymin=4, ymax=1009))),
                      cellsize = 50)
+gene_names <- read_parquet(file.path(fn, "transcripts.parquet"), col_select = "feature_name")[[1]] |> unique()
 test_that("Directly call aggregateTx to aggregate from file, specify `by`", {
     tx_agged <- aggregateTx(file.path(fn, "transcripts.parquet"), by = grid,
                             spatialCoordsNames = c("x_location", "y_location"),
                             gene_col = "feature_name")
     expect_s4_class(tx_agged, "SpatialFeatureExperiment")
+    expect_true(inherits(counts(tx_agged), "matrix"))
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
-    expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(tx_agged))-2500) < sqrt(.Machine$double.eps)))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
+})
+
+test_that("Directly call aggregateTx, sparse = TRUE", {
+    tx_agged <- aggregateTx(file.path(fn, "transcripts.parquet"), by = grid,
+                            spatialCoordsNames = c("x_location", "y_location"),
+                            gene_col = "feature_name", sparse = TRUE)
+    expect_s4_class(tx_agged, "SpatialFeatureExperiment")
+    expect_s4_class(counts(tx_agged), "dgCMatrix")
+    tx_agged$nCounts <- colSums(counts(tx_agged))
+    # empty cells are removed
+    expect_true(all(tx_agged$nCounts > 0))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
 
 test_that("aggregateTx from file, generate grid", {
@@ -27,7 +44,9 @@ test_that("aggregateTx from file, generate grid", {
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
-    expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(tx_agged))-2500) < sqrt(.Machine$double.eps)))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
 
 test_that("Call aggregateTx for a data frame", {
@@ -39,7 +58,9 @@ test_that("Call aggregateTx for a data frame", {
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
-    expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(tx_agged))-2500) < sqrt(.Machine$double.eps)))
+    expect_true(all(rownames(tx_agged) %in% gene_names))
+    expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
 
 fn_vizgen <- VizgenOutput("cellpose", file_path = fp)
@@ -51,7 +72,7 @@ test_that("aggregateTxTech for Vizgen", {
     sfe$nCounts <- colSums(counts(sfe))
     # empty cells are removed
     expect_true(all(sfe$nCounts > 0))
-    expect_true(all(st_area(colGeometry(sfe)) == 400))
+    expect_true(all(abs(st_area(colGeometry(sfe))-400) < sqrt(.Machine$double.eps)))
     # Image is aligned
     ids <- imgData(sfe)
     expect_true(nrow(ids) > 1L)
@@ -73,7 +94,7 @@ test_that("aggregateTxTech for Xenium", {
     sfe$nCounts <- colSums(counts(sfe))
     # empty cells are removed
     expect_true(all(sfe$nCounts > 0))
-    expect_true(all(st_area(colGeometry(sfe)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(sfe))-2500) < sqrt(.Machine$double.eps)))
     # Image is aligned
     ids <- imgData(sfe)
     expect_true(nrow(ids) > 0)
@@ -186,6 +207,26 @@ test_that("aggregate for SFE, multiple samples", {
     expect_true(is.numeric(agg2$logical))
     expect_true(all(agg2$logical >= 0L))
     expect_equal(sampleIDs(sfe2), sampleIDs(agg2))
+})
+
+test_that("aggregate for SFE using txSpots, multiple samples", {
+    agg2 <- aggregate(sfe2, cellsize = 50, rowGeometryName = "txSpots")
+    expect_equal(sampleIDs(agg2), sampleIDs(sfe2))
+    expect_equal(nrow(agg2), nrow(sfe2))
+    expect_equal(rowGeometries(agg2), rowGeometries(sfe2))
+})
+
+test_that("Empty geometries in rowGeometry", {
+    sfe <- readXenium(fn, add_molecules = TRUE)
+    bbox2 <- c(xmin=700, xmax=850, ymin=-800, ymax=-650)
+    sfe_sub <- crop(sfe, bbox2)
+    
+    txSpots(sfe_sub) <- st_cast(txSpots(sfe_sub), "MULTIPOINT") |> st_zm()
+    sfe_agg_cell <- aggregate(sfe_sub, cellSeg(sfe_sub), rowGeometryName = "txSpots")
+    expect_s4_class(counts(sfe_agg_cell), "dgCMatrix")
+    expect_true(ncol(sfe_agg_cell) <= ncol(sfe_sub)) # some cells don't have transcripts here
+    expect_equal(nrow(sfe_agg_cell), nrow(sfe_sub))
+    expect_equal(rowGeometries(sfe_agg_cell), rowGeometries(sfe_sub))
 })
 
 unlink(fn, recursive = TRUE)

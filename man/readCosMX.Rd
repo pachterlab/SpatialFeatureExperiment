@@ -28,7 +28,7 @@ be stored in a new column in \code{\link[SpatialExperiment]{colData}}, if not al
 Default = \code{sample01}.}
 
 \item{min_area}{Minimum cell area in square microns or pixel units (eg for CosMX).
-Anything smaller will be considered artifact or debris and removed. 
+Anything smaller will be considered artifact or debris and removed.
 Default to `NULL`, ie no filtering of polygons.}
 
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
@@ -37,11 +37,11 @@ object.}
 \item{split_cell_comps}{Logical, whether to split transcript spot geometries
 by cell compartment. Only relevant when `add_molecules = TRUE`.}
 
-\item{BPPARAM}{A \code{\link{BiocParallelParam}} object specifying parallel
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
   \enumerate{ \item To load cell segmentation from HDF5 files from different
   fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link{BiocParallelParam}} object. When there are numerous
+  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
   FOVs, reading in the geometries can be time consuming, so we recommend
   using a server and larger number of threads. This argument is not used if
   \code{use_cellpose = TRUE} and the parquet file is present.
@@ -73,7 +73,8 @@ An SFE object. Cell polygons are written to
 }
 \description{
 This function reads the standard CosMX output into an SFE object, as in
-"Basic Data Files" on the Nanostring website.
+"Basic Data Files" on the Nanostring website. For new version of CosMX, these
+files are the flat files in the AtoMX output.
 }
 \examples{
 fp <- tempfile()

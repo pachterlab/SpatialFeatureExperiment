@@ -8,6 +8,9 @@
 #' SFE object by \code{sample_id} so each sample will become a separate SFE
 #' object. The \code{splitContiguity} function splits the SFE object by
 #' contiguity of an \code{annotGeometry}, which by default is "tissueBoundary".
+#' The \code{splitComponent} function splits the SFE object by graph component,
+#' so if there are disconnected components in the graph, then each component 
+#' will become a new SFE object.
 #'
 #' @inheritParams crop
 #' @param x An SFE object
@@ -25,6 +28,7 @@
 #' @param min_area Minimum area in the same unit as the geometry coordinates
 #'   (squared) for each piece to be considered a separate piece when splitting
 #'   by contiguity. Only pieces that are large enough are considered.
+#' 
 #' @return A list of SFE objects.
 #' @concept Geometric operations
 #' @name splitByCol
@@ -104,3 +108,69 @@ splitContiguity <- function(x, colGeometryName = 1L,
     }
     splitByCol(x, ag_union, colGeometryName = colGeometryName, cover = cover)
 }
+
+#' Split by graph component
+#'
+#' Split either a SFE object or \code{sf} or \code{sfc} by graph component of a
+#' spatial neighborhood graph.
+#' 
+#' @inheritParams findDebrisCells
+#' @param x A SFE object, or \code{sf} or \code{sfc}.
+#' @param colGraphName Name of graph to use for \code{splitComponent}. We
+#'   recommend distance based neighbors (`dnearneigh` in
+#'   \code{\link{findSpatialNeighbors}}), and recommend NOT using k nearest
+#'   neighbors (`knearneigh`) or triangulation (`tri2nb`).
+#' @param min_cells Minimum number of cells per graph component; components with
+#'   fewer than this number of cells are considered debris and removed.
+#' @param distance_cutoff For the \code{sf} and \code{sfc} methods, the distance
+#'   cutoff used to construct a distance-based spatial neighborhood graph, in
+#'   the same unit as the spatial coordinates. Anything within this distance is
+#'   considered a neighbor.
+#' @importFrom spdep n.comp.nb
+#' @importFrom S4Vectors split
+#' @return A list of the same object type as the input, each element for one
+#'   component.
+#' @concept Geometric operations
+#' @name splitComponent
+NULL
+
+#' @rdname splitComponent
+#' @export
+setMethod("splitComponent", "SpatialFeatureExperiment",
+          function(x, colGraphName = 1L, min_cells = 100) {
+              g <- colGraph(x, colGraphName)
+              comps <- n.comp.nb(g$neighbours)
+              n_cells <- table(comps$comp.id)
+              sfes <- split(x, comps$comp.id)
+              if (any(n_cells < min_cells)) {
+                  inds <- n_cells >= min_cells
+                  sfes <- sfes[inds]
+              }
+              sfes
+          })
+
+.split_component_sfc <- function(x, min_cells = 100, distance_cutoff = 50,
+                                 BNPARAM = NULL, BPPARAM = SerialParam()) {
+    geo_use <- x
+    if (st_geometry_type(x, by_geometry = FALSE) != "POINT")
+        geo_use  <- st_centroid(x)
+    geo_use <- st_coordinates(geo_use)[,1:2]
+    g <- .dnn_bioc(geo_use, distance_cutoff, BNPARAM = BNPARAM,
+                   BPPARAM = BPPARAM)
+    comps <- spdep::n.comp.nb(g)
+    n_cells <- table(comps$comp.id)
+    out <- split(x, comps$comp.id)
+    if (any(n_cells < min_cells)) {
+        inds <- n_cells >= min_cells
+        out <- out[inds]
+    }
+    out
+}
+
+#' @rdname splitComponent
+#' @export
+setMethod("splitComponent", "sf", .split_component_sfc)
+
+#' @rdname splitComponent
+#' @export
+setMethod("splitComponent", "sfc", .split_component_sfc)

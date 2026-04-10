@@ -22,8 +22,17 @@ polygons of the spots.
 For adding the spot polygons to SFE objects converted from SPE.
 }
 \examples{
-library(SpatialExperiment)
-example(read10xVisium)
+library(VisiumIO)
+# From examples of TENxVisium()
+sample_dir <- system.file(
+file.path("extdata", "10xVisium", "section1"),
+package = "VisiumIO"
+)
+## using spacerangerOut folder
+tv <- TENxVisium(
+    spacerangerOut = file.path(sample_dir, "outs"), processing = "raw", images = "lowres"
+)
+spe <- import(tv)
 # There can't be suplicate barcodes
 colnames(spe) <- make.unique(colnames(spe), sep = "-")
 rownames(spatialCoords(spe)) <- colnames(spe)

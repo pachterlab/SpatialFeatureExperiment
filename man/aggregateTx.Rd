@@ -19,7 +19,11 @@ aggregateTx(
   square = TRUE,
   flat_topped = FALSE,
   new_geometry_name = "bins",
-  unit = "micron"
+  unit = "micron",
+  sparse = FALSE,
+  BPPARAM = SerialParam(),
+  save_memory = FALSE,
+  .orig_nrows = NULL
 )
 
 aggregateTxTech(
@@ -35,7 +39,10 @@ aggregateTxTech(
   cellsize = NULL,
   square = TRUE,
   flat_topped = FALSE,
-  new_geometry_name = "bins"
+  new_geometry_name = "bins",
+  sparse = FALSE,
+  BPPARAM = SerialParam(),
+  save_memory = FALSE
 )
 }
 \arguments{
@@ -79,6 +86,23 @@ output. Defaults to "bins".}
 
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
+
+\item{sparse}{Logical, whether the gene count matrix from aggregating
+transcript spots should be sparse. When the bins are large, the matrix will
+not be very sparse so using sparse matrix will not save memory, but when
+the bins are small, sparsity is worth it.}
+
+\item{BPPARAM}{bpparam object to specify parallel computing over genes. If a
+lot of memory is used, then stick to `SerialParam()`. Using multicore in
+the R level when `save_memory = TRUE` works and results into faster
+computation.}
+
+\item{save_memory}{Logical, if TRUE, then the transcript spots will not all
+be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
+link to the data and then transcript spots of one gene is loaded into
+memory at a time.}
+
+\item{.orig_nrows}{Only used internally in the SFE method of \code{aggregate}}
 
 \item{data_dir}{Top level output directory.}
 

@@ -435,6 +435,8 @@ NULL
     if (length(sampleIDs(x)) > 1L && !grepl(paste0(sample_id, "$"), type)) {
         type <- paste(type, sample_id, sep = "_")
     }
+    if (length(sampleIDs(x)) == 1L && !type %in% rg_names)
+        type <- paste(type, sample_id, sep = "_")
     type
 }
 
@@ -548,7 +550,7 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
 #' @export
 `rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
                               partial = FALSE, translate = TRUE, value) {
-    check_names <- !identical(sample_id, "all") && length(sampleIDs(x)) > 1L
+    check_names <- !identical(sample_id, "all") && length(setdiff(sampleIDs(x), sample_id))
     sample_id0 <- sample_id
     sample_id <- .check_sample_id(x, sample_id, one = FALSE, mustWork = FALSE)
     existing <- rowGeometries(x, sample_id = "all")
@@ -615,8 +617,17 @@ txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
 #' @concept Geometric operations
 #' @export
 #' @examples
-#' library(SpatialExperiment)
-#' example(read10xVisium)
+#' library(VisiumIO)
+#' # From examples of TENxVisium()
+#' sample_dir <- system.file(
+#' file.path("extdata", "10xVisium", "section1"),
+#' package = "VisiumIO"
+#' )
+#' ## using spacerangerOut folder
+#' tv <- TENxVisium(
+#'     spacerangerOut = file.path(sample_dir, "outs"), processing = "raw", images = "lowres"
+#' )
+#' spe <- import(tv)
 #' # There can't be suplicate barcodes
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)

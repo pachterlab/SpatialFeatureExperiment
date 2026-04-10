@@ -56,6 +56,14 @@ some rescaling. This should give the same results as recomputing the distance
 based edge weights for styles "raw", "W", and "B" since the distances
 themselves don't change, but the effects of other more complicated styles of
 re-normalization on spatial statistics should be further investigated.
+
+By default, upon subsetting, the images are cropped to the bounding box of 
+the remaining cells. However, when the image is large and the bounding box 
+contains most of the original image, cropping is slow. Cropping can be
+disabled by \code{options(SFE_subset_crop = FALSE)}. Also, when the remaining
+part of the image is larger than a threshold, the image will not be cropped;
+the threshold can be set with the \code{SFE_subset_crop_max} option, such as
+\code{options(SFE_subset_crop_max = "100MB")}.
 }
 \examples{
 # Just like subsetting matrices and SingleCellExperiment

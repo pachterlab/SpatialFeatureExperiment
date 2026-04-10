@@ -56,6 +56,7 @@ library(sf)
 library(Matrix)
 library(RBioFormats)
 library(spdep)
+library(VisiumIO)
 set.SubgraphOption(FALSE)
 ```
 
@@ -374,7 +375,7 @@ At present, this is merely a string and SFE doesn't perform unit conversion.
 Unlike in `SpatialExperiment`, SFE reads the images as `terra::SpatRaster` objects, so the images are not loaded into memory unless necessary. Also, with `terra`, if a larger image is associated with the SFE object, it will not be fully loaded into memory when plotted; rather, it's downsampled.
 
 ```{r}
-class(imgRaster(getImg(sfe3)))
+class(getImg(sfe3))
 ```
 
 ## Vizgen MERFISH output
@@ -405,8 +406,6 @@ list.files(dir_use)
 ```
 
 ```{r}
-# RBioFormats issue: https://github.com/aoles/RBioFormats/issues/42
-try(sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
 (sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
 ```
 
@@ -437,8 +436,8 @@ A read function for Visium HD is in progress. Contribution for Akoya, Molecular 
 ## Coercion from `SpatialExperiment`
 SPE objects can be coerced into SFE objects. If column geometries or spot diameter are not specified, then a column geometry called "centroids" will be created.
 ```{r}
-spe <- read10xVisium(samples, sample_ids, type = "sparse", data = "filtered", 
-  images = "hires", load = FALSE)
+spe <- TENxVisium(spacerangerOut = file.path(samples[1], "outs"), processing = "filtered",
+                  images = c("lowres", "hires")) |> import()
 ```
 
 For the coercion, column names must not be duplicate.
@@ -560,14 +559,14 @@ When an image is transposed, it is flipped about the line going from top left to
 
 ```{r, fig.width=1, fig.height=1}
 img <- getImg(sfe3, image_id = "hires")
-plot(imgRaster(img))
-plot(transposeImg(img) |> imgRaster())
+plot(img)
+plot(transposeImg(img))
 ```
 
 Arguments for the SFE method of `mirrorImg()` differ from those of the SPE method, to match  `terra::flip()`:
 ```{r, fig.width=1, fig.height=1}
-plot(mirrorImg(img, direction = "vertical") |> imgRaster())
-plot(mirrorImg(img, direction = "horizontal") |> imgRaster())
+plot(mirrorImg(img, direction = "vertical"))
+plot(mirrorImg(img, direction = "horizontal"))
 ```
 
 Here we apply the transformation to an SFE object, where the image specified by the sample and image IDs are transformed:

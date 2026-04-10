@@ -75,21 +75,18 @@
     mult_3d <- rbind(mult, 0) |> cbind(c(0,0,1))
     # It's fine to put it here since I don't expect more than a handful of geometries
     if (is.null(st_z_range(g))) {
-        g$geometry <- g$geometry * mult + add
+        g <- g * mult + add
     } else {
         # Somehow it drops Z when add is a 2x1 matrix but not when it's a vector
-        g$geometry <- g$geometry * mult_3d + add
+        g <- g * mult_3d + add
     }
     g
 }
 
-.transform_geometry.sf <- function(g, mult, add) {
+.transform_geometry_sfc <- function(g, mult, add) {
+    # Need to remove empty geometries before this
     gt <- st_geometry_type(g, FALSE) |> as.character()
     if (gt == "GEOMETRY") return(.transform_geometry_sf(g, mult, add))
-    # Empty geometries causes trouble in st_coordinates
-    inds <- !st_is_empty(g)
-    rns <- rownames(g)[inds]
-    g <- g[inds,]
     coords <- st_coordinates(g)
     coords[,c("X","Y")] <- .transform_geometry(coords[,c("X","Y")], mult, add)
     coord_names <- if (is.null(st_z_range(g))) c("X","Y") else c("X","Y","Z")
@@ -102,9 +99,29 @@
                 geometryType = gt,
                 group_col = group_col, id_col = id_col, subid_col = subid_col,
                 check = FALSE)
-    st_geometry(g) <- st_geometry(g2)
+    g2$geometry
+}
+
+.transform_geometry.sf <- function(g, mult, add) {
+    # Empty geometries causes trouble in st_coordinates
+    inds <- !st_is_empty(g)
+    rns <- rownames(g)[inds]
+    g <- g[inds,]
+    g2 <- .transform_geometry_sfc(st_geometry(g), mult, add)
+    st_geometry(g) <- g2
     rownames(g) <- rns
     g
+}
+
+.transform_geometry.sfc <- function(g, mult, add) {
+    inds <- !st_is_empty(g)
+    g <- g[inds]
+    .transform_geometry_sfc(g, mult, add)
+}
+
+.transform_geometry.sfg <- function(g, mult, add) {
+    out <- .transform_geometry(st_geometry(g))
+    out[[1]] # The number of pieces shouldn't change
 }
 
 .transform_geometry.matrix <- function(g, mult, add) {
@@ -181,8 +198,7 @@
     P <- matrix(c(1,0,0,-1), nrow = 2)
     M2 <- P %*% M %*% P
     v <- center_new - M2 %*% center_old
-    out <- EBImage::affine(imgRaster(img), t(cbind(M2, v)),
-                           output.dim = dim_new_px)
+    out <- EBImage::affine(img, t(cbind(M2, v)), output.dim = dim_new_px)
     ExtImage(img = out, ext = bbox_new)
 }
 

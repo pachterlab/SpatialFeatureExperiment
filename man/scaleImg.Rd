@@ -3,9 +3,12 @@
 \name{scaleImg}
 \alias{scaleImg}
 \alias{scaleImg,AlignedSpatialImage-method}
+\alias{scaleImg,BioFormatsImage-method}
 \title{Scale image}
 \usage{
 \S4method{scaleImg}{AlignedSpatialImage}(x, factor, ...)
+
+\S4method{scaleImg}{BioFormatsImage}(x, factor, ...)
 }
 \arguments{
 \item{x}{An object of class \code{*Image} as implemented in this package.}
@@ -31,6 +34,7 @@ Other image methods:
 \code{\link{affineImg}()},
 \code{\link{cropImg}()},
 \code{\link{dim,BioFormatsImage-method}},
+\code{\link{dim,ExtImage-method}},
 \code{\link{ext}()},
 \code{\link{imgRaster}()},
 \code{\link{imgSource}()},

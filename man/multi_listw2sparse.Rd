@@ -22,8 +22,4 @@ spatial neighborhood graph from the different samples, where the different
 samples would be disconnected components of the graph. This combined
 adjacency matrix can be used in MULTISPATI PCA.
 }
-\examples{
-# example code
-
-}
-\concept{Spatial neighborhood graph}
+\concept{Utilities}

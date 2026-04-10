@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.8.3
+Version: 1.13.2
 Authors@R: 
     c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
     role = c("aut", "cre"),
@@ -20,7 +20,7 @@ Description: A new S4 class integrating Simple Features with the R package sf
     be used.
 Imports:
     Biobase,
-    BiocGenerics,
+    BiocGenerics (>= 0.51.2),
     BiocNeighbors,
     BiocParallel,
     data.table,
@@ -46,7 +46,7 @@ Imports:
     zeallot
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Collate: 
     'AllGenerics.R'
     'utils.R'
@@ -58,6 +58,7 @@ Collate:
     'changeSampleIDs.R'
     'coerce.R'
     'data.R'
+    'debris.R'
     'df2sf.R'
     'dimGeometries.R'
     'featureData.R'
@@ -71,10 +72,12 @@ Collate:
     'localResults.R'
     'read.R'
     'reexports.R'
+    'rotateMinRect.R'
     'saveRDS.R'
     'spatialGraphs.R'
     'split.R'
     'subset.R'
+    'tissue_boundary.R'
     'transformation.R'
     'updateObject.R'
     'validity.R'
@@ -83,7 +86,9 @@ Suggests:
     arrow,
     BiocStyle,
     dplyr,
+    gmp,
     knitr,
+    OSTA.data,
     RBioFormats,
     rhdf5,
     rmarkdown,
@@ -95,12 +100,13 @@ Suggests:
     sparseMatrixStats,
     testthat (>= 3.0.0),
     tidyr,
+    VisiumIO,
     Voyager (>= 1.7.2),
     withr,
     xml2
 Config/testthat/edition: 3
 Depends: 
-    R (>= 4.2.0)
+    R (>= 4.3.0)
 VignetteBuilder: knitr
 biocViews:
     DataRepresentation,

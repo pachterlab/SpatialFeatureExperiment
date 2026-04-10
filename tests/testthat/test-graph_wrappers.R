@@ -165,10 +165,30 @@ test_that("Correct Visium graph", {
     expect_equal(attrs_reconst$args$style, "W")
 })
 
+library(OSTA.data)
+id <- "VisiumHD_HumanColon_Oliveira"
+pa <- OSTA.data_load(id)
+dir.create(dir <- tempfile())
+unzip(pa, exdir=dir)
+
 test_that("Correct Visium HD graph", {
-    testthat::skip()
-    dir <- "~/WoundAnalysis/Visium-HD data/YVW01_binned_outputs/"
-    sfe <- readVisiumHD(dir, bin_size = 16)
+    sfe <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
     g <- findVisiumHDGraph(sfe)
     expect_s3_class(g, "listw")
+})
+
+test_that("Error message when cell segmentation are read", {
+    sfe <- readVisiumHD(dir, bin_size = 16)
+    expect_error(findVisiumHDGraph(sfe), "are required")
+})
+
+unlink(dir, recursive = TRUE)
+
+test_that("Show method name in error message", {
+    mat <- matrix(rnorm(9), 3, 3)
+    # Get duplicated coordinates
+    coords <- cbind(c(1,2,1), c(1,2,1))
+    sfe <- SpatialFeatureExperiment(assays = list(counts = mat),
+                                    spatialCoords = coords)
+    expect_error(findSpatialNeighbors(sfe), "tri2nb")
 })

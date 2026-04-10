@@ -5,18 +5,6 @@ library(sf)
 sfe <- McKellarMuscleData("small")
 g <- findVisiumGraph(sfe)
 
-test_that("listw2sparse gives correct results", {
-    expect_warning(mat <- listw2sparse(g))
-    expect_s4_class(mat, "dgCMatrix")
-    expect_equal(nrow(mat), ncol(sfe))
-    expect_equal(ncol(mat), ncol(sfe))
-    expect_equal(Matrix::rowSums(mat > 0), card(g$neighbours), ignore_attr = TRUE)
-    m2 <- listw2mat(g)
-    expect_equal(as.matrix(mat), m2, ignore_attr = TRUE)
-    expect_equal(rownames(mat), rownames(m2))
-    expect_equal(rownames(mat), colnames(mat))
-})
-
 nb1 <- grid2nb(d = c(5,5))
 nb2 <- grid2nb(d = c(3,3))
 attr(nb1, "region.id") <- LETTERS[1:25]

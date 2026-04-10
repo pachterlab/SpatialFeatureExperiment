@@ -33,7 +33,7 @@ annotNPred(
 samples.}
 
 \item{pred}{Predicate function to use, defaults to
-\code{\link{st_intersects}}.}
+\code{\link[sf]{st_intersects}}.}
 
 \item{yx}{Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
 symmetric predicates, the results should be the same. When x has a large

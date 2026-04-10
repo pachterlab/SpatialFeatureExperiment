@@ -40,7 +40,7 @@ sfe <- updateObject(sfe)
 SFEVersion(sfe)
 }
 \seealso{
-\code{\link{objectVersion}}, which is used to determine if the
+\code{\link[SingleCellExperiment]{objectVersion}}, which is used to determine if the
   object is up-to-date.
 }
 \concept{SpatialFeatureExperiment class}

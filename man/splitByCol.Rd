@@ -62,6 +62,9 @@ become a separate SFE object). The \code{splitSamples} function splits the
 SFE object by \code{sample_id} so each sample will become a separate SFE
 object. The \code{splitContiguity} function splits the SFE object by
 contiguity of an \code{annotGeometry}, which by default is "tissueBoundary".
+The \code{splitComponent} function splits the SFE object by graph component,
+so if there are disconnected components in the graph, then each component 
+will become a new SFE object.
 }
 \examples{
 # example code

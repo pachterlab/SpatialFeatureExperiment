@@ -57,11 +57,11 @@ Default = \code{sample01}.}
 \code{*Geometries} arguments have ordinary data frames, to identify the
 columns in the ordinary data frames that specify the spatial coordinates.
 If \code{colGeometries} is not specified, then this argument will behave as
-in \code{\link{SpatialExperiment}}, but \code{colGeometries} will be given
+in \code{\link[SpatialExperiment]{SpatialExperiment}}, but \code{colGeometries} will be given
 precedence if provided.}
 
 \item{spatialCoords}{A numeric matrix containing columns of spatial
-coordinates, as in \code{\link{SpatialExperiment}}. The coordinates are
+coordinates, as in \code{\link[SpatialExperiment]{SpatialExperiment}}. The coordinates are
 centroids of the entities represented by the columns of the gene count
 matrix. If \code{colGeometries} is also specified, then it will be given
 priority and a warning is issued. Otherwise, the \code{sf} representation
@@ -124,8 +124,8 @@ for spatial neighborhood graphs.}
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
 
-\item{...}{Additional arguments passed to the \code{\link{SpatialExperiment}}
-and \code{\link{SingleCellExperiment}} constructors.}
+\item{...}{Additional arguments passed to the \code{\link[SpatialExperiment]{SpatialExperiment}}
+and \code{\link[SingleCellExperiment]{SingleCellExperiment}} constructors.}
 }
 \value{
 A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}

@@ -19,7 +19,7 @@ sp_enr2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
 pos2 <- read.csv(file.path(outdir, "sample02", "outs", "spatial",
                            "tissue_positions.csv"))
 
-samples <- file.path(outdir, paste0("sample0", 1:2))
+samples <- file.path(outdir, paste0("sample0", 1:2), "outs")
 
 rd1 <- sp_enr1[,4:9]
 rd2 <- sp_enr2[,4:9]
@@ -31,7 +31,7 @@ rd_expect <- cbind(Feature.Type = sp_enr1$Feature.Type, rd1, rd2)
 cd_expect <- rbind(bc_flou1, bc_flou2)[, 3:8]
 
 test_that("Correctly read Space Ranger output", {
-    sfe <- read10xVisiumSFE(samples, type = "sparse", data = "filtered")
+    sfe <- read10xVisiumSFE(dirs = samples, type = "sparse", data = "filtered")
     # Very basic one
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), c("sample01", "sample02"))
@@ -45,33 +45,33 @@ test_that("Correctly read Space Ranger output", {
 })
 
 test_that("Correctly add visium graph when there's 1 sample", {
-    sfe <- read10xVisiumSFE(samples[1], type = "sparse", data = "filtered")
+    sfe <- read10xVisiumSFE(dirs = samples[1], type = "sparse", data = "filtered")
     expect_equal(colGraphNames(sfe, "sample01"), "visium")
 })
 
 # Need uncropped image
-if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
-mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create("ob", recursive = TRUE)
+mat_fn <- file.path("ob", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("ob", "outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
-    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
+                  destfile = file.path("ob", "spatial.tar.gz"))
+    untar(file.path("ob", "spatial.tar.gz"), exdir = "ob")
 }
 
-if (!dir.exists("kidney")) dir.create(file.path("kidney", "outs"), recursive = TRUE)
-mat_fn <- file.path("kidney", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("kidney")) dir.create("kidney", recursive = TRUE)
+mat_fn <- file.path("kidney", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("kidney", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("kidney", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("kidney", "outs", "spatial"))) {
+if (!dir.exists(file.path("kidney", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
-                  destfile = file.path("kidney", "outs", "spatial.tar.gz"))
-    untar(file.path("kidney", "outs", "spatial.tar.gz"), exdir = file.path("kidney", "outs"))
+                  destfile = file.path("kidney", "spatial.tar.gz"))
+    untar(file.path("kidney", "spatial.tar.gz"), exdir = "kidney")
 }
 
 library(terra)
@@ -80,7 +80,7 @@ library(SingleCellExperiment)
 library(SpatialExperiment)
 
 test_that("Image is properly aligned in pixel space", {
-    sfe <- read10xVisiumSFE("ob")
+    sfe <- read10xVisiumSFE(dirs = "ob")
     expect_equal(unit(sfe), "full_res_image_pixel")
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
@@ -103,22 +103,22 @@ test_that("Image is properly aligned in pixel space", {
 })
 
 test_that("Read when one out of multiple images are desired", {
-    sfe <- read10xVisiumSFE("ob", images = "lowres")
+    sfe <- read10xVisiumSFE(dirs = "ob", images = "lowres")
     expect_equal(nrow(imgData(sfe)), 1L)
     expect_equal(imgData(sfe)$image_id, "lowres")
 })
 
 test_that("Image is properly aligned in micron space", {
-    sfe <- read10xVisiumSFE("ob", unit = "micron")
+    sfe <- read10xVisiumSFE(dirs = "ob", unit = "micron")
     expect_equal(unit(sfe), "micron")
     cg <- spotPoly(sfe)
     cg$nCounts <- Matrix::colSums(counts(sfe))
     cg$geometry <- st_centroid(cg$geometry)
-    img_lo <- getImg(sfe, image_id = "lowres") |> imgRaster()
+    img_lo <- getImg(sfe, image_id = "lowres")
     img_lo <- terra::mean(img_lo)
     v_lo <- terra::extract(img_lo, cg)
     expect_true(abs(cor(cg$nCounts, v_lo$mean)) > 0.4)
-    img_hi <- getImg(sfe, image_id = "hires") |> imgRaster()
+    img_hi <- getImg(sfe, image_id = "hires")
     img_hi <- terra::mean(img_hi)
     v_hi <- terra::extract(img_hi, cg)
     expect_true(abs(cor(cg$nCounts, v_hi$mean)) > 0.4)
@@ -133,30 +133,44 @@ test_that("Image is properly aligned in micron space", {
 })
 
 test_that("Micron spot spacing works when there're singletons", {
-    sfe <- read10xVisiumSFE("kidney", unit = "micron", zero.policy = TRUE)
+    sfe <- read10xVisiumSFE(dirs = "kidney", unit = "micron", zero.policy = TRUE)
     expect_equal(unit(sfe), "micron")
 })
 
 # Read Visium HD==================
-dir <- "~/WoundAnalysis/Visium-HD data/YVW01_binned_outputs/"
-# 5. The error messages
-test_that("readVisiumHD, one resolution", {
-    testthat::skip()
-    sfe <- readVisiumHD(dir, bin_size = 16, sample_id = "UW")
+library(OSTA.data)
+id <- "VisiumHD_HumanColon_Oliveira"
+pa <- OSTA.data_load(id)
+dir.create(dir <- tempfile())
+unzip(pa, exdir=dir)
+
+test_that("readVisiumHD, one resolution, not segmented", {
+    sfe <- readVisiumHD(dir, bin_size = 16, sample_id = "UW", use_cellseg = FALSE,
+                        add_graph = TRUE)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), "UW")
     expect_setequal(colGeometryNames(sfe), c("centroids", "spotPoly"))
-    expect_equal(as.character(st_geometry_type(SpatialFeatureExperiment::centroids(sfe), by_geometry = FALSE)),
+    expect_equal(as.character(st_geometry_type(SpatialFeatureExperiment::centroids(sfe), 
+                                               by_geometry = FALSE)),
                  "POINT")
     expect_equal(as.character(st_geometry_type(spotPoly(sfe), by_geometry = FALSE)),
                  "POLYGON")
     g_coords <- st_coordinates(spotPoly(sfe))
     expect_equal(nrow(g_coords)/length(unique(g_coords[,"L2"])), 5)
+    expect_equal(colGraphNames(sfe), "visiumhd")
+    
+    # Image is aligned
+    cg <- spotPoly(sfe)
+    cg$nCounts <- colSums(counts(sfe))
+    cg$geometry <- st_centroid(cg$geometry)
+    img_lo <- getImg(sfe, image_id = "lowres")
+    img_lo <- terra::mean(img_lo)
+    v_lo <- terra::extract(img_lo, cg)
+    expect_true(abs(cor(cg$nCounts, v_lo$mean, use = "complete.obs")) > 0.4)
 })
 
 test_that("Read multiple resolutions", {
-    testthat::skip()
-    sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW")
+    sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW", use_cellseg = FALSE)
     expect_type(sfes, "list")
     classes <- vapply(sfes, class, FUN.VALUE = character(1))
     expect_true(all(classes == "SpatialFeatureExperiment"))
@@ -165,31 +179,47 @@ test_that("Read multiple resolutions", {
 })
 
 test_that("When sample_id is not set", {
-    testthat::skip()
-    sfes <- readVisiumHD(dir, bin_size = c(8, 16))
-    expect_equal(sampleIDs(sfes[[1]]), "square_008um")
-    expect_equal(sampleIDs(sfes[[2]]), "square_016um")
-})
-
-test_that("Rotate the grid", {
-    testthat::skip()
-    sfe2 <- readVisiumHD(dir, bin_size = 16, sample_id = "UW", rotate = TRUE)
-    # To test, make sure that the tiles complete cover the space
-    bbox_use <- st_as_sfc(st_bbox(c(xmin=10000, xmax = 10200, ymin=5000, ymax=5200)))
-    cg <- spotPoly(sfe2)
-    cg <- cg[st_covered_by(cg, bbox_use, sparse = FALSE),]
-    bbox_cg <- st_as_sfc(st_bbox(cg))
-    area_diff <- st_area(st_difference(bbox_cg, st_union(cg)))
-    expect_true(area_diff < 20) # The number depends on the resolution and the bbox
+    sfes <- readVisiumHD(dir, sample_id = "foo", bin_size = c(8, 16), use_cellseg = FALSE)
+    expect_equal(sampleIDs(sfes[[1]]), "foo_8um")
+    expect_equal(sampleIDs(sfes[[2]]), "foo_16um")
 })
 
 test_that("Micron space, including image alignment", {
-    testthat::skip()
-    sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron")
+    sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron", use_cellseg = FALSE)
     expect_equal(SpatialFeatureExperiment::unit(sfe), "micron")
     areas <- st_area(spotPoly(sfe))
     expect_true(max(abs(areas - 256)) < sqrt(.Machine$double.eps))
+    
+    cg <- spotPoly(sfe)
+    cg$nCounts <- colSums(counts(sfe))
+    cg$geometry <- st_centroid(cg$geometry)
+    img_lo <- getImg(sfe, image_id = "lowres")
+    img_lo <- terra::mean(img_lo)
+    v_lo <- terra::extract(img_lo, cg)
+    expect_true(abs(cor(cg$nCounts, v_lo$mean, use = "complete.obs")) > 0.4)
 })
+
+test_that("Use cell segmentation", {
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = TRUE)
+    expect_s4_class(sfe, "SpatialFeatureExperiment")
+    expect_equal(sampleIDs(sfe), "sample01")
+    expect_setequal(colGeometryNames(sfe), c("centroids", "cellSeg", "nucSeg"))
+    expect_equal(as.character(st_geometry_type(SpatialFeatureExperiment::centroids(sfe), 
+                                               by_geometry = FALSE)),
+                 "POINT")
+    expect_equal(as.character(st_geometry_type(cellSeg(sfe), by_geometry = FALSE)),
+                 "POLYGON")
+    expect_equal(as.character(st_geometry_type(nucSeg(sfe), by_geometry = FALSE)),
+                 "POLYGON")
+    expect_equal(colGraphNames(sfe), "knn5")
+})
+
+test_that("Use microns", {
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
+    expect_equal(unit(sfe), "micron")
+})
+
+unlink(dir, recursive = TRUE)
 
 # Read Vizgen MERFISH==============
 test_that("readVizgen flip geometry, use cellpose", {
@@ -202,7 +232,7 @@ test_that("readVizgen flip geometry, use cellpose", {
     expect_equal(imgData(sfe)$image_id,
                  paste0(c(paste0("Cellbound", 1:3), "DAPI", "PolyT"),
                        "_z3"))
-    img <- imgRaster(getImg(sfe, image_id = "PolyT_z3"))
+    img <- getImg(sfe, image_id = "PolyT_z3")
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     # Shouldn't be many cells in that empty space if properly aligned
@@ -243,7 +273,7 @@ test_that("readVizgen flip geometry, don't use cellpose", {
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "geometry")
     expect_equal(unit(sfe), "micron")
-    img <- imgRaster(getImg(sfe))
+    img <- getImg(sfe)
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     expect_true(sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE) < 10)
@@ -267,7 +297,7 @@ test_that("readVizgen flip image", {
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
     expect_equal(unit(sfe), "micron")
-    img <- imgRaster(getImg(sfe))
+    img <- getImg(sfe)
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     expect_true(sum(v$mosaic_PolyT_z3 < 30, na.rm = TRUE) < 10)
@@ -279,11 +309,11 @@ test_that("readVizgen don't flip image when image is too large", {
     dir_use <- VizgenOutput("hdf5", file_path = fp)
     expect_error(readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                             flip = "image", max_flip = "0.02 TB"),
-                 "max_flip must be in either MB or GB")
+                 "must be in either MB or GB")
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image", max_flip = "0.02 MB")
     suppressWarnings(img_orig <- rast(file.path(dir_use, "images", "mosaic_PolyT_z3.tif")))
-    img <- imgRaster(getImg(sfe))
+    img <- getImg(sfe)
     # Make sure image was not flipped
     expect_equal(terra::values(img), terra::values(img_orig))
     cg <- SpatialFeatureExperiment::centroids(sfe)
@@ -297,12 +327,12 @@ test_that("Don't flip image if it's GeoTIFF", {
     dir_use <- VizgenOutput("hdf5", file_path = fp)
     sfe <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "PolyT",
                       flip = "image")
-    terra::writeRaster(imgRaster(getImg(sfe)),
+    terra::writeRaster(getImg(sfe),
                        filename = file.path(dir_use, "images", "mosaic_DAPI_z3.tif"),
                        overwrite = TRUE)
     sfe2 <- readVizgen(dir_use, z = 3L, use_cellpose = FALSE, image = "DAPI",
                        flip = "image")
-    expect_equal(terra::values(imgRaster(getImg(sfe))), terra::values(imgRaster(getImg(sfe2))))
+    expect_equal(terra::values(getImg(sfe)), terra::values(getImg(sfe2)))
     unlink(dir_use, recursive = TRUE)
 })
 
@@ -395,7 +425,7 @@ test_that("Version with Cellpose directory", {
     expect_equal(imgData(sfe)$image_id,
                  paste0(c(paste0("Cellbound", 1:3), "DAPI", "PolyT"),
                         "_z3"))
-    img <- imgRaster(getImg(sfe, image_id = "PolyT_z3"))
+    img <- getImg(sfe, image_id = "PolyT_z3")
     cg <- SpatialFeatureExperiment::centroids(sfe)
     v <- terra::extract(img, cg)
     # Shouldn't be many cells in that empty space if properly aligned
@@ -492,6 +522,13 @@ test_that("readCosMX, not reading transcript spots", {
     time_file <- file.info(file.path(dir_use, "cell_boundaries_sf.parquet"))$ctime
     expect_true(time_file < time_note)
     unlink(dir_use, recursive = TRUE)
+})
+
+test_that("readCosMX, set sample_id", {
+    fp <- tempfile()
+    dir_use <- CosMXOutput(file_path = fp)
+    sfe <- readCosMX(dir_use, z = 1L, sample_id = "foo")
+    expect_equal(sampleIDs(sfe), "foo")
 })
 
 test_that("readCosMX, reading spots, 1 z-plane", {

@@ -122,28 +122,28 @@ test_that("Warning message and dropping graphs when package required for reconst
 })
 
 # Need uncropped image
-if (!dir.exists("ob")) dir.create(file.path("ob", "outs"), recursive = TRUE)
-mat_fn <- file.path("ob", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("ob")) dir.create("ob", recursive = TRUE)
+mat_fn <- file.path("ob", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("ob", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("ob", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("ob", "outs", "spatial"))) {
+if (!dir.exists(file.path("ob", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/2.0.0/Visium_Mouse_Olfactory_Bulb/Visium_Mouse_Olfactory_Bulb_spatial.tar.gz",
-                  destfile = file.path("ob", "outs", "spatial.tar.gz"))
-    untar(file.path("ob", "outs", "spatial.tar.gz"), exdir = file.path("ob", "outs"))
+                  destfile = file.path("ob", "spatial.tar.gz"))
+    untar(file.path("ob", "spatial.tar.gz"), exdir = "ob")
 }
 
-if (!dir.exists("kidney")) dir.create(file.path("kidney", "outs"), recursive = TRUE)
-mat_fn <- file.path("kidney", "outs", "filtered_feature_bc_matrix.h5")
+if (!dir.exists("kidney")) dir.create("kidney", recursive = TRUE)
+mat_fn <- file.path("kidney", "filtered_feature_bc_matrix.h5")
 if (!file.exists(mat_fn))
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_filtered_feature_bc_matrix.h5",
-                  destfile = file.path("kidney", "outs", "filtered_feature_bc_matrix.h5"),
+                  destfile = file.path("kidney", "filtered_feature_bc_matrix.h5"),
                   mode = "wb")
-if (!dir.exists(file.path("kidney", "outs", "spatial"))) {
+if (!dir.exists(file.path("kidney", "spatial"))) {
     download.file("https://cf.10xgenomics.com/samples/spatial-exp/1.0.0/V1_Mouse_Kidney/V1_Mouse_Kidney_spatial.tar.gz",
-                  destfile = file.path("kidney", "outs", "spatial.tar.gz"))
-    untar(file.path("kidney", "outs", "spatial.tar.gz"), exdir = file.path("kidney", "outs"))
+                  destfile = file.path("kidney", "spatial.tar.gz"))
+    untar(file.path("kidney", "spatial.tar.gz"), exdir = "kidney")
 }
 
 library(sf)
@@ -151,8 +151,8 @@ library(SpatialExperiment)
 library(terra)
 library(SingleCellExperiment)
 library(S4Vectors)
-sfe1 <- read10xVisiumSFE("ob", sample_id = "ob", unit = "micron")
-sfe2 <- read10xVisiumSFE("kidney", sample_id = "kidney", zero.policy = TRUE,
+sfe1 <- read10xVisiumSFE(dirs = "ob", sample_id = "ob", unit = "micron")
+sfe2 <- read10xVisiumSFE(dirs = "kidney", sample_id = "kidney", zero.policy = TRUE,
                          unit = "micron")
 
 genes_use <- intersect(rownames(sfe1), rownames(sfe2))
@@ -171,15 +171,15 @@ test_that("Images are cropped after subsetting, multiple samples", {
     cg <- st_centroid(st_geometry(spotPoly(sfe3, sample_id = "all")))
     nCounts <- Matrix::colSums(counts(sfe3))
     # For sample 1
-    img1 <- getImg(sfe3, sample_id = "ob") |> imgRaster()
+    img1 <- getImg(sfe3, sample_id = "ob")
     bbox_geom <- st_bbox(spotPoly(sfe3, "ob")) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img1)) |> st_bbox() |> st_as_sfc()
+    bbox_img <- ext(img1) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 
     # For sample 2
-    img2 <- getImg(sfe3, sample_id = "kidney") |> imgRaster()
+    img2 <- getImg(sfe3, sample_id = "kidney")
     bbox_geom <- st_bbox(spotPoly(sfe3, "kidney")) |> st_as_sfc()
-    bbox_img <- as.vector(ext(img2)) |> st_bbox() |> st_as_sfc()
+    bbox_img <- ext(img2) |> st_bbox() |> st_as_sfc()
     expect_true(st_covered_by(bbox_geom, bbox_img, sparse = FALSE))
 })
 
@@ -238,4 +238,18 @@ test_that("Still works when using logical vector of all FALSE", {
     expect_true(isEmpty(spatialGraphs(sfe0)))
     expect_equal(annotGeometryNames(sfe0), annotGeometryNames(sfe1))
     expect_equal(nrow(annotGeometry(sfe0, "foo")), 0)
+})
+
+sfe1 <- read10xVisiumSFE(dirs = "ob", sample_id = "ob", unit = "micron")
+test_that("Don't crop when subsetting by setting SFE_subset_crop", {
+    options(SFE_subset_crop = FALSE)
+    expect_message(sfe_sub <- sfe1[,seq_len(1000)], "SFE_subset_crop option set to FALSE")
+    expect_equal(bbox(sfe_sub, include_images = TRUE), bbox(sfe1, include_images = TRUE))
+})
+
+test_that("Don't crop when image is too large", {
+    options(SFE_subset_crop = TRUE)
+    options(SFE_subset_crop_max = "0.1MB")
+    expect_message(sfe_sub <- sfe1[,seq_len(1000)], "Some images are larger than")
+    expect_equal(bbox(sfe_sub, include_images = TRUE), bbox(sfe1, include_images = TRUE))
 })

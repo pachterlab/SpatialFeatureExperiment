@@ -44,8 +44,7 @@
                 terra::RGB(im_new) <- seq_len(3)
             } else if (inherits(img, "RemoteSpatialImage") || inherits(img, "StoredSpatialImage")) {
                 suppressWarnings(im_new <- rast(imgSource(img)))
-                if (packageVersion('terra') >= as.package_version("1.7.83"))
-                    im_new <- terra::flip(im_new)
+                if (.terra_flip()) im_new <- terra::flip(im_new)
             } else {
                 warning("Don't know how to convert image ", i, " to SpatRaster, ",
                         "dropping image.")
@@ -110,8 +109,17 @@
 #' @aliases toSpatialFeatureExperiment
 #' @concept SpatialFeatureExperiment class
 #' @examples
-#' library(SpatialExperiment)
-#' example(read10xVisium)
+#' library(VisiumIO)
+#' # From examples of TENxVisium()
+#' sample_dir <- system.file(
+#' file.path("extdata", "10xVisium", "section1"),
+#' package = "VisiumIO"
+#' )
+#' ## using spacerangerOut folder
+#' tv <- TENxVisium(
+#'     spacerangerOut = file.path(sample_dir, "outs"), processing = "raw", images = "lowres"
+#' )
+#' spe <- import(tv)
 #' # There can't be duplicate barcodes
 #' colnames(spe) <- make.unique(colnames(spe), sep = "-")
 #' rownames(spatialCoords(spe)) <- colnames(spe)

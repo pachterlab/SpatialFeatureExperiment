@@ -422,7 +422,7 @@
 #' \code{listw} is used in many methods that facilitate the spatial neighborhood
 #' graph in the \code{spdep}, \code{spatialreg}, and \code{adespatial}. The edge
 #' weights of the graph in the \code{listw} object are by default style W (see
-#' \code{\link{nb2listw}}) and the unweighted neighbor list is in the
+#' \code{\link[spdep]{nb2listw}}) and the unweighted neighbor list is in the
 #' \code{neighbours} field of the \code{listw} object.
 #'
 #' @inheritParams spdep::nb2listw
@@ -448,13 +448,13 @@
 #' \code{BiocNeighbors} are used. For "spdep", methods from the \code{spdep}
 #' package are used. The "bioc" option is more scalable to larger datasets and
 #' supports multithreading.
-#' @param BPPARAM A \code{\link{BiocParallelParam}} object for multithreading.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object for multithreading.
 #' Only used for k nearest neighbor and distance based neighbor with
 #' \code{nn_method = "bioc"}.
-#' @param BNPARAM A \code{\link{BiocNeighborParam}} object specifying the
+#' @param BNPARAM A \code{\link[BiocNeighbors]{BiocNeighborParam}} object specifying the
 #' algorithm to find k nearest neighbors and distance based neighbors with
 #' \code{nn_method = "bioc"}. For distance based neighbors, only
-#' \code{\link{KmknnParam}} and \code{\link{VptreeParam}} are applicable.
+#' \code{\link[BiocNeighbors]{KmknnParam}} and \code{\link[BiocNeighbors]{VptreeParam}} are applicable.
 #' @param alpha Only relevant when \code{dist_type = "dpd"}.
 #' @param dmax Only relevant when \code{dist_type = "dpd"}.
 #' @param ... Extra arguments passed to the \code{spdep} function stated in the
@@ -482,6 +482,8 @@
 #'   and then its edges weighted based on distance in this function.
 #' @concept Spatial neighborhood graph
 #' @export
+#' @name findSpatialNeighbors
+#' @aliases findSpatialNeighbors,SpatialFeatureExperiment-method
 #' @examples
 #' library(SFEData)
 #' sfe <- McKellarMuscleData(dataset = "small")
@@ -555,18 +557,19 @@ setMethod(
             poly2nb = poly2nb
         )
         if (length(sample_id) == 1L) {
-            out <- .comp_graph_sample(
+            tryCatch(out <- .comp_graph_sample(
                 x, sample_id, type, MARGIN, method,
                 dist_type, args, extra_args_use, glist,
                 style, zero.policy, alpha, dmax, fun_use, return_sf
-            )
+            ), error = function(e) stop(method, ": ", e$message, call. = FALSE))
+            
         } else {
             out <- lapply(sample_id, function(s) {
-                .comp_graph_sample(
+                tryCatch(.comp_graph_sample(
                     x, s, type, MARGIN, method, dist_type,
                     args, extra_args_use, glist, style,
                     zero.policy, alpha, dmax, fun_use, return_sf
-                )
+                ), error = function(e) stop(method, ": ", e$message, call. = FALSE))
             })
             names(out) <- sample_id
         }
@@ -585,16 +588,17 @@ setMethod(
     if (is.na(coords_use) |> any()) {
       # use "array_" cols from colData
       coords_use <- 
-        colData(x)[, grep("array_", names(colData(x)))] |> 
+        colData(x)[colData(x)$sample_id == sample_id, grep("array_", names(colData(x)))] |> 
         as.data.frame() |> suppressWarnings()
         colnames(coords_use) <- gsub("array_", "", colnames(coords_use))
     }
     # So adjacent spots are equidistant
     coords_use$row <- coords_use$row * sqrt(3)
-    g <- dnearneigh(as.matrix(coords_use),
+    g <- .dnn_bioc(as.matrix(coords_use),
         d1 = 1.9, d2 = 2.1,
         row.names = bcs_use
     )
+    attr(g, "distance") <- NULL
     out <- nb2listw(g, style = style, zero.policy = zero.policy)
     attr(out, "method") <- list(
         FUN = "findVisiumGraph",
@@ -705,6 +709,9 @@ findVisiumGraph <- function(x, sample_id = "all", style = "W",
 findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
                               zero.policy = TRUE) {
     df <- as.data.frame(colData(x))
+    if (any(!c("barcode", "array_row", "array_col") %in% names(df))) {
+        stop("Columns 'barcode', 'array_row', and 'array_col' are required.")
+    }
     df$index <- seq_along(df$barcode)
     cols_use <- c("index", "array_row", "array_col")
     df <- df[,cols_use]
@@ -720,9 +727,10 @@ findVisiumHDGraph <- function(x, style = "W", queen = FALSE,
     }
     cols <- paste0("index_", sides)
     gm <- as.matrix(df[,..cols])
-    gm <- apply(gm, 1, sort) # This is the slowest part
-    colnames(gm) <- NULL
-    g <- apply(gm, 1, function(x) x[!is.na(x)])
+    # This is the slowest part; it removes NA's and creates a list
+    g <- apply(gm, 1, sort, simplify = FALSE)
+    singletons <- which(lengths(g) == 0L)
+    if (length(singletons)) g[singletons] <- 0L
     class(g) <- "nb"
     out <- nb2listw(g, style = style, zero.policy = TRUE)
     attr(out, "method") <- list(
