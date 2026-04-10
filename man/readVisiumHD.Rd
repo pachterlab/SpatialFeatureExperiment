@@ -98,3 +98,4 @@ sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
 
 unlink(dir, recursive = TRUE)
 }
+\concept{Read data into SFE}

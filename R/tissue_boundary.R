@@ -86,6 +86,7 @@
 #'   \code{geometry}.
 #' @importFrom sf st_simplify
 #' @importFrom EBImage clahe
+#' @concept Preprocessing and QC
 #' @export
 #' 
 getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
@@ -139,6 +140,7 @@ getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
 #' in the same sample.
 #' @return A \code{sf} data frame with columns \code{sample_id} and
 #'   \code{geometry}.
+#' @concept Preprocessing and QC
 #' @name getTissueBoundaryConcave
 NULL
 

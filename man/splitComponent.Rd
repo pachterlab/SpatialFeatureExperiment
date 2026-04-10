@@ -58,3 +58,4 @@ A list of the same object type as the input, each element for one
 Split either a SFE object or \code{sf} or \code{sfc} by graph component of a
 spatial neighborhood graph.
 }
+\concept{Geometric operations}

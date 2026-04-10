@@ -82,3 +82,4 @@ computed, with \code{distance_cutoff} as the distance cutoff. Then disjoint
 connected subgraphs are found. Cells in subgraphs with \code{max_cells} or
 fewer cells are considered debris.
 }
+\concept{Preprocessing and QC}

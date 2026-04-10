@@ -39,3 +39,4 @@ the sample so the minimum bounding rotated rectangle is horizontal or
 vertical. This will reduce empty space in plots when the sample has a long
 shape.
 }
+\concept{Geometric operations}

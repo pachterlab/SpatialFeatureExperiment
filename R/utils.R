@@ -227,6 +227,7 @@ gdalParquetAvailable <- function() {
 #' \item{\code{cell_col}}{Column name for cell IDs.}
 #' \item{\code{fn}}{File path of the transcript spot file.}
 #' }
+#' @concept Utilities
 #' @export
 getTechTxFields <- function(tech, data_dir = NULL) {
     spatialCoordsNames <- switch(

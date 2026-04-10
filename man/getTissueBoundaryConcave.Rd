@@ -84,3 +84,4 @@ adjusted with the \code{ratio} parameter. Run \code{\link{findDebrisCells}}
 to remove small bits outside the main piece tissue before running this
 function.
 }
+\concept{Preprocessing and QC}

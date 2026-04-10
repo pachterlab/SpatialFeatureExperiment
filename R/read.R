@@ -345,6 +345,7 @@ read10xVisiumSFE <- function(dirs,
 #'   not zooming in. See the \code{scattermore} argument in
 #'   \code{\link[Voyager]{plotSpatialFeature}}.
 #' @export
+#' @concept Read data into SFE
 #' @examples
 #' library(OSTA.data)
 #' id <- "VisiumHD_HumanColon_Oliveira"

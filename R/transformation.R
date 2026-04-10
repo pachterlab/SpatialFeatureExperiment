@@ -107,7 +107,7 @@
     inds <- !st_is_empty(g)
     rns <- rownames(g)[inds]
     g <- g[inds,]
-    g2 <- .transform_geometry_sfc(g, mult, add)
+    g2 <- .transform_geometry_sfc(st_geometry(g), mult, add)
     st_geometry(g) <- g2
     rownames(g) <- rns
     g

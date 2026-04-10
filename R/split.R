@@ -130,6 +130,7 @@ splitContiguity <- function(x, colGeometryName = 1L,
 #' @importFrom S4Vectors split
 #' @return A list of the same object type as the input, each element for one
 #'   component.
+#' @concept Geometric operations
 #' @name splitComponent
 NULL
 

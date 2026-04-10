@@ -13,6 +13,7 @@
 #' @param ... Ignored
 #' @return Object of the same class as \code{x}, rotated.
 #' @importFrom sf st_multipoint st_minimum_rotated_rectangle
+#' @concept Geometric operations
 #' @name rotateMinRect
 NULL
 
