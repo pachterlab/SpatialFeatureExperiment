@@ -288,3 +288,6 @@ setGeneric("rotateMinRect", function(x, orientation = c("horizontal", "vertical"
 
 #' @export
 setGeneric("splitComponent", function(x, ...) standardGeneric("splitComponent"))
+
+#' @export
+setGeneric("getTissueBoundaryConcave", function(x, ...) standardGeneric("getTissueBoundaryConcave"))

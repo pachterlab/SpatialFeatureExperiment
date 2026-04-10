@@ -18,9 +18,9 @@
 .get_factor <- function(d) {
     # for clahe
     f <- as.integer(gmp::factorize(d))
-    f <- f[f <= 15]
+    f <- f[f <= 20]
     cp <- cumprod(f)
-    max(cp[cp <= 15])
+    max(cp[cp <= 20])
 }
 #' @importFrom EBImage normalize otsu closing makeBrush fillHull
 .get_tb1 <- function(sfe, sample_id, image_id, 
@@ -33,12 +33,13 @@
     else if (inherits(img, "SpatRasterImage"))
         img <- toExtImage(img, maxcell = maxcell, channel = channel)
     # rowSums is a bit confusing; with dims = 2 it sums all channels, i.e. the 3rd dimension
-    if (length(dim(img)) > 2L) img <- rowSums(img, dims = 2)
+    if (length(dim(img)) > 2L) {
+        img <- ExtImage(rowSums(img, dims = 2), ext = ext(img))
+    }
     img <- EBImage::normalize(img)
     if (image_type == "brightfield") {
         mask <- img < otsu(img)
     } else {
-        check_installed("gmp")
         fctx <- .get_factor(dim(img)[1])
         fcty <- .get_factor(dim(img)[2])
         img <- clahe(img, nx = fctx, ny = fcty)
@@ -53,7 +54,9 @@
 #' Get tissue boundary from histology image
 #'
 #' This function gets the tissue boundary from image and makes sure that it is
-#' properly aligned with the geometries in the SFE object.
+#' properly aligned with the geometries in the SFE object. Note that it will not
+#' work on fluorescent images when the fluorescence looks sparse. In that case,
+#' use \code{\link{getTissueBoundaryConcave}}.
 #'
 #' @param sfe An SFE object with images
 #' @param sample_id Sample id(s) whose tissue boundaries are to be found.
@@ -82,6 +85,7 @@
 #' @return A \code{sf} data frame with columns \code{sample_id} and
 #'   \code{geometry}.
 #' @importFrom sf st_simplify
+#' @importFrom EBImage clahe
 #' @export
 #' 
 getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
@@ -112,9 +116,11 @@ getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
     st_sf(sample_id = sample_id, geometry = og, agr = "constant", crs = NA)
 }
 
-.get_tb1_concave <- function(sfe, sample_id, colGeometryName, ratio, allow_holes) {
-    cs <- st_union(colGeometry(sfe, colGeometryName, sample_id = sample_id))
-    st_concave_hull(cs, ratio = ratio, allow_holes = allow_holes)
+.get_tb1_concave <- function(sfe, sample_id, colGeometryName, ratio, 
+                             allow_holes, multiple_pieces, ...) {
+    g <- colGeometry(sfe, colGeometryName, sample_id = sample_id)
+    getTissueBoundaryConcave(g, ratio = ratio, allow_holes = allow_holes,
+                             multiple_pieces = multiple_pieces, ...)
 }
 
 #' Get tissue boundary from concave hull of cell geometries
@@ -126,17 +132,54 @@ getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
 #' 
 #' @inheritParams getTissueBoundaryImg
 #' @inheritParams sf::st_concave_hull
+#' @inheritParams splitComponent
 #' @param colGeometryName Name of the \code{colGeometry} to use to infer the
 #' concave hull.
+#' @param multiple_pieces Logical, whether there are multiple pieces of tissue
+#' in the same sample.
 #' @return A \code{sf} data frame with columns \code{sample_id} and
 #'   \code{geometry}.
+#' @name getTissueBoundaryConcave
+NULL
+
+#' @rdname getTissueBoundaryConcave
 #' @export
-getTissueBoundaryConcave <- function(sfe, sample_id = NULL, colGeometryName = 1L,
-                                     ratio = 0.01, allow_holes = TRUE) {
-    sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
-    og <- lapply(sample_id, .get_tb1_concave, sfe = sfe, 
-                 colGeometryName = colGeometryName, ratio = ratio, 
-                 allow_holes = allow_holes)
-    og <- st_sfc(unlist(og, recursive = FALSE))
-    st_sf(sample_id = sample_id, geometry = og, agr = "constant", crs = NA)
+setMethod("getTissueBoundaryConcave", "SpatialFeatureExperiment",
+          function(x, sample_id = NULL, colGeometryName = 1L,
+                   ratio = 0.01, allow_holes = TRUE, multiple_pieces = FALSE, 
+                   min_cells = 100, distance_cutoff = 50,
+                   BNPARAM = NULL, BPPARAM = SerialParam()) {
+              sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+              og <- lapply(sample_id, .get_tb1_concave, sfe = x, 
+                           colGeometryName = colGeometryName, ratio = ratio, 
+                           allow_holes = allow_holes, multiple_pieces = multiple_pieces,
+                           min_cells = min_cells, distance_cutoff = distance_cutoff,
+                           BNPARAM = BNPARAM, BPPARAM = BPPARAM)
+              og <- st_sfc(unlist(og, recursive = FALSE))
+              st_sf(sample_id = sample_id, geometry = og, agr = "constant", crs = NA)
+          })
+
+.gtbc_sf <- function(x, ratio = 0.01, allow_holes = TRUE, 
+                     multiple_pieces = FALSE, min_cells = 100, 
+                     distance_cutoff = 50,
+                     BNPARAM = NULL, BPPARAM = SerialParam()) {
+    if (multiple_pieces) {
+        x <- splitComponent(x, min_cells = min_cells, distance_cutoff = distance_cutoff,
+                            BNPARAM = BNPARAM, BPPARAM = BPPARAM)
+    } else x <- list(x)
+    out <- lapply(x, function(x) {
+        st_concave_hull(st_union(x), ratio = ratio, allow_holes = allow_holes)
+    })
+    if (length(out) > 1L) {
+        out <- st_as_sfc(unlist(out, recursive = FALSE)) |> st_union()
+    } else out <- out[[1]]
+    out
 }
+
+#' @rdname getTissueBoundaryConcave
+#' @export
+setMethod("getTissueBoundaryConcave", "sfc", .gtbc_sf)
+
+#' @rdname getTissueBoundaryConcave
+#' @export
+setMethod("getTissueBoundaryConcave", "sf", .gtbc_sf)
