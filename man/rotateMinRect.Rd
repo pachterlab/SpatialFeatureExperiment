@@ -3,25 +3,32 @@
 \name{rotateMinRect}
 \alias{rotateMinRect}
 \alias{rotateMinRect,matrix-method}
-\alias{rotateMinRect,sfg-method}
 \alias{rotateMinRect,sfc-method}
 \alias{rotateMinRect,sf-method}
+\alias{rotateMinRect,SpatialFeatureExperiment-method}
 \title{Rotate the tissue to reduce empty space in plots}
 \usage{
-\S4method{rotateMinRect}{matrix}(x, orientation = c("horizontal", "vertical"))
+\S4method{rotateMinRect}{matrix}(x, orientation = c("horizontal", "vertical"), ...)
 
-\S4method{rotateMinRect}{sfg}(x, orientation = c("horizontal", "vertical"))
+\S4method{rotateMinRect}{sfc}(x, orientation = c("horizontal", "vertical"), ...)
 
-\S4method{rotateMinRect}{sfc}(x, orientation = c("horizontal", "vertical"))
+\S4method{rotateMinRect}{sf}(x, orientation = c("horizontal", "vertical"), ...)
 
-\S4method{rotateMinRect}{sf}(x, orientation = c("horizontal", "vertical"))
+\S4method{rotateMinRect}{SpatialFeatureExperiment}(x, orientation = c("horizontal", "vertical"), maxcell = 1e+07)
 }
 \arguments{
 \item{x}{Object of interest to be rotated, can be a matrix with 2 columns,
-\code{sf}, \code{sfc}, \code{sfg}, or \code{SpatialFeatureExperiment}.}
+\code{sf}, \code{sfc}, or \code{SpatialFeatureExperiment}.}
 
 \item{orientation}{Whether you want the rotated sample to be horizontal or
 vertical.}
+
+\item{...}{Ignored}
+
+\item{maxcell}{Rotating \code{SpatRasterImage} will convert it into
+\code{ExtImage}, loading the image into memory. This argument specifies the
+maximum number of pixels in the image loaded into memory. The image will be
+down sampled to approximately this number of pixels.}
 }
 \value{
 Object of the same class as \code{x}, rotated.

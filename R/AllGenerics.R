@@ -285,3 +285,6 @@ setGeneric("findDebrisCells", function(x, max_cells = 5, distance_cutoff = 50,
 #' @export
 setGeneric("rotateMinRect", function(x, orientation = c("horizontal", "vertical"), ...) 
     standardGeneric("rotateMinRect"))
+
+#' @export
+setGeneric("splitComponent", function(x, ...) standardGeneric("splitComponent"))

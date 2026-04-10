@@ -5,7 +5,7 @@
 #' vertical. This will reduce empty space in plots when the sample has a long
 #' shape.
 #' 
-#' @inheritParams SpatialFeatureExperiment::rotate
+#' @inheritParams SFE-transform
 #' @param x Object of interest to be rotated, can be a matrix with 2 columns,
 #'   \code{sf}, \code{sfc}, or \code{SpatialFeatureExperiment}.
 #' @param orientation Whether you want the rotated sample to be horizontal or
