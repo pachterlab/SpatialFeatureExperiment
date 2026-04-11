@@ -112,5 +112,5 @@ biocViews:
     DataRepresentation,
     Transcriptomics,
     Spatial
-URL: https://github.com/pachterlab/SpatialFeatureExperiment
+URL: https://pachterlab.github.io/SpatialFeatureExperiment
 BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues
