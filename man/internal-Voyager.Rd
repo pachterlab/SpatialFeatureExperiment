@@ -10,7 +10,9 @@
 \alias{.rm_empty_geometries}
 \alias{.check_rg}
 \alias{.ext_}
-\title{Internal functions also used in Voyager}
+\alias{.check_tx_file}
+\alias{.check_tx_file_mem}
+\title{Internal functions also used in Voyager and Wayfarer}
 \usage{
 .value2df(value, use_geometry, feature = NULL)
 
@@ -27,6 +29,27 @@
 .check_rg(type, x, sample_id)
 
 .ext_(x)
+
+.check_tx_file(
+  file,
+  spatialCoordsNames,
+  gene_col,
+  phred_col,
+  min_phred,
+  flip,
+  BPPARAM = SerialParam(),
+  save_memory = FALSE
+)
+
+.check_tx_file_mem(
+  file,
+  spatialCoordsNames,
+  gene_col,
+  phred_col,
+  min_phred,
+  flip,
+  BPPARAM = SerialParam()
+)
 }
 \value{
 Internal

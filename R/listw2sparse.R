@@ -19,10 +19,8 @@
 #' with the original spatial neighborhood graphs of the samples on the diagonal.
 #' When the input is an SFE object, the rows and columns will match the column
 #' names of the SFE object.
+#' @concept Utilities
 #' @export
-#' @examples
-#' # example code
-#'
 multi_listw2sparse <- function(listws) {
     slices <- list()
     n <- length(listws)

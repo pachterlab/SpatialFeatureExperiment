@@ -25,16 +25,13 @@
 #'   not be very sparse so using sparse matrix will not save memory, but when
 #'   the bins are small, sparsity is worth it.
 #' @param BPPARAM bpparam object to specify parallel computing over genes. If a
-#'   lot of memory is used, then stick to `SerialParam()`. If \code{save_memory
-#'   = TRUE}, then this argument is ignored because the operation is not thread
-#'   safe; \code{SerialParam()} will always be used.
+#'   lot of memory is used, then stick to `SerialParam()`. Using multicore in
+#'   the R level when `save_memory = TRUE` works and results into faster
+#'   computation.
 #' @param save_memory Logical, if TRUE, then the transcript spots will not all
 #'   be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
 #'   link to the data and then transcript spots of one gene is loaded into
 #'   memory at a time.
-#' @param progressbar Logical, whether to show progress bar. This argument is
-#'   only used when \code{save_memory = TRUE} because otherwise the
-#'   \code{progressbar} argument can be specified in \code{BPPARAM}.
 #' @param .orig_nrows Only used internally in the SFE method of \code{aggregate}
 #' @inheritParams formatTxTech
 #' @inheritParams formatTxSpots
@@ -61,7 +58,6 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                         cellsize = NULL, square = TRUE, flat_topped = FALSE,
                         new_geometry_name = "bins", unit = "micron", sparse = FALSE,
                         BPPARAM = SerialParam(), save_memory = FALSE,
-                        progressbar = FALSE,
                         .orig_nrows = NULL) {
     # This is only for one file, one sample
     if (!is.null(df)) {
@@ -119,7 +115,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                 inds <- st_intersects(by, x)
                 lengths(inds)
             }
-        }, BPPARAM = SerialParam(progressbar = progressbar))
+        }, BPPARAM = BPPARAM)
         if (sparse) {
             ml <- data.table::rbindlist(ml)
             new_mat <- sparseMatrix(i = ml$i, j = ml$j, x = ml$x, dims = c(length(genes_use), length(by)),
@@ -188,7 +184,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                             cellsize = NULL, square = TRUE, flat_topped = FALSE,
                             new_geometry_name = "bins", sparse = FALSE,
                             BPPARAM = SerialParam(), 
-                            save_memory = FALSE, progressbar = FALSE) {
+                            save_memory = FALSE) {
     tech <- match.arg(tech)
     flip <- match.arg(flip)
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
@@ -225,7 +221,7 @@ aggregateTxTech <- function(data_dir, df = NULL, by = NULL,
                 flip_geometry = (flip == "geometry"),
                 cellsize = cellsize, square = square, flat_topped = flat_topped,
                 new_geometry_name = new_geometry_name, BPPARAM = BPPARAM, 
-                sparse = sparse, save_memory = save_memory, progressbar = progressbar)
+                sparse = sparse, save_memory = save_memory)
     imgData(sfe) <- img_df
     sfe
 }

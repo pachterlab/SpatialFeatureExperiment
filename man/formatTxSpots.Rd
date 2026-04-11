@@ -22,7 +22,6 @@ formatTxSpots(
   BPPARAM = SerialParam(),
   return = TRUE,
   save_memory = FALSE,
-  progressbar = FALSE,
   partition = FALSE
 )
 
@@ -113,14 +112,8 @@ used otherwise.}
 not depend on whether the geometries are written to file. Always `FALSE`
 when `dest = "colGeometry"`.}
 
-\item{save_memory}{Logical, if TRUE, then the transcript spots will not all
-be loaded into memory. \code{\link[arrow]{open_dataset}} is used to open a
-link to the data and then transcript spots of one gene is loaded into
-memory at a time.}
-
-\item{progressbar}{Logical, whether to show progress bar. This argument is
-only used when \code{save_memory = TRUE} because otherwise the
-\code{progressbar} argument can be specified in \code{BPPARAM}.}
+\item{save_memory}{Don't load transcript spots of all genes at once. Not 
+fully implemented here.}
 
 \item{partition}{Whether to partition the output by gene.}
 

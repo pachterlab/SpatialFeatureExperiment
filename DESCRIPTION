@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.12.1
+Version: 1.13.2
 Authors@R: 
     c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
     role = c("aut", "cre"),
@@ -72,6 +72,7 @@ Collate:
     'localResults.R'
     'read.R'
     'reexports.R'
+    'rotateMinRect.R'
     'saveRDS.R'
     'spatialGraphs.R'
     'split.R'
@@ -87,6 +88,7 @@ Suggests:
     dplyr,
     gmp,
     knitr,
+    OSTA.data,
     RBioFormats,
     rhdf5,
     rmarkdown,
@@ -102,15 +104,13 @@ Suggests:
     Voyager (>= 1.7.2),
     withr,
     xml2
-Remotes:
-    Voyager=github::pachterlab/voyager@devel
 Config/testthat/edition: 3
 Depends: 
-    R (>= 4.2.0)
+    R (>= 4.3.0)
 VignetteBuilder: knitr
 biocViews:
     DataRepresentation,
     Transcriptomics,
     Spatial
-URL: https://github.com/pachterlab/SpatialFeatureExperiment
+URL: https://pachterlab.github.io/SpatialFeatureExperiment
 BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues

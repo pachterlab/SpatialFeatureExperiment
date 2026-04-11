@@ -4,7 +4,7 @@ library(sf)
 fp <- tempfile()
 fn <- XeniumOutput("v2", file_path = fp)
 
-try(sfe <- readXenium(fn))
+#try(sfe <- readXenium(fn))
 sfe <- readXenium(fn)
 pieces <- readRDS(system.file("extdata/pieces.rds", package = "SpatialFeatureExperiment"))
 
@@ -86,12 +86,33 @@ test_that("Split by contiguity of an annotGeometry", {
     # When it has pieces that are too small
 })
 
-test_that("Split by graph component", {
+test_that("Split by graph component for SFE", {
     colGraph(sfe, "dnn") <- findSpatialNeighbors(sfe, method = "dnearneigh", d2 = 25)
     sfes <- splitComponent(sfe, colGraphName = "dnn")
     classes <- vapply(sfes, class, FUN.VALUE = character(1))
     expect_true(all(classes == "SpatialFeatureExperiment"))
     expect_equal(length(sfes), 2L)
+})
+
+test_that("Split by graph component for sf", {
+    g <- cellSeg(sfe)
+    st_agr(g) <- c(label_id = "constant", polygon_area = "constant")
+    gs <- splitComponent(g, distance_cutoff = 25)
+    expect_type(gs, "list")
+    expect_length(gs, 2L)
+    expect_s3_class(gs[[1]], "sf")
+    expect_s3_class(gs[[2]], "sf")
+    expect_true(st_disjoint(st_union(gs[[1]]), st_union(gs[[2]]), sparse = FALSE))
+})
+
+test_that("Split by graph component for sfc", {
+    g <- cellSeg(sfe) |> st_geometry()
+    gs <- splitComponent(g, distance_cutoff = 25)
+    expect_type(gs, "list")
+    expect_length(gs, 2L)
+    expect_s3_class(gs[[1]], "sfc")
+    expect_s3_class(gs[[2]], "sfc")
+    expect_true(st_disjoint(st_union(gs[[1]]), st_union(gs[[2]]), sparse = FALSE))
 })
 
 unlink(fn, recursive = TRUE)

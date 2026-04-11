@@ -60,5 +60,8 @@ A \code{sf} data frame with columns \code{sample_id} and
 }
 \description{
 This function gets the tissue boundary from image and makes sure that it is
-properly aligned with the geometries in the SFE object.
+properly aligned with the geometries in the SFE object. Note that it will not
+work on fluorescent images when the fluorescence looks sparse. In that case,
+use \code{\link{getTissueBoundaryConcave}}.
 }
+\concept{Preprocessing and QC}

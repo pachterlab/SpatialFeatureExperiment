@@ -258,7 +258,6 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' specific subset and add them separately to the SFE object with the setter
 #' functions.
 #' 
-#' @inheritParams aggregateTx
 #' @param sfe A `SpatialFeatureExperiment` object.
 #' @param file File with the transcript spot coordinates. Should be one row per
 #'   spot when read into R and should have columns for coordinates on each axis,
@@ -318,6 +317,8 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' @param sample_id Which sample in the SFE object the transcript spots should
 #'   be added to.
 #' @param partition Whether to partition the output by gene.
+#' @param save_memory Don't load transcript spots of all genes at once. Not 
+#' fully implemented here.
 #' @return A sf data frame for vector geometries if `file_out` is not set.
 #'   `SpatRaster` for raster. If there are multiple files written, such as when
 #'   splitting by cell compartment or when `dest = "colGeometry"`, then a
@@ -364,7 +365,7 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           not_in_cell_id = c("-1", "UNASSIGNED"),
                           z_option = c("3d", "split"), flip = FALSE,
                           file_out = NULL, BPPARAM = SerialParam(),
-                          return = TRUE, save_memory = FALSE, progressbar = FALSE,
+                          return = TRUE, save_memory = FALSE, #progressbar = FALSE,
                           partition = FALSE) {
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
@@ -497,15 +498,24 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
         if (!dir.exists(dirname(file_out)))
             dir.create(dirname(file_out))
         if (inherits(mols, "sf")) {
-            # Partition
+          tryCatch({
             suppressWarnings(sfarrow::st_write_parquet(mols, file_out))
+          }, error = function(e) {
+            message(sprintf(" Could not write %s: %s", file_out, e$message))
+          })
             if (!return) return(file_out)
         } else {
             if (!dir.exists(file_dir)) dir.create(file_dir)
             suppressWarnings({
                 bplapply(names(mols), function(n) {
                     name_use <- gsub("/", ".", n)
-                    suppressWarnings(sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet"))))
+                    tryCatch({
+                      suppressWarnings(
+                        sfarrow::st_write_parquet(mols[[n]], file.path(file_dir, paste0(name_use, ".parquet")))
+                      )
+                    }, error = function(e) {
+                      message(sprintf(" Could not write %s: %s", n, e$message))
+                    })
                 }, BPPARAM = SerialParam(progressbar = TRUE))
             })
             if (!return) return(file_dir)

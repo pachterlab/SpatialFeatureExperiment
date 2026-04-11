@@ -12,7 +12,6 @@
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams DropletUtils::read10xCounts
 #' @inheritParams SpatialExperiment::read10xVisium
-#' @param sample Deprecated, use the \code{dirs} argument instead.
 #' @param type Either "HDF5", and the matrix will be represented as
 #'   \code{TENxMatrix}, or "sparse", and the matrix will be read as a
 #'   \code{dgCMatrix}.
@@ -55,8 +54,7 @@
 #'     type = "sparse", data = "filtered"
 #' ))
 #' 
-read10xVisiumSFE <- function(samples = deprecated(),
-                             dirs = NULL,
+read10xVisiumSFE <- function(dirs,
                              sample_id = paste0(
                                  "sample",
                                  sprintf(
@@ -73,11 +71,6 @@ read10xVisiumSFE <- function(samples = deprecated(),
                              flip = c("geometry", "image", "none"),
                              read_spatial_enrichment = TRUE) {
     check_installed("DropletUtils")
-    if (is_present(samples)) {
-        deprecate_warn("1.12.0", "read10xVisiumSFE(samples)",
-                       "read10xVisiuimSFE(dirs)")
-        dirs <- dirs %||% file.path(samples, "outs")
-    }
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
@@ -91,9 +84,10 @@ read10xVisiumSFE <- function(samples = deprecated(),
     # Read one sample at a time, in order to get spot diameter one sample at a time
     sfes <- lapply(seq_along(dirs), function(i) {
         o <- .read10xVisium(dirs[i], sample_id[i],
-                            type, data, images, 
+                            type, data, images,
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,
-                            unit = unit, zero.policy = zero.policy, style = style)
+                            unit = unit, zero.policy = zero.policy, style = style,
+                            use_cellseg = FALSE)
         # Add spatial enrichment if present
         fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
         if (file.exists(fn) && read_spatial_enrichment) {
@@ -133,7 +127,7 @@ read10xVisiumSFE <- function(samples = deprecated(),
 # and for SFE specific needs
 # This internal function reads one sample, and for HD one bin size
 .read10xVisium <-
-  function(sample = "", # eg, path to "./binned_outputs"
+  function(sample = "", # eg, path to "./binned_outputs" or "segmented_outputs"
            sample_id = "sample01",
            type = c("HDF5", "sparse"),
            data = c("filtered", "raw"),
@@ -142,7 +136,7 @@ read10xVisiumSFE <- function(samples = deprecated(),
            VisiumHD = FALSE, flip = c("geometry", "image"),
            add_graph = TRUE, unit = c("full_res_image_pixel", "micron"),
            rotate_hd = FALSE, zero.policy = TRUE, style = "W",
-           add_centroids = FALSE) {
+           add_centroids = FALSE, use_cellseg = TRUE) {
     type <- match.arg(type)
     data <- match.arg(data)
     imgs <- c("lowres", "hires", "detected", "aligned")
@@ -153,18 +147,11 @@ read10xVisiumSFE <- function(samples = deprecated(),
     }
     message(paste0(">>> 10X ", ifelse(VisiumHD, "VisiumHD", "Visium"),
                    " data will be loaded: ", basename(sample), "\n"))
-    
-    fns <- paste0(data, "_feature_bc_matrix", switch(type, HDF5 = ".h5", ""))
+    mid <- ifelse(use_cellseg, "cell", "bc")
+    fns <- paste0(data, sprintf("_feature_%s_matrix", mid), switch(type, HDF5 = ".h5", ""))
     counts <- file.path(sample, fns)
     dir <- file.path(sample, "spatial")
-    suffix <- c("", "_list")
-    if (VisiumHD) {
-        xyz <- file.path(dir, "tissue_positions.parquet")
-    } else {
-        xyz <- file.path(rep(dir, each = length(suffix)), 
-                         sprintf("tissue_positions%s.csv", suffix))
-    }
-    xyz <- xyz[file.exists(xyz)]
+    
     sfs <- file.path(dir, "scalefactors_json.json")
     img_fns <- c(lowres = "tissue_lowres_image.png", hires = "tissue_hires_image.png",
                  detected = "detected_tissue_image.jpg", aligned = "aligned_fiducials.jpg")
@@ -184,18 +171,29 @@ read10xVisiumSFE <- function(samples = deprecated(),
     names_use <- paste("tissue", images, "scalef", sep = "_")
     scale_imgs <- unlist(scalefactors[names_use])
     
-    if (VisiumHD) {
-        spd <-
-            arrow::read_parquet(xyz) |>
-            as.data.frame()
-        rownames(spd) <- spd$barcode
-    } else {
-        spd <- read.csv(xyz,
-                        col.names = c("barcode", "in_tissue", "array_row", "array_col",
-                                      "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
-        spd$in_tissue <- as.logical(spd$in_tissue)
-        
+    if (!use_cellseg) {
+        suffix <- c("", "_list")
+        if (VisiumHD) {
+            xyz <- file.path(dir, "tissue_positions.parquet")
+        } else {
+            xyz <- file.path(rep(dir, each = length(suffix)),
+                             sprintf("tissue_positions%s.csv", suffix))
+        }
+        xyz <- xyz[file.exists(xyz)]
+        if (VisiumHD) {
+            spd <-
+                arrow::read_parquet(xyz) |>
+                as.data.frame()
+            rownames(spd) <- spd$barcode
+        } else {
+            spd <- read.csv(xyz,
+                            col.names = c("barcode", "in_tissue", "array_row", "array_col",
+                                          "pxl_row_in_fullres", "pxl_col_in_fullres"), row.names = 1)
+            spd$in_tissue <- as.logical(spd$in_tissue)
+            
+        }
     }
+    
     # Convert to microns and set extent for image
     if (unit == "micron") {
         message(">>> Converting pixels to microns")
@@ -206,14 +204,11 @@ read10xVisiumSFE <- function(samples = deprecated(),
             scale_fct <- .pixel2micron(spd)
         # Scale factors for images
         scale_imgs <- scale_imgs / scale_fct
-        spd$pxl_row_in_fullres <- spd$pxl_row_in_fullres * scale_fct
-        spd$pxl_col_in_fullres <- spd$pxl_col_in_fullres * scale_fct
-        spot_diam <- scalefactors$spot_diameter_fullres * scale_fct
     } else {
         scale_imgs <- scalefactors[names_use]
         spot_diam <- scalefactors$spot_diameter_fullres
     }
-    
+
     # Set up ImgData
     img_dfs <- lapply(seq_along(img_fns), function(j) {
         .get_imgData(img_fns[j], sample_id = sample_id,
@@ -228,37 +223,78 @@ read10xVisiumSFE <- function(samples = deprecated(),
         ind <- which.max(img_df$scaleFactor)
         sfct <- img_df$scaleFactor[ind]
         e <- ext(img_df$data[[ind]]) # All scaled
-        spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
     }
-    
+
     # When used internally, this function only reads one matrix/sample at a time
-    sce <- DropletUtils::read10xCounts(samples = counts,
+    sce <- DropletUtils::read10xCounts(samples = counts, 
                                        sample.names = sample_id,
                                        col.names = TRUE,
                                        row.names = row.names)
-    obs <- intersect(colnames(sce), rownames(spd))
-    sce <- sce[, obs]
-    spd <- spd[obs, ]
-    spe <- SpatialExperiment(assays = assays(sce), rowData = DataFrame(symbol = rowData(sce)$Symbol),
-                             sample_id = sample_id, colData = DataFrame(spd),
-                             spatialCoordsNames = c("pxl_col_in_fullres", "pxl_row_in_fullres"))
-    if (VisiumHD && rotate_hd) {
-        # Rotate Visium HD array to make grid accurate
-        rs <- sample(unique(spd$array_col), 10)
-        ths <- vapply(rs, .get_row_angle, df = spd, FUN.VALUE = numeric(1))
-        theta <- mean(ths)
-        m <- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), 2)
-        spatialCoords(spe) <- spatialCoords(spe) %*% m
-        img_df$data <- lapply(img_df$data, rotateImg, degrees = theta/pi*180, maxcell = 1e9)
+    if (use_cellseg) {
+        colnames(sce) <- sub("cellid_0*([0-9]+)-.*", "\\1", sce$Barcode)
+        cell_seg <- st_read(file.path(sample, "cell_segmentations.geojson"), 
+                            crs = NA, agr = "constant", quiet = TRUE)
+        nuc_seg <- st_read(file.path(sample, "nucleus_segmentations.geojson"), 
+                           crs = NA, agr = "constant", quiet = TRUE)
+        rownames(cell_seg) <- cell_seg$cell_id
+        rownames(nuc_seg) <- nuc_seg$cell_id
+        centroids <- st_centroid(cell_seg)
+        centroids$cell_id <- as.character(centroids$cell_id)
+        common_cells <- intersect(centroids$cell_id, colnames(sce))
+        
+        cell_seg <- cell_seg[cell_seg$cell_id %in% common_cells, ]
+        nuc_seg <- nuc_seg[nuc_seg$cell_id %in% common_cells, ]
+        centroids <- centroids[centroids$cell_id %in% common_cells, ]
+        sce <- sce[, colnames(sce) %in% common_cells]
+        
+        # # Sanity check on ordering of cell ids
+        # all(as.character(centroids$cell_id) == colnames(vhdcellsce))
+        
+        if (flip == "geometry") {
+            centroids <- .flip_sf_Y(centroids, type = "POINT", e_ymax = e["ymax"])
+            cell_seg <- .flip_sf_Y(cell_seg, type = "POLYGON", e_ymax = e["ymax"])
+            nuc_seg <- .flip_sf_Y(nuc_seg, type = "POLYGON", e_ymax = e["ymax"])
+        }
+        if (unit == "micron") {
+            st_geometry(centroids) <- st_geometry(centroids) * scale_fct
+            st_geometry(cell_seg) <- st_geometry(cell_seg) * scale_fct
+            st_geometry(nuc_seg) <- st_geometry(nuc_seg) * scale_fct
+        }
+        # Extract coordinates
+        coords <- st_coordinates(centroids)
+        colnames(coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
+        sfe <- toSpatialFeatureExperiment(sce, 
+                                          colGeometries = list(centroids = centroids,
+                                                               cellSeg = cell_seg,
+                                                               nucSeg = nuc_seg),
+                                          spatialCoordsNames = NULL,
+                                          sample_id = sample_id,
+                                          spatialCoords = coords,
+                                          unit = unit)
+    } else {
+        if (flip == "geometry") {
+            spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
+        }
+        if (unit == "micron") {
+            spd$pxl_row_in_fullres <- spd$pxl_row_in_fullres * scale_fct
+            spd$pxl_col_in_fullres <- spd$pxl_col_in_fullres * scale_fct
+            spot_diam <- scalefactors$spot_diameter_fullres * scale_fct
+        }
+        obs <- intersect(colnames(sce), rownames(spd))
+        sce <- sce[, obs]
+        spd <- spd[obs, ]
+        spe <- SpatialExperiment(assays = assays(sce), rowData = DataFrame(symbol = rowData(sce)$Symbol),
+                                 sample_id = sample_id, colData = DataFrame(spd),
+                                 spatialCoordsNames = c("pxl_col_in_fullres", "pxl_row_in_fullres"))
+        sfe <- .spe_to_sfe(spe,
+                           colGeometries = NULL, rowGeometries = NULL,
+                           annotGeometries = NULL, spatialCoordsNames = NULL,
+                           annotGeometryType = NULL, spatialGraphs = NULL,
+                           spotDiameter = spot_diam,
+                           unit = unit, endCapStyle = if (VisiumHD) "SQUARE" else "ROUND",
+                           add_centroids = add_centroids)
     }
-    sfe <- .spe_to_sfe(spe,
-                       colGeometries = NULL, rowGeometries = NULL,
-                       annotGeometries = NULL, spatialCoordsNames = NULL,
-                       annotGeometryType = NULL, spatialGraphs = NULL,
-                       spotDiameter = spot_diam,
-                       unit = unit, endCapStyle = if (VisiumHD) "SQUARE" else "ROUND",
-                       add_centroids = add_centroids
-    )
+    
     if (unit == "microns") spatialCoordsNames(sfe) <- c("x", "y")
     imgData(sfe) <- img_df
     # Create Visium graph for filtered data
@@ -266,8 +302,13 @@ read10xVisiumSFE <- function(samples = deprecated(),
         message(paste0(">>> Adding spatial neighborhood graph to ",
                        sample_id, "\n"))
         if (VisiumHD) {
-            colGraph(sfe, "visiumhd") <- 
-                findVisiumHDGraph(sfe, style = style, zero.policy = zero.policy)
+            if (use_cellseg) {
+                colGraph(sfe, "knn5") <- 
+                    findSpatialNeighbors(sfe, method = "knearneigh", k = 5)
+            } else {
+                colGraph(sfe, "visiumhd") <-
+                    findVisiumHDGraph(sfe, style = style, zero.policy = zero.policy)
+            }
         } else {
             colGraph(sfe, "visium") <-
                 findVisiumGraph(sfe, sample_id = "all",
@@ -283,19 +324,17 @@ read10xVisiumSFE <- function(samples = deprecated(),
 #' This function reads Visium HD Space Ranger output into R.
 #'
 #' @inheritParams read10xVisiumSFE
-#' @param data_dir Directory
+#' @param data_dir Directory with Visium HD output
 #' @param bin_size One or more resolutions to load, must be 2, 8, or 16. Can be
 #'   either integer or character.
-#' @param add_graph \code{c(local)}, if to add spatial neighborhood graph for
-#'   spots and only if \code{c(data = "filtered")}. Default is \code{c(TRUE)}.
+#' @param use_cellseg Logical, whether to use cell segmentation if present. Only
+#'   applicable when the \code{segmented_outputs} directory is present. If TRUE
+#'   and the directory is present, then \code{bin_size} will be ignored and cell
+#'   segmentations will be used instead.
+#' @param add_graph Logical, if to add spatial neighborhood graph for
+#'   spots and only if \code{c(data = "filtered")}. Default is \code{FALSE}.
 #'   This is optional because for larger datasets, the graph can take a while to
 #'   compute.
-#' @param rotate Logical, whether to rotate the geometry, because usually the
-#'   grid of spots is slightly, but just very slightly, rotated from the perfect
-#'   horizontal line. The spots can be rotated so the square polygons are more
-#'   accurate, because for computational efficiency, \code{st_buffer} is used to
-#'   create the polygons which are not rotated. This is optional because the
-#'   rotation is very slight.
 #' @return An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
 #'   objects each element of which is for one bin size. They're not concatenated
 #'   since it might not make sense to perform joint analyses on the different
@@ -306,55 +345,97 @@ read10xVisiumSFE <- function(samples = deprecated(),
 #'   not zooming in. See the \code{scattermore} argument in
 #'   \code{\link[Voyager]{plotSpatialFeature}}.
 #' @export
+#' @concept Read data into SFE
 #' @examples
-#' #
-readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L), 
-                         sample_id = NULL, 
+#' library(OSTA.data)
+#' id <- "VisiumHD_HumanColon_Oliveira"
+#' pa <- OSTA.data_load(id)
+#' dir.create(dir <- tempfile())
+#' unzip(pa, exdir=dir)
+#' 
+#' # Use binned output
+#' sfe1 <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
+#' 
+#' # Use cell segmentations
+#' sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
+#' 
+#' unlink(dir, recursive = TRUE)
+readVisiumHD <- function(data_dir, bin_size = 8L,
+                         sample_id = "sample01", use_cellseg = TRUE,
                          type = c("HDF5", "sparse"),
                          data = c("filtered", "raw"),
                          images = c("lowres", "hires"),
                          unit = c("full_res_image_pixel", "micron"),
-                         style = "W", zero.policy = NULL,
+                         style = "W", zero.policy = TRUE,
                          row.names = c("id", "symbol"),
                          flip = c("geometry", "image"),
-                         add_graph = FALSE, rotate = FALSE) {
+                         add_graph = FALSE) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
     flip <- match.arg(flip)
     if (.terra_flip()) flip <- "none"
     images <- match.arg(images, several.ok = TRUE)
-    bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
-                          several.ok = TRUE) |> 
-        as.integer() |> 
-        sort()
     row.names <- match.arg(row.names)
-    dirs_check <- c(data_dir, list.files(data_dir, full.names = TRUE))
-    dirs_check <- normalizePath(dirs_check)
-    sanity_passed <-
-        grep("binned_out|square|um$", dirs_check) |> any()
-    if (sanity_passed) {
-        # match sample names with bin_size
+    if (use_cellseg) {
+        samples <- file.path(data_dir, "segmented_outputs")
+        if (!dir.exists(samples)) {
+            warning("segmented_outputs directory not found. Using bin_size and binned outputs instead.")
+            use_cellseg <- FALSE
+        }
+    }
+    if (!use_cellseg) {
+        bo <- normalizePath(file.path(data_dir, "binned_outputs"), mustWork = TRUE)
+        dirs_check <- list.files(bo, full.names = TRUE, include.dirs = TRUE)
+        bin_size <- match.arg(as.character(bin_size), choices = c("2", "8", "16"),
+                              several.ok = TRUE) |>
+            as.integer() |>
+            sort()
         samples <- grep(paste0(paste0(bin_size, collapse = "|"), "um$"), dirs_check, value = TRUE)
-    } else {
-        stop("data_dir should contain or be `square_0xxum`")
+        found <- dir.exists(samples)
+        if (!any(found))
+            stop("Binned output for bin size ", paste0(bin_size, collapse = ", "), "not found")
+        samples <- samples[found]
+        if (is.null(sample_id)) sample_id <- basename(samples)
+        if (length(sample_id) == 1L && length(samples) > 1L) {
+            sample_id <- paste0(sample_id, "_", bin_size, "um")
+        }
+        if (length(sample_id) != length(samples)) {
+            stop("Length of sample_id does not match number of resolutions found")
+        }
     }
-    if (is.null(sample_id)) sample_id <- basename(samples)
-    if (length(sample_id) == 1L && length(samples) > 1L) {
-        sample_id <- paste0(sample_id, "_", bin_size, "um")
-    }
-    if (length(sample_id) != length(samples)) {
-        stop("Length of sample_id does not match number of resolutions found")
-    }
+    
     sfes <- lapply(seq_along(samples), function(i) {
-        .read10xVisium(samples[i], sample_id[i], type = type, data = data, 
+        .read10xVisium(samples[i], sample_id[i], type = type, data = data,
                        images = images, row.names = row.names, flip = flip,
                        add_graph = add_graph, VisiumHD = TRUE, unit = unit,
-                       style = style, zero.policy = zero.policy, 
-                       add_centroids = TRUE, rotate_hd = rotate)
+                       style = style, zero.policy = zero.policy,
+                       add_centroids = TRUE, 
+                       use_cellseg = use_cellseg)
     })
     if (length(sfes) == 1L) return(sfes[[1]])
     sfes
+}
+
+#' Flip the Y-axis of cell or nucleus segmentations to align with H&E image. 
+#'
+#' @param sf a sf object read from a `.geojson` file.
+#' @param type "POINT" for cell centroid, or "POLYGON" for cell segmentation 
+#' mask. Default is "POINT".
+#' @param e_ymax The ymax in the extent of the image
+#' @returns a sf object with Y-axis of the points or polygons flipped.
+#' @noRd
+.flip_sf_Y <- function(sf, type = "POINT", e_ymax){
+    coords <- st_coordinates(sf)
+    coords[, 2] <- e_ymax - coords[, 2] 
+    if (type == "POINT"){
+        g <- st_point(coords)
+    } else { # type == "POLYGON"
+        g <- sfheaders::sf_polygon(coords, x = "X", y = "Y", polygon_id = "L2")
+    }
+  st_geometry(sf) <- st_sfc(g, crs = st_crs(sf))
+  
+  return(sf)
 }
 
 #' @importFrom sf st_nearest_feature st_distance
@@ -377,7 +458,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 .get_row_angle <- function(r, df) {
     # Check alignment
     df2 <- df[df$array_row == r,]
-    if (max(df2$pxl_row_in_fullres) - min(df2$pxl_row_in_fullres) > 1000) 
+    if (max(df2$pxl_row_in_fullres) - min(df2$pxl_row_in_fullres) > 1000)
         df2 <- df[df$array_col == r,] # In this case array_col matches with pxl_row
     ind1 <- which.max(df2$pxl_col_in_fullres)
     ind2 <- which.min(df2$pxl_col_in_fullres)
@@ -415,7 +496,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 .filter_polygons <- function(polys, min_area,
                              is_Xenium = FALSE, # indicate if input tech is Xenium or not
                              BPPARAM = SerialParam()) {
-    # Sanity check: 
+    # Sanity check:
     #..on `min_area` arg
     if (!is.null(min_area)) {
         if (!is.numeric(min_area) || min_area <= 0)
@@ -435,22 +516,22 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
     # remove empty elements
     polys <- polys[!st_is_empty(polys), ]
     empty.inds <- which(!polys.ID_row %in% polys$ID_row)
-    if (length(empty.inds)) { 
+    if (length(empty.inds)) {
         message(">>> ..removing ", length(empty.inds), " empty polygons") }
     # check if polys are from Xenium tech
-    is_xen <- 
-        grepl("cell_id|label_id", names(polys)) |> 
+    is_xen <-
+        grepl("cell_id|label_id", names(polys)) |>
         any() |> all(is_Xenium)
     # check if not all are TRUE
     if (!is_xen && is_Xenium) {
-        warning("Provided segmentations data for `.filter_polygons` indicates Xenium technology,", "\n", 
+        warning("Provided segmentations data for `.filter_polygons` indicates Xenium technology,", "\n",
                 "However, it doesn't contain `cell_id` and/or `label_id` columns")
     }
     # identify which column contains tech-specific cell ids
     # ie, "cell_id" for Xenium; "cellID" for CosMX; "EntityID" for Vizgen
-    cell_ID <- grep("cell_id|cellID|EntityID", 
+    cell_ID <- grep("cell_id|cellID|EntityID",
                     colnames(polys), value = TRUE)
-    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON" && 
+    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON" &&
         !is_Xenium) {
         # convert sf df to polygons directly
         message(">>> Casting MULTIPOLYGON geometry to POLYGON")
@@ -467,7 +548,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
         dupl_inds <- which(polys$ID_row |> duplicated())
         # filter polygons with multiple pieces in single cell segmentation
         if (length(dupl_inds)) {
-            warning("There are ", length(dupl_inds), " cells with multiple", " pieces in cell segmentation", 
+            warning("There are ", length(dupl_inds), " cells with multiple", " pieces in cell segmentation",
                     if (!is.null(min_area)) " larger than `min_area`,",
                     " whose first 10 indices are: ",
                     paste(dupl_inds |> head(10),
@@ -488,18 +569,18 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             id_max_dt <- dupl_area_dt[,gmax := max(area), by = name][, gi := seq_len(.N), by = name][, i := .I][area == gmax]
             add_geo <- poly_df[id_max_dt$i,] |> st_geometry() |> st_sfc()
             # add clean geometries
-            polys_add <- 
-                polys[polys$ID_row %in% dupl_cells, ] |> 
+            polys_add <-
+                polys[polys$ID_row %in% dupl_cells, ] |>
                 st_drop_geometry() |>
                 dplyr::distinct(!!rlang::sym(cell_ID),
                                 .keep_all = TRUE)
             polys_add$Geometry <- add_geo
             # combine polygon dfs
             colnames(polys_add) <- colnames(polys)
-            polys <- 
+            polys <-
                 # data.table is faster than rbind or dplyr::bind_rows
-                data.table::rbindlist(list(polys[!polys$ID_row %in% dupl_cells,], 
-                                           polys_add)) |> 
+                data.table::rbindlist(list(polys[!polys$ID_row %in% dupl_cells,],
+                                           polys_add)) |>
                 as.data.frame() |> st_as_sf()
             # sort by ID_row
             polys <- dplyr::arrange(polys, -dplyr::desc(ID_row))
@@ -514,7 +595,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
             # filter areas larger than `min_area`
             inds <- which(areas > min_area)
             if (any(inds)) {
-                message(">>> Removing ", c(length(areas) - length(inds)), 
+                message(">>> Removing ", c(length(areas) - length(inds)),
                         " cells with area < ", min_area)
                 }
             polys <- polys[inds, ]
@@ -664,7 +745,7 @@ readVisiumHD <- function(data_dir, bin_size = c(2L, 8L, 16L),
 #' @param image Which image(s) to load, can be "DAPI", "PolyT", "Cellbound" or
 #'   any combination of them.
 #' @param min_area Minimum cell area in square microns or pixel units (eg for CosMX).
-#'   Anything smaller will be considered artifact or debris and removed. 
+#'   Anything smaller will be considered artifact or debris and removed.
 #'   Default to `NULL`, ie no filtering of polygons.
 #' @param filter_counts Logical, whether to keep cells with counts \code{> 0}.
 #' @param add_molecules Logical, whether to add transcripts coordinates to an
@@ -826,7 +907,14 @@ readVizgen <- function(data_dir,
             polys$Type <- "cell"
             parq_file <- file.path(data_dir, "hdf5s_micron_space.parquet")
             if (!file.exists(parq_file)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+              tryCatch(
+                {
+                  suppressWarnings(sfarrow::st_write_parquet(polys, dsn = parq_file))
+                },
+                error = function(e) {
+                  message(sprintf(" Could not write %s: %s", parq_file, e$message))
+                }
+              )
             }
         } else if (length(fns) == 0) {
             warning("No '.hdf5' files present, check input directory -> `data_dir`")
@@ -977,8 +1065,7 @@ readCosMX <- function(data_dir,
     fn_polys <- grep("polygons", fns, value = TRUE)[1]
 
     meta <- fread(fn_metadata)
-    mat <- fread(fn_mat)
-    
+    mat <- fread(fn_mat) # TODO: write to h5 or mtx. Consult alabaster.sce
 
     meta$cell_ID <- paste(meta$cell_ID, meta$fov, sep = "_")
     mat$cell_ID <- paste(mat$cell_ID, mat$fov, sep = "_")
@@ -991,6 +1078,7 @@ readCosMX <- function(data_dir,
     colnames(mat) <- cell_ids
 
     poly_sf_fn <- file.path(data_dir, "cell_boundaries_sf.parquet")
+
     if (file.exists(poly_sf_fn)) {
         message(">>> File cell_boundaries_sf.parquet found")
         polys <- sfarrow::st_read_parquet(poly_sf_fn)
@@ -1005,8 +1093,29 @@ readCosMX <- function(data_dir,
         polys <- polys[match(meta$cell_ID, polys$cellID),]
         polys <- .filter_polygons(polys, min_area,
                                   BPPARAM = BPPARAM)
-        suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
+        tryCatch(
+          {
+            suppressWarnings(sfarrow::st_write_parquet(polys, poly_sf_fn))
+          },
+          error = function(e) {
+            message(sprintf(" Could not write %s: %s", poly_sf_fn, e$message))
+          }
+        )
     }
+
+    meta <- fread(fn_metadata) |>
+      dplyr::mutate(cell_ID = paste(cell_ID, fov, sep = "_")) |>
+      dplyr::filter(cell_ID %in% polys$cellID)
+    mat <- fread(fn_mat) |> # TODO: write to h5 or mtx. Consult alabaster.sce
+      dplyr::mutate(cell_ID = paste(cell_ID, fov, sep = "_")) |>
+      dplyr::filter(cell_ID %in% polys$cellID)
+ 
+    mat <- mat[match(meta$cell_ID, mat$cell_ID),]
+    cell_ids <- mat$cell_ID
+    mat <- mat[,3:ncol(mat)] |>
+        as.matrix() |>
+        as("CsparseMatrix") |> Matrix::t()
+    colnames(mat) <- cell_ids
 
     sfe <- SpatialFeatureExperiment(list(counts = mat), colData = meta,
                                     sample_id = sample_id,
@@ -1089,7 +1198,15 @@ readCosMX <- function(data_dir,
             warning("The image file(s) for ", "`", paste0(image[!if_exists], collapse = "|"), "`",
                     " don't exist, or have non-standard file name(s).")
         }
-    } else { # For now there's only v2. We'll see what v3 will be like
+    } else if (major_version == 4L) { 
+        stains <- c("dapi", "atp1a1_cd45_e-cadherin", "18s", "alphasma_vimentin") 
+        img_fn <- paste0("ch000", 0:3, "_", stains, ".ome.tif") 
+        img_fn <- file.path(data_dir, "morphology_focus", img_fn) 
+        if_exists <- dir.exists(file.path(data_dir, "morphology_focus")) 
+        if (!if_exists) { 
+            warning("morphology_focus images not found") 
+        }
+    } else {
         img_fn <- paste0("morphology_focus_000", 0:3, ".ome.tif")
         img_fn <- file.path(data_dir, "morphology_focus", img_fn)
         # When any of the images indicated in the XML metadata is absent RBioFormats
@@ -1308,7 +1425,14 @@ readXenium <- function(data_dir,
             fn_out <- file.path(data_dir, fn_out)
             message(">>> Saving geometries to parquet files")
             for (i in seq_along(polys)) {
-                suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+              tryCatch(
+                {
+                  suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+                },
+                error = function(e) {
+                  message(sprintf(" Could not write %s: %s", fn_out[[i]], e$message))
+                }
+              )
             }
         }
         # add names to polys list

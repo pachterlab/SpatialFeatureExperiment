@@ -26,6 +26,7 @@
 #' \item{Matrix and \code{sf(c)}}{A logical vector indicating whether each cell
 #' is debris.}
 #' }
+#' @concept Preprocessing and QC
 #' @name findDebrisCells
 NULL
 

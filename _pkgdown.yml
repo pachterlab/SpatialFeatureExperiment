@@ -1,4 +1,3 @@
-url: ~
 template:
   bootstrap: 5
   bootswatch: united
@@ -6,6 +5,7 @@ template:
     text-muted: "#cccccc"
 development:
   mode: devel
+url: https://pachterlab.github.io/SpatialFeatureExperiment
 reference:
   - title: SpatialFeatureExperiment class
   - contents: has_concept("SpatialFeatureExperiment class")
@@ -13,6 +13,8 @@ reference:
   - contents: has_concept("Read data into SFE")
   - title: Getters and setters
   - contents: has_concept("Getters and setters")
+  - title: Preprocessing and QC
+  - contents: has_concept("Preprocessing and QC")
   - title: Find spatial neighborhood graph
   - contents: has_concept("Spatial neighborhood graph")
   - title: Transcript spots

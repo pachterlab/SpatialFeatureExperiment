@@ -2,18 +2,48 @@
 % Please edit documentation in R/tissue_boundary.R
 \name{getTissueBoundaryConcave}
 \alias{getTissueBoundaryConcave}
+\alias{getTissueBoundaryConcave,SpatialFeatureExperiment-method}
+\alias{getTissueBoundaryConcave,sfc-method}
+\alias{getTissueBoundaryConcave,sf-method}
 \title{Get tissue boundary from concave hull of cell geometries}
 \usage{
-getTissueBoundaryConcave(
-  sfe,
+\S4method{getTissueBoundaryConcave}{SpatialFeatureExperiment}(
+  x,
   sample_id = NULL,
   colGeometryName = 1L,
   ratio = 0.01,
-  allow_holes = TRUE
+  allow_holes = TRUE,
+  multiple_pieces = FALSE,
+  min_cells = 100,
+  distance_cutoff = 50,
+  BNPARAM = NULL,
+  BPPARAM = SerialParam()
+)
+
+\S4method{getTissueBoundaryConcave}{sfc}(
+  x,
+  ratio = 0.01,
+  allow_holes = TRUE,
+  multiple_pieces = FALSE,
+  min_cells = 100,
+  distance_cutoff = 50,
+  BNPARAM = NULL,
+  BPPARAM = SerialParam()
+)
+
+\S4method{getTissueBoundaryConcave}{sf}(
+  x,
+  ratio = 0.01,
+  allow_holes = TRUE,
+  multiple_pieces = FALSE,
+  min_cells = 100,
+  distance_cutoff = 50,
+  BNPARAM = NULL,
+  BPPARAM = SerialParam()
 )
 }
 \arguments{
-\item{sfe}{An SFE object with images}
+\item{x}{object of class \code{sfg}, \code{sfc} or \code{sf}}
 
 \item{sample_id}{Sample id(s) whose tissue boundaries are to be found.}
 
@@ -23,6 +53,26 @@ concave hull.}
 \item{ratio}{numeric; fraction convex: 1 returns the convex hulls, 0 maximally concave hulls}
 
 \item{allow_holes}{logical; if \code{TRUE}, the resulting concave hull may have holes}
+
+\item{multiple_pieces}{Logical, whether there are multiple pieces of tissue
+in the same sample.}
+
+\item{min_cells}{Minimum number of cells per graph component; components with
+fewer than this number of cells are considered debris and removed.}
+
+\item{distance_cutoff}{For the \code{sf} and \code{sfc} methods, the distance
+cutoff used to construct a distance-based spatial neighborhood graph, in
+the same unit as the spatial coordinates. Anything within this distance is
+considered a neighbor.}
+
+\item{BNPARAM}{A \code{\link[BiocNeighbors]{BiocNeighborParam}} object specifying the
+algorithm to find k nearest neighbors and distance based neighbors with
+\code{nn_method = "bioc"}. For distance based neighbors, only
+\code{\link[BiocNeighbors]{KmknnParam}} and \code{\link[BiocNeighbors]{VptreeParam}} are applicable.}
+
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object for multithreading.
+Only used for k nearest neighbor and distance based neighbor with
+\code{nn_method = "bioc"}.}
 }
 \value{
 A \code{sf} data frame with columns \code{sample_id} and
@@ -34,3 +84,4 @@ adjusted with the \code{ratio} parameter. Run \code{\link{findDebrisCells}}
 to remove small bits outside the main piece tissue before running this
 function.
 }
+\concept{Preprocessing and QC}

@@ -18,7 +18,7 @@ test_that("Directly call aggregateTx to aggregate from file, specify `by`", {
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
-    expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(tx_agged))-2500) < sqrt(.Machine$double.eps)))
     expect_true(all(rownames(tx_agged) %in% gene_names))
     expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
@@ -44,7 +44,7 @@ test_that("aggregateTx from file, generate grid", {
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
-    expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(tx_agged))-2500) < sqrt(.Machine$double.eps)))
     expect_true(all(rownames(tx_agged) %in% gene_names))
     expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
@@ -58,7 +58,7 @@ test_that("Call aggregateTx for a data frame", {
     tx_agged$nCounts <- colSums(counts(tx_agged))
     # empty cells are removed
     expect_true(all(tx_agged$nCounts > 0))
-    expect_true(all(st_area(colGeometry(tx_agged)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(tx_agged))-2500) < sqrt(.Machine$double.eps)))
     expect_true(all(rownames(tx_agged) %in% gene_names))
     expect_equal(colnames(tx_agged), as.character(seq_along(grid)))
 })
@@ -72,7 +72,7 @@ test_that("aggregateTxTech for Vizgen", {
     sfe$nCounts <- colSums(counts(sfe))
     # empty cells are removed
     expect_true(all(sfe$nCounts > 0))
-    expect_true(all(st_area(colGeometry(sfe)) == 400))
+    expect_true(all(abs(st_area(colGeometry(sfe))-400) < sqrt(.Machine$double.eps)))
     # Image is aligned
     ids <- imgData(sfe)
     expect_true(nrow(ids) > 1L)
@@ -94,7 +94,7 @@ test_that("aggregateTxTech for Xenium", {
     sfe$nCounts <- colSums(counts(sfe))
     # empty cells are removed
     expect_true(all(sfe$nCounts > 0))
-    expect_true(all(st_area(colGeometry(sfe)) == 2500))
+    expect_true(all(abs(st_area(colGeometry(sfe))-2500) < sqrt(.Machine$double.eps)))
     # Image is aligned
     ids <- imgData(sfe)
     expect_true(nrow(ids) > 0)
