@@ -524,7 +524,11 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 
           # remove this afterwards
           #sfe_out <<- sfe
-
+          if (!is.null(polys)) {
+              # sanity on geometries
+              # Moved it here because flipping causes weird geos error in sf_remove_holes
+              polys <- .check_st_valid(polys)
+          }
           # flip geometry both for col & row geoms ----
           if (flip == "geometry") {
             # flip the coordinates
@@ -540,8 +544,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
 
           # add polygon geometries ----
           if (!is.null(polys)) {
-            # sanity on geometries
-            polys <- .check_st_valid(polys)
             cellSeg(sfe) <- polys
             cellSeg(sfe)$sample_id <- sampleIDs(sfe)
           }
