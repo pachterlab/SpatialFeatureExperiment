@@ -108,12 +108,14 @@ plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
 ## Load Visium Seurat object (real data)
 Visium data is taken from `SeuratData` (ie `stxBrain.SeuratData`), subsetted to keep first 50 genes, and added to `./inst/extdata/`.
 Note, the spot diameter was added manually as `80`, since older Seurat version had a bug when adding spatial infos to `scale.factors`, `$spot` was too small and same as `$hires`
+
+Note that as of April 2026, `Seurat::SpatialFeaturePlot` has an error regarding [`UpdateSeuratObject`](https://github.com/satijalab/seurat/issues/10261). This problem is resolved in version `5.4.0.9002`, which does not seem to on CRAN yet as of writing. Use `pak::pak("satijalab/seurat")` to install this version.
+
 ```{r}
-obj_vis2 <- SeuratTestData("Visium")
+obj_vis2 <- SeuratTestData("Visium") |> UpdateSeuratObject()
 obj_vis2
 # plot it
 SpatialFeaturePlot(obj_vis2, features = rownames(obj_vis2)[1])
-
 ```
 ## Convert Seurat -> SFE - Visium (real data)
 ```{r}
@@ -175,10 +177,11 @@ plotSpatialFeature(sfe_vishd, exprs_values = "counts",
 # slim down Xenium obj to keep only 1 Assay
 if (!exists("obj_xen_slim"))
   obj_xen_slim <- DietSeurat(obj_xen, assays = "Xenium")
+obj_xen_slim <- UpdateSeuratObject(obj_xen_slim)
 #real data subset
 sfe_conv_xen <-
   toSpatialFeatureExperiment(x = obj_xen_slim,
-                             add_molecules = TRUE,
+                             add_molecules = FALSE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM
@@ -191,10 +194,7 @@ getMeta(obj_xen) %>% str
 ```{r}
 # manual check
 ggplot() &
-    geom_sf(data = cellSeg(sfe_conv_xen)) &
-    geom_sf(data = 
-              rowGeometry(sfe_conv_xen, "txSpots") %>% 
-              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
+    geom_sf(data = cellSeg(sfe_conv_xen))
 ```
 
 ## Plot converted Seurat to SFE - Xenium
@@ -213,23 +213,13 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
                    #sample_id = "",
                    scattermore = FALSE # will plot only centroids!
                   )
-plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
-                   features = rownames(sfe_conv_xen)[1],
-                   size = 1, colGeometryName = "cellSeg", 
-                   dark = TRUE,
-                   #sample_id = "",
-                   scattermore = FALSE # will plot only centroids!
-                  ) & # add molecules
-  geom_sf(data = 
-              rowGeometry(sfe_conv_xen, "txSpots") %>% 
-              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
 ```
 
 ## Convert Seurat -> SFE - Vizgen
 ```{r}
 sfe_conv_vz <-
   toSpatialFeatureExperiment(x = obj_vz,
-                             add_molecules = TRUE,
+                             add_molecules = FALSE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM)
@@ -241,8 +231,7 @@ getMeta(obj_vz) %>% str
 ```{r}
 # manual check
 ggplot() & 
-    geom_sf(data = cellSeg(sfe_conv_vz)) &
-    geom_sf(data = rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5)
+    geom_sf(data = cellSeg(sfe_conv_vz))
 ```
 
 ## Plot converted Seurat to SFE - Vizgen
@@ -254,16 +243,14 @@ plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
                    dark = TRUE, #show_axes = T,
                    #sample_id = "",
                    scattermore = FALSE
-                  ) & # add molecules
-  geom_sf(data = 
-            rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5, color = "red", alpha = 0.4)
+                  )
 ```
 
 ## Test when Seurat object has > 1 Assay - Xenium
 ```{r}
 sfe_conv_xen2 <-
   toSpatialFeatureExperiment(x = obj_xen,
-                             add_molecules = TRUE,
+                             add_molecules = FALSE,
                              flip = "geometry",
                              unit = "micron",
                              BPPARAM = BPPARAM
@@ -306,7 +293,7 @@ obj_vz %<>%
 obj_vz
 sfe_conv_vz2 <-
   toSpatialFeatureExperiment(x = obj_vz,
-                             add_molecules = TRUE,
+                             add_molecules = FALSE,
                              flip = "geometry",
                              unit = "micron",
                              BPPARAM = BPPARAM
@@ -399,7 +386,7 @@ if (!exists("obj_xen_multi.slim"))
 #real data subset
 sfe_xen_multi <-
   toSpatialFeatureExperiment(x = obj_xen_multi.slim,
-                             add_molecules = TRUE,
+                             add_molecules = FALSE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM
@@ -430,7 +417,7 @@ plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
 ```{r}
 sfe_vz_multi <-
   toSpatialFeatureExperiment(x = obj_vz_multi,
-                             add_molecules = TRUE,
+                             add_molecules = FALSE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM)
