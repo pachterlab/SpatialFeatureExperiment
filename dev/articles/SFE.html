@@ -8,8 +8,8 @@
 <title>Introduction to the SpatialFeatureExperiment class • SpatialFeatureExperiment</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Introduction to the SpatialFeatureExperiment class">
 <meta name="robots" content="noindex">
 </head>
@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.7.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.13.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/SFE.html">Introduction to the SpatialFeatureExperiment class</a></li>
+<li><a class="dropdown-item" href="../articles/seurat_sfe_coerce.html">Seurat_to_SFE</a></li>
+    <li><a class="dropdown-item" href="../articles/SFE.html">Introduction to the SpatialFeatureExperiment class</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -61,9 +62,9 @@
                         <h4 data-toc-skip class="author">Lambda Moses,
 Alik Huseynov, Lior Pachter</h4>
             
-            <h4 data-toc-skip class="date">Jul 24, 2024</h4>
+            <h4 data-toc-skip class="date">Apr 24, 2026</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/pachterlab/SpatialFeatureExperiment/blob/documentation-devel/vignettes/SFE.Rmd" class="external-link"><code>vignettes/SFE.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pachterlab/SpatialFeatureExperiment/blob/documentation/vignettes/SFE.Rmd" class="external-link"><code>vignettes/SFE.Rmd</code></a></small>
       <div class="d-none name"><code>SFE.Rmd</code></div>
     </div>
 
@@ -97,7 +98,7 @@ including algorithms for for determining whether geometries intersect,
 finding intersection geometries, buffering geometries with margins, etc.
 A schematic of the SFE object is shown below:</p>
 <div class="figure">
-<img src="sfe_schematics.png" alt="SpatialFeatureExperiment expands on SpatialExperiment by adding column, row, and annotation geometries and spatial graphs. This is explained in detail in the following paragraphs." width="100%"><p class="caption">
+<img src="sfe_schematics.png" class="r-plt" alt="SpatialFeatureExperiment expands on SpatialExperiment by adding column, row, and annotation geometries and spatial graphs. This is explained in detail in the following paragraphs." width="100%"><p class="caption">
 Schematics of the SFE object
 </p>
 </div>
@@ -177,7 +178,8 @@ spatial analysis such as <a href="https://cran.r-project.org/web/packages/adespa
 PCA</a> can be stored in <code>reducedDims</code>.</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pachterlab/SpatialFeatureExperiment" class="external-link">SpatialFeatureExperiment</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pachterlab.github.io/SpatialFeatureExperiment">SpatialFeatureExperiment</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; There appears to be a problem with the PROJ installation</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'SpatialFeatureExperiment'</span></span>
 <span><span class="co">#&gt; The following object is masked from 'package:base':</span></span>
@@ -210,6 +212,13 @@ PCA</a> can be stored in <code>reducedDims</code>.</li>
 <span><span class="co">#&gt; Loading required package: GenomicRanges</span></span>
 <span><span class="co">#&gt; Loading required package: stats4</span></span>
 <span><span class="co">#&gt; Loading required package: BiocGenerics</span></span>
+<span><span class="co">#&gt; Loading required package: generics</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'generics'</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     as.difftime, as.factor, as.ordered, intersect, is.element, setdiff,</span></span>
+<span><span class="co">#&gt;     setequal, union</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'BiocGenerics'</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
@@ -219,10 +228,10 @@ PCA</a> can be stored in <code>reducedDims</code>.</li>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     anyDuplicated, aperm, append, as.data.frame, basename, cbind,</span></span>
 <span><span class="co">#&gt;     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,</span></span>
-<span><span class="co">#&gt;     get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,</span></span>
-<span><span class="co">#&gt;     match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,</span></span>
-<span><span class="co">#&gt;     Position, rank, rbind, Reduce, rownames, sapply, setdiff, table,</span></span>
-<span><span class="co">#&gt;     tapply, union, unique, unsplit, which.max, which.min</span></span>
+<span><span class="co">#&gt;     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,</span></span>
+<span><span class="co">#&gt;     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,</span></span>
+<span><span class="co">#&gt;     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,</span></span>
+<span><span class="co">#&gt;     unsplit, which.max, which.min</span></span>
 <span><span class="co">#&gt; Loading required package: S4Vectors</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'S4Vectors'</span></span>
@@ -233,7 +242,7 @@ PCA</a> can be stored in <code>reducedDims</code>.</li>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     expand.grid, I, unname</span></span>
 <span><span class="co">#&gt; Loading required package: IRanges</span></span>
-<span><span class="co">#&gt; Loading required package: GenomeInfoDb</span></span>
+<span><span class="co">#&gt; Loading required package: Seqinfo</span></span>
 <span><span class="co">#&gt; Loading required package: Biobase</span></span>
 <span><span class="co">#&gt; Welcome to Bioconductor</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -250,7 +259,7 @@ PCA</a> can be stored in <code>reducedDims</code>.</li>
 <span><span class="co">#&gt;     anyMissing, rowMedians</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pachterlab/SFEData" class="external-link">SFEData</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Linking to GEOS 3.10.2, GDAL 3.4.1, PROJ 8.2.1; sf_use_s2() is TRUE</span></span>
+<span><span class="co">#&gt; Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://Matrix.R-forge.R-project.org" class="external-link">Matrix</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'Matrix'</span></span>
@@ -258,7 +267,15 @@ PCA</a> can be stored in <code>reducedDims</code>.</li>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     expand</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/aoles/RBioFormats" class="external-link">RBioFormats</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; BioFormats library version 7.3.0</span></span></code></pre></div>
+<span><span class="co">#&gt; BioFormats library version 7.3.0</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-spatial/spdep/" class="external-link">spdep</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required package: spData</span></span>
+<span><span class="co">#&gt; To access larger datasets in this package, install the spDataLarge</span></span>
+<span><span class="co">#&gt; package with: `install.packages('spDataLarge',</span></span>
+<span><span class="co">#&gt; repos='https://nowosad.github.io/drat/', type='source')`</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/waldronlab/VisiumIO" class="external-link">VisiumIO</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required package: TENxIO</span></span>
+<span><span class="fu"><a href="https://r-spatial.github.io/spdep/reference/set.spChkOption.html" class="external-link">set.SubgraphOption</a></span><span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example dataset</span></span>
 <span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/McKellarMuscleData.html" class="external-link">McKellarMuscleData</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"small"</span><span class="op">)</span><span class="op">)</span></span>
@@ -328,7 +345,7 @@ name of index.</p>
 <span><span class="co">#&gt; ACGCTAGTGATACACT POLYGON ((5639.096 13394.44...     Vis5A</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="va">spots</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Setter</span></span>
 <span><span class="fu"><a href="../reference/dimGeometries.html">dimGeometry</a></span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"foobar"</span>, MARGIN <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">spots</span></span></code></pre></div>
@@ -417,7 +434,7 @@ Similar to column and row geometries, annotation geometries have
 <span><span class="co">#&gt; 7  7 POLYGON ((5094 13000, 5095 ...     Vis5A</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="va">tb</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Setter, by name or index</span></span>
 <span><span class="fu"><a href="../reference/annotGeometries.html">annotGeometry</a></span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"tissueBoundary"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">tb</span></span></code></pre></div>
@@ -484,7 +501,7 @@ to find the spatial graph; many other methods are also supported, such
 as k nearest neighbors, distance based neighbors, and polygon
 contiguity.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/findSpatialNeighbors-SpatialFeatureExperiment-method.html">findSpatialNeighbors</a></span><span class="op">(</span><span class="va">sfe</span>, MARGIN <span class="op">=</span> <span class="fl">2</span>, method <span class="op">=</span> <span class="st">"tri2nb"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/findSpatialNeighbors.html">findSpatialNeighbors</a></span><span class="op">(</span><span class="va">sfe</span>, MARGIN <span class="op">=</span> <span class="fl">2</span>, method <span class="op">=</span> <span class="st">"tri2nb"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Characteristics of weights list object:</span></span>
 <span><span class="co">#&gt; Neighbour list object:</span></span>
 <span><span class="co">#&gt; Number of regions: 77 </span></span>
@@ -498,7 +515,7 @@ contiguity.</p>
 <span><span class="co">#&gt; W 77 5929 77 28.0096 309.4083</span></span></code></pre></div>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-24-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-24-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set graph by name</span></span>
 <span><span class="fu"><a href="../reference/spatialGraphs.html">spatialGraph</a></span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"graph1"</span>, MARGIN <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">g</span></span>
@@ -524,10 +541,10 @@ contiguity.</p>
 <p>For Visium, spatial neighborhood graph of the hexagonal grid can be
 found with the known locations of the barcodes.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/spatialGraphs.html">colGraph</a></span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"visium"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/findVisiumGraph.html">findVisiumGraph</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/spatialGraphs.html">colGraph</a></span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"visium"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/findVisiumGraph.html">findVisiumGraph</a></span><span class="op">(</span><span class="va">sfe</span>, zero.policy <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/spatialGraphs.html">colGraph</a></span><span class="op">(</span><span class="va">sfe</span>, <span class="st">"visium"</span><span class="op">)</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-28-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-28-1.png" class="r-plt" alt="" width="700"></p>
 <p>All graphs of the SFE object, or if specified, of the margin of
 interest, can be get or set with <code><a href="../reference/spatialGraphs.html">spatialGraphs()</a></code> and the
 margin specific wrappers.</p>
@@ -629,7 +646,7 @@ samples</p>
 <span><span class="co">#&gt; ACAATTGTGTCTCTTT  sample02 POLYGON ((6043.169 7843.77,...</span></span>
 <span><span class="co">#&gt; ACAGGCTTGCCCGACT  sample02 POLYGON ((7428.88 7358.195,...</span></span>
 <span><span class="co">#&gt; ACCAGTGCGGGAGACG  sample02 POLYGON ((6460.753 8566.757...</span></span>
-<span><span class="co">#&gt; ACCCTCCCTTGCTATT  sample02 POLYGON ((7847.503 8563.771...</span></span></code></pre></div>
+<span><span class="co">#&gt; ACCCTCCCTTGCTATT  sample02 POLYGON ((7847.503 8563.77,...</span></span></code></pre></div>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Only set the geometries for the second sample</span></span>
 <span><span class="co"># Leaving geometries of the first sample intact</span></span>
@@ -637,7 +654,7 @@ samples</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set graph only for the second sample</span></span>
 <span><span class="fu"><a href="../reference/spatialGraphs.html">colGraph</a></span><span class="op">(</span><span class="va">sfe_combined</span>, <span class="st">"foo"</span>, sample_id <span class="op">=</span> <span class="st">"sample02"</span><span class="op">)</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/findSpatialNeighbors-SpatialFeatureExperiment-method.html">findSpatialNeighbors</a></span><span class="op">(</span><span class="va">sfe_combined</span>, sample_id <span class="op">=</span> <span class="st">"sample02"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/findSpatialNeighbors.html">findSpatialNeighbors</a></span><span class="op">(</span><span class="va">sfe_combined</span>, sample_id <span class="op">=</span> <span class="st">"sample02"</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get graph only for the second sample</span></span>
 <span><span class="fu"><a href="../reference/spatialGraphs.html">colGraph</a></span><span class="op">(</span><span class="va">sfe_combined</span>, <span class="st">"foo"</span>, sample_id <span class="op">=</span> <span class="st">"sample02"</span><span class="op">)</span></span>
@@ -852,9 +869,9 @@ datasets with fluorescent imaging rather than bright field H&amp;E.</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read10xVisiumSFE.html">read10xVisiumSFE</a></span><span class="op">(</span><span class="va">samples</span>, sample_id <span class="op">=</span> <span class="va">sample_ids</span>, type <span class="op">=</span> <span class="st">"sparse"</span>, </span>
 <span>                          data <span class="op">=</span> <span class="st">"filtered"</span>, images <span class="op">=</span> <span class="st">"hires"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: sample01</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: outs</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Adding spatial neighborhood graph to sample01</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: sample02</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: outs</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Adding spatial neighborhood graph to sample02</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
 <span><span class="co">#&gt; dim: 5 25 </span></span>
@@ -862,12 +879,10 @@ datasets with fluorescent imaging rather than bright field H&amp;E.</p>
 <span><span class="co">#&gt; assays(1): counts</span></span>
 <span><span class="co">#&gt; rownames(5): ENSG00000014257 ENSG00000142515 ENSG00000263639</span></span>
 <span><span class="co">#&gt;   ENSG00000163810 ENSG00000149591</span></span>
-<span><span class="co">#&gt; rowData names(14): symbol Feature.Type ...</span></span>
-<span><span class="co">#&gt;   Median.Normalized.Average.Counts_sample02</span></span>
-<span><span class="co">#&gt;   Barcodes.Detected.per.Feature_sample02</span></span>
+<span><span class="co">#&gt; rowData names(1): symbol</span></span>
 <span><span class="co">#&gt; colnames(25): GTGGCGTGCACCAGAG-1 GGTCCCATAACATAGA-1 ...</span></span>
 <span><span class="co">#&gt;   TGCAATTTGGGCACGG-1 ATGCCAATCGCTCTGC-1</span></span>
-<span><span class="co">#&gt; colData names(10): in_tissue array_row ... channel3_mean channel3_stdev</span></span>
+<span><span class="co">#&gt; colData names(4): in_tissue array_row array_col sample_id</span></span>
 <span><span class="co">#&gt; reducedDimNames(0):</span></span>
 <span><span class="co">#&gt; mainExpName: NULL</span></span>
 <span><span class="co">#&gt; altExpNames(0):</span></span>
@@ -893,10 +908,10 @@ The unit can be set in the <code>unit</code> argument; for now only
 <div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read10xVisiumSFE.html">read10xVisiumSFE</a></span><span class="op">(</span><span class="va">samples</span>, sample_id <span class="op">=</span> <span class="va">sample_ids</span>, type <span class="op">=</span> <span class="st">"sparse"</span>, </span>
 <span>                          data <span class="op">=</span> <span class="st">"filtered"</span>, images <span class="op">=</span> <span class="st">"hires"</span>, unit <span class="op">=</span> <span class="st">"micron"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: sample01</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: outs</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Converting pixels to microns</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Adding spatial neighborhood graph to sample01</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: sample02</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; 10X Visium data will be loaded: outs</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Converting pixels to microns</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Adding spatial neighborhood graph to sample02</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
@@ -905,12 +920,10 @@ The unit can be set in the <code>unit</code> argument; for now only
 <span><span class="co">#&gt; assays(1): counts</span></span>
 <span><span class="co">#&gt; rownames(5): ENSG00000014257 ENSG00000142515 ENSG00000263639</span></span>
 <span><span class="co">#&gt;   ENSG00000163810 ENSG00000149591</span></span>
-<span><span class="co">#&gt; rowData names(14): symbol Feature.Type ...</span></span>
-<span><span class="co">#&gt;   Median.Normalized.Average.Counts_sample02</span></span>
-<span><span class="co">#&gt;   Barcodes.Detected.per.Feature_sample02</span></span>
+<span><span class="co">#&gt; rowData names(1): symbol</span></span>
 <span><span class="co">#&gt; colnames(25): GTGGCGTGCACCAGAG-1 GGTCCCATAACATAGA-1 ...</span></span>
 <span><span class="co">#&gt;   TGCAATTTGGGCACGG-1 ATGCCAATCGCTCTGC-1</span></span>
-<span><span class="co">#&gt; colData names(10): in_tissue array_row ... channel3_mean channel3_stdev</span></span>
+<span><span class="co">#&gt; colData names(4): in_tissue array_row array_col sample_id</span></span>
 <span><span class="co">#&gt; reducedDimNames(0):</span></span>
 <span><span class="co">#&gt; mainExpName: NULL</span></span>
 <span><span class="co">#&gt; altExpNames(0):</span></span>
@@ -936,10 +949,10 @@ into memory unless necessary. Also, with <code>terra</code>, if a larger
 image is associated with the SFE object, it will not be fully loaded
 into memory when plotted; rather, it’s downsampled.</p>
 <div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="fu"><a href="../reference/imgRaster.html">imgRaster</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/imgData-methods.html" class="external-link">getImg</a></span><span class="op">(</span><span class="va">sfe3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "SpatRaster"</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/imgData-methods.html" class="external-link">getImg</a></span><span class="op">(</span><span class="va">sfe3</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "SpatRasterImage"</span></span>
 <span><span class="co">#&gt; attr(,"package")</span></span>
-<span><span class="co">#&gt; [1] "terra"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "SpatialFeatureExperiment"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="vizgen-merfish-output">Vizgen MERFISH output<a class="anchor" aria-label="anchor" href="#vizgen-merfish-output"></a>
@@ -958,7 +971,7 @@ dataset which is the first FOV from a real dataset:</p>
 <span><span class="va">dir_use</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/VizgenOutput.html" class="external-link">VizgenOutput</a></span><span class="op">(</span>file_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fp</span>, <span class="st">"vizgen"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
-<span><span class="co">#&gt; The downloaded files are in /tmp/RtmptEFnTb/vizgen/vizgen_cellbound</span></span>
+<span><span class="co">#&gt; The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/vizgen/vizgen_cellbound</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">dir_use</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "cell_boundaries"          "cell_boundaries.parquet" </span></span>
 <span><span class="co">#&gt; [3] "cell_by_gene.csv"         "cell_metadata.csv"       </span></span>
@@ -968,23 +981,21 @@ dataset which is the first FOV from a real dataset:</p>
 <div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_mer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readVizgen.html">readVizgen</a></span><span class="op">(</span><span class="va">dir_use</span>, z <span class="op">=</span> <span class="fl">3L</span>, image <span class="op">=</span> <span class="st">"PolyT"</span>, add_molecules <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; 1 `.parquet` files exist:</span></span>
-<span><span class="co">#&gt; /tmp/RtmptEFnTb/vizgen/vizgen_cellbound/cell_boundaries.parquet</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; using -&gt; /tmp/RtmptEFnTb/vizgen/vizgen_cellbound/cell_boundaries.parquet</span></span>
+<span><span class="co">#&gt; /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/vizgen/vizgen_cellbound/cell_boundaries.parquet</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; using -&gt; /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/vizgen/vizgen_cellbound/cell_boundaries.parquet</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Cell segmentations are found in `.parquet` file</span></span>
-<span><span class="co">#&gt; Removing 35 cells with area less than 15</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; filtering geometries to match 1023 cells with counts &gt; 0</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Checking polygon validity</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Reading transcript coordinates</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Converting transcript spots to geometry</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Writing reformatted transcript spots to disk</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
-<span><span class="co">#&gt; dim: 88 1023 </span></span>
+<span><span class="co">#&gt; dim: 88 1058 </span></span>
 <span><span class="co">#&gt; metadata(0):</span></span>
 <span><span class="co">#&gt; assays(1): counts</span></span>
 <span><span class="co">#&gt; rownames(88): CD4 TLL1 ... Blank-38 Blank-39</span></span>
 <span><span class="co">#&gt; rowData names(0):</span></span>
-<span><span class="co">#&gt; colnames(1023): 112824700230101267 112824700230101269 ...</span></span>
-<span><span class="co">#&gt;   112824700330100848 112824700330100920</span></span>
+<span><span class="co">#&gt; colnames(1058): 112824700230101249 112824700230101252 ...</span></span>
+<span><span class="co">#&gt;   112824700330100920 112824700330100974</span></span>
 <span><span class="co">#&gt; colData names(11): fov volume ... solidity sample_id</span></span>
 <span><span class="co">#&gt; reducedDimNames(0):</span></span>
 <span><span class="co">#&gt; mainExpName: NULL</span></span>
@@ -1024,7 +1035,7 @@ vertices and transcript spots and saves them as GeoParquet files.</p>
 <code class="sourceCode R"><span><span class="va">dir_use</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/XeniumOutput.html" class="external-link">XeniumOutput</a></span><span class="op">(</span><span class="st">"v2"</span>, file_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fp</span>, <span class="st">"xenium"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
-<span><span class="co">#&gt; The downloaded files are in /tmp/RtmptEFnTb/xenium/xenium2</span></span>
+<span><span class="co">#&gt; The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/xenium/xenium2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">dir_use</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "cell_boundaries.csv.gz"     "cell_boundaries.parquet"   </span></span>
 <span><span class="co">#&gt;  [3] "cell_feature_matrix.h5"     "cells.csv.gz"              </span></span>
@@ -1033,13 +1044,15 @@ vertices and transcript spots and saves them as GeoParquet files.</p>
 <span><span class="co">#&gt;  [9] "nucleus_boundaries.parquet" "transcripts.csv.gz"        </span></span>
 <span><span class="co">#&gt; [11] "transcripts.parquet"</span></span></code></pre></div>
 <div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># RBioFormats issue: https://github.com/aoles/RBioFormats/issues/42</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">sfe_xen</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readXenium.html">readXenium</a></span><span class="op">(</span><span class="va">dir_use</span>, add_molecules <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_xen</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readXenium.html">readXenium</a></span><span class="op">(</span><span class="va">dir_use</span>, add_molecules <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Must use gene symbols as row names when adding transcript spots.</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Cell segmentations are found in `.parquet` file(s)</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Reading cell and nucleus segmentations</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Making MULTIPOLYGON nuclei geometries</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Making POLYGON cell geometries</span></span>
+<span><span class="co">#&gt; Sanity checks on cell segmentation polygons:</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; ..found 132 cells with (nested) polygon lists</span></span>
+<span><span class="co">#&gt; &gt;&gt;&gt; ..applying filtering</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Checking polygon validity</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Saving geometries to parquet files</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Reading cell metadata -&gt; `cells.parquet`</span></span>
@@ -1049,17 +1062,6 @@ vertices and transcript spots and saves them as GeoParquet files.</p>
 <span><span class="co">#&gt; &gt;&gt;&gt; Reading transcript coordinates</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Converting transcript spots to geometry</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Writing reformatted transcript spots to disk</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Total of 116 features/genes with no transcript detected or `min_phred` &lt; 20 are removed from SFE object</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; To keep all features -&gt; set `min_phred = NULL`</span></span>
-<span><span class="op">(</span><span class="va">sfe_xen</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readXenium.html">readXenium</a></span><span class="op">(</span><span class="va">dir_use</span>, add_molecules <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Must use gene symbols as row names when adding transcript spots.</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Preprocessed sf segmentations found</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Reading cell and nucleus segmentations</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Reading cell metadata -&gt; `cells.parquet`</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Reading h5 gene count matrix</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; filtering cellSeg geometries to match 6272 cells with counts &gt; 0</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; filtering nucSeg geometries to match 6158 cells with counts &gt; 0</span></span>
-<span><span class="co">#&gt; &gt;&gt;&gt; Reading transcript coordinates</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; Total of 116 features/genes with no transcript detected or `min_phred` &lt; 20 are removed from SFE object</span></span>
 <span><span class="co">#&gt; &gt;&gt;&gt; To keep all features -&gt; set `min_phred = NULL`</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
@@ -1105,7 +1107,7 @@ images.</p>
 <code class="sourceCode R"><span><span class="va">dir_use</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/CosMXOutput.html" class="external-link">CosMXOutput</a></span><span class="op">(</span>file_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">fp</span>, <span class="st">"cosmx"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; see ?SFEData and browseVignettes('SFEData') for documentation</span></span>
 <span><span class="co">#&gt; loading from cache</span></span>
-<span><span class="co">#&gt; The downloaded files are in /tmp/RtmptEFnTb/cosmx/cosmx</span></span>
+<span><span class="co">#&gt; The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/cosmx/cosmx</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">dir_use</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Run5642_S3_Quarter_exprMat_file.csv" </span></span>
 <span><span class="co">#&gt; [2] "Run5642_S3_Quarter_metadata_file.csv"</span></span>
@@ -1161,8 +1163,8 @@ Molecular Cartography, and Curio Seeker are welcome. See the <a href="https://gi
 spot diameter are not specified, then a column geometry called
 “centroids” will be created.</p>
 <div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">spe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/read10xVisium.html" class="external-link">read10xVisium</a></span><span class="op">(</span><span class="va">samples</span>, <span class="va">sample_ids</span>, type <span class="op">=</span> <span class="st">"sparse"</span>, data <span class="op">=</span> <span class="st">"filtered"</span>, </span>
-<span>  images <span class="op">=</span> <span class="st">"hires"</span>, load <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">spe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/VisiumIO/man/TENxVisium-class.html" class="external-link">TENxVisium</a></span><span class="op">(</span>spacerangerOut <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"outs"</span><span class="op">)</span>, processing <span class="op">=</span> <span class="st">"filtered"</span>,</span>
+<span>                  images <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lowres"</span>, <span class="st">"hires"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">import</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>For the coercion, column names must not be duplicate.</p>
 <div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/make.unique.html" class="external-link">make.unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"-"</span><span class="op">)</span></span>
@@ -1170,17 +1172,17 @@ spot diameter are not specified, then a column geometry called
 <div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
-<span><span class="co">#&gt; dim: 5 25 </span></span>
-<span><span class="co">#&gt; metadata(0):</span></span>
+<span><span class="co">#&gt; dim: 5 12 </span></span>
+<span><span class="co">#&gt; metadata(2): resources spatialList</span></span>
 <span><span class="co">#&gt; assays(1): counts</span></span>
 <span><span class="co">#&gt; rownames(5): ENSG00000014257 ENSG00000142515 ENSG00000263639</span></span>
 <span><span class="co">#&gt;   ENSG00000163810 ENSG00000149591</span></span>
-<span><span class="co">#&gt; rowData names(1): symbol</span></span>
-<span><span class="co">#&gt; colnames(25): GTGGCGTGCACCAGAG-1 GGTCCCATAACATAGA-1 ...</span></span>
-<span><span class="co">#&gt;   TGCAATTTGGGCACGG-1 ATGCCAATCGCTCTGC-1</span></span>
+<span><span class="co">#&gt; rowData names(3): ID Symbol Type</span></span>
+<span><span class="co">#&gt; colnames(12): GTGGCGTGCACCAGAG-1 GGTCCCATAACATAGA-1 ...</span></span>
+<span><span class="co">#&gt;   CTTCCTGCATATTTAC-1 CAATATGTAGATTTAC-1</span></span>
 <span><span class="co">#&gt; colData names(4): in_tissue array_row array_col sample_id</span></span>
 <span><span class="co">#&gt; reducedDimNames(0):</span></span>
-<span><span class="co">#&gt; mainExpName: NULL</span></span>
+<span><span class="co">#&gt; mainExpName: Gene Expression</span></span>
 <span><span class="co">#&gt; altExpNames(0):</span></span>
 <span><span class="co">#&gt; spatialCoords names(2) : pxl_col_in_fullres pxl_row_in_fullres</span></span>
 <span><span class="co">#&gt; imgData names(4): sample_id image_id data scaleFactor</span></span>
@@ -1190,8 +1192,7 @@ spot diameter are not specified, then a column geometry called
 <span><span class="co">#&gt; colGeometries: centroids (POINT) </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Graphs:</span></span>
-<span><span class="co">#&gt; sample01: </span></span>
-<span><span class="co">#&gt; sample02:</span></span></code></pre></div>
+<span><span class="co">#&gt; sample01:</span></span></code></pre></div>
 <p>If images are present in the SPE object, they will be converted into
 <code>SpatRaster</code> when the SPE object is converted into SFE.
 Plotting functions in the <code>Voyager</code> package relies on
@@ -1260,19 +1261,9 @@ just now to create a toy example with 2 samples.</p>
 <p>The SFE object can also be subsetted like a matrix, like an SCE
 object. More complexity arises when it comes to the spatial graphs. The
 <code>drop</code> argument of the SFE method <code>[</code> determines
-what to do with the spatial graphs. If <code>drop = TRUE</code>, then
-all spatial graphs will be removed, since the graphs with nodes and
-edges that have been removed are no longer valid. If
-<code>drop = FALSE</code>, which is the default, then the spatial graphs
-will be reconstructed with the remaining nodes after subsetting.
-Reconstruction would only work when the original graphs were constructed
-with <code>findSpatialNeighbors</code> or <code>findVisiumGraph</code>
-in this package, which records the method and parameters used to
-construct the graphs. If reconstruction fails, then a waning will be
-issued and the graphs removed.</p>
+what to do with the spatial graphs.</p>
 <div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_subset</span> <span class="op">&lt;-</span> <span class="va">sfe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, drop <span class="op">=</span> <span class="cn">TRUE</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Node indices in the graphs are no longer valid after subsetting. Dropping all row and col graphs.</span></span>
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">sfe_subset</span> <span class="op">&lt;-</span> <span class="va">sfe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; class: SpatialFeatureExperiment </span></span>
 <span><span class="co">#&gt; dim: 10 10 </span></span>
 <span><span class="co">#&gt; metadata(0):</span></span>
@@ -1295,10 +1286,17 @@ issued and the graphs removed.</p>
 <span><span class="co">#&gt; annotGeometries: tissueBoundary (POLYGON), myofiber_full (GEOMETRY), myofiber_simplified (GEOMETRY), nuclei (POLYGON), nuclei_centroid (POINT) </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Graphs:</span></span>
-<span><span class="co">#&gt; Vis5A:</span></span></code></pre></div>
+<span><span class="co">#&gt; Vis5A: col: graph1, visium</span></span></code></pre></div>
+<p>Note that after subsetting, the spatial graphs might have singletons.
+The <code>zero.policy</code> argument in <code><a href="../reference/findVisiumGraph.html">findVisiumGraph()</a></code>
+and <code><a href="../reference/findSpatialNeighbors.html">findSpatialNeighbors()</a></code> determines behavior when it
+comes to singletons. If <code>zero.policy = TRUE</code>, then no error
+or warning and singletons are tolerated. If <code>NULL</code>, then
+there will be a warning. If <code>FALSE</code>, then there will be an
+error.</p>
 <div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Will give warning because graph reconstruction fails</span></span>
-<span><span class="va">sfe_subset</span> <span class="op">&lt;-</span> <span class="va">sfe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/spatialGraphs.html">colGraph</a></span><span class="op">(</span><span class="va">sfe_subset</span>, <span class="st">"visium"</span><span class="op">)</span>, coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">sfe_subset</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="SFE_files/figure-html/unnamed-chunk-69-1.png" class="r-plt" alt="" width="700"></p>
 <p>If images are present, then they will be cropped to the bounding box
 of the remaining geometries after subsetting.</p>
 </div>
@@ -1325,7 +1323,7 @@ the cropped geometries.</p>
 <code class="sourceCode R"><span><span class="co"># Before</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/colGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-70-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-70-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_in_tissue</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crop.html">crop</a></span><span class="op">(</span><span class="va">sfe</span>, y <span class="op">=</span> <span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, colGeometryName <span class="op">=</span> <span class="st">"spotPoly"</span><span class="op">)</span></span></code></pre></div>
 <p>Note that for large datasets with many geometries, cropping can take
@@ -1334,7 +1332,7 @@ a while to run.</p>
 <code class="sourceCode R"><span><span class="co"># After</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/colGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe_in_tissue</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-72-1.png" width="700"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-72-1.png" class="r-plt" alt="" width="700"></p>
 <p><code>crop</code> can also be used in the conventional sense of
 cropping, i.e. specifying a bounding box.</p>
 <div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
@@ -1410,19 +1408,19 @@ as well as SFE objects with sample and image IDs specified.</p>
 top left to bottom right:</p>
 <div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">img</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/imgData-methods.html" class="external-link">getImg</a></span><span class="op">(</span><span class="va">sfe3</span>, image_id <span class="op">=</span> <span class="st">"hires"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/imgRaster.html">imgRaster</a></span><span class="op">(</span><span class="va">img</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-77-1.png" width="96"></p>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">img</span><span class="op">)</span></span></code></pre></div>
+<p><img src="SFE_files/figure-html/unnamed-chunk-77-1.png" class="r-plt" alt="" width="96"></p>
 <div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/transposeImg.html">transposeImg</a></span><span class="op">(</span><span class="va">img</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/imgRaster.html">imgRaster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-77-2.png" width="96"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/transposeImg.html">transposeImg</a></span><span class="op">(</span><span class="va">img</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="SFE_files/figure-html/unnamed-chunk-77-2.png" class="r-plt" alt="" width="96"></p>
 <p>Arguments for the SFE method of <code><a href="../reference/mirrorImg.html">mirrorImg()</a></code> differ from
 those of the SPE method, to match <code><a href="https://rspatial.github.io/terra/reference/flip.html" class="external-link">terra::flip()</a></code>:</p>
 <div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/mirrorImg.html">mirrorImg</a></span><span class="op">(</span><span class="va">img</span>, direction <span class="op">=</span> <span class="st">"vertical"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/imgRaster.html">imgRaster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-78-1.png" width="96"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/mirrorImg.html">mirrorImg</a></span><span class="op">(</span><span class="va">img</span>, direction <span class="op">=</span> <span class="st">"vertical"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="SFE_files/figure-html/unnamed-chunk-78-1.png" class="r-plt" alt="" width="96"></p>
 <div class="sourceCode" id="cb79"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/mirrorImg.html">mirrorImg</a></span><span class="op">(</span><span class="va">img</span>, direction <span class="op">=</span> <span class="st">"horizontal"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/imgRaster.html">imgRaster</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-78-2.png" width="96"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/mirrorImg.html">mirrorImg</a></span><span class="op">(</span><span class="va">img</span>, direction <span class="op">=</span> <span class="st">"horizontal"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="SFE_files/figure-html/unnamed-chunk-78-2.png" class="r-plt" alt="" width="96"></p>
 <p>Here we apply the transformation to an SFE object, where the image
 specified by the sample and image IDs are transformed:</p>
 <div class="sourceCode" id="cb80"><pre class="downlit sourceCode r">
@@ -1443,7 +1441,7 @@ geometries and images, can be transformed at once.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="fu"><a href="../reference/annotGeometries.html">tissueBoundary</a></span><span class="op">(</span><span class="va">sfe_transposed</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/colGeometries.html">spotPoly</a></span><span class="op">(</span><span class="va">sfe_transposed</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"gray"</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="SFE_files/figure-html/unnamed-chunk-81-1.png" width="576"></p>
+<p><img src="SFE_files/figure-html/unnamed-chunk-81-1.png" class="r-plt" alt="" width="576"></p>
 <p>Transforming the entire SFE object can be useful when the tissue has
 a orientation and a conventional direction of the orientation, such as
 rostral is conventionally at the top while caudal is at the bottom in
@@ -1502,138 +1500,139 @@ helpful to plotting scale bars when plotting geometries.</li>
 </h2>
 <div class="sourceCode" id="cb84"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.4.1 (2024-06-14)</span></span>
-<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 22.04.4 LTS</span></span>
+<span><span class="co">#&gt; R version 4.6.0 Patched (2026-04-24 r89960)</span></span>
+<span><span class="co">#&gt; Platform: aarch64-apple-darwin23</span></span>
+<span><span class="co">#&gt; Running under: macOS Sequoia 15.7.4</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
-<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so;  LAPACK version 3.10.0</span></span>
+<span><span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib </span></span>
+<span><span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8          LC_NUMERIC=C             </span></span>
-<span><span class="co">#&gt;  [3] LC_TIME=C.UTF-8           LC_COLLATE=C.UTF-8       </span></span>
-<span><span class="co">#&gt;  [5] LC_MONETARY=C.UTF-8       LC_MESSAGES=C.UTF-8      </span></span>
-<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8          LC_NAME=C.UTF-8          </span></span>
-<span><span class="co">#&gt;  [9] LC_ADDRESS=C.UTF-8        LC_TELEPHONE=C.UTF-8     </span></span>
-<span><span class="co">#&gt; [11] LC_MEASUREMENT=C.UTF-8    LC_IDENTIFICATION=C.UTF-8</span></span>
+<span><span class="co">#&gt; [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; time zone: UTC</span></span>
-<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span><span class="co">#&gt; tzcode source: internal</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; attached base packages:</span></span>
 <span><span class="co">#&gt; [1] stats4    stats     graphics  grDevices utils     datasets  methods  </span></span>
 <span><span class="co">#&gt; [8] base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt;  [1] RBioFormats_1.5.1              Matrix_1.7-0                  </span></span>
-<span><span class="co">#&gt;  [3] sf_1.0-16                      SFEData_1.7.0                 </span></span>
-<span><span class="co">#&gt;  [5] SpatialExperiment_1.15.1       SingleCellExperiment_1.27.2   </span></span>
-<span><span class="co">#&gt;  [7] SummarizedExperiment_1.35.1    Biobase_2.65.0                </span></span>
-<span><span class="co">#&gt;  [9] GenomicRanges_1.57.1           GenomeInfoDb_1.41.1           </span></span>
-<span><span class="co">#&gt; [11] IRanges_2.39.2                 S4Vectors_0.43.2              </span></span>
-<span><span class="co">#&gt; [13] BiocGenerics_0.51.0            MatrixGenerics_1.17.0         </span></span>
-<span><span class="co">#&gt; [15] matrixStats_1.3.0              SpatialFeatureExperiment_1.7.1</span></span>
-<span><span class="co">#&gt; [17] BiocStyle_2.33.1              </span></span>
+<span><span class="co">#&gt;  [1] VisiumIO_1.7.9                  TENxIO_1.13.4                  </span></span>
+<span><span class="co">#&gt;  [3] spdep_1.4-2                     spData_2.3.4                   </span></span>
+<span><span class="co">#&gt;  [5] RBioFormats_1.11.0              Matrix_1.7-5                   </span></span>
+<span><span class="co">#&gt;  [7] sf_1.1-0                        SFEData_1.13.0                 </span></span>
+<span><span class="co">#&gt;  [9] SpatialExperiment_1.21.0        SingleCellExperiment_1.33.2    </span></span>
+<span><span class="co">#&gt; [11] SummarizedExperiment_1.41.1     Biobase_2.71.0                 </span></span>
+<span><span class="co">#&gt; [13] GenomicRanges_1.63.2            Seqinfo_1.1.0                  </span></span>
+<span><span class="co">#&gt; [15] IRanges_2.45.0                  S4Vectors_0.49.2               </span></span>
+<span><span class="co">#&gt; [17] BiocGenerics_0.57.1             generics_0.1.4                 </span></span>
+<span><span class="co">#&gt; [19] MatrixGenerics_1.23.0           matrixStats_1.5.0              </span></span>
+<span><span class="co">#&gt; [21] SpatialFeatureExperiment_1.13.2 BiocStyle_2.39.0               </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] spatstat.sparse_3.1-0     fs_1.6.4                 </span></span>
-<span><span class="co">#&gt;   [3] bitops_1.0-7              EBImage_4.47.0           </span></span>
-<span><span class="co">#&gt;   [5] httr_1.4.7                RColorBrewer_1.1-3       </span></span>
-<span><span class="co">#&gt;   [7] sctransform_0.4.1         tools_4.4.1              </span></span>
-<span><span class="co">#&gt;   [9] utf8_1.2.4                R6_2.5.1                 </span></span>
-<span><span class="co">#&gt;  [11] HDF5Array_1.33.5          uwot_0.2.2               </span></span>
-<span><span class="co">#&gt;  [13] lazyeval_0.2.2            rhdf5filters_1.17.0      </span></span>
-<span><span class="co">#&gt;  [15] withr_3.0.0               sp_2.1-4                 </span></span>
-<span><span class="co">#&gt;  [17] gridExtra_2.3             progressr_0.14.0         </span></span>
-<span><span class="co">#&gt;  [19] cli_3.6.3                 textshaping_0.4.0        </span></span>
-<span><span class="co">#&gt;  [21] spatstat.explore_3.3-1    fastDummies_1.7.3        </span></span>
-<span><span class="co">#&gt;  [23] sass_0.4.9                Seurat_5.1.0             </span></span>
-<span><span class="co">#&gt;  [25] spatstat.data_3.1-2       arrow_16.1.0             </span></span>
-<span><span class="co">#&gt;  [27] proxy_0.4-27              ggridges_0.5.6           </span></span>
-<span><span class="co">#&gt;  [29] pbapply_1.7-2             pkgdown_2.1.0            </span></span>
-<span><span class="co">#&gt;  [31] systemfonts_1.1.0         R.utils_2.12.3           </span></span>
-<span><span class="co">#&gt;  [33] parallelly_1.37.1         limma_3.61.5             </span></span>
-<span><span class="co">#&gt;  [35] RSQLite_2.3.7             generics_0.1.3           </span></span>
-<span><span class="co">#&gt;  [37] spatstat.random_3.3-1     ica_1.0-3                </span></span>
-<span><span class="co">#&gt;  [39] spdep_1.3-5               dplyr_1.1.4              </span></span>
-<span><span class="co">#&gt;  [41] fansi_1.0.6               abind_1.4-5              </span></span>
-<span><span class="co">#&gt;  [43] R.methodsS3_1.8.2         terra_1.7-78             </span></span>
-<span><span class="co">#&gt;  [45] lifecycle_1.0.4           yaml_2.3.9               </span></span>
-<span><span class="co">#&gt;  [47] edgeR_4.3.5               rhdf5_2.49.0             </span></span>
-<span><span class="co">#&gt;  [49] SparseArray_1.5.25        BiocFileCache_2.13.0     </span></span>
-<span><span class="co">#&gt;  [51] Rtsne_0.17                grid_4.4.1               </span></span>
-<span><span class="co">#&gt;  [53] blob_1.2.4                promises_1.3.0           </span></span>
-<span><span class="co">#&gt;  [55] dqrng_0.4.1               ExperimentHub_2.13.0     </span></span>
-<span><span class="co">#&gt;  [57] crayon_1.5.3              miniUI_0.1.1.1           </span></span>
-<span><span class="co">#&gt;  [59] lattice_0.22-6            beachmat_2.21.4          </span></span>
-<span><span class="co">#&gt;  [61] cowplot_1.1.3             KEGGREST_1.45.1          </span></span>
-<span><span class="co">#&gt;  [63] magick_2.8.4              zeallot_0.1.0            </span></span>
-<span><span class="co">#&gt;  [65] pillar_1.9.0              knitr_1.48               </span></span>
-<span><span class="co">#&gt;  [67] rjson_0.2.21              boot_1.3-30              </span></span>
-<span><span class="co">#&gt;  [69] future.apply_1.11.2       sfarrow_0.4.1            </span></span>
-<span><span class="co">#&gt;  [71] codetools_0.2-20          leiden_0.4.3.1           </span></span>
-<span><span class="co">#&gt;  [73] wk_0.9.2                  glue_1.7.0               </span></span>
-<span><span class="co">#&gt;  [75] spatstat.univar_3.0-0     data.table_1.15.4        </span></span>
-<span><span class="co">#&gt;  [77] vctrs_0.6.5               png_0.1-8                </span></span>
-<span><span class="co">#&gt;  [79] spam_2.10-0               gtable_0.3.5             </span></span>
-<span><span class="co">#&gt;  [81] assertthat_0.2.1          cachem_1.1.0             </span></span>
-<span><span class="co">#&gt;  [83] xfun_0.46                 S4Arrays_1.5.5           </span></span>
-<span><span class="co">#&gt;  [85] mime_0.12                 DropletUtils_1.25.0      </span></span>
-<span><span class="co">#&gt;  [87] survival_3.7-0            sfheaders_0.4.4          </span></span>
-<span><span class="co">#&gt;  [89] rJava_1.0-11              units_0.8-5              </span></span>
-<span><span class="co">#&gt;  [91] statmod_1.5.0             fitdistrplus_1.2-1       </span></span>
-<span><span class="co">#&gt;  [93] ROCR_1.0-11               nlme_3.1-165             </span></span>
-<span><span class="co">#&gt;  [95] bit64_4.0.5               filelock_1.0.3           </span></span>
-<span><span class="co">#&gt;  [97] RcppAnnoy_0.0.22          bslib_0.7.0              </span></span>
-<span><span class="co">#&gt;  [99] irlba_2.3.5.1             KernSmooth_2.23-24       </span></span>
-<span><span class="co">#&gt; [101] colorspace_2.1-0          spData_2.3.1             </span></span>
-<span><span class="co">#&gt; [103] DBI_1.2.3                 tidyselect_1.2.1         </span></span>
-<span><span class="co">#&gt; [105] bit_4.0.5                 compiler_4.4.1           </span></span>
-<span><span class="co">#&gt; [107] curl_5.2.1                BiocNeighbors_1.23.0     </span></span>
-<span><span class="co">#&gt; [109] xml2_1.3.6                desc_1.4.3               </span></span>
-<span><span class="co">#&gt; [111] DelayedArray_0.31.9       plotly_4.10.4            </span></span>
-<span><span class="co">#&gt; [113] bookdown_0.40             scales_1.3.0             </span></span>
-<span><span class="co">#&gt; [115] classInt_0.4-10           lmtest_0.9-40            </span></span>
-<span><span class="co">#&gt; [117] rappdirs_0.3.3            goftest_1.2-3            </span></span>
-<span><span class="co">#&gt; [119] stringr_1.5.1             tiff_0.1-12              </span></span>
-<span><span class="co">#&gt; [121] digest_0.6.36             spatstat.utils_3.0-5     </span></span>
-<span><span class="co">#&gt; [123] fftwtools_0.9-11          rmarkdown_2.27           </span></span>
-<span><span class="co">#&gt; [125] XVector_0.45.0            htmltools_0.5.8.1        </span></span>
-<span><span class="co">#&gt; [127] pkgconfig_2.0.3           jpeg_0.1-10              </span></span>
-<span><span class="co">#&gt; [129] sparseMatrixStats_1.17.2  highr_0.11               </span></span>
-<span><span class="co">#&gt; [131] dbplyr_2.5.0              fastmap_1.2.0            </span></span>
-<span><span class="co">#&gt; [133] rlang_1.1.4               htmlwidgets_1.6.4        </span></span>
-<span><span class="co">#&gt; [135] UCSC.utils_1.1.0          shiny_1.8.1.1            </span></span>
-<span><span class="co">#&gt; [137] DelayedMatrixStats_1.27.2 jquerylib_0.1.4          </span></span>
-<span><span class="co">#&gt; [139] zoo_1.8-12                jsonlite_1.8.8           </span></span>
-<span><span class="co">#&gt; [141] BiocParallel_1.39.0       R.oo_1.26.0              </span></span>
-<span><span class="co">#&gt; [143] RCurl_1.98-1.16           magrittr_2.0.3           </span></span>
-<span><span class="co">#&gt; [145] scuttle_1.15.2            GenomeInfoDbData_1.2.12  </span></span>
-<span><span class="co">#&gt; [147] s2_1.1.7                  dotCall64_1.1-1          </span></span>
-<span><span class="co">#&gt; [149] patchwork_1.2.0           Rhdf5lib_1.27.0          </span></span>
-<span><span class="co">#&gt; [151] munsell_0.5.1             Rcpp_1.0.13              </span></span>
-<span><span class="co">#&gt; [153] reticulate_1.38.0         stringi_1.8.4            </span></span>
-<span><span class="co">#&gt; [155] zlibbioc_1.51.1           MASS_7.3-61              </span></span>
-<span><span class="co">#&gt; [157] plyr_1.8.9                AnnotationHub_3.13.0     </span></span>
-<span><span class="co">#&gt; [159] parallel_4.4.1            listenv_0.9.1            </span></span>
-<span><span class="co">#&gt; [161] ggrepel_0.9.5             deldir_2.0-4             </span></span>
-<span><span class="co">#&gt; [163] Biostrings_2.73.1         splines_4.4.1            </span></span>
-<span><span class="co">#&gt; [165] tensor_1.5                locfit_1.5-9.10          </span></span>
-<span><span class="co">#&gt; [167] igraph_2.0.3              spatstat.geom_3.3-2      </span></span>
-<span><span class="co">#&gt; [169] RcppHNSW_0.6.0            reshape2_1.4.4           </span></span>
-<span><span class="co">#&gt; [171] BiocVersion_3.20.0        evaluate_0.24.0          </span></span>
-<span><span class="co">#&gt; [173] SeuratObject_5.0.2        BiocManager_1.30.23      </span></span>
-<span><span class="co">#&gt; [175] httpuv_1.6.15             polyclip_1.10-7          </span></span>
-<span><span class="co">#&gt; [177] RANN_2.6.1                tidyr_1.3.1              </span></span>
-<span><span class="co">#&gt; [179] purrr_1.0.2               future_1.33.2            </span></span>
-<span><span class="co">#&gt; [181] scattermore_1.2           ggplot2_3.5.1            </span></span>
-<span><span class="co">#&gt; [183] xtable_1.8-4              e1071_1.7-14             </span></span>
-<span><span class="co">#&gt; [185] RSpectra_0.16-2           later_1.3.2              </span></span>
-<span><span class="co">#&gt; [187] viridisLite_0.4.2         class_7.3-22             </span></span>
-<span><span class="co">#&gt; [189] ragg_1.3.2                tibble_3.2.1             </span></span>
-<span><span class="co">#&gt; [191] memoise_2.0.1             AnnotationDbi_1.67.0     </span></span>
-<span><span class="co">#&gt; [193] cluster_2.1.6             globals_0.16.3</span></span></code></pre></div>
+<span><span class="co">#&gt;   [1] spatstat.sparse_3.1-0     fs_2.1.0                 </span></span>
+<span><span class="co">#&gt;   [3] spatialreg_1.4-3          bitops_1.0-9             </span></span>
+<span><span class="co">#&gt;   [5] EBImage_4.53.0            httr_1.4.8               </span></span>
+<span><span class="co">#&gt;   [7] RColorBrewer_1.1-3        sctransform_0.4.3        </span></span>
+<span><span class="co">#&gt;   [9] tools_4.6.0               backports_1.5.1          </span></span>
+<span><span class="co">#&gt;  [11] R6_2.6.1                  HDF5Array_1.39.1         </span></span>
+<span><span class="co">#&gt;  [13] uwot_0.2.4                lazyeval_0.2.3           </span></span>
+<span><span class="co">#&gt;  [15] rhdf5filters_1.23.3       withr_3.0.2              </span></span>
+<span><span class="co">#&gt;  [17] sp_2.2-1                  gridExtra_2.3            </span></span>
+<span><span class="co">#&gt;  [19] progressr_0.19.0          cli_3.6.6                </span></span>
+<span><span class="co">#&gt;  [21] textshaping_1.0.5         spatstat.explore_3.8-0   </span></span>
+<span><span class="co">#&gt;  [23] fastDummies_1.7.6         sandwich_3.1-1           </span></span>
+<span><span class="co">#&gt;  [25] marginaleffects_0.32.0    sass_0.4.10              </span></span>
+<span><span class="co">#&gt;  [27] Seurat_5.5.0.9000         spatstat.data_3.1-9      </span></span>
+<span><span class="co">#&gt;  [29] mvtnorm_1.3-7             arrow_23.0.1.2           </span></span>
+<span><span class="co">#&gt;  [31] S7_0.2.2                  readr_2.2.0              </span></span>
+<span><span class="co">#&gt;  [33] pbapply_1.7-4             proxy_0.4-29             </span></span>
+<span><span class="co">#&gt;  [35] ggridges_0.5.7            pkgdown_2.2.0            </span></span>
+<span><span class="co">#&gt;  [37] systemfonts_1.3.2         R.utils_2.13.0           </span></span>
+<span><span class="co">#&gt;  [39] parallelly_1.47.0         limma_3.67.3             </span></span>
+<span><span class="co">#&gt;  [41] RSQLite_2.4.6             BiocIO_1.21.0            </span></span>
+<span><span class="co">#&gt;  [43] spatstat.random_3.4-5     ica_1.0-3                </span></span>
+<span><span class="co">#&gt;  [45] dplyr_1.2.1               abind_1.4-8              </span></span>
+<span><span class="co">#&gt;  [47] R.methodsS3_1.8.2         terra_1.9-11             </span></span>
+<span><span class="co">#&gt;  [49] lifecycle_1.0.5           multcomp_1.4-30          </span></span>
+<span><span class="co">#&gt;  [51] yaml_2.3.12               edgeR_4.9.9              </span></span>
+<span><span class="co">#&gt;  [53] rhdf5_2.55.16             SparseArray_1.11.13      </span></span>
+<span><span class="co">#&gt;  [55] BiocFileCache_3.1.0       Rtsne_0.17               </span></span>
+<span><span class="co">#&gt;  [57] grid_4.6.0                blob_1.3.0               </span></span>
+<span><span class="co">#&gt;  [59] promises_1.5.0            dqrng_0.4.1              </span></span>
+<span><span class="co">#&gt;  [61] ExperimentHub_3.1.0       crayon_1.5.3             </span></span>
+<span><span class="co">#&gt;  [63] miniUI_0.1.2              lattice_0.22-9           </span></span>
+<span><span class="co">#&gt;  [65] beachmat_2.27.5           cowplot_1.2.0            </span></span>
+<span><span class="co">#&gt;  [67] KEGGREST_1.51.1           magick_2.9.1             </span></span>
+<span><span class="co">#&gt;  [69] zeallot_0.2.0             pillar_1.11.1            </span></span>
+<span><span class="co">#&gt;  [71] knitr_1.51                rjson_0.2.23             </span></span>
+<span><span class="co">#&gt;  [73] boot_1.3-32               future.apply_1.20.2      </span></span>
+<span><span class="co">#&gt;  [75] sfarrow_0.4.1             codetools_0.2-20         </span></span>
+<span><span class="co">#&gt;  [77] wk_0.9.5                  glue_1.8.1               </span></span>
+<span><span class="co">#&gt;  [79] spatstat.univar_3.1-7     data.table_1.18.2.1      </span></span>
+<span><span class="co">#&gt;  [81] vctrs_0.7.3               png_0.1-9                </span></span>
+<span><span class="co">#&gt;  [83] spam_2.11-3               gtable_0.3.6             </span></span>
+<span><span class="co">#&gt;  [85] assertthat_0.2.1          cachem_1.1.0             </span></span>
+<span><span class="co">#&gt;  [87] xfun_0.57                 mime_0.13                </span></span>
+<span><span class="co">#&gt;  [89] S4Arrays_1.11.1           DropletUtils_1.31.1      </span></span>
+<span><span class="co">#&gt;  [91] coda_0.19-4.1             survival_3.8-6           </span></span>
+<span><span class="co">#&gt;  [93] sfheaders_0.4.5           rJava_1.0-18             </span></span>
+<span><span class="co">#&gt;  [95] units_1.0-1               statmod_1.5.1            </span></span>
+<span><span class="co">#&gt;  [97] fitdistrplus_1.2-6        TH.data_1.1-5            </span></span>
+<span><span class="co">#&gt;  [99] ROCR_1.0-12               nlme_3.1-169             </span></span>
+<span><span class="co">#&gt; [101] bit64_4.8.0               filelock_1.0.3           </span></span>
+<span><span class="co">#&gt; [103] RcppAnnoy_0.0.23          bslib_0.10.0             </span></span>
+<span><span class="co">#&gt; [105] irlba_2.3.7               KernSmooth_2.23-26       </span></span>
+<span><span class="co">#&gt; [107] otel_0.2.0                DBI_1.3.0                </span></span>
+<span><span class="co">#&gt; [109] tidyselect_1.2.1          bit_4.6.0                </span></span>
+<span><span class="co">#&gt; [111] compiler_4.6.0            curl_7.1.0               </span></span>
+<span><span class="co">#&gt; [113] httr2_1.2.2               BiocNeighbors_2.5.4      </span></span>
+<span><span class="co">#&gt; [115] h5mread_1.3.3             xml2_1.5.2               </span></span>
+<span><span class="co">#&gt; [117] plotly_4.12.0             desc_1.4.3               </span></span>
+<span><span class="co">#&gt; [119] DelayedArray_0.37.1       bookdown_0.46            </span></span>
+<span><span class="co">#&gt; [121] scales_1.4.0              classInt_0.4-11          </span></span>
+<span><span class="co">#&gt; [123] lmtest_0.9-40             rappdirs_0.3.4           </span></span>
+<span><span class="co">#&gt; [125] goftest_1.2-3             stringr_1.6.0            </span></span>
+<span><span class="co">#&gt; [127] tiff_0.1-12               digest_0.6.39            </span></span>
+<span><span class="co">#&gt; [129] spatstat.utils_3.2-2      fftwtools_0.9-11         </span></span>
+<span><span class="co">#&gt; [131] rmarkdown_2.31            XVector_0.51.0           </span></span>
+<span><span class="co">#&gt; [133] htmltools_0.5.9           pkgconfig_2.0.3          </span></span>
+<span><span class="co">#&gt; [135] jpeg_0.1-11               sparseMatrixStats_1.23.0 </span></span>
+<span><span class="co">#&gt; [137] dbplyr_2.5.2              fastmap_1.2.0            </span></span>
+<span><span class="co">#&gt; [139] rlang_1.2.0               htmlwidgets_1.6.4        </span></span>
+<span><span class="co">#&gt; [141] shiny_1.13.0              DelayedMatrixStats_1.33.0</span></span>
+<span><span class="co">#&gt; [143] farver_2.1.2              jquerylib_0.1.4          </span></span>
+<span><span class="co">#&gt; [145] zoo_1.8-15                jsonlite_2.0.0           </span></span>
+<span><span class="co">#&gt; [147] BiocParallel_1.45.0       R.oo_1.27.1              </span></span>
+<span><span class="co">#&gt; [149] RCurl_1.98-1.18           magrittr_2.0.5           </span></span>
+<span><span class="co">#&gt; [151] scuttle_1.21.6            s2_1.1.9                 </span></span>
+<span><span class="co">#&gt; [153] dotCall64_1.2             patchwork_1.3.2          </span></span>
+<span><span class="co">#&gt; [155] Rhdf5lib_1.99.6           Rcpp_1.1.1-1.1           </span></span>
+<span><span class="co">#&gt; [157] reticulate_1.46.0         stringi_1.8.7            </span></span>
+<span><span class="co">#&gt; [159] MASS_7.3-65               plyr_1.8.9               </span></span>
+<span><span class="co">#&gt; [161] AnnotationHub_4.1.0       parallel_4.6.0           </span></span>
+<span><span class="co">#&gt; [163] listenv_0.10.1            ggrepel_0.9.8            </span></span>
+<span><span class="co">#&gt; [165] deldir_2.0-4              Biostrings_2.79.5        </span></span>
+<span><span class="co">#&gt; [167] splines_4.6.0             tensor_1.5.1             </span></span>
+<span><span class="co">#&gt; [169] hms_1.1.4                 locfit_1.5-9.12          </span></span>
+<span><span class="co">#&gt; [171] igraph_2.3.0              spatstat.geom_3.7-3      </span></span>
+<span><span class="co">#&gt; [173] RcppHNSW_0.6.0            reshape2_1.4.5           </span></span>
+<span><span class="co">#&gt; [175] LearnBayes_2.15.2         BiocVersion_3.23.1       </span></span>
+<span><span class="co">#&gt; [177] evaluate_1.0.5            SeuratObject_5.4.0       </span></span>
+<span><span class="co">#&gt; [179] BiocManager_1.30.27       httpuv_1.6.17            </span></span>
+<span><span class="co">#&gt; [181] tzdb_0.5.0                polyclip_1.10-7          </span></span>
+<span><span class="co">#&gt; [183] RANN_2.6.2                tidyr_1.3.2              </span></span>
+<span><span class="co">#&gt; [185] purrr_1.2.2               scattermore_1.2          </span></span>
+<span><span class="co">#&gt; [187] future_1.70.0             ggplot2_4.0.3            </span></span>
+<span><span class="co">#&gt; [189] BiocBaseUtils_1.13.0      xtable_1.8-8             </span></span>
+<span><span class="co">#&gt; [191] e1071_1.7-17              RSpectra_0.16-2          </span></span>
+<span><span class="co">#&gt; [193] later_1.4.8               viridisLite_0.4.3        </span></span>
+<span><span class="co">#&gt; [195] class_7.3-23              ragg_1.5.2               </span></span>
+<span><span class="co">#&gt; [197] tibble_3.3.1              memoise_2.0.1            </span></span>
+<span><span class="co">#&gt; [199] AnnotationDbi_1.73.1      cluster_2.1.8.2          </span></span>
+<span><span class="co">#&gt; [201] globals_0.19.1</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -1646,7 +1645,7 @@ helpful to plotting scale bars when plotting geometries.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
