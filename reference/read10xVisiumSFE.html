@@ -19,7 +19,7 @@ spatial analyses.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,18 +63,17 @@ spatial analyses.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read10xVisiumSFE</span><span class="op">(</span></span>
-<span>  samples <span class="op">=</span> <span class="st">""</span>,</span>
-<span>  dirs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">samples</span>, <span class="st">"outs"</span><span class="op">)</span>,</span>
-<span>  sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"sample"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="va">dirs</span>,</span>
+<span>  sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"sample"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">dirs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HDF5"</span>, <span class="st">"sparse"</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"filtered"</span>, <span class="st">"raw"</span><span class="op">)</span>,</span>
 <span>  images <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lowres"</span>, <span class="st">"hires"</span><span class="op">)</span>,</span>
 <span>  unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"full_res_image_pixel"</span>, <span class="st">"micron"</span><span class="op">)</span>,</span>
 <span>  style <span class="op">=</span> <span class="st">"W"</span>,</span>
 <span>  zero.policy <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  load <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"symbol"</span><span class="op">)</span>,</span>
-<span>  flip <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"geometry"</span>, <span class="st">"image"</span>, <span class="st">"none"</span><span class="op">)</span></span>
+<span>  flip <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"geometry"</span>, <span class="st">"image"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  read_spatial_enrichment <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,21 +81,9 @@ spatial analyses.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
-<dd><p>A character vector containing one or more directory names, each corresponding to a 10X sample.
-Each directory should contain a matrix file, a gene/feature annotation file, and a barcode annotation file.</p>
-<p>Alternatively, each string may contain a path to a HDF5 file in the sparse matrix format generated by 10X.
-These can be mixed with directory names when <code>type="auto"</code>.</p>
-<p>Alternatively, each string may contain a prefix of names for the three-file system described above,
-where the rest of the name of each file follows the standard 10X output.</p></dd>
-
-
-<dt id="arg-dirs">dirs<a class="anchor" aria-label="anchor" href="#arg-dirs"></a></dt>
+<dl><dt id="arg-dirs">dirs<a class="anchor" aria-label="anchor" href="#arg-dirs"></a></dt>
 <dd><p>Directory for each sample that contains the <code>spatial</code> and
-<code>raw/filtered_featues_bc_matrix</code> directories. By default, the
-<code>outs</code> directory under the directory specified in the <code>samples</code>
-argument, as in Space Ranger output. Change the <code>dirs</code> argument if you
-have moved or renamed the output directory.</p></dd>
+<code>raw/filtered_featues_bc_matrix</code> directories.</p></dd>
 
 
 <dt id="arg-sample-id">sample_id<a class="anchor" aria-label="anchor" href="#arg-sample-id"></a></dt>
@@ -136,12 +123,9 @@ microns. This is used to plot scale bar.</p></dd>
 <dd><p>default NULL, use global option value; if FALSE stop with error for any empty neighbour sets, if TRUE permit the weights list to be formed with zero-length weights vectors</p></dd>
 
 
-<dt id="arg-load">load<a class="anchor" aria-label="anchor" href="#arg-load"></a></dt>
-<dd><p>Deprecated. Not used, kept for backward compatibility for now.</p></dd>
-
-
 <dt id="arg-row-names">row.names<a class="anchor" aria-label="anchor" href="#arg-row-names"></a></dt>
-<dd><p>String specifying whether to use Ensembl IDs ("ID") or gene symbols ("Symbol") as row names. If using symbols, the Ensembl ID will be appended to disambiguate in case the same symbol corresponds to multiple Ensembl IDs.</p></dd>
+<dd><p>String specifying whether to use Ensembl IDs ("ID") or gene symbols ("Symbol") as row names.
+For symbols, the Ensembl ID will be appended to disambiguate rows where the same symbol corresponds to multiple Ensembl IDs.</p></dd>
 
 
 <dt id="arg-flip">flip<a class="anchor" aria-label="anchor" href="#arg-flip"></a></dt>
@@ -153,11 +137,10 @@ image or the geometry needs to be flipped for them match in the Cartesian
 coordinate system.</p></dd>
 
 
-<dt id="arg-sample">sample<a class="anchor" aria-label="anchor" href="#arg-sample"></a></dt>
-<dd><p>To be consistent with <code><a href="https://rdrr.io/pkg/SpatialExperiment/man/read10xVisium.html" class="external-link">SpatialExperiment::read10xVisium</a></code>,
-one or more directories with Space Ranger output for a Visium sample. It is
-assumed to have the <code>outs</code> directory in it but this can be overridden
-with the <code>dirs</code> argument.</p></dd>
+<dt id="arg-read-spatial-enrichment">read_spatial_enrichment<a class="anchor" aria-label="anchor" href="#arg-read-spatial-enrichment"></a></dt>
+<dd><p>Logical, whether to read the
+`spatial_enrichment.csv` file from Visium output if the file is present and
+add its contents to `rowData`.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -177,18 +160,18 @@ with the <code>dirs</code> argument.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"SpatialFeatureExperiment"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">sample_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sample01"</span>, <span class="st">"sample02"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="va">sample_ids</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="va">sample_ids</span>, <span class="st">"outs"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "outs"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "filtered_feature_bc_matrix" "spatial"                   </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">samples</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"spatial"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
-<span class="r-in"><span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">read10xVisiumSFE</span><span class="op">(</span><span class="va">samples</span>, sample_id <span class="op">=</span> <span class="va">sample_ids</span>,</span></span>
-<span class="r-in"><span>    type <span class="op">=</span> <span class="st">"sparse"</span>, data <span class="op">=</span> <span class="st">"filtered"</span>,</span></span>
-<span class="r-in"><span>    load <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "aligned_fiducials.jpg"              "barcode_fluorescence_intensity.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "detected_tissue_image.jpg"          "scalefactors_json.json"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5] "spatial_enrichment.csv"             "tissue_hires_image.png"            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [7] "tissue_lowres_image.png"            "tissue_positions.csv"              </span>
+<span class="r-in"><span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">read10xVisiumSFE</span><span class="op">(</span>dirs <span class="op">=</span> <span class="va">samples</span>, sample_id <span class="op">=</span> <span class="va">sample_ids</span>,</span></span>
+<span class="r-in"><span>    type <span class="op">=</span> <span class="st">"sparse"</span>, data <span class="op">=</span> <span class="st">"filtered"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The `load` argument of `read10xVisiumSFE()` is deprecated as of</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> SpatialFeatureExperiment 1.8.0.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; 10X Visium data will be loaded: outs</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; Adding spatial neighborhood graph to sample01</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; 10X Visium data will be loaded: outs</span>
@@ -230,7 +213,7 @@ with the <code>dirs</code> argument.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

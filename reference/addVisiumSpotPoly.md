@@ -1,0 +1,50 @@
+# Add Visium spot polygons to colGeometry
+
+For adding the spot polygons to SFE objects converted from SPE.
+
+## Usage
+
+``` r
+addVisiumSpotPoly(x, spotDiameter)
+```
+
+## Arguments
+
+- x:
+
+  A `SpatialFeatureExperiment` object.
+
+- spotDiameter:
+
+  Spot diameter for technologies with arrays of spots of fixed diameter
+  per slide, such as Visium, ST, DBiT-seq, and slide-seq. The diameter
+  must be in the same unit as the coordinates in the \*Geometry
+  arguments. Ignored for geometries that are not POINT or MULTIPOINT.
+
+## Value
+
+A SFE object with a new colGeometry called spotPoly, which has polygons
+of the spots.
+
+## Examples
+
+``` r
+library(VisiumIO)
+# From examples of TENxVisium()
+sample_dir <- system.file(
+file.path("extdata", "10xVisium", "section1"),
+package = "VisiumIO"
+)
+## using spacerangerOut folder
+tv <- TENxVisium(
+    spacerangerOut = file.path(sample_dir, "outs"), processing = "raw", images = "lowres"
+)
+spe <- import(tv)
+# There can't be suplicate barcodes
+colnames(spe) <- make.unique(colnames(spe), sep = "-")
+rownames(spatialCoords(spe)) <- colnames(spe)
+sfe <- toSpatialFeatureExperiment(spe)
+# A hypothetical spot diameter; check the scalefactors_json.json file for
+# actual diameter in pixels in full resolution image.
+sfe <- addVisiumSpotPoly(sfe, spotDiameter = 80)
+```

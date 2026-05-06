@@ -29,7 +29,7 @@ while to convert the spots to MULTIPOINT geometries."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@ while to convert the spots to MULTIPOINT geometries."></head><body>
 The coordinates are in microns. Cell centroids are read into
 <code><a href="colGeometries.html">colGeometry</a></code> "centroids", and cell segmentations are read into
 <code>colGeometry</code> "cellSeg". The image(s) (polyT, DAPI, and cell boundaries)
-are also read as <code>SpatRaster</code> objects so they are not loaded into
+are also read as <code><a href="https://rspatial.github.io/terra/reference/SpatRaster-class.html" class="external-link">SpatRaster</a></code> objects so they are not loaded into
 memory unless necessary. Because the image's origin is the top left while the
 geometry's origin is bottom left, either the image or the geometry needs to
 be flipped. Because the image accompanying MERFISH datasets are usually very
@@ -163,10 +163,10 @@ files. Note that reading HDF5 files for numerous FOVs is very slow.</p></dd>
 
 
 <dt id="arg-bpparam">BPPARAM<a class="anchor" aria-label="anchor" href="#arg-bpparam"></a></dt>
-<dd><p>A <code>BiocParallelParam</code> object specifying parallel
+<dd><p>A <code><a href="https://rdrr.io/pkg/BiocParallel/man/BiocParallelParam-class.html" class="external-link">BiocParallelParam</a></code> object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:</p><ol><li><p>To load cell segmentation from HDF5 files from different
   fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the <code>BiocParallelParam</code> object. When there are numerous
+  in the <code><a href="https://rdrr.io/pkg/BiocParallel/man/BiocParallelParam-class.html" class="external-link">BiocParallelParam</a></code> object. When there are numerous
   FOVs, reading in the geometries can be time consuming, so we recommend
   using a server and larger number of threads. This argument is not used if
   <code>use_cellpose = TRUE</code> and the parquet file is present.</p></li>
@@ -217,12 +217,12 @@ speak of. This argument does not apply when `spatialCoordsNames` has length
 <span class="r-in"><span><span class="va">dir_use</span> <span class="op">&lt;-</span> <span class="fu">SFEData</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/VizgenOutput.html" class="external-link">VizgenOutput</a></span><span class="op">(</span>file_path <span class="op">=</span> <span class="va">fp</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> see ?SFEData and browseVignettes('SFEData') for documentation</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> loading from cache</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The downloaded files are in /tmp/RtmpUGEtoo/file834d5f2ec964/vizgen_cellbound </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> The downloaded files are in /tmp/RtmphTOllm/fileea9d19b7dba1/vizgen_cellbound </span>
 <span class="r-in"><span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">readVizgen</span><span class="op">(</span><span class="va">dir_use</span>, z <span class="op">=</span> <span class="fl">3L</span>, image <span class="op">=</span> <span class="st">"PolyT"</span>,</span></span>
 <span class="r-in"><span>flip <span class="op">=</span> <span class="st">"geometry"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; 1 `.parquet` files exist:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> /tmp/RtmpUGEtoo/file834d5f2ec964/vizgen_cellbound/cell_boundaries.parquet</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; using -&gt; /tmp/RtmpUGEtoo/file834d5f2ec964/vizgen_cellbound/cell_boundaries.parquet</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> /tmp/RtmphTOllm/fileea9d19b7dba1/vizgen_cellbound/cell_boundaries.parquet</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; using -&gt; /tmp/RtmphTOllm/fileea9d19b7dba1/vizgen_cellbound/cell_boundaries.parquet</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; Cell segmentations are found in `.parquet` file</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; Checking polygon validity</span>
 <span class="r-in"><span></span></span>
@@ -230,8 +230,8 @@ speak of. This argument does not apply when `spatialCoordsNames` has length
 <span class="r-in"><span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">readVizgen</span><span class="op">(</span><span class="va">dir_use</span>, z <span class="op">=</span> <span class="fl">3L</span>, image <span class="op">=</span> <span class="st">"PolyT"</span>, filter_counts <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>add_molecules <span class="op">=</span> <span class="cn">TRUE</span>, flip <span class="op">=</span> <span class="st">"geometry"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; 1 `.parquet` files exist:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> /tmp/RtmpUGEtoo/file834d5f2ec964/vizgen_cellbound/cell_boundaries.parquet</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; using -&gt; /tmp/RtmpUGEtoo/file834d5f2ec964/vizgen_cellbound/cell_boundaries.parquet</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> /tmp/RtmphTOllm/fileea9d19b7dba1/vizgen_cellbound/cell_boundaries.parquet</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; using -&gt; /tmp/RtmphTOllm/fileea9d19b7dba1/vizgen_cellbound/cell_boundaries.parquet</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; Cell segmentations are found in `.parquet` file</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; filtering `cell_metadata` - keep cells with `transcript_count` &gt; 0</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; Checking polygon validity</span>
@@ -251,7 +251,7 @@ speak of. This argument does not apply when `spatialCoordsNames` has length
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

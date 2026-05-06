@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,10 +133,10 @@ chance that the spot was decoded in error.</p></dd>
 
 
 <dt id="arg-bpparam">BPPARAM<a class="anchor" aria-label="anchor" href="#arg-bpparam"></a></dt>
-<dd><p>A <code>BiocParallelParam</code> object specifying parallel
+<dd><p>A <code><a href="https://rdrr.io/pkg/BiocParallel/man/BiocParallelParam-class.html" class="external-link">BiocParallelParam</a></code> object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:</p><ol><li><p>To load cell segmentation from HDF5 files from different
   fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the <code>BiocParallelParam</code> object. When there are numerous
+  in the <code><a href="https://rdrr.io/pkg/BiocParallel/man/BiocParallelParam-class.html" class="external-link">BiocParallelParam</a></code> object. When there are numerous
   FOVs, reading in the geometries can be time consuming, so we recommend
   using a server and larger number of threads. This argument is not used if
   <code>use_cellpose = TRUE</code> and the parquet file is present.</p></li>
@@ -183,7 +183,7 @@ Rerun the code and it should work the second time.</p>
 <span class="r-in"><span><span class="va">dir_use</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/XeniumOutput.html" class="external-link">XeniumOutput</a></span><span class="op">(</span><span class="st">"v2"</span>, file_path <span class="op">=</span> <span class="va">fp</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> see ?SFEData and browseVignettes('SFEData') for documentation</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> loading from cache</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The downloaded files are in /tmp/RtmpUGEtoo/file834d4fae360a/xenium2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> The downloaded files are in /tmp/RtmphTOllm/fileea9d2e2c821a/xenium2 </span>
 <span class="r-in"><span><span class="co"># RBioFormats issue</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="va">sfe</span> <span class="op">&lt;-</span> <span class="fu">readXenium</span><span class="op">(</span><span class="va">dir_use</span>, add_molecules <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> &gt;&gt;&gt; Must use gene symbols as row names when adding transcript spots.</span>
@@ -228,7 +228,7 @@ Rerun the code and it should work the second time.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

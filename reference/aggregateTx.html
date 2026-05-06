@@ -15,7 +15,7 @@ can be added when add_images = TRUE."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,11 @@ can be added when <code>add_images = TRUE</code>.</p>
 <span>  square <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  flat_topped <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  new_geometry_name <span class="op">=</span> <span class="st">"bins"</span>,</span>
-<span>  unit <span class="op">=</span> <span class="st">"micron"</span></span>
+<span>  unit <span class="op">=</span> <span class="st">"micron"</span>,</span>
+<span>  sparse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">SerialParam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  save_memory <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  .orig_nrows <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">aggregateTxTech</span><span class="op">(</span></span>
@@ -86,7 +90,10 @@ can be added when <code>add_images = TRUE</code>.</p>
 <span>  cellsize <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  square <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  flat_topped <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  new_geometry_name <span class="op">=</span> <span class="st">"bins"</span></span>
+<span>  new_geometry_name <span class="op">=</span> <span class="st">"bins"</span>,</span>
+<span>  sparse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">SerialParam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  save_memory <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -163,6 +170,31 @@ output. Defaults to "bins".</p></dd>
 resolution image.</p></dd>
 
 
+<dt id="arg-sparse">sparse<a class="anchor" aria-label="anchor" href="#arg-sparse"></a></dt>
+<dd><p>Logical, whether the gene count matrix from aggregating
+transcript spots should be sparse. When the bins are large, the matrix will
+not be very sparse so using sparse matrix will not save memory, but when
+the bins are small, sparsity is worth it.</p></dd>
+
+
+<dt id="arg-bpparam">BPPARAM<a class="anchor" aria-label="anchor" href="#arg-bpparam"></a></dt>
+<dd><p>bpparam object to specify parallel computing over genes. If a
+lot of memory is used, then stick to `SerialParam()`. Using multicore in
+the R level when `save_memory = TRUE` works and results into faster
+computation.</p></dd>
+
+
+<dt id="arg-save-memory">save_memory<a class="anchor" aria-label="anchor" href="#arg-save-memory"></a></dt>
+<dd><p>Logical, if TRUE, then the transcript spots will not all
+be loaded into memory. <code><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></code> is used to open a
+link to the data and then transcript spots of one gene is loaded into
+memory at a time.</p></dd>
+
+
+<dt id="arg--orig-nrows">.orig_nrows<a class="anchor" aria-label="anchor" href="#arg--orig-nrows"></a></dt>
+<dd><p>Only used internally in the SFE method of <code>aggregate</code></p></dd>
+
+
 <dt id="arg-data-dir">data_dir<a class="anchor" aria-label="anchor" href="#arg-data-dir"></a></dt>
 <dd><p>Top level output directory.</p></dd>
 
@@ -215,7 +247,7 @@ than this size then the coordinates will be flipped instead.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

@@ -23,7 +23,7 @@ value for each spatial location."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -248,13 +248,13 @@ type and one feature.</p></dd>
 <span class="r-in"><span>    nrow <span class="op">=</span> <span class="fl">5</span>, ncol <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>    dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"meow"</span>, <span class="st">"purr"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">toy_df1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/DataFrame-class.html" class="external-link">DataFrame</a></span><span class="op">(</span>gene1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">toy_res1</span><span class="op">)</span>, gene2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">toy_res1b</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">toy_df1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/DataFrame-class.html" class="external-link">DataFrame</a></span><span class="op">(</span>gene1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/S4Vectors-internals.html" class="external-link">I</a></span><span class="op">(</span><span class="va">toy_res1</span><span class="op">)</span>, gene2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/S4Vectors-internals.html" class="external-link">I</a></span><span class="op">(</span><span class="va">toy_res1b</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">toy_res2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">10</span>, lambda <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    nrow <span class="op">=</span> <span class="fl">5</span>, ncol <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>    dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sassy"</span>, <span class="st">"tortitude"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">toy_df2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/DataFrame-class.html" class="external-link">DataFrame</a></span><span class="op">(</span>gene1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">toy_res2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">toy_df2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/DataFrame-class.html" class="external-link">DataFrame</a></span><span class="op">(</span>gene1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/S4Vectors/man/S4Vectors-internals.html" class="external-link">I</a></span><span class="op">(</span><span class="va">toy_res2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Set all local results</span></span></span>
 <span class="r-in"><span><span class="fu">localResults</span><span class="op">(</span><span class="va">sfe</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>localmoran <span class="op">=</span> <span class="va">toy_df1</span>, Gistar <span class="op">=</span> <span class="va">toy_df2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Get all local results</span></span></span>
@@ -294,7 +294,7 @@ type and one feature.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

@@ -1,0 +1,68 @@
+# Find spatial neighborhood graphs for Visium spots
+
+Visium spots are arranged in a hexagonal grid. This function uses the
+known locations of the Visium barcodes to construct a neighborhood
+graph, so adjacent spots are connected by edges. Since the known rows
+and columns of the spots are used, the unit the spot centroid
+coordinates are in does not matter.
+
+## Usage
+
+``` r
+findVisiumGraph(x, sample_id = "all", style = "W", zero.policy = NULL)
+```
+
+## Arguments
+
+- x:
+
+  A `SpatialFeatureExperiment` object with Visium data. Column names of
+  the gene count matrix must be Visium barcodes, which may have a
+  numeric suffix to distinguish between samples (e.g.
+  "AAACAACGAATAGTTC-1").
+
+- sample_id:
+
+  Which sample(s) in the SFE object to use for the graph. Can also be
+  "all", which means this function will compute the graph for all
+  samples independently.
+
+- style:
+
+  `style` can take values “W”, “B”, “C”, “U”, “minmax” and “S”
+
+- zero.policy:
+
+  default NULL, use global option value; if FALSE stop with error for
+  any empty neighbour sets, if TRUE permit the weights list to be formed
+  with zero-length weights vectors
+
+## Value
+
+For one sample, then a `listw` object representing the graph, with an
+attribute "method" recording the function used to build the graph, its
+arguments, and information about the geometry for which the graph was
+built. The attribute is used to reconstruct the graphs when the SFE
+object is subsetted since some nodes in the graph will no longer be
+present. If sample_id = "all" or has length \> 1, then a named list of
+`listw` objects, whose names are the sample_ids. To add the list for
+multiple samples to a SFE object, specify the `name` argument in the
+[`spatialGraphs`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/spatialGraphs.md)
+replacement method, so graph of the same name will be added to the SFE
+object for each sample.
+
+## Examples
+
+``` r
+library(SFEData)
+sfe <- McKellarMuscleData(dataset = "small")
+#> see ?SFEData and browseVignettes('SFEData') for documentation
+#> loading from cache
+g <- findVisiumGraph(sfe)
+# For multiple samples, returns named list
+sfe2 <- McKellarMuscleData(dataset = "small2")
+#> see ?SFEData and browseVignettes('SFEData') for documentation
+#> loading from cache
+sfe_combined <- cbind(sfe, sfe2)
+gs <- findVisiumGraph(sfe, sample_id = "all")
+```

@@ -25,7 +25,7 @@ SpatialExperiment."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ SpatialExperiment."></head><body>
     <p><code>SpatialFeatureExperiment</code> and the <code>Voyager</code> package work with
 images differently from <code>SpatialExperiment</code>. In SFE and
 <code>Voyager</code>'s, plotting functions for SFE objects, the images can be read
-with <code>rast</code> and represented as <code>SpatRaster</code>, so the image is
+with <code><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></code> and represented as <code>SpatRaster</code>, so the image is
 not entirely loaded into memory unless necessary. Plotting will not load a
 large image into memory; rather the image will be downsampled and the
 downsampled version is plotted. A <code>SpatRasterImage</code> object (as of Bioc
@@ -82,7 +82,7 @@ inheriting from <code>VirtualSpatialImage</code> as required by
 
 
 <dl><dt id="arg-img">img<a class="anchor" aria-label="anchor" href="#arg-img"></a></dt>
-<dd><p>A <code>SpatRaster</code> or <code>PackedSpatRaster</code> object.</p></dd>
+<dd><p>A <code><a href="https://rspatial.github.io/terra/reference/SpatRaster-class.html" class="external-link">SpatRaster</a></code> or <code>PackedSpatRaster</code> object.</p></dd>
 
 
 <dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
@@ -108,7 +108,7 @@ inheriting from <code>VirtualSpatialImage</code> as required by
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

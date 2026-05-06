@@ -1,7 +1,10 @@
-pandoc: 3.1.11
-pkgdown: 2.1.1
+pandoc: 3.8.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   seurat_sfe_coerce: seurat_sfe_coerce.html
   SFE: SFE.html
-last_built: 2024-11-23T01:49Z
+last_built: 2026-05-06T22:28Z
+urls:
+  reference: https://pachterlab.github.io/SpatialFeatureExperiment/reference
+  article: https://pachterlab.github.io/SpatialFeatureExperiment/articles
