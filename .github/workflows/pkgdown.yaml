@@ -25,14 +25,14 @@ jobs:
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1
         with:
-          bioc-version: devel
+          bioc-version: release
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
-      - name: Install Seurat from GitHub
-        run: pak::pak("satijalab/seurat")
-        shell: Rscript {0}
+      #- name: Install Seurat from GitHub
+      #  run: pak::pak("satijalab/seurat")
+      #  shell: Rscript {0}
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = TRUE, install = FALSE)
         shell: Rscript {0}
