@@ -3,6 +3,8 @@ template:
   bootswatch: united
   bslib:
     text-muted: "#cccccc"
+development:
+  mode: auto
 url: https://pachterlab.github.io/SpatialFeatureExperiment
 reference:
   - title: SpatialFeatureExperiment class
