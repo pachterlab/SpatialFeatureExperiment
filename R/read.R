@@ -1511,9 +1511,11 @@ readXenium <- function(data_dir,
     metadata <- as.data.frame(metadata) |> as("DataFrame")
     rownames(metadata) <- metadata$cell_id
     metadata[,1] <- NULL
-    # Remove cells that are too small from the gene count matrix and metadata
-    metadata <- metadata[polys[[1]]$cell_id,]
-    sce <- sce[,polys[[1]]$cell_id]
+    if (!is.null(polys)) {
+        # Remove cells that are too small from the gene count matrix and metadata
+        metadata <- metadata[polys[[1]]$cell_id,]
+        sce <- sce[,polys[[1]]$cell_id]
+    }
     # Remove nuclei of removed cells
     if (setequal(names(polys), c("cellSeg", "nucSeg"))) {
         polys[["nucSeg"]] <- polys[["nucSeg"]][polys[["nucSeg"]]$cell_id %in% polys[["cellSeg"]]$cell_id,]

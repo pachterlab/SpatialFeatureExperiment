@@ -179,15 +179,21 @@
 #'     sfe <- addSelectTx(sfe, fn_tx, head(rownames(sfe), 5), swap_rownames = "Symbol")
 #'     unlink(dir_use, recursive = TRUE)
 #' }
-readSelectTx <- function(file, gene_select, z = "all",
-                         z_option = c("3d", "split")) {
+readSelectTx <- function(file, gene_select, z = deprecated(),
+                         z_option = deprecated()) {
     # TODO: do away with GDAL
     if (!gdalParquetAvailable()) {
         stop("GDAL Parquet driver is required to selectively read genes.")
     }
+    if (is_present(z)) {
+        deprecate_warn("1.16.0", "readSelectTx(z)")
+    }
+    if (is_present(z_option)) {
+        deprecate_warn("1.16.0", "readSelectTx(z_option)")
+        z_option <- match.arg(z_option, choices = c("3d", "split"))
+    }
     file <- normalizePath(file, mustWork = FALSE)
     file_dir <- file_path_sans_ext(file)
-    z_option <- match.arg(z_option)
     gene_col <- "gene"
     if (dir.exists(file_dir)) {
         # Multiple files
@@ -230,10 +236,9 @@ readSelectTx <- function(file, gene_select, z = "all",
 #' @rdname readSelectTx
 #' @export
 addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
-                        z = "all", z_option = c("3d", "split"),
+                        z = deprecated(), z_option = deprecated(),
                         swap_rownames = NULL) {
     sample_id <- .check_sample_id(sfe, sample_id)
-    z_option <- match.arg(z_option)
     gene_select <- .id2symbol(sfe, gene_select, swap_rownames)
     mols <- readSelectTx(file, gene_select, z, z_option)
     rownames(mols) <- .symbol2id(sfe, rownames(mols), swap_rownames)
@@ -360,16 +365,22 @@ addSelectTx <- function(sfe, file, gene_select, sample_id = 1L,
 #' unlink(dir_use, recursive = TRUE)
 formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
                           spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                          gene_col = "gene", cell_col = "cell_id", z = "all",
+                          gene_col = "gene", cell_col = "cell_id", z = deprecated(),
                           phred_col = "qv", min_phred = 20, split_col = NULL,
                           not_in_cell_id = c("-1", "UNASSIGNED"),
-                          z_option = c("3d", "split"), flip = FALSE,
+                          z_option = "deprecated", flip = FALSE,
                           file_out = NULL, BPPARAM = SerialParam(),
                           return = TRUE, save_memory = FALSE, #progressbar = FALSE,
                           partition = FALSE) {
     file <- normalizePath(file, mustWork = TRUE)
     dest <- match.arg(dest)
-    z_option <- match.arg(z_option)
+    if (is_present(z)) {
+        deprecate_warn("1.16.0", "addSelectTx(z)")
+    }
+    if (is_present(z_option)) {
+        deprecate_warn("1.16.0", "addSelectTx(z_option)")
+        z_option <- match.arg(z_option, choices = c("3d", "split"))
+    }
     if (dest == "colGeometry") {
         return <- FALSE
         if (is.null(file_out))
@@ -528,12 +539,11 @@ formatTxSpots <- function(file, dest = c("rowGeometry", "colGeometry"),
 #' @export
 addTxSpots <- function(sfe, file, sample_id = 1L,
                        spatialCoordsNames = c("global_x", "global_y", "global_z"),
-                       gene_col = "gene", z = "all",
+                       gene_col = "gene", z = deprecated(),
                        phred_col = "qv", min_phred = 20, split_col = NULL,
-                       z_option = c("3d", "split"), flip = FALSE,
+                       z_option = deprecated(), flip = FALSE,
                        file_out = NULL, BPPARAM = SerialParam()) {
     sample_id <- .check_sample_id(sfe, sample_id)
-    z_option <- match.arg(z_option)
     dest <- "rowGeometry"
     mols <- formatTxSpots(file, dest = dest, spatialCoordsNames = spatialCoordsNames,
                           gene_col = gene_col, z = z, phred_col = phred_col,
@@ -597,9 +607,9 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
 #'
 formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
                          dest = c("rowGeometry", "colGeometry"),
-                         z = "all", min_phred = 20,
+                         z = deprecated(), min_phred = 20,
                          split_cell_comps = FALSE,
-                         z_option = c("3d", "split"), flip = FALSE,
+                         z_option = deprecated(), flip = FALSE,
                          file_out = NULL, BPPARAM = SerialParam(),
                          return = TRUE) {
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
@@ -609,7 +619,6 @@ formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
     if (tech == "CosMX" && split_cell_comps)
         split_col <- "CellComp"
     else split_col <- NULL
-    # TODO: check if z is valid here for all technologies. Need new internal function.
     if (tech == "Xenium") {
         z <- "all"
         z_option <- "3d"
@@ -627,9 +636,9 @@ formatTxTech <- function(data_dir, tech = c("Vizgen", "Xenium", "CosMX"),
 #' @export
 addTxTech <- function(sfe, data_dir, sample_id = 1L,
                       tech = c("Vizgen", "Xenium", "CosMX"),
-                      z = "all", min_phred = 20,
+                      z = deprecated(), min_phred = 20,
                       split_cell_comps = FALSE,
-                      z_option = c("3d", "split"), flip = FALSE,
+                      z_option = deprecated(), flip = FALSE,
                       file_out = NULL, BPPARAM = SerialParam()) {
     c(spatialCoordsNames, gene_col, cell_col, fn) %<-%
         getTechTxFields(tech, data_dir)

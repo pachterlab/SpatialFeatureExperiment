@@ -1,6 +1,12 @@
-# Superclass for *Image with extent
+#' Superclass for images with extent
+#' 
+#' This is a virtual class for images with spatial extents. All other images
+#' classes in this package inherits from this virtual class.
+#' 
 #' @importFrom S4Vectors showAsCell
+#' @export
 setClass("AlignedSpatialImage", contains = c("VirtualSpatialImage", "VIRTUAL"))
+
 setMethod("NROW", "AlignedSpatialImage", function(x) 1L)
 setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 

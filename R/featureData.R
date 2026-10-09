@@ -102,7 +102,6 @@ reducedDimFeatureData <- function(sfe, dimred) {
 #' @export
 #' @examples
 #' library(SFEData)
-#' library(scater)
 #' library(Voyager)
 #' sfe <- McKellarMuscleData("small")
 #' colGraph(sfe, "visium") <- findVisiumGraph(sfe)
