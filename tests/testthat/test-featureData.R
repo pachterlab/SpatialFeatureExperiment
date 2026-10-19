@@ -2,7 +2,7 @@ library(SFEData)
 library(scrapper)
 library(spdep)
 library(Voyager)
-
+library(scater)
 sfe <- McKellarMuscleData("small")
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 

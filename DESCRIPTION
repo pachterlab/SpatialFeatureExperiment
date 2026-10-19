@@ -92,6 +92,7 @@ Suggests:
     RBioFormats,
     rhdf5,
     rmarkdown,
+    scater,
     scrapper,
     sfarrow,
     SFEData (>= 1.5.3),
