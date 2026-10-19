@@ -272,13 +272,13 @@ read10xVisiumSFE <- function(dirs,
                                           spatialCoords = coords,
                                           unit = unit)
     } else {
-        if (flip == "geometry") {
-            spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
-        }
         if (unit == "micron") {
             spd$pxl_row_in_fullres <- spd$pxl_row_in_fullres * scale_fct
             spd$pxl_col_in_fullres <- spd$pxl_col_in_fullres * scale_fct
             spot_diam <- scalefactors$spot_diameter_fullres * scale_fct
+        }
+        if (flip == "geometry") {
+            spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
         }
         obs <- intersect(colnames(sce), rownames(spd))
         sce <- sce[, obs]
