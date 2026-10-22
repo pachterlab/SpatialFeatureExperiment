@@ -57,9 +57,8 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                         phred_col = "qv", min_phred = 20, flip_geometry = FALSE,
                         cellsize = NULL, square = TRUE, flat_topped = FALSE,
                         new_geometry_name = "bins", unit = "micron", sparse = FALSE,
-                        BPPARAM = SerialParam(), save_memory = FALSE, use_duckspatial = FALSE,
+                        BPPARAM = SerialParam(), save_memory = FALSE, 
                         .orig_nrows = NULL) {
-    if (use_duckspatial) check_installed("duckspatial")
     # This is only for one file, one sample
     if (!is.null(df)) {
         file <- df

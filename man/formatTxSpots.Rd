@@ -7,16 +7,16 @@
 \usage{
 formatTxSpots(
   file,
-  dest = c("rowGeometry", "colGeometry"),
+  dest = deprecated(),
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
   cell_col = "cell_id",
-  z = "all",
+  z = deprecated(),
   phred_col = "qv",
   min_phred = 20,
-  split_col = NULL,
+  split_col = deprecated(),
   not_in_cell_id = c("-1", "UNASSIGNED"),
-  z_option = c("3d", "split"),
+  z_option = deprecated(),
   flip = FALSE,
   file_out = NULL,
   BPPARAM = SerialParam(),
@@ -31,11 +31,11 @@ addTxSpots(
   sample_id = 1L,
   spatialCoordsNames = c("global_x", "global_y", "global_z"),
   gene_col = "gene",
-  z = "all",
+  z = deprecated(),
   phred_col = "qv",
   min_phred = 20,
-  split_col = NULL,
-  z_option = c("3d", "split"),
+  split_col = deprecated(),
+  z_option = deprecated(),
   flip = FALSE,
   file_out = NULL,
   BPPARAM = SerialParam()
@@ -47,13 +47,8 @@ spot when read into R and should have columns for coordinates on each axis,
 gene the transcript is assigned to, and optionally cell the transcript is
 assigned to. Must be csv, tsv, or parquet.}
 
-\item{dest}{Where in the SFE object to store the spot geometries. This
-affects how the data is processed. Options: \describe{
-\item{rowGeometry}{All spots for each gene will be a `MULTIPOINT` geometry,
-regardless of whether they are in cells or which cells they are assigned
-to.} \item{colGeometry}{The spots for each gene assigned to a cell of
-interest will be a `MULTIPOINT` geometry; since the gene count matrix is
-sparse, the geometries are NOT returned to memory.}}}
+\item{dest}{This argument and the "colGeometry" option is deprecated. Only
+"rowGeometry" will be allowed.}
 
 \item{spatialCoordsNames}{Column names for the x, y, and optionally z
 coordinates of the spots. The defaults are for Vizgen.}
@@ -66,9 +61,7 @@ cells, in which case the contents of the columns will be concatenated, such
 as in CosMX data where cell ID is only unique within the same FOV. Default
 "cell_id" is for Vizgen MERFISH. Should be `c("cell_ID", "fov")` for CosMX.}
 
-\item{z}{Index of z plane to read. Can be "all" to read all z-planes into
-MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
-then spots with all z values will be read.}
+\item{z}{Selecting z-planes is deprecated. All z-planes are read by default.}
 
 \item{phred_col}{Column name for Phred scores of the spots.}
 
@@ -85,13 +78,8 @@ assigned to any cell, such as "-1" in Vizgen MERFISH and "0" in CosMX. When
 there're multiple columns for `cell_col`, the first column is used to
 identify spots that are not in cells.}
 
-\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
-geometries. "split" is to create a separate 2D geometry for each z-plane so
-geometric operations are fully supported but some data wrangling is
-required to perform 3D analyses. When the z coordinates are not integers,
-3D geometries will always be constructed since there are no z-planes to
-speak of. This argument does not apply when `spatialCoordsNames` has length
-2.}
+\item{z_option}{Deprecated. Will always be "3d" to construct 3D point
+geometries if multiple z-planes are present.}
 
 \item{flip}{Logical, whether to flip the geometry to match image. Here the y
 coordinates are simply set to -y, so the original bounding box is not
@@ -104,15 +92,15 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{BPPARAM}{\code{\link[BiocParallel]{BiocParallelParam}} object to specify
-multithreading to convert raw char in some parquet files to R objects. Not
-used otherwise.}
+\item{BPPARAM}{\code{\link[BiocParallel]{BiocParallelParam}} object to
+specify multithreading to convert raw char in some parquet files to R
+objects. Not used otherwise.}
 
 \item{return}{Logical, whether to return the geometries in memory. This does
 not depend on whether the geometries are written to file. Always `FALSE`
 when `dest = "colGeometry"`.}
 
-\item{save_memory}{Don't load transcript spots of all genes at once. Not 
+\item{save_memory}{Don't load transcript spots of all genes at once. Not
 fully implemented here.}
 
 \item{partition}{Whether to partition the output by gene.}
@@ -129,8 +117,8 @@ A sf data frame for vector geometries if `file_out` is not set.
   directory with the same name as `file_out` will be created (but without the
   extension) and the files are written to that directory with informative
   names. `parquet` files that can be read with `st_read` is written for
-  vector geometries. When `return = FALSE`, the file name or directory
-  (when there're multiple files) is returned.
+  vector geometries. When `return = FALSE`, the file name or directory (when
+  there're multiple files) is returned.
 
 The `sf` data frame, or path to file where geometries are written if
   `return = FALSE`.

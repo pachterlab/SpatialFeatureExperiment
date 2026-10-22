@@ -41,9 +41,7 @@ cells or spots should belong to which new SFE object when splitting by
 \code{sf} or \code{sfc}. Default to the first one.}
 
 \item{cover}{Logical, whether the geometries in \code{x} must be entirely
-covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
-be entirely outside \code{y} if \code{op = st_difference}. Only relevant
-when \code{keep_whole != "none"}.}
+covered by \code{f}.}
 
 \item{annotGeometryName}{Name of \code{annotGeometry} to use to split by
 contiguity.}

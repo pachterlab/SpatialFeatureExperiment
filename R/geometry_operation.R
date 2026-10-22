@@ -365,7 +365,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' geometry of interest. This can be used to subset an SFE object with a tissue
 #' boundary or histological region polygon, or crop away empty spaces. After
 #' cropping, not only will the cells/spots be subsetted, but also all geometries
-#' will be cropped.
+#' may be cropped.
 #'
 #' 3D geometries are allowed, but geometric operations can only be performed in
 #' x and y but not z.
@@ -384,18 +384,17 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   included in the indicated sample IDs are subsetted. If sample is not
 #'   indicated in \code{y}, then the same geometry or bounding box is used to
 #'   subset all samples specified in the \code{sample_id} argument.
-#' @param op A geometric operation function to crop the geometries in the SFE
-#'   object. Only \code{\link[sf]{st_intersection}} and \code{\link[sf]{st_difference}}
-#'   are allowed. If "intersection", then only things inside \code{y} is kept
-#'   after cropping. If "difference", then only things outside \code{y} is kept.
+#' @param op Deprecated.
+#' @param difference Logical, whether to compute remove the area occupied by
+#' \code{y} from the SFE object.
 #' @param keep_whole Character vector, can be one or more of "col" and "annot"
 #'   to keep whole items from \code{colGeometries} or \code{annotGeometries},
 #'   keeping geometries that partially intersect with \code{y} whole. This can
 #'   greatly speed up code while not breaking geometries into multiple pieces.
 #'   Can also be "none" so all geometries are actually cropped.
 #' @param cover Logical, whether the geometries in \code{x} must be entirely
-#'   covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
-#'   be entirely outside \code{y} if \code{op = st_difference}. Only relevant
+#'   covered by \code{y} if \code{difference = FALSE} or whether \code{x} must
+#'   be entirely outside \code{y} if \code{difference = TRUE}. Only relevant
 #'   when \code{keep_whole != "none"}.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
@@ -412,23 +411,25 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     sample_id = "Vis5A"
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
-                 op = st_intersection,
-                 keep_whole = "none",
+                 op = deprecated(), difference = FALSE,
+                 keep_whole = "col",
                  cover = FALSE) {
-    if (!(identical(op, sf::st_intersection) || identical(op, sf::st_difference))) {
-        stop("op must be either st_intersection or st_difference.")
+    if (is_present(op)) 
+        deprecate_warn("1.16.0", "crop(op)", "crop(difference)")
+    if (!is.logical(difference) || is.na(difference)) {
+        stop("difference must be logical and not NA")
     }
-    keep_whole <- match.arg(keep_whole, choices = c("none", "col", "annot"),
+    keep_whole <- match.arg(keep_whole, choices = c("col", "annot", "none"),
                             several.ok = TRUE)
     if (length(keep_whole) > 1L && "none" %in% keep_whole) {
         keep_whole <- keep_whole[keep_whole != "none"]
     }
-    is_difference <- identical(op, sf::st_difference)
-    pred <- if (is_difference) {
+    pred <- if (difference) {
         if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
     } else {
         if (cover) st_covers else st_intersects
     }
+    op <- if (difference) st_difference else st_intersection
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!inherits(y, "sf") && !inherits(y, "sfc") && !inherits(y, "sfg")) {
         # y should be bbox, either named vector or matrix with samples in columns

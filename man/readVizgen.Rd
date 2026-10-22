@@ -6,7 +6,7 @@
 \usage{
 readVizgen(
   data_dir,
-  z = "all",
+  z = deprecated(),
   sample_id = "sample01",
   min_area = NULL,
   image = c("DAPI", "PolyT", "Cellbound"),
@@ -18,16 +18,13 @@ readVizgen(
   use_cellpose = TRUE,
   BPPARAM = SerialParam(),
   file_out = file.path(data_dir, "detected_transcripts.parquet"),
-  z_option = c("3d", "split")
+  z_option = deprecated()
 )
 }
 \arguments{
 \item{data_dir}{Top level output directory.}
 
-\item{z}{Integer, z index to read, or "all", indicating z-planes of the
-images and transcript spots to read. While cell segmentation seems to have
-multiple z-planes, the segmentation in all z-planes are the same so in
-effect the cell segmentatio is only in 2D.}
+\item{z}{Deprecated.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -82,13 +79,8 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
-geometries. "split" is to create a separate 2D geometry for each z-plane so
-geometric operations are fully supported but some data wrangling is
-required to perform 3D analyses. When the z coordinates are not integers,
-3D geometries will always be constructed since there are no z-planes to
-speak of. This argument does not apply when `spatialCoordsNames` has length
-2.}
+\item{z_option}{Deprecated. Will always be "3d" to construct 3D point
+geometries if multiple z-planes are present.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.
@@ -121,11 +113,11 @@ Since the transcript spots file is often very large, we recommend only
 \examples{
 fp <- tempfile()
 dir_use <- SFEData::VizgenOutput(file_path = fp)
-sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
+sfe <- readVizgen(dir_use, image = "PolyT",
 flip = "geometry")
 
 ## Filtering of counts, and addition of molecule coordinates..
-sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
+sfe <- readVizgen(dir_use, image = "PolyT", filter_counts = TRUE,
 add_molecules = TRUE, flip = "geometry")
 
 unlink(dir_use, recursive = TRUE)

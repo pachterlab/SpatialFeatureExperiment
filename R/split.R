@@ -12,13 +12,14 @@
 #' so if there are disconnected components in the graph, then each component 
 #' will become a new SFE object.
 #'
-#' @inheritParams crop
 #' @param x An SFE object
 #' @param f It can be a \code{sf} data frame or \code{sfc} to split by geometry.
 #'   Each row of the \code{sf} data frame or each element in the \code{sfc} will
 #'   correspond to a new SFE object. The \code{sf} data frame must have a column
 #'   \code{sample_id} when splitting multiple samples. Can also be a list of
 #'   \code{sfc} whose names correspond to \code{sample_id}s to split.
+#' @param cover Logical, whether the geometries in \code{x} must be entirely
+#'   covered by \code{f}.
 #' @param sample_id Which samples to split.
 #' @param colGeometryName Which \code{colGeometry} to use to determine which
 #'   cells or spots should belong to which new SFE object when splitting by

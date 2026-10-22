@@ -171,6 +171,7 @@ export(transpose)
 export(transposeImg)
 export(txSpots)
 export(unit)
+exportClasses(AlignedSpatialImage)
 exportClasses(BioFormatsImage)
 exportClasses(ExtImage)
 exportClasses(SpatRasterImage)
@@ -240,193 +241,233 @@ importClassesFrom(EBImage,Image)
 importClassesFrom(SpatialExperiment,SpatialExperiment)
 importClassesFrom(SpatialExperiment,VirtualSpatialImage)
 importClassesFrom(terra,SpatRaster)
-importFrom(BiocGenerics,cbind)
-importFrom(BiocGenerics,containsOutOfMemoryData)
-importFrom(BiocGenerics,saveRDS)
-importFrom(BiocGenerics,updateObject)
-importFrom(BiocNeighbors,AnnoyParam)
-importFrom(BiocNeighbors,KmknnParam)
-importFrom(BiocNeighbors,findKNN)
-importFrom(BiocNeighbors,findNeighbors)
-importFrom(BiocParallel,SerialParam)
-importFrom(BiocParallel,bplapply)
-importFrom(BiocParallel,bpmapply)
+importFrom(BiocGenerics,
+  cbind,
+  containsOutOfMemoryData,
+  saveRDS,
+  updateObject
+)
+importFrom(BiocNeighbors,
+  AnnoyParam,
+  KmknnParam,
+  findKNN,
+  findNeighbors
+)
+importFrom(BiocParallel,
+  SerialParam,
+  bplapply,
+  bpmapply
+)
 importFrom(DropletUtils,read10xCounts)
-importFrom(EBImage,Image)
-importFrom(EBImage,clahe)
-importFrom(EBImage,closing)
-importFrom(EBImage,fillHull)
-importFrom(EBImage,makeBrush)
-importFrom(EBImage,normalize)
-importFrom(EBImage,otsu)
-importFrom(Matrix,colSums)
-importFrom(Matrix,rowSums)
-importFrom(Matrix,sparseMatrix)
-importFrom(S4Vectors,"mcols<-")
-importFrom(S4Vectors,"metadata<-")
-importFrom(S4Vectors,DataFrame)
-importFrom(S4Vectors,SimpleList)
-importFrom(S4Vectors,combineCols)
-importFrom(S4Vectors,isEmpty)
-importFrom(S4Vectors,make_zero_col_DFrame)
-importFrom(S4Vectors,mcols)
-importFrom(S4Vectors,metadata)
-importFrom(S4Vectors,setValidity2)
-importFrom(S4Vectors,showAsCell)
-importFrom(S4Vectors,split)
-importFrom(SingleCellExperiment,"altExp<-")
-importFrom(SingleCellExperiment,"int_colData<-")
-importFrom(SingleCellExperiment,"int_elementMetadata<-")
-importFrom(SingleCellExperiment,"int_metadata<-")
-importFrom(SingleCellExperiment,"reducedDim<-")
-importFrom(SingleCellExperiment,"reducedDims<-")
-importFrom(SingleCellExperiment,SingleCellExperiment)
-importFrom(SingleCellExperiment,altExp)
-importFrom(SingleCellExperiment,altExpNames)
-importFrom(SingleCellExperiment,counts)
-importFrom(SingleCellExperiment,int_colData)
-importFrom(SingleCellExperiment,int_elementMetadata)
-importFrom(SingleCellExperiment,int_metadata)
-importFrom(SingleCellExperiment,logcounts)
-importFrom(SingleCellExperiment,mainExpName)
-importFrom(SingleCellExperiment,reducedDim)
-importFrom(SingleCellExperiment,reducedDimNames)
-importFrom(SingleCellExperiment,reducedDims)
-importFrom(SpatialExperiment,"imgData<-")
-importFrom(SpatialExperiment,"spatialCoords<-")
-importFrom(SpatialExperiment,"spatialCoordsNames<-")
-importFrom(SpatialExperiment,SpatialExperiment)
-importFrom(SpatialExperiment,addImg)
-importFrom(SpatialExperiment,getImg)
-importFrom(SpatialExperiment,imgData)
-importFrom(SpatialExperiment,imgRaster)
-importFrom(SpatialExperiment,imgSource)
-importFrom(SpatialExperiment,mirrorImg)
-importFrom(SpatialExperiment,rmvImg)
-importFrom(SpatialExperiment,rotateImg)
-importFrom(SpatialExperiment,spatialCoords)
-importFrom(SpatialExperiment,spatialCoordsNames)
-importFrom(SpatialExperiment,toSpatialExperiment)
-importFrom(SummarizedExperiment,"assay<-")
-importFrom(SummarizedExperiment,"colData<-")
-importFrom(SummarizedExperiment,"rowData<-")
-importFrom(SummarizedExperiment,assayNames)
-importFrom(SummarizedExperiment,assays)
-importFrom(SummarizedExperiment,colData)
-importFrom(SummarizedExperiment,rowData)
-importFrom(data.table,":=")
-importFrom(data.table,as.data.table)
-importFrom(data.table,fread)
-importFrom(data.table,is.data.table)
-importFrom(data.table,merge.data.table)
-importFrom(data.table,rbindlist)
+importFrom(EBImage,
+  Image,
+  clahe,
+  closing,
+  fillHull,
+  makeBrush,
+  normalize,
+  otsu
+)
+importFrom(Matrix,
+  colSums,
+  rowSums,
+  sparseMatrix
+)
+importFrom(S4Vectors,
+  "mcols<-",
+  "metadata<-",
+  DataFrame,
+  SimpleList,
+  combineCols,
+  isEmpty,
+  make_zero_col_DFrame,
+  mcols,
+  metadata,
+  setValidity2,
+  showAsCell,
+  split
+)
+importFrom(SingleCellExperiment,
+  "altExp<-",
+  "int_colData<-",
+  "int_elementMetadata<-",
+  "int_metadata<-",
+  "reducedDim<-",
+  "reducedDims<-",
+  SingleCellExperiment,
+  altExp,
+  altExpNames,
+  counts,
+  int_colData,
+  int_elementMetadata,
+  int_metadata,
+  logcounts,
+  mainExpName,
+  reducedDim,
+  reducedDimNames,
+  reducedDims
+)
+importFrom(SpatialExperiment,
+  "imgData<-",
+  "spatialCoords<-",
+  "spatialCoordsNames<-",
+  SpatialExperiment,
+  addImg,
+  getImg,
+  imgData,
+  imgRaster,
+  imgSource,
+  mirrorImg,
+  rmvImg,
+  rotateImg,
+  spatialCoords,
+  spatialCoordsNames,
+  toSpatialExperiment
+)
+importFrom(SummarizedExperiment,
+  "assay<-",
+  "colData<-",
+  "rowData<-",
+  assayNames,
+  assays,
+  colData,
+  rowData
+)
+importFrom(data.table,
+  ":=",
+  as.data.table,
+  fread,
+  is.data.table,
+  merge.data.table,
+  rbindlist
+)
 importFrom(grDevices,col2rgb)
-importFrom(lifecycle,deprecate_warn)
-importFrom(lifecycle,deprecated)
-importFrom(lifecycle,is_present)
-importFrom(methods,"slot<-")
-importFrom(methods,as)
-importFrom(methods,callNextMethod)
-importFrom(methods,is)
-importFrom(methods,new)
-importFrom(methods,setAs)
-importFrom(methods,setClass)
-importFrom(methods,setClassUnion)
-importFrom(methods,setGeneric)
-importFrom(methods,setMethod)
-importFrom(methods,setReplaceMethod)
-importFrom(methods,show)
-importFrom(methods,signature)
-importFrom(methods,slot)
-importFrom(methods,slotNames)
-importFrom(methods,validObject)
+importFrom(lifecycle,
+  deprecate_warn,
+  deprecated,
+  is_present
+)
+importFrom(methods,
+  "slot<-",
+  as,
+  callNextMethod,
+  is,
+  new,
+  setAs,
+  setClass,
+  setClassUnion,
+  setGeneric,
+  setMethod,
+  setReplaceMethod,
+  show,
+  signature,
+  slot,
+  slotNames,
+  validObject
+)
 importFrom(rjson,fromJSON)
-importFrom(rlang,"!!")
-importFrom(rlang,"%||%")
-importFrom(rlang,.data)
-importFrom(rlang,check_installed)
-importFrom(rlang,sym)
-importFrom(sf,"st_agr<-")
-importFrom(sf,"st_geometry<-")
-importFrom(sf,st_agr)
-importFrom(sf,st_area)
-importFrom(sf,st_as_sf)
-importFrom(sf,st_as_sfc)
-importFrom(sf,st_bbox)
-importFrom(sf,st_buffer)
-importFrom(sf,st_cast)
-importFrom(sf,st_centroid)
-importFrom(sf,st_collection_extract)
-importFrom(sf,st_concave_hull)
-importFrom(sf,st_coordinates)
-importFrom(sf,st_covers)
-importFrom(sf,st_disjoint)
-importFrom(sf,st_distance)
-importFrom(sf,st_drop_geometry)
-importFrom(sf,st_geometry)
-importFrom(sf,st_geometry_type)
-importFrom(sf,st_geometrycollection)
-importFrom(sf,st_intersection)
-importFrom(sf,st_intersects)
-importFrom(sf,st_is_empty)
-importFrom(sf,st_is_valid)
-importFrom(sf,st_join)
-importFrom(sf,st_linestring)
-importFrom(sf,st_make_grid)
-importFrom(sf,st_minimum_rotated_rectangle)
-importFrom(sf,st_multilinestring)
-importFrom(sf,st_multipoint)
-importFrom(sf,st_multipolygon)
-importFrom(sf,st_nearest_feature)
-importFrom(sf,st_point)
-importFrom(sf,st_polygon)
-importFrom(sf,st_read)
-importFrom(sf,st_sf)
-importFrom(sf,st_sfc)
-importFrom(sf,st_simplify)
-importFrom(sf,st_union)
-importFrom(sf,st_z_range)
-importFrom(sf,st_zm)
-importFrom(sfheaders,sf_linestring)
-importFrom(sfheaders,sf_multilinestring)
-importFrom(sfheaders,sf_multipoint)
-importFrom(sfheaders,sf_multipolygon)
-importFrom(sfheaders,sf_polygon)
+importFrom(rlang,
+  "!!",
+  "%||%",
+  .data,
+  check_installed,
+  sym
+)
+importFrom(sf,
+  "st_agr<-",
+  "st_geometry<-",
+  st_agr,
+  st_area,
+  st_as_sf,
+  st_as_sfc,
+  st_bbox,
+  st_buffer,
+  st_cast,
+  st_centroid,
+  st_collection_extract,
+  st_concave_hull,
+  st_coordinates,
+  st_covers,
+  st_disjoint,
+  st_distance,
+  st_drop_geometry,
+  st_geometry,
+  st_geometry_type,
+  st_geometrycollection,
+  st_intersection,
+  st_intersects,
+  st_is_empty,
+  st_is_valid,
+  st_join,
+  st_linestring,
+  st_make_grid,
+  st_minimum_rotated_rectangle,
+  st_multilinestring,
+  st_multipoint,
+  st_multipolygon,
+  st_nearest_feature,
+  st_point,
+  st_polygon,
+  st_read,
+  st_sf,
+  st_sfc,
+  st_simplify,
+  st_union,
+  st_z_range,
+  st_zm
+)
+importFrom(sfheaders,
+  sf_linestring,
+  sf_multilinestring,
+  sf_multipoint,
+  sf_multipolygon,
+  sf_polygon
+)
 importFrom(spatialreg,as_dgRMatrix_listw)
-importFrom(spdep,card)
-importFrom(spdep,dnearneigh)
-importFrom(spdep,gabrielneigh)
-importFrom(spdep,graph2nb)
-importFrom(spdep,knearneigh)
-importFrom(spdep,knn2nb)
-importFrom(spdep,mat2listw)
-importFrom(spdep,n.comp.nb)
-importFrom(spdep,nb2listw)
-importFrom(spdep,nb2listwdist)
-importFrom(spdep,poly2nb)
-importFrom(spdep,relativeneigh)
-importFrom(spdep,soi.graph)
-importFrom(spdep,tri2nb)
-importFrom(stats,aggregate)
-importFrom(stats,median)
-importFrom(stats,na.omit)
-importFrom(stats,setNames)
-importFrom(terra,"ext<-")
-importFrom(terra,as.raster)
-importFrom(terra,ext)
-importFrom(terra,inMemory)
-importFrom(terra,nlyr)
-importFrom(terra,rast)
-importFrom(terra,shift)
-importFrom(terra,sources)
-importFrom(terra,unwrap)
-importFrom(terra,vect)
-importFrom(terra,wrap)
-importFrom(tools,file_ext)
-importFrom(tools,file_path_sans_ext)
-importFrom(utils,getFromNamespace)
-importFrom(utils,head)
-importFrom(utils,packageVersion)
-importFrom(utils,read.csv)
-importFrom(utils,tail)
+importFrom(spdep,
+  card,
+  dnearneigh,
+  gabrielneigh,
+  graph2nb,
+  knearneigh,
+  knn2nb,
+  mat2listw,
+  n.comp.nb,
+  nb2listw,
+  nb2listwdist,
+  poly2nb,
+  relativeneigh,
+  soi.graph,
+  tri2nb
+)
+importFrom(stats,
+  aggregate,
+  median,
+  na.omit,
+  setNames
+)
+importFrom(terra,
+  "ext<-",
+  as.raster,
+  ext,
+  inMemory,
+  nlyr,
+  rast,
+  shift,
+  sources,
+  unwrap,
+  vect,
+  wrap
+)
+importFrom(tools,
+  file_ext,
+  file_path_sans_ext
+)
+importFrom(utils,
+  getFromNamespace,
+  head,
+  packageVersion,
+  read.csv,
+  tail
+)
 importFrom(zeallot,"%<-%")

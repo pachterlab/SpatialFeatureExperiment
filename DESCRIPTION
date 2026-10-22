@@ -117,4 +117,4 @@ biocViews:
     Spatial
 URL: https://pachterlab.github.io/SpatialFeatureExperiment
 BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.1

@@ -54,7 +54,8 @@ rg_use <- st_sf(geometry = st_sfc(st_multipoint(rg1), st_multipoint(rg2)),
 rowGeometry(sfe_visium, "points", sample_id = "sample01", withDimnames = FALSE) <- rg_use
 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all")
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all",
+                                                  keep_whole = "none")
     cg <- spotPoly(sfe_cropped, "all")
     expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by, sparse = FALSE)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
@@ -65,7 +66,8 @@ test_that("All spots in the cropped SFE objects indeed are covered by the bbox",
 test_that("Only crop one sample out of two, with sf", {
     expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample02"),
                  "No bounding boxes for samples specified.")
-    sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample01")
+    sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, 
+                                                   sample_id = "sample01", keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use,
                                 pred = st_covered_by, sparse = FALSE
     )))
@@ -96,9 +98,9 @@ test_that("Using a bounding box to crop SFE objects, current way, one sample", {
     m <- matrix(c(1, 3, 1, 6), ncol = 1,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 "sample01"))
-    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample02"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample02", keep_whole = "none"),
                  "No bounding boxes for samples specified.")
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m, keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
                                 pred = st_covered_by, sparse = FALSE
     )))
@@ -117,7 +119,7 @@ test_that("Using a bounding box to crop SFE objects, current way, all samples", 
     m <- matrix(c(1, 3, 1, 6, 1, 3, 5, 9), ncol = 2,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 c("sample01", "sample02")))
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m, keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
                                 pred = st_covered_by, sparse = FALSE
     )))
@@ -129,7 +131,8 @@ test_that("Using a bounding box to crop SFE objects, current way, all samples", 
 test_that("When a geometry is broken into multiple pieces", {
     notch <- st_as_sfc(st_bbox(c(xmin = 0, xmax = 1.5, ymin = 1.7, ymax = 1.9)))
     bbox_use3 <- st_difference(bbox_use, notch)
-    sfe_cropped3 <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use3, sample_id = "sample01")
+    sfe_cropped3 <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use3, 
+                                                   sample_id = "sample01", keep_whole = "none")
     cg <- spotPoly(sfe_cropped3, "all")
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "MULTIPOLYGON")
 })
@@ -194,7 +197,7 @@ test_that("Use st_difference for cropping, not cover", {
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
-                        op = st_difference)
+                        difference = TRUE, keep_whole = "none")
     cg2 <- spotPoly(sfe_cropped, "sample01")
     ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
     expect_false(any(st_overlaps(cg2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
@@ -214,7 +217,7 @@ test_that("Use st_difference for cropping, cover", {
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
-                        op = st_difference, cover = TRUE,
+                        difference = TRUE, cover = TRUE,
                         keep_whole = c("col", "annot"))
     cg2 <- spotPoly(sfe_cropped, "sample01")
     ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
@@ -247,11 +250,11 @@ test_that("Only cells/spots covered by y if keep whole", {
     expect_true(all(lengths(st_equals(ag2, ag_use))))
 })
 
-test_that("Error when other spatial operations are specified", {
+test_that("Error for inappropriate input to difference argument", {
     bbox_use <- c(xmin = 2.5, xmax = 3.5, ymin = 1.75, ymax = 2.5)
     expect_error(SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
-                      op = st_sym_difference),
-                 "op must be either st_intersection or st_difference")
+                      difference = NA),
+                 "difference must be logical and not NA")
 })
 
 test_that("Crop 3D geometry", {
@@ -260,7 +263,7 @@ test_that("Crop 3D geometry", {
     sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
                      z_option = "3d")
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe, bbox1)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe, bbox1, keep_whole = "none")
     bbox_new <- bbox(sfe_cropped)
     expect_true(st_covered_by(st_as_sfc(st_bbox(bbox_new)), st_as_sfc(st_bbox(bbox1)),
                               sparse = FALSE))

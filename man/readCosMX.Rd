@@ -6,21 +6,20 @@
 \usage{
 readCosMX(
   data_dir,
-  z = "all",
+  z = deprecated(),
   sample_id = "sample01",
   min_area = NULL,
   add_molecules = FALSE,
-  split_cell_comps = FALSE,
+  split_cell_comps = deprecated(),
   BPPARAM = SerialParam(),
   file_out = file.path(data_dir, "tx_spots.parquet"),
-  z_option = c("3d", "split")
+  z_option = deprecated()
 )
 }
 \arguments{
 \item{data_dir}{Top level output directory.}
 
-\item{z}{Integer z index or "all" to indicate which z-planes to read for the
-transcript spots.}
+\item{z}{Deprecated.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -34,8 +33,7 @@ Default to `NULL`, ie no filtering of polygons.}
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
 object.}
 
-\item{split_cell_comps}{Logical, whether to split transcript spot geometries
-by cell compartment. Only relevant when `add_molecules = TRUE`.}
+\item{split_cell_comps}{Deprecated.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
   processing backend and number of threads to use for parallelizable tasks:
@@ -56,13 +54,8 @@ already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
 extensions are determined based on `dest`.}
 
-\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
-geometries. "split" is to create a separate 2D geometry for each z-plane so
-geometric operations are fully supported but some data wrangling is
-required to perform 3D analyses. When the z coordinates are not integers,
-3D geometries will always be constructed since there are no z-planes to
-speak of. This argument does not apply when `spatialCoordsNames` has length
-2.}
+\item{z_option}{Deprecated. Will always be "3d" to construct 3D point
+geometries if multiple z-planes are present.}
 }
 \value{
 An SFE object. Cell polygons are written to
@@ -79,7 +72,7 @@ files are the flat files in the AtoMX output.
 \examples{
 fp <- tempfile()
 dir_use <- SFEData::CosMXOutput(file_path = fp)
-sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
+sfe <- readCosMX(dir_use, add_molecules = TRUE)
 # Clean up
 unlink(dir_use, recursive = TRUE)
 }
