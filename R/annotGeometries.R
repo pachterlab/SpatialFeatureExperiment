@@ -81,6 +81,10 @@ setMethod(
 setReplaceMethod(
     "annotGeometries", "SpatialFeatureExperiment",
     function(x, translate = TRUE, ..., value) {
+        args <- list(...)
+        if (length(args))
+            deprecate_warn("1.16.0", "annotGeometries<-(...)",
+                           details = "Support to ordinary data frames is deprecated")
         value <- .df2sf_list(value, ...)
         value <- lapply(value, .rm_empty_geometries, MARGIN = 3)
         value <- lapply(value, .translate_value,
@@ -131,6 +135,10 @@ setMethod("annotGeometry", "SpatialFeatureExperiment", .ag)
 
 .ag_r <- function(x, type = 1L, sample_id = NULL, translate = TRUE, ..., value) {
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
+    args <- list(...)
+    if (length(args))
+        deprecate_warn("1.16.0", "annotGeometry<-(...)",
+                       details = "Support to ordinary data frames is deprecated")
     if (length(sampleIDs(x)) == 1L && !"sample_id" %in% names(value)) {
         value$sample_id <- sample_id
     }

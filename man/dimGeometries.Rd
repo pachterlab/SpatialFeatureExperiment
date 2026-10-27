@@ -15,22 +15,22 @@
 \alias{dimGeometry<-,SpatialFeatureExperiment-method}
 \title{Dimension geometry methods}
 \usage{
-\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN = 2, withDimnames = TRUE)
+\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN = 2, withDimnames = FALSE)
 
-\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN, withDimnames = TRUE, translate = TRUE, ...) <- value
+\S4method{dimGeometries}{SpatialFeatureExperiment}(x, MARGIN, withDimnames = FALSE, translate = TRUE, ...) <- value
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment}(x, MARGIN)
 
 \S4method{dimGeometryNames}{SpatialFeatureExperiment,numeric,character}(x, MARGIN) <- value
 
-\S4method{dimGeometry}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE)
+\S4method{dimGeometry}{SpatialFeatureExperiment}(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = FALSE)
 
 \S4method{dimGeometry}{SpatialFeatureExperiment}(
   x,
   type = 1L,
   MARGIN,
   sample_id = 1L,
-  withDimnames = TRUE,
+  withDimnames = FALSE,
   translate = TRUE,
   ...
 ) <- value
@@ -58,10 +58,12 @@ of the geometry type of each data frame in the list of the same length as
 the list if the data frames specify different types of geometries.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
-frame with the same number of rows as size in the dimension of interest, or
-an ordinary data frame that can be converted to such a \code{sf} data frame
-(see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
-\code{sf} or ordinary data frames.}
+frame with the same number of rows as size in the dimension of interest, a
+\code{DuckDBColumn} with type "geometry", or an ordinary data frame that
+can be converted to such a \code{sf} data frame (see \code{\link{df2sf}}).
+For \code{dimGeometries}, must be a named list of such \code{sf} or
+\code{DuckDBColumn} or ordinary data frames. Support for ordinary data
+frames is deprecated.}
 
 \item{type}{An integer specifying the index or string specifying the name of
 the *Geometry to query or replace. If missing, then the first item in the
@@ -70,8 +72,8 @@ the *Geometry to query or replace. If missing, then the first item in the
 \item{sample_id}{Sample ID to get or set geometries.}
 }
 \value{
-Getters for multiple geometries return a named list. Getters for names
-  return a character vector of the names. Getters for single geometries
+Getters for multiple geometries return a named list. Getters for
+  names return a character vector of the names. Getters for single geometries
   return an \code{sf} data frame. Setters return an SFE object.
 }
 \description{

@@ -11,23 +11,23 @@
 \alias{txSpots<-}
 \title{Row geometry getters and setters}
 \usage{
-rowGeometry(x, type = 1L, sample_id = 1L, withDimnames = TRUE)
+rowGeometry(x, type = 1L, sample_id = 1L, withDimnames = FALSE)
 
 rowGeometry(
   x,
   type = 1L,
   sample_id = 1L,
-  withDimnames = TRUE,
+  withDimnames = FALSE,
   partial = FALSE,
   translate = TRUE
 ) <- value
 
-rowGeometries(x, sample_id = "all", withDimnames = TRUE)
+rowGeometries(x, sample_id = "all", withDimnames = FALSE)
 
 rowGeometries(
   x,
   sample_id = "all",
-  withDimnames = TRUE,
+  withDimnames = FALSE,
   partial = FALSE,
   translate = TRUE
 ) <- value
@@ -36,12 +36,12 @@ rowGeometryNames(x)
 
 rowGeometryNames(x) <- value
 
-txSpots(x, sample_id = 1L, withDimnames = TRUE)
+txSpots(x, sample_id = 1L, withDimnames = FALSE)
 
 txSpots(
   x,
   sample_id = 1L,
-  withDimnames = TRUE,
+  withDimnames = FALSE,
   partial = FALSE,
   translate = TRUE
 ) <- value
@@ -69,10 +69,12 @@ prior to removal of empty space so it should be translated to match the new
 coordinates after removing empty space. Default to \code{TRUE}.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
-frame with the same number of rows as size in the dimension of interest, or
-an ordinary data frame that can be converted to such a \code{sf} data frame
-(see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
-\code{sf} or ordinary data frames.}
+frame with the same number of rows as size in the dimension of interest, a
+\code{DuckDBColumn} with type "geometry", or an ordinary data frame that
+can be converted to such a \code{sf} data frame (see \code{\link{df2sf}}).
+For \code{dimGeometries}, must be a named list of such \code{sf} or
+\code{DuckDBColumn} or ordinary data frames. Support for ordinary data
+frames is deprecated.}
 }
 \description{
 \code{rowGeometries} are geometries that corresponding to rows of the gene

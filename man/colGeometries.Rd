@@ -19,43 +19,43 @@
 \alias{nucSeg<-}
 \title{Column geometry getters and setters}
 \usage{
-colGeometry(x, type = 1L, sample_id = 1L, withDimnames = TRUE)
+colGeometry(x, type = 1L, sample_id = 1L, withDimnames = FALSE)
 
 colGeometry(
   x,
   type = 1L,
   sample_id = 1L,
-  withDimnames = TRUE,
+  withDimnames = FALSE,
   translate = TRUE
 ) <- value
 
-colGeometries(x, withDimnames = TRUE)
+colGeometries(x, withDimnames = FALSE)
 
-colGeometries(x, withDimnames = TRUE, translate = TRUE) <- value
+colGeometries(x, withDimnames = FALSE, translate = TRUE) <- value
 
 colGeometryNames(x)
 
 colGeometryNames(x) <- value
 
-spotPoly(x, sample_id = 1L, withDimnames = TRUE)
+spotPoly(x, sample_id = 1L, withDimnames = FALSE)
 
-spotPoly(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
+spotPoly(x, sample_id = 1L, withDimnames = FALSE, translate = TRUE) <- value
 
-centroids(x, sample_id = 1L, withDimnames = TRUE)
+centroids(x, sample_id = 1L, withDimnames = FALSE)
 
-centroids(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
+centroids(x, sample_id = 1L, withDimnames = FALSE, translate = TRUE) <- value
 
-ROIPoly(x, sample_id = 1L, withDimnames = TRUE)
+ROIPoly(x, sample_id = 1L, withDimnames = FALSE)
 
-ROIPoly(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
+ROIPoly(x, sample_id = 1L, withDimnames = FALSE, translate = TRUE) <- value
 
-cellSeg(x, sample_id = 1L, withDimnames = TRUE)
+cellSeg(x, sample_id = 1L, withDimnames = FALSE)
 
-cellSeg(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
+cellSeg(x, sample_id = 1L, withDimnames = FALSE, translate = TRUE) <- value
 
-nucSeg(x, sample_id = 1L, withDimnames = TRUE)
+nucSeg(x, sample_id = 1L, withDimnames = FALSE)
 
-nucSeg(x, sample_id = 1L, withDimnames = TRUE, translate = TRUE) <- value
+nucSeg(x, sample_id = 1L, withDimnames = FALSE, translate = TRUE) <- value
 }
 \arguments{
 \item{x}{A \code{SpatialFeatureExperiment} object.}
@@ -77,10 +77,12 @@ prior to removal of empty space so it should be translated to match the new
 coordinates after removing empty space. Default to \code{TRUE}.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
-frame with the same number of rows as size in the dimension of interest, or
-an ordinary data frame that can be converted to such a \code{sf} data frame
-(see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
-\code{sf} or ordinary data frames.}
+frame with the same number of rows as size in the dimension of interest, a
+\code{DuckDBColumn} with type "geometry", or an ordinary data frame that
+can be converted to such a \code{sf} data frame (see \code{\link{df2sf}}).
+For \code{dimGeometries}, must be a named list of such \code{sf} or
+\code{DuckDBColumn} or ordinary data frames. Support for ordinary data
+frames is deprecated.}
 }
 \description{
 \code{colGeometries} are geometries that correspond to columns of the gene

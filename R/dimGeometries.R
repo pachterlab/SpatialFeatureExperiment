@@ -27,17 +27,19 @@
 #'   prior to removal of empty space so it should be translated to match the new
 #'   coordinates after removing empty space. Default to \code{TRUE}.
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
-#'   frame with the same number of rows as size in the dimension of interest, or
-#'   an ordinary data frame that can be converted to such a \code{sf} data frame
-#'   (see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
-#'   \code{sf} or ordinary data frames.
+#'   frame with the same number of rows as size in the dimension of interest, a
+#'   \code{DuckDBColumn} with type "geometry", or an ordinary data frame that
+#'   can be converted to such a \code{sf} data frame (see \code{\link{df2sf}}).
+#'   For \code{dimGeometries}, must be a named list of such \code{sf} or
+#'   \code{DuckDBColumn} or ordinary data frames. Support for ordinary data
+#'   frames is deprecated.
 #' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} passed to
 #'   \code{\link{df2sf}}. Defaults are the same as in \code{\link{df2sf}}. For
 #'   \code{dimGeometries<-} only: \code{geometryType} can be a character vector
 #'   of the geometry type of each data frame in the list of the same length as
 #'   the list if the data frames specify different types of geometries.
-#' @return Getters for multiple geometries return a named list. Getters for names
-#'   return a character vector of the names. Getters for single geometries
+#' @return Getters for multiple geometries return a named list. Getters for
+#'   names return a character vector of the names. Getters for single geometries
 #'   return an \code{sf} data frame. Setters return an SFE object.
 #' @concept Getters and setters
 #' @name dimGeometries
@@ -103,7 +105,7 @@ NULL
 #' @export
 setMethod(
     "dimGeometries", "SpatialFeatureExperiment",
-    function(x, MARGIN = 2, withDimnames = TRUE) {
+    function(x, MARGIN = 2, withDimnames = FALSE) {
         .get_intdimdata_all(x, MARGIN, withDimnames,
             getfun = .getfun(MARGIN),
             key = .dg_key(MARGIN)
@@ -115,8 +117,12 @@ setMethod(
 #' @export
 setReplaceMethod(
     "dimGeometries", "SpatialFeatureExperiment",
-    function(x, MARGIN, withDimnames = TRUE, translate = TRUE, ...,
+    function(x, MARGIN, withDimnames = FALSE, translate = TRUE, ...,
              value) {
+        args <- list(...)
+        if (length(args))
+            deprecate_warn("1.16.0", "dimGeometries<-(...)",
+                           details = "Support to ordinary data frames is deprecated")
         .set_intdimdata_all(x, MARGIN,
             withDimnames = withDimnames,
             translate = translate, sf = TRUE,
@@ -160,7 +166,7 @@ setReplaceMethod(
 #' @export
 setMethod(
     "dimGeometry", "SpatialFeatureExperiment",
-    function(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE) {
+    function(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = FALSE) {
         .get_internal_id(x, type, MARGIN, sample_id, withDimnames,
             .get_internal,
             getfun = .getfun(MARGIN),
@@ -174,8 +180,12 @@ setMethod(
 #' @export
 setReplaceMethod(
     "dimGeometry", "SpatialFeatureExperiment",
-    function(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE,
+    function(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = FALSE,
              translate = TRUE, ..., value) {
+        args <- list(...)
+        if (length(args))
+            deprecate_warn("1.16.0", "dimGeometry<-(...)",
+                           details = "Support to ordinary data frames is deprecated")
         .set_internal_id(x, type, MARGIN, sample_id, withDimnames,
             translate,
             sf = TRUE,
@@ -226,7 +236,7 @@ NULL
 
 #' @rdname colGeometries
 #' @export
-colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
+colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = FALSE) {
     dimGeometry(x, type,
         MARGIN = 2, sample_id = sample_id,
         withDimnames = withDimnames
@@ -235,7 +245,7 @@ colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-`colGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
+`colGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = FALSE,
                             translate = TRUE, value) {
     `dimGeometry<-`(x, type,
         MARGIN = 2, sample_id = sample_id,
@@ -246,13 +256,13 @@ colGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-colGeometries <- function(x, withDimnames = TRUE) {
+colGeometries <- function(x, withDimnames = FALSE) {
     dimGeometries(x, MARGIN = 2, withDimnames = withDimnames)
 }
 
 #' @rdname colGeometries
 #' @export
-`colGeometries<-` <- function(x, withDimnames = TRUE, translate = TRUE, value) {
+`colGeometries<-` <- function(x, withDimnames = FALSE, translate = TRUE, value) {
     `dimGeometries<-`(x,
         MARGIN = 2, withDimnames = withDimnames,
         translate = translate, value = value
@@ -274,13 +284,13 @@ colGeometryNames <- function(x) {
 
 #' @rdname colGeometries
 #' @export
-spotPoly <- function(x, sample_id = 1L, withDimnames = TRUE) {
+spotPoly <- function(x, sample_id = 1L, withDimnames = FALSE) {
     colGeometry(x, "spotPoly", withDimnames, sample_id = sample_id)
 }
 
 #' @rdname colGeometries
 #' @export
-`spotPoly<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+`spotPoly<-` <- function(x, sample_id = 1L, withDimnames = FALSE,
                          translate = TRUE, value) {
     colGeometry(x, "spotPoly", withDimnames,
                 sample_id = sample_id,
@@ -291,13 +301,13 @@ spotPoly <- function(x, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-centroids <- function(x, sample_id = 1L, withDimnames = TRUE) {
+centroids <- function(x, sample_id = 1L, withDimnames = FALSE) {
     colGeometry(x, "centroids", withDimnames, sample_id = sample_id)
 }
 
 #' @rdname colGeometries
 #' @export
-`centroids<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+`centroids<-` <- function(x, sample_id = 1L, withDimnames = FALSE,
                           translate = TRUE, value) {
     colGeometry(x, "centroids", withDimnames,
                 sample_id = sample_id,
@@ -308,13 +318,13 @@ centroids <- function(x, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-ROIPoly <- function(x, sample_id = 1L, withDimnames = TRUE) {
+ROIPoly <- function(x, sample_id = 1L, withDimnames = FALSE) {
     colGeometry(x, "ROIPoly", withDimnames, sample_id = sample_id)
 }
 
 #' @rdname colGeometries
 #' @export
-`ROIPoly<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+`ROIPoly<-` <- function(x, sample_id = 1L, withDimnames = FALSE,
                         translate = TRUE, value) {
     colGeometry(x, "ROIPoly", withDimnames,
                 sample_id = sample_id,
@@ -343,13 +353,13 @@ ROIPoly <- function(x, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-cellSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
+cellSeg <- function(x, sample_id = 1L, withDimnames = FALSE) {
     .get_col_then_annot(x, "cellSeg", sample_id, withDimnames)
 }
 
 #' @rdname colGeometries
 #' @export
-`cellSeg<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+`cellSeg<-` <- function(x, sample_id = 1L, withDimnames = FALSE,
                         translate = TRUE, value) {
     .set_col_then_annot(x, "cellSeg", sample_id, withDimnames,
                         translate = translate, value
@@ -358,13 +368,13 @@ cellSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname colGeometries
 #' @export
-nucSeg <- function(x, sample_id = 1L, withDimnames = TRUE) {
+nucSeg <- function(x, sample_id = 1L, withDimnames = FALSE) {
     .get_col_then_annot(x, "nucSeg", sample_id, withDimnames)
 }
 
 #' @rdname colGeometries
 #' @export
-`nucSeg<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+`nucSeg<-` <- function(x, sample_id = 1L, withDimnames = FALSE,
                        translate = TRUE, value) {
     .set_col_then_annot(x, "nucSeg", sample_id, withDimnames, translate, value)
 }
@@ -481,7 +491,7 @@ NULL
 
 #' @rdname rowGeometries
 #' @export
-rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
+rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = FALSE) {
     type <- .check_rg(type, x, sample_id)
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     dimGeometry(x, type,
@@ -492,7 +502,7 @@ rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname rowGeometries
 #' @export
-`rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE,
+`rowGeometry<-` <- function(x, type = 1L, sample_id = 1L, withDimnames = FALSE,
                             partial = FALSE, translate = TRUE, value) {
     type <- .check_rg_setter(type, x, sample_id)
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -537,7 +547,7 @@ rowGeometry <- function(x, type = 1L, sample_id = 1L, withDimnames = TRUE) {
 
 #' @rdname rowGeometries
 #' @export
-rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
+rowGeometries <- function(x, sample_id = "all", withDimnames = FALSE) {
     out <- dimGeometries(x, MARGIN = 1, withDimnames = withDimnames)
     if (identical(sample_id, "all") || length(sampleIDs(x)) == 1L) return(out)
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
@@ -547,7 +557,7 @@ rowGeometries <- function(x, sample_id = "all", withDimnames = TRUE) {
 
 #' @rdname rowGeometries
 #' @export
-`rowGeometries<-` <- function(x, sample_id = "all", withDimnames = TRUE,
+`rowGeometries<-` <- function(x, sample_id = "all", withDimnames = FALSE,
                               partial = FALSE, translate = TRUE, value) {
     check_names <- !identical(sample_id, "all") && length(setdiff(sampleIDs(x), sample_id))
     sample_id0 <- sample_id
@@ -592,13 +602,13 @@ rowGeometryNames <- function(x) {
 
 #' @rdname rowGeometries
 #' @export
-txSpots <- function(x, sample_id = 1L, withDimnames = TRUE) {
+txSpots <- function(x, sample_id = 1L, withDimnames = FALSE) {
     rowGeometry(x, "txSpots", sample_id, withDimnames)
 }
 
 #' @rdname rowGeometries
 #' @export
-`txSpots<-` <- function(x, sample_id = 1L, withDimnames = TRUE,
+`txSpots<-` <- function(x, sample_id = 1L, withDimnames = FALSE,
                         partial = FALSE, translate = TRUE, value) {
     rowGeometry(x, "txSpots", sample_id, withDimnames, partial, translate) <- value
     x

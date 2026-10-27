@@ -252,7 +252,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     )
     out
 }
-
+#' @importFrom BiocGenerics type
 # Call in SFE constructor and *Geometries replacement methods
 .df2sf_in_list <- function(x, spatialCoordsNames = c("x", "y"),
                            spotDiameter = NA, geometryType = "POLYGON",
@@ -269,6 +269,20 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     } else if (is.data.frame(x) || is.matrix(x)) {
         return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType,
                      group_col, id_col, subid_col, check = check))
+    } else if (is.character(x)) {
+        x <- normalizePath(x, mustWork = TRUE)
+        if (file_ext(x) != "parquet")
+            stop("Must use parquet file")
+        check_installed("DuckDBSpatial")
+        df <- DuckDBSpatial::readGeoParquet(x)
+        if (!"geometry" %in% names(df)) {
+            # Might allow other names but so far input formats don't use GeoParquet
+            stop("Geometry column 'geometry' not found")
+        }
+        o <- df[["geometry"]]
+        if (type(o) != "geometry")
+            stop("The parquet file is not GeoParquet")
+        o
     }
 }
 
