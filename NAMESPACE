@@ -199,7 +199,6 @@ exportMethods(annotGeometry)
 exportMethods(annotGeometryNames)
 exportMethods(bbox)
 exportMethods(cbind)
-exportMethods(containsOutOfMemoryData)
 exportMethods(cropImg)
 exportMethods(dim)
 exportMethods(dimGeometries)
@@ -237,6 +236,7 @@ exportMethods(translateImg)
 exportMethods(transposeImg)
 exportMethods(unit)
 exportMethods(updateObject)
+importClassesFrom(BiocGenerics,OutOfMemoryObject)
 importClassesFrom(EBImage,Image)
 importClassesFrom(SpatialExperiment,SpatialExperiment)
 importClassesFrom(SpatialExperiment,VirtualSpatialImage)
@@ -245,6 +245,7 @@ importFrom(BiocGenerics,
   cbind,
   containsOutOfMemoryData,
   saveRDS,
+  type,
   updateObject
 )
 importFrom(BiocNeighbors,

@@ -83,6 +83,11 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
     paste(paste(d[c(2,1,3)], collapse=" x "), "SpatRasterImage")
 })
 
+#' @importFrom BiocGenerics containsOutOfMemoryData
+setMethod("containsOutOfMemoryData", "SpatRasterImage", function(object) {
+    !is.na(imgSource(object))
+})
+
 # BioFormatsImage====================
 
 #' On disk representation of BioFormats images in SFE object
@@ -136,12 +141,13 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #'   for a 2x2 linear transformation matrix in the xy plane and "v" for a
 #'   translation vector of length 2 to specify general affine transformation.
 #' @return A \code{BioFormatsImage} object.
+#' @importClassesFrom BiocGenerics OutOfMemoryObject
 #' @name BioFormatsImage
 #' @aliases BioFormatsImage-class
 #' @concept Image classes
 #' @seealso [isFull()], [origin()]
 #' @exportClass BioFormatsImage
-setClass("BioFormatsImage", contains = "AlignedSpatialImage",
+setClass("BioFormatsImage", contains = c("AlignedSpatialImage", "OutOfMemoryObject"),
          slots = c(path = "character", ext = "numeric", isFull = "logical",
                    origin = "numeric", transformation = "list"))
 
