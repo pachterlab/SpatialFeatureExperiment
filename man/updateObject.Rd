@@ -30,6 +30,11 @@ Version 1.1.4 adds package version to the SFE object. We are considering an
 overhaul of the \code{spatialGraphs} slot in a future version using the
 \code{sfdep} package to decouple the adjacency graph from the edge weights.
 }
+\note{
+The first version of the SFE object that supports DuckDB for geometries
+  is 1.16.0. Older versions don't need to be converted, but the new version
+  can't be used with older versions of the SFE package.
+}
 \examples{
 library(SFEData)
 sfe <- McKellarMuscleData("small")
@@ -40,7 +45,7 @@ sfe <- updateObject(sfe)
 SFEVersion(sfe)
 }
 \seealso{
-\code{\link[SingleCellExperiment]{objectVersion}}, which is used to determine if the
-  object is up-to-date.
+\code{\link[SingleCellExperiment]{objectVersion}}, which is used to
+  determine if the object is up-to-date.
 }
 \concept{SpatialFeatureExperiment class}

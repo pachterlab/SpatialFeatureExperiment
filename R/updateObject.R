@@ -12,8 +12,11 @@
 #' @param verbose Logical scalar indicating whether a message should be emitted
 #'   as the object is updated.
 #' @return An updated version of \code{object}.
-#' @seealso \code{\link[SingleCellExperiment]{objectVersion}}, which is used to determine if the
-#'   object is up-to-date.
+#' @note The first version of the SFE object that supports DuckDB for geometries
+#'   is 1.16.0. Older versions don't need to be converted, but the new version
+#'   can't be used with older versions of the SFE package.
+#' @seealso \code{\link[SingleCellExperiment]{objectVersion}}, which is used to
+#'   determine if the object is up-to-date.
 #' @importFrom BiocGenerics updateObject
 #' @export
 #' @name updateObject
