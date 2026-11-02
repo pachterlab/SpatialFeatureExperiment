@@ -18,11 +18,11 @@
 #'
 #' @inheritParams dimGeometries
 #' @param value Value to set. For \code{annotGeometry}, must be a \code{sf} data
-#'   frame, or an ordinary data frame that can be converted to a \code{sf} data
-#'   frame (see \code{\link{df2sf}}). For \code{annotGeometries}, must be a list
-#'   of such \code{sf} or ordinary data frames. There must be a column
-#'   \code{sample_id} to indicate the sample the geometries are for, and the
-#'   \code{sample_id} must also appear in \code{colData}.
+#'   frame, a GeoParquet file name, a \code{DuckDBDataFrame}, or an ordinary data
+#'   frame that can be converted to a \code{sf} data frame (deprecated). For
+#'   \code{annotGeometries}, must be a named list of the above. There must be a
+#'   column \code{sample_id} to indicate the sample the geometries are for, and
+#'   the \code{sample_id} must also appear in \code{colData}.
 #' @return Getters for multiple geometries return a named list. Getters for
 #'   names return a character vector of the names. Getters for single geometries
 #'   return an \code{sf} data frame. Setters return an SFE object.
@@ -146,10 +146,16 @@ setMethod("annotGeometry", "SpatialFeatureExperiment", .ag)
     value <- .rm_empty_geometries(value, MARGIN = 3)
     if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
         existing <- int_metadata(x)$annotGeometries[[type]]
+        if (!setequal(class(value), class(existing))) {
+            stop("value must have class matching existing entry (", 
+                 paste(class(existing), collapse = ", "), ")")
+        }
         if (!is.null(existing)) {
-            existing <- .reconcile_cols(existing, value)
-            value <- .reconcile_cols(value, existing)
-            value <- value[, names(existing)]
+            if (!inherits(existing, "DuckDBDataFrame")) {
+                existing <- .reconcile_cols(existing, value)
+                value <- .reconcile_cols(value, existing)
+                value <- value[, names(existing)]
+            }
             if (sample_id %in% existing$sample_id) {
                 # This is a replacement method, so do replace
                 existing <- existing[!existing$sample_id %in% sample_id, ]

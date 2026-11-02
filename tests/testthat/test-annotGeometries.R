@@ -1,5 +1,6 @@
 library(sf)
 library(SingleCellExperiment)
+library(DuckDBSpatial)
 
 sfe <- readRDS(system.file("extdata/sfe_toy.rds",
     package = "SpatialFeatureExperiment"
@@ -20,6 +21,15 @@ test_that("annotGeometries setter", {
     expect_error(annotGeometries(sfe) <- list(foo = foo))
 })
 
+test_that("annotGeometries setter, DuckDBDataFrame", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(ag, fn)
+    ag2 <- readGeoParquet(fn)
+    annotGeometries(sfe) <- list(hull = ag2)
+    expect_s4_class(int_metadata(sfe)$annotGeometries[["hull"]], "DuckDBDataFrame")
+    file.remove(fn)
+})
+
 test_that("annotGeometries getter", {
     int_metadata(sfe)$annotGeometries <- list(hull = ag)
     out <- annotGeometries(sfe)
@@ -33,6 +43,16 @@ test_that("annotGeometry setter (one sample_id)", {
     expect_true(is.list(int_metadata(sfe)$annotGeometries))
     expect_equal(names(int_metadata(sfe)$annotGeometries), "hull")
     expect_equal(int_metadata(sfe)$annotGeometries[["hull"]], ag)
+})
+
+test_that("annotGeometry setter (DuckDB, 1 sample)", {
+    int_metadata(sfe)$annotGeometries <- NULL
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(ag, fn)
+    ag2 <- readGeoParquet(fn)
+    annotGeometry(sfe, "hull") <- ag2
+    expect_s4_class(int_metadata(sfe)$annotGeometries[["hull"]], "DuckDBDataFrame")
+    file.remove(fn)
 })
 
 sfe3 <- sfe
@@ -75,16 +95,41 @@ test_that("Error message when the geometry of interest is absent", {
 
 test_that("annotGeometry setter for one sample_id when already present", {
     # when annotGeometry of the given name already exists
-    foo <- st_sf(
-        geometry = st_sfc(lapply(
-            seq_len(2),
-            function(t) st_geometrycollection()
-        )),
-        sample_id = c("sample01", "sample02"),
-        sf_column_name = "geometry"
-    )
+    foo <- st_as_sf(data.frame(x=c(0,1), y=c(0,1), sample_id = c("sample01", "sample02")),
+                    coords = c("x", "y"))
     int_metadata(sfe2)$annotGeometries$foo <- foo
     annotGeometry(sfe2, "foo", sample_id = "sample01") <- ag2[1, ]
     bar <- int_metadata(sfe2)$annotGeometries$foo
     expect_equal(bar[bar$sample_id == "sample01", ], ag2[1, ])
+})
+# Tests about DuckDB
+test_that("Error message when class of value doesn't match that of existing", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(ag2[1,], fn)
+    ag2_duck <- readGeoParquet(fn)
+    int_metadata(sfe2)$annotGeometries$foo <- ag2[2,]
+    expect_error(annotGeometry(sfe2, "foo", sample_id = "sample01") <- ag2_duck,
+                 "value must have class matching existing entry")
+    file.remove(fn)
+})
+
+test_that("set for one sample out of two, DuckDB", {
+    # more general case where cols don't match
+    fn1 <- tempfile(fileext = ".parquet")
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(ag2[1,], fn1)
+    bar <- ag2[2,]
+    bar$foobar <- "blah"
+    writeGeoParquet(bar, fn2)
+    ag_duck1 <- readGeoParquet(fn1)
+    ag_duck2 <- readGeoParquet(fn2)
+    int_metadata(sfe2)$annotGeometries$foo <- ag_duck1
+    annotGeometry(sfe2, "foo", "sample02") <- ag_duck2
+    actual_duck <- int_metadata(sfe2)$annotGeometries$foo
+    expect_equal(as.vector(actual_duck$foobar) |> unname(), c(NA, "blah"))
+    actual_geom <- st_as_binary(actual_duck)
+    actual_geom <- dplyr::collect(actual_geom@conn |> dplyr::select(geometry)) |> st_as_sf()
+    eq <- st_equals(actual_geom$geometry, ag2$geometry) |> unclass() |> unlist()
+    expect_equal(eq, seq_len(nrow(ag2)))
+    file.remove(fn1, fn2)
 })
