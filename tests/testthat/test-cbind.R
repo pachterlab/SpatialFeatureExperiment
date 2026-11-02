@@ -26,13 +26,34 @@ test_that("cbind properly deals with annotGeometries and spatialGraphs", {
     expect_equal(spatialGraphs(sfe_visium), spatialGraphs(sfe_concat))
 })
 
-# With rowGeometries
 cg_toy <- readRDS(system.file("extdata/cg_toy.rds",
                               package = "SpatialFeatureExperiment"
 ))
 cg_toy2 <- readRDS(system.file("extdata/cg_toy2.rds",
                                package = "SpatialFeatureExperiment"
 ))
+library(DuckDBSpatial)
+library(sf)
+test_that("cbind, with DuckDBSpatial colGeometries", {
+    fn1 <- tempfile(fileext = ".parquet")
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg_toy, fn1)
+    writeGeoParquet(cg_toy2[c(1:5,1:3),], fn2)
+    cg1 <- readGeoParquet(fn1)
+    cg2 <- readGeoParquet(fn2)
+    colGeometry(sfe_visium1, "foo") <- cg1
+    colGeometry(sfe_visium2, "foo") <- cg2
+    sfe_c <- cbind(sfe_visium1, sfe_visium2)
+    cg <- colGeometry(sfe_c, "foo", sample_id = "all")
+    expect_s4_class(cg, "DuckDBDataFrame")
+    expected <- c(cg_toy$geometry, cg_toy2$geometry[c(1:5,1:3)])
+    cg <- st_as_binary(cg)
+    actual <- dplyr::collect(cg@conn) |> st_as_sf()
+    expect_equal(expected, actual$geometry)
+    file.remove(fn1, fn2)
+})
+
+# With rowGeometries
 rg_toy1 <- cg_toy[1:2,]
 rownames(rg_toy1) <- rownames(sfe_visium)
 rg_toy2 <- cg_toy[3:4,]
