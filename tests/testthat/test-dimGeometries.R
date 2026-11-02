@@ -125,11 +125,44 @@ test_that("colGeometry setter for one of the two samples (already present)", {
 test_that("colGeometry getter for one of the two samples", {
     int_colData(sfe3)$colGeometries <- make_zero_col_DFrame(nrow = ncol(sfe3))
     int_colData(sfe3)$colGeometries$coords <- cg_toy
-    coords_sample02 <- colGeometry(sfe3, "coords", "sample02")
+    coords_sample02 <- colGeometry(sfe3, "coords", "sample02", withDimnames = TRUE)
     expect_equal(nrow(coords_sample02), 2L)
     cg_expect <- cg_toy[4:5, ]
     rownames(cg_expect) <- rownames(cg_toy)[4:5]
     expect_equal(coords_sample02, cg_expect)
+})
+
+test_that("colGeometry getter, 2 samples, DuckDB", {
+    sfe3 <- addVisiumSpotPoly(sfe3, 0.3)
+    cg <- spotPoly(sfe3, sample_id = "all")
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg, fn)
+    cg2 <- readGeoParquet(fn)
+    int_colData(sfe3)$colGeometries$foo <- cg2
+    out <- colGeometry(sfe3, "foo", sample_id = 1L)
+    expect_s4_class(out, "DuckDBDataFrame")
+    out <- st_as_binary(out)
+    out_geo <- dplyr::collect(out@conn) |> st_as_sf()
+    expect_equal(spotPoly(sfe3, sample_id = 1L)$geometry, out_geo$geometry)
+    file.remove(fn)
+})
+
+test_that("colGeometry setter, 2 samples, DuckDB", {
+    sfe3 <- addVisiumSpotPoly(sfe3, 0.3)
+    cg <- spotPoly(sfe3, sample_id = "all")
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg, fn)
+    cg2 <- readGeoParquet(fn)
+    int_colData(sfe3)$colGeometries$foo <- cg2
+    
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg_toy[1:3,], fn2)
+    cg_r <- readGeoParquet(fn2)
+    expect_error(colGeometry(sfe3, "spotPoly", sample_id = 1L) <- cg_r,
+                 "not supported")
+    expect_error(colGeometry(sfe3, "foo", sample_id = 1L) <- cg_r,
+                 "not supported")
+    file.remove(fn, fn2)
 })
 
 test_that("When rownames of value don't match those of sfe", {

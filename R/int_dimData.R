@@ -159,7 +159,7 @@
     )
 }
 
-.out_intdimdata_id <- function(x, out, MARGIN, sample_id) {
+.out_intdimdata_id <- function(x, out, MARGIN, sample_id, withDimnames) {
     if (MARGIN == 1L) {
         return(out)
     }
@@ -169,10 +169,10 @@
         if (MARGIN == 2L) {
             if (length(samples) > 1L) {
                 # Somehow I lose the rownames after row subsetting sf data frames
-                inds <- colData(x)$sample_id %in% sample_id
-                rns <- rownames(out)[inds]
+                inds <- which(colData(x)$sample_id %in% sample_id)
+                if (withDimnames) rns <- rownames(out)[inds]
                 out <- out[inds, , drop = FALSE]
-                rownames(out) <- rns
+                if (withDimnames) rownames(out) <- rns
             }
         } else { # annotGeometry
             if (length(samples) > 1L)
@@ -196,7 +196,7 @@
     if (withDimnames) {
         rownames(out) <- dimnames(x)[[MARGIN]]
     }
-    .out_intdimdata_id(x, out, MARGIN, sample_id)
+    .out_intdimdata_id(x, out, MARGIN, sample_id, withDimnames)
 }
 
 .make_na_df <- function(template, nrow, rownames, sf) {
@@ -274,6 +274,10 @@
         # Assuming that the order in value is the same as the
         # order of geometries for this sample in colGeometries
         existing <- getfun(x)[[key]][[type]]
+        if (inherits(existing, "DuckDBDataFrame") || 
+            inherits(value, "DuckDBDataFrame")) {
+            stop("Partially replacing DuckDBColumn is not supported")
+        }
         value <- .intdimdata_partial_replace(existing, value, ncol(x),
                                              colnames(x), colData(x)$sample_id,
                                              sample_id,
