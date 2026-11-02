@@ -75,6 +75,8 @@ named list or vector of one or more of the following:
 \item{An \code{sf} data frame}{The geometry column specifies the geometry of the entities.}
 \item{File names of GeoParquet files}{These will be used to represent geometries
 out of memory with \code{DuckDBSpatial}.}
+\item{DuckDBDataFrame with geometries}{As read from GeoParquet file with
+ \code{\link[DuckDBSpatial]{readGeoParquet}}}
 \item{An ordinary data frame specifying centroids or polygons}{Deprecated}
 }}
 
@@ -150,10 +152,10 @@ writeGeoParquet(cg, fn)
 sfe <- SpatialFeatureExperiment(list(counts = mat),
                                 colGeometries = c(foo = fn)
 )
-# Or use DuckDBColumn
+# Or use DuckDBDataFrame
 cg2 <- readGeoParquet(fn)
 sfe <- SpatialFeatureExperiment(list(counts = mat),
-                                colGeometries = c(foo = cg2$geometry)
+                                colGeometries = c(foo = cg2)
 )
 
 file.remove(fn)

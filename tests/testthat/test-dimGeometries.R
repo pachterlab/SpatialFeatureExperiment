@@ -33,17 +33,17 @@ test_that("colGeometries setter, DuckDB parquet file name", {
     fn <- tempfile(fileext = ".parquet")
     writeGeoParquet(cg_toy, fn)
     colGeometries(sfe) <- list(foo = fn)
-    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBColumn")
+    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBDataFrame")
     colGeometry(sfe, "foo") <- NULL
     file.remove(fn)
 })
 
-test_that("colGeometries setter, DuckDBColumn", {
+test_that("colGeometries setter, DuckDBDataFrame", {
     fn <- tempfile(fileext = ".parquet")
     writeGeoParquet(cg_toy, fn)
     foo <- readGeoParquet(fn)
-    colGeometries(sfe) <- list(foo = foo$geometry)
-    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBColumn")
+    colGeometries(sfe) <- list(foo = foo)
+    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBDataFrame")
     colGeometry(sfe, "foo") <- NULL
     file.remove(fn)
 })
@@ -60,7 +60,7 @@ test_that("colGeometry setter, DuckDB parquet file name", {
     fn <- tempfile(fileext = ".parquet")
     writeGeoParquet(cg_toy, fn)
     colGeometry(sfe, "foo") <- fn
-    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBColumn")
+    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBDataFrame")
     colGeometry(sfe, "foo") <- NULL
     file.remove(fn)
 })

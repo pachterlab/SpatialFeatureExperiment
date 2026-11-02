@@ -31,6 +31,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   \item{An \code{sf} data frame}{The geometry column specifies the geometry of the entities.}
 #'   \item{File names of GeoParquet files}{These will be used to represent geometries
 #'   out of memory with \code{DuckDBSpatial}.}
+#'   \item{DuckDBDataFrame with geometries}{As read from GeoParquet file with
+#'    \code{\link[DuckDBSpatial]{readGeoParquet}}}
 #'   \item{An ordinary data frame specifying centroids or polygons}{Deprecated}
 #'   }
 #' @param rowGeometries Geometry associated with genes or features, which
@@ -115,10 +117,10 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' sfe <- SpatialFeatureExperiment(list(counts = mat),
 #'                                 colGeometries = c(foo = fn)
 #' )
-#' # Or use DuckDBColumn
+#' # Or use DuckDBDataFrame
 #' cg2 <- readGeoParquet(fn)
 #' sfe <- SpatialFeatureExperiment(list(counts = mat),
-#'                                 colGeometries = c(foo = cg2$geometry)
+#'                                 colGeometries = c(foo = cg2)
 #' )
 #' 
 #' file.remove(fn)
@@ -180,9 +182,9 @@ SpatialFeatureExperiment <- function(assays,
 }
 
 setMethod(".st_geometry_type_show", "sf", function(x) as.character(st_geometry_type(x, by_geometry = FALSE)))
-setMethod(".st_geometry_type_show", "DuckDBColumn", function(x) {
+setMethod(".st_geometry_type_show", "DuckDBDataFrame", function(x) {
     check_installed("DuckDBSpatial")
-    df <- DuckDBSpatial::st_geometry_type(head(x)) |> as.data.frame()
+    df <- DuckDBSpatial::st_geometry_type(head(x)$geometry) |> as.data.frame()
     unique(df[,1]) |> as.character()
 })
 .names_types <- function(l) {

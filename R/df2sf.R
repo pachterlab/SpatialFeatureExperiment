@@ -259,15 +259,15 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                            group_col = "group", id_col = "ID", subid_col = "subID",
                            check = TRUE) {
     if (!is.null(x) && !inherits(x, "sf") && !is.data.frame(x) && !is.matrix(x) && 
-        !is.character(x) && !.is_duckdbcolumn_spatial(x)) {
+        !is.character(x) && !.is_duckdbdf_spatial(x)) {
         stop(
             "Each element of the list for *Geometry must be one of: ",
-            "sf object, GeoParquet file name, geometry DuckDBColumn, data frame, or a matrix."
+            "sf object, GeoParquet file name, spatial DuckDBDataFrame, data frame, or a matrix."
         )
     }
     if (inherits(x, "sf") || is.null(x)) {
         return(x)
-    } else if (.is_duckdbcolumn_spatial(x)) {
+    } else if (.is_duckdbdf_spatial(x)) {
         return(x)
     } else if (is.data.frame(x) || is.matrix(x)) {
         return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType,
@@ -278,9 +278,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
             stop("Must use parquet file")
         check_installed("DuckDBSpatial")
         df <- DuckDBSpatial::readGeoParquet(x)
-        if (!DuckDBSpatial::hasGeometry(df))
-            stop("The parquet file does not have geometry")
-        return(df$geometry)
+        return(df)
     }
 }
 

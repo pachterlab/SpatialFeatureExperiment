@@ -1,10 +1,10 @@
 # Validity of SFE object
 .check_geometries <- function(gs, name_show) {
     msgs <- lapply(seq_along(gs), function(i) {
-        if (!inherits(gs[[i]], "sf") && !.is_duckdbcolumn_spatial(gs[[i]])) {
+        if (!inherits(gs[[i]], "sf") && !.is_duckdbdf_spatial(gs[[i]])) {
             paste0(
                 "Item ", i, " in ", name_show, " is ", class(gs[[i]])[1],
-                " rather than sf or DuckDBColumn of type geometry.\n"
+                " rather than sf or DuckDBDataFrame from GeoParquet.\n"
             )
         }
     })

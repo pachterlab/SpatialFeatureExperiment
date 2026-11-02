@@ -28,10 +28,10 @@
 #'   coordinates after removing empty space. Default to \code{TRUE}.
 #' @param value Value to set. For \code{dimGeometry}, must be a \code{sf} data
 #'   frame with the same number of rows as size in the dimension of interest, a
-#'   \code{DuckDBColumn} with type "geometry", or an ordinary data frame that
+#'   \code{DuckDBDataFrame} with geometry, or an ordinary data frame that
 #'   can be converted to such a \code{sf} data frame (see \code{\link{df2sf}}).
 #'   For \code{dimGeometries}, must be a named list of such \code{sf} or
-#'   \code{DuckDBColumn} or ordinary data frames. Support for ordinary data
+#'   \code{DuckDBDataFrame} or ordinary data frames. Support for ordinary data
 #'   frames is deprecated.
 #' @param ... \code{spatialCoordsNames, spotDiameter, geometryType} passed to
 #'   \code{\link{df2sf}}. Defaults are the same as in \code{\link{df2sf}}. For
@@ -106,9 +106,9 @@
 #' writeGeoParquet(spotPoly(sfe), fn)
 #' colGeometry(sfe, "ondisk") <- fn
 #' 
-#' # Or use DuckDBColumn instead of file name
+#' # Or use DuckDBDataFrame instead of file name
 #' cg2 <- readGeoParquet(fn)
-#' colGeometry(sfe, "ondisk") <- cg2$geometry
+#' colGeometry(sfe, "ondisk") <- cg2
 #' 
 #' file.remove(fn)
 NULL

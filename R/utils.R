@@ -299,11 +299,10 @@ getTechTxFields <- function(tech, data_dir = NULL) {
     as.vector(img[18,4,2] > 200)
 }
 
-#' @importFrom BiocGenerics type
 #' @importFrom rlang is_installed
-.is_duckdbcolumn_spatial <- function(x) {
+.is_duckdbdf_spatial <- function(x) {
     if (is_installed("DuckDBSpatial")) {
-        inherits(x, "DuckDBColumn") & type(x) == "geometry"
+        inherits(x, "DuckDBDataFrame") && DuckDBSpatial::hasGeometry(x)
     } else FALSE
 }
 
