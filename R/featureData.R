@@ -55,6 +55,8 @@ rowFeatureData <- function(sfe) {
 #' @rdname colFeatureData
 #' @export
 geometryFeatureData <- function(sfe, type, MARGIN = 2L) {
+    lifecycle::deprecate_soft("1.16.0", "geometryFeatureData()", "annotFeatureData()",
+                              details = "Feature data is deprecated for rowGeometries and colGeometries")
     geo_fun <- switch (MARGIN, rowGeometry, colGeometry, annotGeometry)
     df <- geo_fun(sfe, type, sample_id = "all")
     attr(df, "featureData")
@@ -66,6 +68,13 @@ geometryFeatureData <- function(sfe, type, MARGIN = 2L) {
     df <- geo_fun(sfe, type, sample_id = "all")
     attr(df, "featureData") <- value
     geo_fun_setter(sfe, type, sample_id = "all", value = df)
+}
+
+#' @rdname colFeatureData
+#' @export
+annotFeatureData <- function(sfe, type) {
+    df <- annotGeometry(sfe, type, sample_id = "all")
+    attr(df, "featureData")
 }
 
 #' @rdname colFeatureData
