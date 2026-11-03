@@ -141,8 +141,7 @@ test_that("colGeometry getter, 2 samples, DuckDB", {
     int_colData(sfe3)$colGeometries$foo <- cg2
     out <- colGeometry(sfe3, "foo", sample_id = 1L)
     expect_s4_class(out, "DuckDBDataFrame")
-    out <- st_as_binary(out)
-    out_geo <- dplyr::collect(out@conn) |> st_as_sf()
+    out_geo <- st_as_sf(out, crs = NA)
     expect_equal(spotPoly(sfe3, sample_id = 1L)$geometry, out_geo$geometry)
     file.remove(fn)
 })

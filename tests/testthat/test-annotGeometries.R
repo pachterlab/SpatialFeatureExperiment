@@ -127,8 +127,7 @@ test_that("set for one sample out of two, DuckDB", {
     annotGeometry(sfe2, "foo", "sample02") <- ag_duck2
     actual_duck <- int_metadata(sfe2)$annotGeometries$foo
     expect_equal(as.vector(actual_duck$foobar) |> unname(), c(NA, "blah"))
-    actual_geom <- st_as_binary(actual_duck)
-    actual_geom <- dplyr::collect(actual_geom@conn |> dplyr::select(geometry)) |> st_as_sf()
+    actual_geom <- st_as_sf(actual_duck, crs = NA)
     eq <- st_equals(actual_geom$geometry, ag2$geometry) |> unclass() |> unlist()
     expect_equal(eq, seq_len(nrow(ag2)))
     file.remove(fn1, fn2)
