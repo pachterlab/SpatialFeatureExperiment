@@ -4,6 +4,7 @@
 \alias{colFeatureData}
 \alias{rowFeatureData}
 \alias{geometryFeatureData}
+\alias{annotFeatureData}
 \alias{reducedDimFeatureData}
 \title{Get global spatial analysis results and metadata of colData, rowData, and
 geometries}
@@ -13,6 +14,8 @@ colFeatureData(sfe)
 rowFeatureData(sfe)
 
 geometryFeatureData(sfe, type, MARGIN = 2L)
+
+annotFeatureData(sfe, type)
 
 reducedDimFeatureData(sfe, dimred)
 }
