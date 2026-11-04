@@ -2,6 +2,7 @@ library(sf)
 library(SFEData)
 library(terra)
 
+# Predicate helpers=============
 # From sf's examples
 pts = st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
 pol = st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
@@ -25,6 +26,33 @@ test_that("trivial, st_n_intersects", {
     n2 <- st_n_intersects(pol, pts)
     expect_equal(n2, 2)
 })
+
+# DuckDB geometries
+library(DuckDBSpatial)
+pts_df <- st_sf(geometry = pts)
+pol_df <- st_sf(geometry = st_sfc(pol))
+fn1 <- tempfile(fileext = ".parquet")
+fn2 <- tempfile(fileext = ".parquet")
+writeGeoParquet(pts_df, fn1)
+writeGeoParquet(pol_df, fn2)
+pts_duck <- readGeoParquet(fn1)
+pol_duck <- readGeoParquet(fn2)
+
+test_that("st_any_intersects for DuckDB", {
+    o <- st_any_intersects(pts_duck, pol_duck)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_setequal(as.vector(o) |> as.integer(), 1:2)
+})
+
+test_that("st_n_intersects for DuckDB", {
+    o1 <- st_n_intersects(pts_duck, pol_duck)
+    expect_s4_class(o1, "DuckDBColumn")
+    expect_equal(as.vector(o1) |> as.integer(), c(1,1,0))
+    o2 <- st_n_intersects(pol_duck, pts_duck)
+    expect_equal(as.vector(o2) |> as.integer(), 2)
+})
+
+file.remove(fn1, fn2)
 
 # Crop============
 

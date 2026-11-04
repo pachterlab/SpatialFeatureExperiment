@@ -2,16 +2,29 @@
 % Please edit documentation in R/geometry_operation.R
 \name{st_any_pred}
 \alias{st_any_pred}
+\alias{st_any_pred,ANY-method}
+\alias{st_any_pred,duckspatial_df-method}
+\alias{st_any_pred,DuckDBTable-method}
 \alias{st_any_intersects}
-\alias{st_n_pred}
+\alias{st_n_pred,ANY-method}
+\alias{st_n_pred,duckspatial_df-method}
+\alias{st_n_pred,DuckDBTable-method}
 \alias{st_n_intersects}
 \title{Simple geometry predicates}
 \usage{
-st_any_pred(x, y, pred, yx = FALSE, sparse = FALSE, ...)
+\S4method{st_any_pred}{ANY}(x, y, pred, yx = FALSE, sparse = FALSE, ...)
+
+\S4method{st_any_pred}{duckspatial_df}(x, y, pred, yx = NA, sparse = TRUE, ...)
+
+\S4method{st_any_pred}{DuckDBTable}(x, y, pred, yx = NA, sparse = TRUE, ...)
 
 st_any_intersects(x, y, yx = FALSE, sparse = FALSE)
 
-st_n_pred(x, y, pred, ...)
+\S4method{st_n_pred}{ANY}(x, y, pred, ...)
+
+\S4method{st_n_pred}{duckspatial_df}(x, y, pred, ...)
+
+\S4method{st_n_pred}{DuckDBTable}(x, y, pred, ...)
 
 st_n_intersects(x, y)
 }
@@ -20,21 +33,26 @@ st_n_intersects(x, y)
 
 \item{y}{Another object of class \code{sf}, \code{sfc}, or \code{sfg}.}
 
-\item{pred}{A geometric binary predicate function, such as
-\code{\link[sf]{st_intersects}}. It should return an object of class
-\code{sgbp}, for sparse predicates.}
+\item{pred}{Name of a predicate such as "intersects", see
+\code{\link[duckspatial]{ddbs_predicate}}. It can correspond to functions
+in the \code{sf} package without the \code{st_} prefix. Deprecated
+behavior: A geometric binary predicate function, such as
+\code{\link[sf]{st_intersects}}.}
 
 \item{yx}{Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
 symmetric predicates, the results should be the same. When x has a large
 number of geometries and y has few, \code{pred(y, x)} is much faster than
 \code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
-\code{st_is_within_distance}.}
+\code{st_is_within_distance}. Ignored for \code{DuckDBDataFrame}.}
 
 \item{sparse}{If \code{TRUE}, returns numeric indices rather than logical
 vector. Defaults to \code{FALSE} for backward compatibility, though the
-default in \code{st_intersects} is \code{TRUE}.}
+default in \code{st_intersects} is \code{TRUE}. For \code{DuckDB}, it's
+always \code{TRUE} and this argument is ignored.}
 
-\item{...}{Arguments passed to \code{pred}.}
+\item{...}{Arguments passed to the predicate function, which would be
+\code{st_<pred>} for in memory geometries and
+\code{\link[duckspatial]{ddbs_<pred>}} when using DuckDB.}
 }
 \value{
 For \code{st_any_*}, a logical vector indicating whether each
@@ -44,7 +62,7 @@ For \code{st_any_*}, a logical vector indicating whether each
   indicate which item in \code{y} each item in \code{x} intersects, which
   might not always be relevant. For \code{st_n_*}, an integer vector
   indicating the number of geometries in y returns TRUE for each geometry in
-  x.
+  x. For \code{DuckDB}, the vector returned would be a \code{DuckDBColumn}.
 }
 \description{
 Unlike functions in \code{sf} like \code{st_intersects}, this function simply

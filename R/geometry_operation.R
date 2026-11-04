@@ -10,18 +10,23 @@
 #'
 #' @param x An object of class \code{sf}, \code{sfc}, or \code{sfg}.
 #' @param y Another object of class \code{sf}, \code{sfc}, or \code{sfg}.
-#' @param pred A geometric binary predicate function, such as
-#'   \code{\link[sf]{st_intersects}}. It should return an object of class
-#'   \code{sgbp}, for sparse predicates.
+#' @param pred Name of a predicate such as "intersects", see
+#'   \code{\link[duckspatial]{ddbs_predicate}}. It can correspond to functions
+#'   in the \code{sf} package without the \code{st_} prefix. Deprecated
+#'   behavior: A geometric binary predicate function, such as
+#'   \code{\link[sf]{st_intersects}}.
 #' @param yx Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
 #'   symmetric predicates, the results should be the same. When x has a large
 #'   number of geometries and y has few, \code{pred(y, x)} is much faster than
 #'   \code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
-#'   \code{st_is_within_distance}.
+#'   \code{st_is_within_distance}. Ignored for \code{DuckDBDataFrame}.
 #' @param sparse If \code{TRUE}, returns numeric indices rather than logical
 #'   vector. Defaults to \code{FALSE} for backward compatibility, though the
-#'   default in \code{st_intersects} is \code{TRUE}.
-#' @param ... Arguments passed to \code{pred}.
+#'   default in \code{st_intersects} is \code{TRUE}. For \code{DuckDB}, it's
+#'   always \code{TRUE} and this argument is ignored.
+#' @param ... Arguments passed to the predicate function, which would be
+#'   \code{st_<pred>} for in memory geometries and
+#'   \code{\link[duckspatial]{ddbs_<pred>}} when using DuckDB.
 #' @return For \code{st_any_*}, a logical vector indicating whether each
 #'   geometry in \code{x} intersects (or other predicates such as is covered by)
 #'   anything in \code{y} or a numeric vector of indices of \code{TRUE} when
@@ -29,11 +34,13 @@
 #'   indicate which item in \code{y} each item in \code{x} intersects, which
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
-#'   x.
+#'   x. For \code{DuckDB}, the vector returned would be a \code{DuckDBColumn}.
 #' @concept Geometric operations
 #' @export
-#' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast st_is_empty st_disjoint st_z_range st_zm
+#' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
+#'   st_is_empty st_disjoint st_z_range st_zm
 #' @importFrom stats aggregate
+#' @name st_any_pred
 #' @examples
 #' library(sf)
 #' pts <- st_sfc(
@@ -45,30 +52,135 @@
 #' st_any_intersects(pts, pol)
 #' st_n_pred(pts, pol, pred = st_disjoint)
 #' st_n_intersects(pts, pol)
-st_any_pred <- function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
-    if (yx) {
-        res <- unlist(unclass(pred(y, x, ...)))
-        res <- sort(unique(res))
-        if (!sparse) res <- seq_along(st_geometry(x)) %in% res
-    } else {
-        res <- lengths(pred(x, y, ...)) > 0L
-        if (sparse) res <- which(res)
-    }
-    res
+NULL
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_any_pred", "ANY",
+          function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
+              if (is.function(pred)) {
+                  deprecate_warn("1.16.0", "st_any_pred(pred = 'should be a string')")
+              } else if (is.character(pred)) {
+                  pred <- get(paste0("st_", pred), mode = "function")
+              } else stop("`pred` of class ", class(pred)[1], " not supported.")
+              if (yx) {
+                  res <- unlist(unclass(pred(y, x, ...)))
+                  res <- sort(unique(res))
+                  if (!sparse) res <- seq_along(st_geometry(x)) %in% res
+              } else {
+                  res <- lengths(pred(x, y, ...)) > 0L
+                  if (sparse) res <- which(res)
+              }
+              res
+          })
+
+.check_y_class_pred <- function(y) {
+    if (!any(c("sf", "sfc", "sfg") %in% class(y)) && 
+        !inherits(y, "tbl_duckdb_connection"))
+        stop("y must be one of DuckDBTable, sf(g/c), or tbl_duckdb_connection")
+}
+
+.st_fun2string <- function(pred) {
+    if (is.function(pred)) {
+        nm <- as.character(substitute(pred))
+        gsub("^st_", "", nm)
+    } else pred
 }
 
 #' @rdname st_any_pred
 #' @export
-st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE) 
-    st_any_pred(x, y, st_intersects, yx = yx, sparse = sparse)
+setMethod("st_any_pred", "duckspatial_df",
+          function(x, y, pred, yx = NA, sparse = TRUE, ...) {
+              check_installed("duckspatial")
+              check_installed("dplyr")
+              check_installed("DuckDBDataFrame")
+              .check_y_class_pred(y)
+              pred <- .st_fun2string(pred)
+              out <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
+              # NOTE: Still debating whether to keep it lazy. Depends on downstream use.
+              out <- out |> dplyr::select(id_x) |> dplyr::distinct() |> 
+                  DuckDBDataFrame::DuckDBDataFrame()
+              out$id_x
+          })
 
 #' @rdname st_any_pred
 #' @export
-st_n_pred <- function(x, y, pred, ...) lengths(pred(x, y, ...))
+setMethod("st_any_pred", "DuckDBTable",
+          function(x, y, pred, yx = NA, sparse = TRUE, ...) {
+              check_installed("DuckDBSpatial")
+              check_installed("DuckDBDataFrame")
+              check_installed("duckspatial")
+              if (inherits(y, "DuckDBTable")) {
+                  stopifnot(DuckDBSpatial::hasGeometry(y))
+                  y <- DuckDBDataFrame::tblconn(y) |> 
+                      duckspatial::as_duckspatial_df(crs = NA)
+              }
+              st_any_pred(DuckDBDataFrame::tblconn(x) |> 
+                              duckspatial::as_duckspatial_df(crs = NA), 
+                          y, pred = pred, sparse = sparse, ...)
+          })
+
+#' @rdname st_any_pred
+#' @export
+st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE) 
+    st_any_pred(x, y, "intersects", yx = yx, sparse = sparse)
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_n_pred", "ANY",
+          function(x, y, pred, ...) {
+              if (is.function(pred)) {
+                  deprecate_warn("1.16.0", "st_n_pred(pred = 'should be a string')")
+              } else if (is.character(pred)) {
+                  pred <- get(paste0("st_", pred), mode = "function")
+              } else stop("`pred` of class ", class(pred)[1], " not supported.")
+              lengths(pred(x, y, ...))
+          })
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_n_pred", "duckspatial_df",
+          function(x, y, pred, ...) {
+              check_installed("duckspatial")
+              check_installed("dplyr")
+              check_installed("DuckDBDataFrame")
+              .check_y_class_pred(y)
+              pred <- .st_fun2string(pred)
+              res <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
+              # NOTE: again, debating whether to keep it lazy
+              out_count <- res |> dplyr::count(id_x)
+              out <- x |> 
+                  dplyr::mutate(id_x = dplyr::row_number(geometry)) |> 
+                  duckspatial::ddbs_drop_geometry() |> 
+                  dplyr::select(id_x) |> 
+                  dplyr::left_join(out_count, by = "id_x") |> 
+                  dplyr::mutate(n = dplyr::case_when(is.na(n) ~ as.integer64(0),
+                                                     TRUE ~ n)) |> 
+                  DuckDBDataFrame::DuckDBDataFrame()
+              out$n
+          })
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_n_pred", "DuckDBTable", 
+          function(x, y, pred, ...) {
+              check_installed("DuckDBSpatial")
+              check_installed("DuckDBDataFrame")
+              check_installed("duckspatial")
+              if (inherits(y, "DuckDBTable")) {
+                  stopifnot(DuckDBSpatial::hasGeometry(y))
+                  y <- DuckDBDataFrame::tblconn(y) |> 
+                      duckspatial::as_duckspatial_df(crs = NA)
+              }
+              st_n_pred(DuckDBDataFrame::tblconn(x) |> 
+                            duckspatial::as_duckspatial_df(crs = NA), 
+                        y, pred = pred, ...)
+          })
+
 # Not doing yx here since this is usually not used when length(y) << length(x)
 #' @rdname st_any_pred
 #' @export
-st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
+st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 
 .crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
                            id_col = "id", remove_empty = FALSE) {
@@ -148,7 +260,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
     })
     if (!return_df) {
         out <- Reduce(c, out)
-        out <- out[rownames(cg)]
+        out <- out[rownames(cg)] # change for DuckDB
     } else {
         out <- do.call(rbind, out)
         out <- out[rownames(cg), ]

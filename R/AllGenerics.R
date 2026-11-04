@@ -300,3 +300,8 @@ setGeneric(".get_centroid_coords", function(x) standardGeneric(".get_centroid_co
 setGeneric(".vdimfun", function(x) standardGeneric(".vdimfun"))
 
 setGeneric(".st_geometry_type_show", function(x) standardGeneric(".st_geometry_type_show"))
+
+# Predicates----------------
+setGeneric("st_any_pred", function(x, y, pred, ...) standardGeneric("st_any_pred"))
+
+setGeneric("st_n_pred", function(x, y, pred, ...) standardGeneric("st_n_pred"))

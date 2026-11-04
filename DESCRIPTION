@@ -86,6 +86,7 @@ Suggests:
     BiocStyle,
     dplyr,
     DuckDBSpatial,
+    duckspatial,
     gmp,
     knitr,
     nanoparquet,
