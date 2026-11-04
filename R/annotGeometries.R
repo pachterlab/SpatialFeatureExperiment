@@ -146,11 +146,11 @@ setMethod("annotGeometry", "SpatialFeatureExperiment", .ag)
     value <- .rm_empty_geometries(value, MARGIN = 3)
     if (!is.null(sample_id) && any(!sampleIDs(x) %in% sample_id)) {
         existing <- int_metadata(x)$annotGeometries[[type]]
-        if (!setequal(class(value), class(existing))) {
-            stop("value must have class matching existing entry (", 
-                 paste(class(existing), collapse = ", "), ")")
-        }
         if (!is.null(existing)) {
+            if (!setequal(class(value), class(existing))) {
+                stop("value must have class matching existing entry (", 
+                     paste(class(existing), collapse = ", "), ")")
+            }
             if (!inherits(existing, "DuckDBDataFrame")) {
                 existing <- .reconcile_cols(existing, value)
                 value <- .reconcile_cols(value, existing)
