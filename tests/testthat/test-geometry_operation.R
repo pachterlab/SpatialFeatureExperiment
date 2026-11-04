@@ -1,6 +1,7 @@
 library(sf)
 library(SFEData)
 library(terra)
+library(DuckDBSpatial)
 
 # Predicate helpers=============
 # From sf's examples
@@ -28,7 +29,6 @@ test_that("trivial, st_n_intersects", {
 })
 
 # DuckDB geometries
-library(DuckDBSpatial)
 pts_df <- st_sf(geometry = pts)
 pol_df <- st_sf(geometry = st_sfc(pol))
 fn1 <- tempfile(fileext = ".parquet")
@@ -335,7 +335,6 @@ test_that("annotOp", {
 
 # bbox=============
 test_that("Find bbox of samples", {
-    cg1 <- spotPoly(sfe_visium, "sample01")
     bbox1 <- bbox(sfe_visium, "sample01")
     expect_equal(st_bbox(rowGeometry(sfe_visium)), bbox1,
         ignore_attr = c("class", "crs")
@@ -374,6 +373,17 @@ test_that("Remove empty space", {
     diff2 <- unname(coord_diffs[sfe_visium$sample_id == "sample02",][1,])
     expect_equal(diff1, unname(bboxes[c("xmin", "ymin"), "sample01"]))
     expect_equal(diff2, unname(bboxes[c("xmin", "ymin"), "sample02"]))
+})
+
+test_that("bbox when there's DuckDB geometry", {
+    bbox1 <- bbox(sfe_visium, "sample01")
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe_visium, sample_id = "all"), fn)
+    foo <- readGeoParquet(fn)
+    int_colData(sfe_visium)$colGeometries$foo <- foo
+    bb <- bbox(sfe_visium, sample_id = "sample01")
+    expect_equal(bb, bbox1)
+    file.remove(fn)
 })
 
 # removeEmptySpace===============

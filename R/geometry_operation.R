@@ -616,24 +616,17 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     out
 }
 
-.bbox_sample_g <- function(gs) {
-    # Assume that it's already properly subsetted for the sample
-    # For one sample_id, multiple geometries
-    bboxes <- lapply(gs, st_bbox)
-    aggBboxes(bboxes)
-}
-
 .bbox_sample <- function(sfe, sample_id, include_images = FALSE,
                          include_row = FALSE) { # For one sample
     sample_index <- colData(sfe)$sample_id == sample_id
     cgs <- as.list(int_colData(sfe)[["colGeometries"]][sample_index, ,
         drop = FALSE
     ])
-    cgs_bboxes <- lapply(cgs, st_bbox)
+    cgs_bboxes <- lapply(cgs, function(x) st_bbox(x$geometry))
     ags <- annotGeometries(sfe)
     if (length(ags)) {
         ags <- lapply(ags, function(g) g[g$sample_id == sample_id, ])
-        ags_bboxes <- lapply(ags, st_bbox)
+        ags_bboxes <- lapply(ags, function(x) st_bbox(x$geometry))
     } else {
         ags_bboxes <- NULL
     }
@@ -645,7 +638,8 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
             has_sample <- grepl(pattern, names(rgs))
             rgs <- rgs[has_sample]
         }
-        if (length(rgs)) rgs_bboxes <- lapply(rgs, st_bbox) else rgs_bboxes <- NULL
+        if (length(rgs)) rgs_bboxes <- lapply(rgs, function(x) st_bbox(x$geometry)) 
+        else rgs_bboxes <- NULL
     } else rgs_bboxes <- NULL
     if (isEmpty(imgData(sfe))) include_images <- FALSE
     if (include_images) {
