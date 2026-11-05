@@ -29,6 +29,7 @@
 #' @name annotGeometries
 #' @aliases annotGeometries<- annotGeometry annotGeometry<- annotGeometryNames annotGeometryNames<-
 #' @concept Getters and setters
+#' @importFrom BiocGenerics %in% NROW NCOL
 #' @examples
 #' # Example dataset
 #' library(SFEData)

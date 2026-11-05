@@ -244,6 +244,9 @@ importClassesFrom(SpatialExperiment,SpatialExperiment)
 importClassesFrom(SpatialExperiment,VirtualSpatialImage)
 importClassesFrom(terra,SpatRaster)
 importFrom(BiocGenerics,
+  "%in%",
+  NCOL,
+  NROW,
   cbind,
   containsOutOfMemoryData,
   saveRDS,

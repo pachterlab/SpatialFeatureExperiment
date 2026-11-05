@@ -132,3 +132,13 @@ test_that("set for one sample out of two, DuckDB", {
     expect_equal(eq, seq_len(nrow(ag2)))
     file.remove(fn1, fn2)
 })
+
+test_that("annotGeometry getter, DuckDB", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(ag2[1,], fn)
+    ag2_duck <- readGeoParquet(fn)
+    int_metadata(sfe2)$annotGeometries$foo <- ag2_duck
+    out <- annotGeometry(sfe2, "foo", "sample01")
+    expect_s4_class(out, "DuckDBDataFrame")
+    file.remove(fn)
+})
