@@ -39,9 +39,15 @@ pts_duck <- readGeoParquet(fn1)
 pol_duck <- readGeoParquet(fn2)
 
 test_that("st_any_intersects for DuckDB", {
-    o <- st_any_intersects(pts_duck, pol_duck)
+    o <- st_any_intersects(pts_duck, pol_duck, sparse = TRUE)
     expect_s4_class(o, "DuckDBColumn")
     expect_setequal(as.vector(o) |> as.integer(), 1:2)
+})
+
+test_that("st_any_intersects for DuckDB, not sparse", {
+    o <- st_any_intersects(pts_duck, pol_duck, sparse = FALSE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_equal(unname(as.vector(o)), c(TRUE, TRUE, FALSE))
 })
 
 test_that("st_n_intersects for DuckDB", {
@@ -69,9 +75,10 @@ bbox_sf <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
 cg <- colGeometry(sfe_visium, sample_id = "sample01")
 bbox_cg <- st_bbox(st_centroid(cg))
 ag <- st_bbox(cg) |> st_as_sfc() |> st_buffer(dist = 0.3)
-annotGeometry(sfe_visium, "box", sample_id = "sample01") <- st_sf(geometry = ag, sample_id = "sample01",
-                                                                  sf_column_name = "geometry",
-                                                                  crs = NA)
+ag_df <- st_sf(geometry = ag, sample_id = "sample01",
+               sf_column_name = "geometry",
+               crs = NA)
+annotGeometry(sfe_visium, "box", sample_id = "sample01") <- ag_df
 rg_bbox <- st_bbox(ag)
 set.seed(29)
 rg1 <- cbind(runif(20, rg_bbox["xmin"], rg_bbox["xmax"]),
@@ -316,6 +323,26 @@ test_that("annotPred", {
     )
     expect_true(all(out[c(1, 2, 5)]))
     expect_false(any(out[3:4]))
+})
+
+test_that("annotPred for DuckDB", {
+    fn1 <- tempfile(fileext = ".parquet")
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe_visium, sample_id = "all"), fn1)
+    writeGeoParquet(annotGeometry(sfe_visium, "bbox", "sample01"), fn2)
+    foo <- readGeoParquet(fn1)
+    bar <- readGeoParquet(fn2)
+    int_colData(sfe_visium)$colGeometries$foo <- foo
+    annotGeometry(sfe_visium, "bar", sample_id = "sample01") <- bar
+    # Slow, much of the time taken up by S4 dispatch. Might pay off for large datasets.
+    out <- annotPred(sfe_visium, colGeometryName = "foo", annotGeometryName = "bar",
+                     sample_id = "sample01")
+    expect_s4_class(out, "DuckDBDataFrame")
+    expect_equal(names(out), c("ind", "barcode"))
+    expect_equal(unname(as.vector(out$ind)), c(TRUE, TRUE, FALSE, FALSE, TRUE))
+    expect_equal(unname(as.vector(out$barcode)), 
+                 colnames(sfe_visium)[sfe_visium$sample_id=="sample01"])
+    file.remove(fn1, fn2)
 })
 
 test_that("annotOp", {

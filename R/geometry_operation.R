@@ -22,8 +22,7 @@
 #'   \code{st_is_within_distance}. Ignored for \code{DuckDBDataFrame}.
 #' @param sparse If \code{TRUE}, returns numeric indices rather than logical
 #'   vector. Defaults to \code{FALSE} for backward compatibility, though the
-#'   default in \code{st_intersects} is \code{TRUE}. For \code{DuckDB}, it's
-#'   always \code{TRUE} and this argument is ignored.
+#'   default in \code{st_intersects} is \code{TRUE}. 
 #' @param ... Arguments passed to the predicate function, which would be
 #'   \code{st_<pred>} for in memory geometries and
 #'   \code{\link[duckspatial]{ddbs_<pred>}} when using DuckDB.
@@ -34,7 +33,8 @@
 #'   indicate which item in \code{y} each item in \code{x} intersects, which
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
-#'   x. For \code{DuckDB}, the vector returned would be a \code{DuckDBColumn}.
+#'   x. For \code{DuckDB}, the output is a \code{DuckDBDataFrame} with an extra
+#'   column \code{barcode} because rownames or names can't be set.
 #' @concept Geometric operations
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
@@ -54,15 +54,20 @@
 #' st_n_intersects(pts, pol)
 NULL
 
+.check_pred <- function(pred) {
+    if (is.function(pred)) {
+        deprecate_warn("1.16.0", "st_any_pred(pred = 'should be a string')")
+    } else if (is.character(pred)) {
+        pred <- get(paste0("st_", pred), mode = "function")
+    } else stop("`pred` of class ", class(pred)[1], " not supported.")
+    return(pred)
+}
+
 #' @rdname st_any_pred
 #' @export
 setMethod("st_any_pred", "ANY",
           function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
-              if (is.function(pred)) {
-                  deprecate_warn("1.16.0", "st_any_pred(pred = 'should be a string')")
-              } else if (is.character(pred)) {
-                  pred <- get(paste0("st_", pred), mode = "function")
-              } else stop("`pred` of class ", class(pred)[1], " not supported.")
+              pred <- .check_pred(pred)
               if (yx) {
                   res <- unlist(unclass(pred(y, x, ...)))
                   res <- sort(unique(res))
@@ -90,7 +95,7 @@ setMethod("st_any_pred", "ANY",
 #' @rdname st_any_pred
 #' @export
 setMethod("st_any_pred", "duckspatial_df",
-          function(x, y, pred, yx = NA, sparse = TRUE, ...) {
+          function(x, y, pred, yx = NA, sparse = FALSE, ...) {
               check_installed("duckspatial")
               check_installed("dplyr")
               check_installed("DuckDBDataFrame")
@@ -98,9 +103,27 @@ setMethod("st_any_pred", "duckspatial_df",
               pred <- .st_fun2string(pred)
               out <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
               # NOTE: Still debating whether to keep it lazy. Depends on downstream use.
-              out <- out |> dplyr::select(id_x) |> dplyr::distinct() |> 
-                  DuckDBDataFrame::DuckDBDataFrame()
-              out$id_x
+              # Output indices can be out of order
+              out <- out |> dplyr::select(id_x) |> dplyr::distinct()
+              if (sparse) {
+                  out <- out |> 
+                      DuckDBDataFrame::DuckDBDataFrame()
+                  return(out$id_x)
+              } else {
+                  # Gets the correct output, but could be more optimized
+                  out <- out |> 
+                      dplyr::mutate(ind = TRUE)
+                  out_lgl <- x |> 
+                      dplyr::mutate(id_x = dplyr::row_number(geometry)) |> 
+                      duckspatial::ddbs_drop_geometry() |> 
+                      dplyr::select(id_x) |> 
+                      dplyr::left_join(out, by = "id_x") |> 
+                      dplyr::mutate(ind = dplyr::case_when(is.na(ind) ~ FALSE,
+                                                           TRUE ~ ind)) |> 
+                      dplyr::select(ind) |> 
+                      DuckDBDataFrame::DuckDBDataFrame()
+                  return(out_lgl$ind)
+              }
           })
 
 #' @rdname st_any_pred
@@ -129,11 +152,7 @@ st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE)
 #' @export
 setMethod("st_n_pred", "ANY",
           function(x, y, pred, ...) {
-              if (is.function(pred)) {
-                  deprecate_warn("1.16.0", "st_n_pred(pred = 'should be a string')")
-              } else if (is.character(pred)) {
-                  pred <- get(paste0("st_", pred), mode = "function")
-              } else stop("`pred` of class ", class(pred)[1], " not supported.")
+              pred <- .check_pred(pred)
               lengths(pred(x, y, ...))
           })
 
@@ -238,12 +257,18 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 .annot_fun <- function(x, y, colGeometryName, samples_use = NULL,
                        fun = st_any_pred, return_df = FALSE, ...) {
     cg <- colGeometry(x,
-        type = colGeometryName, sample_id = samples_use,
-        withDimnames = TRUE
+        type = colGeometryName, sample_id = "all",
+        withDimnames = FALSE # withDimnames won't work for DuckDBDF
     )
-    cg$barcode <- rownames(cg)
-    cg <- cg[, c("barcode", "geometry")]
-    cgs <- split(cg, colData(x)$sample_id[colData(x)$sample_id %in% samples_use])
+    if (inherits(cg, "DuckDBDataFrame")) {
+        check_installed("DuckDBDataFrame")
+        return_df <- TRUE
+    }
+    cg$barcode <- colnames(x)
+    cg$sample_id <- x$sample_id
+    cg <- cg[cg$barcode %in% colnames(x)[x$sample_id %in% samples_use],]
+    cg <- cg[, c("sample_id", "barcode", "geometry")]
+    cgs <- split(cg, cg$sample_id)
     out <- lapply(names(cgs), function(s) {
         if ("sample_id" %in% names(y)) {
             y_use <- y[y$sample_id == s, ]
@@ -251,10 +276,17 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
             y_use <- y
         }
         o <- fun(cgs[[s]], y_use, ...)
-        if (!return_df) {
-            names(o) <- cgs[[s]]$barcode
+        if (!inherits(cg, "DuckDBDataFrame")) {
+            if (!return_df) {
+                names(o) <- cgs[[s]]$barcode
+            } else {
+                rownames(o) <- cgs[[s]]$barcode
+            }
         } else {
-            rownames(o) <- cgs[[s]]$barcode
+            # Can't use names or rownames. Include additional column for barcode
+            o <- DuckDBDataFrame::DuckDBDataFrame(DuckDBDataFrame::tblconn(o),
+                                                  datacols = o@table@datacols)
+            o$barcode <- as.vector(cgs[[s]]$barcode)
         }
         o
     })
@@ -263,8 +295,10 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
         out <- out[rownames(cg)] # change for DuckDB
     } else {
         out <- do.call(rbind, out)
-        out <- out[rownames(cg), ]
-        out$barcode <- NULL
+        if (!inherits(out, "DuckDBDataFrame")) {
+            out <- out[rownames(cg), ]
+            out$barcode <- NULL
+        }
     }
     out
 }
@@ -274,8 +308,9 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 #' This function finds binary predicates for the geometry of each cell/spot
 #' (i.e. \code{colGeometry}) and an annotation geometry for each sample. For
 #' example, whether each Visium spot intersects with the tissue boundary in each
-#' sample.
-#' 
+#' sample. This function can be useful when the \code{annotGeometries} have
+#' undergone affine transforms with the rest of the SFE object.
+#'
 #' @inheritParams st_any_pred
 #' @param sfe An SFE object.
 #' @param colGeometryName Name of column geometry for the predicate.
@@ -288,8 +323,8 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 #'   number of columns in the sample(s) of interest, with barcodes (or
 #'   corresponding column names of sfe) as names. For \code{annotNPred}, a
 #'   numeric vector of the same length as the number of columns in the sample(s)
-#'   of interest with barcodes as names, indicating the number of geometries
-#'   in the \code{annotGeometry} of interest returns TRUE for the predicate for
+#'   of interest with barcodes as names, indicating the number of geometries in
+#'   the \code{annotGeometry} of interest returns TRUE for the predicate for
 #'   each each geometry in the \code{colGeometry} of interest.
 #' @concept Geometric operations
 #' @export
@@ -302,7 +337,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 #' # How many nuclei are there in each Visium spot
 #' n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                      sample_id = "all", pred = st_intersects, yx = FALSE) {
+                      sample_id = "all", pred = "intersects", yx = FALSE) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -315,7 +350,7 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @rdname annotPred
 #' @export
 annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                       sample_id = "all", pred = st_intersects) {
+                       sample_id = "all", pred = "intersects") {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -407,7 +442,7 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' )
 annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                          annotColNames = 1L, sample_id = "all",
-                         pred = st_intersects, summary_fun = mean) {
+                         pred = "intersects", summary_fun = mean) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     cols_use <- intersect(

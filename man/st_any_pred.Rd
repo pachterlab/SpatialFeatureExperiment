@@ -14,7 +14,7 @@
 \usage{
 \S4method{st_any_pred}{ANY}(x, y, pred, yx = FALSE, sparse = FALSE, ...)
 
-\S4method{st_any_pred}{duckspatial_df}(x, y, pred, yx = NA, sparse = TRUE, ...)
+\S4method{st_any_pred}{duckspatial_df}(x, y, pred, yx = NA, sparse = FALSE, ...)
 
 \S4method{st_any_pred}{DuckDBTable}(x, y, pred, yx = NA, sparse = TRUE, ...)
 
@@ -47,8 +47,7 @@ number of geometries and y has few, \code{pred(y, x)} is much faster than
 
 \item{sparse}{If \code{TRUE}, returns numeric indices rather than logical
 vector. Defaults to \code{FALSE} for backward compatibility, though the
-default in \code{st_intersects} is \code{TRUE}. For \code{DuckDB}, it's
-always \code{TRUE} and this argument is ignored.}
+default in \code{st_intersects} is \code{TRUE}.}
 
 \item{...}{Arguments passed to the predicate function, which would be
 \code{st_<pred>} for in memory geometries and
@@ -62,7 +61,8 @@ For \code{st_any_*}, a logical vector indicating whether each
   indicate which item in \code{y} each item in \code{x} intersects, which
   might not always be relevant. For \code{st_n_*}, an integer vector
   indicating the number of geometries in y returns TRUE for each geometry in
-  x. For \code{DuckDB}, the vector returned would be a \code{DuckDBColumn}.
+  x. For \code{DuckDB}, the output is a \code{DuckDBDataFrame} with an extra
+  column \code{barcode} because rownames or names can't be set.
 }
 \description{
 Unlike functions in \code{sf} like \code{st_intersects}, this function simply
