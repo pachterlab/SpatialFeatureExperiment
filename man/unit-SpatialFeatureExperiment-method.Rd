@@ -12,7 +12,7 @@
 }
 \value{
 A string for the name of the unit. At present it's merely a
-  string and \code{udunits} is not used.
+string and \code{udunits} is not used.
 }
 \description{
 Length units can be microns or pixels in full resolution image in SFE

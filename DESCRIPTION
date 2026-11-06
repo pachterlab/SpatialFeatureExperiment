@@ -50,6 +50,7 @@ Collate:
     'AllGenerics.R'
     'utils.R'
     'SFE-class.R'
+    'SpatialFeatureExperiment-package.R'
     'aggregate.R'
     'align.R'
     'annotGeometries.R'
@@ -120,3 +121,4 @@ biocViews:
 URL: https://pachterlab.github.io/SpatialFeatureExperiment
 BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues
 Config/roxygen2/version: 8.1.1
+Roxygen: list(markdown = TRUE)

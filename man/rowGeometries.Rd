@@ -110,6 +110,6 @@ txSpots(sfe)
 unlink(dir_use, recursive = TRUE)
 }
 \seealso{
-[dimGeometries()], [colGeometries()]
+\code{\link[=dimGeometries]{dimGeometries()}}, \code{\link[=colGeometries]{colGeometries()}}
 }
 \concept{Getters and setters}

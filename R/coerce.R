@@ -93,9 +93,9 @@
 #' @inheritParams readVizgen
 #' @param x A \code{SpatialExperiment} or \code{Seurat} object to be coerced to a
 #'   \code{SpatialFeatureExperiment} object.
-#' @param image_scalefactors # A \code{character}, choose between "lowres" or "hires".
+#' @param image_scalefactors A \code{character}, choose between "lowres" or "hires".
 #'  Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.
-#' @param unit # Default unit is \code{"micron"}. However for Visium one can choose
+#' @param unit Default unit is \code{"micron"}. However for Visium one can choose
 #'  between \code{"micron"} or \code{"full_res_image_pixel"}.
 #' @param BPPARAM Deprecated when coercing from \code{SpatialExperiment},
 #'  but is used when coercing from \code{Seurat} object.

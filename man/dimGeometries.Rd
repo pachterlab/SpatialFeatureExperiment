@@ -73,8 +73,8 @@ the *Geometry to query or replace. If missing, then the first item in the
 }
 \value{
 Getters for multiple geometries return a named list. Getters for
-  names return a character vector of the names. Getters for single geometries
-  return an \code{sf} data frame. Setters return an SFE object.
+names return a character vector of the names. Getters for single geometries
+return an \code{sf} data frame. Setters return an SFE object.
 }
 \description{
 "Dimension geometry" refers to Simple Feature (\code{sf}) geometries
@@ -156,6 +156,6 @@ colGeometry(sfe, "ondisk") <- cg2
 file.remove(fn)
 }
 \seealso{
-[colGeometries()], [rowGeometries()]
+\code{\link[=colGeometries]{colGeometries()}}, \code{\link[=rowGeometries]{rowGeometries()}}
 }
 \concept{Getters and setters}

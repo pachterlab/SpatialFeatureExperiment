@@ -32,7 +32,7 @@ reading data from formatted files on disk. If specified, then \code{return
 \item{z_option}{Deprecated. Will always be "3d" to construct 3D point
 geometries if multiple z-planes are present.}
 
-\item{sfe}{A `SpatialFeatureExperiment` object.}
+\item{sfe}{A \code{SpatialFeatureExperiment} object.}
 
 \item{sample_id}{Which sample in the SFE object the transcript spots should
 be added to.}
@@ -44,9 +44,9 @@ needed to match each transcript spot MULTIPOINT geometry to rows of
 }
 \value{
 When there are multipel parquet files to be read, a list of sf data
-  frames with MULTIPOINT geometry for genes selected. When there is only one
-  file, then one sf data frame. For \code{addSelectTx}, an SFE object with
-  the transcript spots of the selected genes added.
+frames with MULTIPOINT geometry for genes selected. When there is only one
+file, then one sf data frame. For \code{addSelectTx}, an SFE object with
+the transcript spots of the selected genes added.
 }
 \description{
 I speculate that in practice, the most common use of the transcript spots is
@@ -59,10 +59,10 @@ object.
 }
 \note{
 The GDAL Parquet driver is required for this function, though not for
-  other functions that work with GeoParquet files. GDAL Parquet driver has
-  been supported since GDAL 3.5.0, but is not part of the default
-  installation. The \code{z} and \code{z_option} arguments are there since
-  the file names contain z-plane information when relevant.
+other functions that work with GeoParquet files. GDAL Parquet driver has
+been supported since GDAL 3.5.0, but is not part of the default
+installation. The \code{z} and \code{z_option} arguments are there since
+the file names contain z-plane information when relevant.
 See the \href{https://gdal.org/drivers/vector/parquet.html}{GDAL documentation
 page for the Parquet driver}.
 }

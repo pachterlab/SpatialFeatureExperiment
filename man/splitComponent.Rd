@@ -29,9 +29,9 @@
 \item{x}{A SFE object, or \code{sf} or \code{sfc}.}
 
 \item{colGraphName}{Name of graph to use for \code{splitComponent}. We
-recommend distance based neighbors (`dnearneigh` in
+recommend distance based neighbors (\code{dnearneigh} in
 \code{\link{findSpatialNeighbors}}), and recommend NOT using k nearest
-neighbors (`knearneigh`) or triangulation (`tri2nb`).}
+neighbors (\code{knearneigh}) or triangulation (\code{tri2nb}).}
 
 \item{min_cells}{Minimum number of cells per graph component; components with
 fewer than this number of cells are considered debris and removed.}
@@ -52,7 +52,7 @@ Only used for k nearest neighbor and distance based neighbor with
 }
 \value{
 A list of the same object type as the input, each element for one
-  component.
+component.
 }
 \description{
 Split either a SFE object or \code{sf} or \code{sfc} by graph component of a

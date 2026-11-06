@@ -29,15 +29,17 @@ samples.}
 A \code{sf} data frame with \code{geometry} column containing the
 geometries and corresponding column names of sfe as row names. There is no
 guarantee that the returned geometries are valid or preserve the geometry
-class (e.g. when the intersection of polygons result into a line of a point).
+class (e.g. when the intersection of polygons result into a line of a
+point).
 }
 \description{
-Just like \code{\link{annotPred}}, but performs the operation rather than
-predicate. For example, this function would return the geometry of the
-intersections between each Visium spot and the tissue boundary for each
-sample, rather than whether each Visium spot intersects the tissue boundary.
-In case one cell/spot gets broken up into multiple geometries, the union of
-those geometries will be taken, so each cell/spot will only get one geometry.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Just like \code{\link{annotPred}}, but
+performs the operation rather than predicate. For example, this function
+would return the geometry of the intersections between each Visium spot and
+the tissue boundary for each sample, rather than whether each Visium spot
+intersects the tissue boundary. In case one cell/spot gets broken up into
+multiple geometries, the union of those geometries will be taken, so each
+cell/spot will only get one geometry.
 }
 \examples{
 library(SFEData)

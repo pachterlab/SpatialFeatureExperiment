@@ -28,7 +28,7 @@ Default = \code{sample01}.}
 
 \item{min_area}{Minimum cell area in square microns or pixel units (eg for CosMX).
 Anything smaller will be considered artifact or debris and removed.
-Default to `NULL`, ie no filtering of polygons.}
+Default to \code{NULL}, ie no filtering of polygons.}
 
 \item{add_molecules}{Logical, whether to add transcripts coordinates to an
 object.}
@@ -36,33 +36,33 @@ object.}
 \item{split_cell_comps}{Deprecated.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
-  processing backend and number of threads to use for parallelizable tasks:
-  \enumerate{ \item To load cell segmentation from HDF5 files from different
-  fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
-  FOVs, reading in the geometries can be time consuming, so we recommend
-  using a server and larger number of threads. This argument is not used if
-  \code{use_cellpose = TRUE} and the parquet file is present.
+processing backend and number of threads to use for parallelizable tasks:
+\enumerate{ \item To load cell segmentation from HDF5 files from different
+fields of view (FOVs) with multiple cores. A progress bar can be configured
+in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
+FOVs, reading in the geometries can be time consuming, so we recommend
+using a server and larger number of threads. This argument is not used if
+\code{use_cellpose = TRUE} and the parquet file is present.
 
-  \item To get the largest piece and see if it's larger than \code{min_area}
-  when there are multiple pieces in the cell segmentation for one cell.}}
+\item To get the largest piece and see if it's larger than \code{min_area}
+when there are multiple pieces in the cell segmentation for one cell.}}
 
 \item{file_out}{Name of file to save the geometry or raster to disk.
 Especially when the geometries are so large that it's unwieldy to load
 everything into memory. If this file (or directory for multiple files)
 already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
-extensions are determined based on `dest`.}
+extensions are determined based on \code{dest}.}
 
 \item{z_option}{Deprecated. Will always be "3d" to construct 3D point
 geometries if multiple z-planes are present.}
 }
 \value{
 An SFE object. Cell polygons are written to
-  `cell_boundaries_sf.parquet` in `data_dir`. If reading transcript spots
-  (`add_molecules = TRUE`), then the reformatted transcript spots are saved
-  to file specified in the `file_out` argument, which is by default
-  `tx_spots.parquet` in the same directory as the rest of the data.
+\code{cell_boundaries_sf.parquet} in \code{data_dir}. If reading transcript spots
+(\code{add_molecules = TRUE}), then the reformatted transcript spots are saved
+to file specified in the \code{file_out} argument, which is by default
+\code{tx_spots.parquet} in the same directory as the rest of the data.
 }
 \description{
 This function reads the standard CosMX output into an SFE object, as in

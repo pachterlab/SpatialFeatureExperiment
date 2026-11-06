@@ -52,7 +52,7 @@ when \code{keep_whole != "none"}.}
 }
 \value{
 An SFE object. There is no guarantee that the geometries after
-  cropping are still all valid or preserve the original geometry class.
+cropping are still all valid or preserve the original geometry class.
 }
 \description{
 Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}

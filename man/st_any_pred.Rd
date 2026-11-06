@@ -55,14 +55,14 @@ default in \code{st_intersects} is \code{TRUE}.}
 }
 \value{
 For \code{st_any_*}, a logical vector indicating whether each
-  geometry in \code{x} intersects (or other predicates such as is covered by)
-  anything in \code{y} or a numeric vector of indices of \code{TRUE} when
-  \code{sparse = TRUE}. Simplified from the \code{sgbp} results which
-  indicate which item in \code{y} each item in \code{x} intersects, which
-  might not always be relevant. For \code{st_n_*}, an integer vector
-  indicating the number of geometries in y returns TRUE for each geometry in
-  x. For \code{DuckDB}, the output is a \code{DuckDBDataFrame} with an extra
-  column \code{barcode} because rownames or names can't be set.
+geometry in \code{x} intersects (or other predicates such as is covered by)
+anything in \code{y} or a numeric vector of indices of \code{TRUE} when
+\code{sparse = TRUE}. Simplified from the \code{sgbp} results which
+indicate which item in \code{y} each item in \code{x} intersects, which
+might not always be relevant. For \code{st_n_*}, an integer vector
+indicating the number of geometries in y returns TRUE for each geometry in
+x. For \code{DuckDB}, the output is a \code{DuckDBDataFrame} with an extra
+column \code{barcode} because rownames or names can't be set.
 }
 \description{
 Unlike functions in \code{sf} like \code{st_intersects}, this function simply

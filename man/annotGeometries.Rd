@@ -63,8 +63,8 @@ the *Geometry to query or replace. If missing, then the first item in the
 }
 \value{
 Getters for multiple geometries return a named list. Getters for
-  names return a character vector of the names. Getters for single geometries
-  return an \code{sf} data frame. Setters return an SFE object.
+names return a character vector of the names. Getters for single geometries
+return an \code{sf} data frame. Setters return an SFE object.
 }
 \description{
 "Annotation geometry" refers to Simple Feature (\code{sf}) geometries NOT

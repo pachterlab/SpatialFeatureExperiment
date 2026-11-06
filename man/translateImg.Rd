@@ -24,7 +24,7 @@ arguments.}
 }
 \value{
 A \code{*Image} object of the same class that has been shifted in
-  space.
+space.
 }
 \description{
 This function shifts the spatial extent of the image in the x-y plane.

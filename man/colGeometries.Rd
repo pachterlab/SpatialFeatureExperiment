@@ -110,6 +110,6 @@ cgs <- colGeometries(sfe)
 spots <- spotPoly(sfe)
 }
 \seealso{
-[dimGeometries()], [rowGeometries()]
+\code{\link[=dimGeometries]{dimGeometries()}}, \code{\link[=rowGeometries]{rowGeometries()}}
 }
 \concept{Getters and setters}

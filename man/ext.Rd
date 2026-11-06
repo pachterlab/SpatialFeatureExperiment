@@ -30,7 +30,7 @@ specifying the extent to use.}
 }
 \value{
 Getters return a numeric vector specifying the extent. Setters return
-  a \code{*Image} object of the same class as the input.
+a \code{*Image} object of the same class as the input.
 }
 \description{
 Unlike in \code{SpatialExperiment}, images in SFE have extents which are used

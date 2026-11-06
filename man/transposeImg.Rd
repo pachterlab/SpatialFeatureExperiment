@@ -29,10 +29,10 @@ arguments.}
 }
 \value{
 For \code{SpatRasterImage} and \code{ExtImage}, object of the same
-  class. For \code{BioFormatsImage}, the image of the specified resolution is
-  read into memory and then the \code{ExtImage} method is called, returning
-  \code{ExtImage}. For the extent: xmin and xmax are switched with ymin and
-  ymax.
+class. For \code{BioFormatsImage}, the image of the specified resolution is
+read into memory and then the \code{ExtImage} method is called, returning
+\code{ExtImage}. For the extent: xmin and xmax are switched with ymin and
+ymax.
 }
 \description{
 Swap rows and columns of images. In effect, this will flip the image around

@@ -23,8 +23,8 @@ order, to specify the bounding box.}
 }
 \value{
 Image of the same class as input but cropped. For
-  \code{BioFormatsImage}, the image is not loaded into memory; only the
-  extent is changed.
+\code{BioFormatsImage}, the image is not loaded into memory; only the
+extent is changed.
 }
 \description{
 Crop images of class \code{*Image} in this package with a bounding box.

@@ -46,7 +46,7 @@ addTxTech(
 coordinates are not discrete.}
 
 \item{min_phred}{Minimum Phred score to keep spot. By default 20, the
-conventional threshold indicating "acceptable", meaning that there's 1%
+conventional threshold indicating "acceptable", meaning that there's 1\%
 chance that the spot was decoded in error.}
 
 \item{split_cell_comps}{Deprecated.}
@@ -63,24 +63,24 @@ Especially when the geometries are so large that it's unwieldy to load
 everything into memory. If this file (or directory for multiple files)
 already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
-extensions are determined based on `dest`.}
+extensions are determined based on \code{dest}.}
 
 \item{BPPARAM}{\code{\link[BiocParallel]{BiocParallelParam}} object to
 specify multithreading to convert raw char in some parquet files to R
 objects. Not used otherwise.}
 
 \item{return}{Logical, whether to return the geometries in memory. This does
-not depend on whether the geometries are written to file. Always `FALSE`
-when `dest = "colGeometry"`.}
+not depend on whether the geometries are written to file. Always \code{FALSE}
+when \code{dest = "colGeometry"}.}
 
-\item{sfe}{A `SpatialFeatureExperiment` object.}
+\item{sfe}{A \code{SpatialFeatureExperiment} object.}
 
 \item{sample_id}{Which sample in the SFE object the transcript spots should
 be added to.}
 }
 \value{
-The `sf` data frame, or path to file where geometries are written if
-  `return = FALSE`.
+The \code{sf} data frame, or path to file where geometries are written if
+\code{return = FALSE}.
 }
 \description{
 To preset parameters such as \code{spatialCoordsNames}, \code{gene_col},

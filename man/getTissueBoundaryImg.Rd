@@ -56,7 +56,7 @@ same unit as the geometries in the SFE object.}
 }
 \value{
 A \code{sf} data frame with columns \code{sample_id} and
-  \code{geometry}.
+\code{geometry}.
 }
 \description{
 This function gets the tissue boundary from image and makes sure that it is

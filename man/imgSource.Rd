@@ -18,8 +18,8 @@
 }
 \value{
 String, file path to the original image on disk. For
-  \code{SpatRasterImage}, if the image is loaded into memory, then
-  \code{NULL}.
+\code{SpatRasterImage}, if the image is loaded into memory, then
+\code{NULL}.
 }
 \description{
 Get the file path of images that are on disk and not read into memory. Only

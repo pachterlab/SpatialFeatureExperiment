@@ -21,15 +21,15 @@ samples independently.}
 }
 \value{
 For one sample, then a \code{listw} object representing the graph,
-  with an attribute "method" recording the function used to build the graph,
-  its arguments, and information about the geometry for which the graph was
-  built. The attribute is used to reconstruct the graphs when the SFE object
-  is subsetted since some nodes in the graph will no longer be present. If
-  sample_id = "all" or has length > 1, then a named list of \code{listw}
-  objects, whose names are the sample_ids. To add the list for multiple
-  samples to a SFE object, specify the \code{name} argument in the
-  \code{\link{spatialGraphs}} replacement method, so graph of the same name
-  will be added to the SFE object for each sample.
+with an attribute "method" recording the function used to build the graph,
+its arguments, and information about the geometry for which the graph was
+built. The attribute is used to reconstruct the graphs when the SFE object
+is subsetted since some nodes in the graph will no longer be present. If
+sample_id = "all" or has length > 1, then a named list of \code{listw}
+objects, whose names are the sample_ids. To add the list for multiple
+samples to a SFE object, specify the \code{name} argument in the
+\code{\link{spatialGraphs}} replacement method, so graph of the same name
+will be added to the SFE object for each sample.
 }
 \description{
 Visium spots are arranged in a hexagonal grid. This function uses the known

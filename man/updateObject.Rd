@@ -32,8 +32,8 @@ overhaul of the \code{spatialGraphs} slot in a future version using the
 }
 \note{
 The first version of the SFE object that supports DuckDB for geometries
-  is 1.16.0. Older versions don't need to be converted, but the new version
-  can't be used with older versions of the SFE package.
+is 1.16.0. Older versions don't need to be converted, but the new version
+can't be used with older versions of the SFE package.
 }
 \examples{
 library(SFEData)
@@ -46,6 +46,6 @@ SFEVersion(sfe)
 }
 \seealso{
 \code{\link[SingleCellExperiment]{objectVersion}}, which is used to
-  determine if the object is up-to-date.
+determine if the object is up-to-date.
 }
 \concept{SpatialFeatureExperiment class}

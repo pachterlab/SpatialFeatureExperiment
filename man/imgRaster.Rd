@@ -25,8 +25,8 @@ is a medium resolution in Xenium.}
 }
 \value{
 Since version 1.9.8, \code{imgRaster} will return an array of hex
-  colors, or the raster object, as required by \code{SpatialExperiment}. This
-  will break older SFE code calling \code{imgRaster}.
+colors, or the raster object, as required by \code{SpatialExperiment}. This
+will break older SFE code calling \code{imgRaster}.
 }
 \description{
 In SFE, S4 classes inheriting from \code{VirtualSpatialImage} have been

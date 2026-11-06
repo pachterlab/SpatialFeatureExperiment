@@ -49,7 +49,7 @@ translation vector of length 2 to specify general affine transformation.}
 A \code{BioFormatsImage} object.
 }
 \description{
-`r lifecycle::badge("experimental")` At present, the \code{BioFormatsImage}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} At present, the \code{BioFormatsImage}
 is designed for OME-TIFF from Xenium and has not been tested on other formats
 that can be read with \code{BioFormats}. The image is not loaded into memory,
 and when it is, the the \code{BioFormatsImage} object is converted into
@@ -78,6 +78,6 @@ is specified. If the subsequent transformation happens to restore the image
 to its original place, then transformation specifications will be removed.
 }
 \seealso{
-[isFull()], [origin()]
+\code{\link[=isFull]{isFull()}}, \code{\link[=origin]{origin()}}
 }
 \concept{Image classes}

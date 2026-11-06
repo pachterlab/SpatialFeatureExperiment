@@ -60,7 +60,7 @@ named list or vector of one or more of the following:
 \item{File names of GeoParquet files}{These will be used to represent geometries
 out of memory with \code{DuckDBSpatial}.}
 \item{DuckDBDataFrame with geometries}{As read from GeoParquet file with
- \code{\link[DuckDBSpatial]{readGeoParquet}}}
+\code{\link[DuckDBSpatial]{readGeoParquet}}}
 \item{An ordinary data frame specifying centroids or polygons}{Deprecated}
 }}
 
@@ -79,7 +79,7 @@ If \code{colGeometries} is not specified, then this argument will behave as
 in \code{\link[SpatialExperiment]{SpatialExperiment}}, but \code{colGeometries} will be given
 precedence if provided.}
 
-\item{annotGeometryType}{Deprecated. Ignored if the corresponding element is 
+\item{annotGeometryType}{Deprecated. Ignored if the corresponding element is
 an \code{sf} object or file path of a GeoParquet file.}
 
 \item{spatialGraphs}{A named list of \code{listw} objects (see \code{spdep})
@@ -90,7 +90,7 @@ fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
-\item{unit}{# Default unit is \code{"micron"}. However for Visium one can choose
+\item{unit}{Default unit is \code{"micron"}. However for Visium one can choose
 between \code{"micron"} or \code{"full_res_image_pixel"}.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
@@ -134,8 +134,8 @@ bottom left, one of them needs to be flipped for them to match. If one of
 them is already flipped, then use "none". The image will not be flipped if
 it's GeoTIFF.}
 
-\item{image_scalefactors}{# A \code{character}, choose between "lowres" or "hires".
-Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.}
+\item{image_scalefactors}{A \code{character}, choose between "lowres" or "hires".
+Only for 10X Visium, image scaling factors are from \code{scalefactors_json.json} file.}
 
 \item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment},
 but is used when coercing from \code{Seurat} object.}
