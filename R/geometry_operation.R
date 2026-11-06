@@ -227,10 +227,11 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
             }
             .g <- gs[[s]][, c("geometry", id_col)]
             st_agr(.g) <- "constant"
-            if (!is.null(st_z_range(.g)))
+            if (!is.null(st_z_range(.g))) # ddbs_has_z, ddbs_force_3d
                 y_use <- st_zm(y_use, drop = FALSE, what = "Z")
             o <- op(.g, y_use)
             # Aggregate in case cropping broke some items into multiple pieces
+            # ddbs_union_agg
             if (any(!rownames(o) %in% rownames(.g))) {
                 o <- aggregate(o,
                                by = setNames(list(id = o[[id_col]]), id_col),
@@ -275,18 +276,21 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
         } else {
             y_use <- y
         }
-        o <- fun(cgs[[s]], y_use, ...)
+        df_use <- cgs[[s]]
+        df_use$sample_id <- NULL
+        o <- fun(df_use, y_use, ...)
         if (!inherits(cg, "DuckDBDataFrame")) {
             if (!return_df) {
-                names(o) <- cgs[[s]]$barcode
+                names(o) <- df_use$barcode
             } else {
-                rownames(o) <- cgs[[s]]$barcode
+                o <- as.data.frame(o) # not tibble
+                rownames(o) <- df_use$barcode
             }
         } else {
             # Can't use names or rownames. Include additional column for barcode
             o <- DuckDBDataFrame::DuckDBDataFrame(DuckDBDataFrame::tblconn(o),
                                                   datacols = o@table@datacols)
-            o$barcode <- as.vector(cgs[[s]]$barcode)
+            o$barcode <- as.vector(df_use$barcode)
         }
         o
     })
@@ -351,6 +355,9 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @export
 annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                        sample_id = "all", pred = "intersects") {
+    # Question: do I still want this function? It was specifically created to
+    # relate Visium spots to nuclei segmentation from H&E, not a case where
+    # DuckDB is helpful. I won't use it with Xenium.
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -361,20 +368,22 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 
 #' Binary operations for geometry of each cell/spot and annotation
 #'
-#' Just like \code{\link{annotPred}}, but performs the operation rather than
-#' predicate. For example, this function would return the geometry of the
-#' intersections between each Visium spot and the tissue boundary for each
-#' sample, rather than whether each Visium spot intersects the tissue boundary.
-#' In case one cell/spot gets broken up into multiple geometries, the union of
-#' those geometries will be taken, so each cell/spot will only get one geometry.
+#' `r lifecycle::badge('deprecated')` Just like \code{\link{annotPred}}, but
+#' performs the operation rather than predicate. For example, this function
+#' would return the geometry of the intersections between each Visium spot and
+#' the tissue boundary for each sample, rather than whether each Visium spot
+#' intersects the tissue boundary. In case one cell/spot gets broken up into
+#' multiple geometries, the union of those geometries will be taken, so each
+#' cell/spot will only get one geometry.
 #'
 #' @inheritParams annotPred
 #' @param op A binary operation function for the geometries. Defaults to
-#' \code{\link[sf]{st_intersection}}.
+#'   \code{\link[sf]{st_intersection}}.
 #' @return A \code{sf} data frame with \code{geometry} column containing the
-#' geometries and corresponding column names of sfe as row names. There is no
-#' guarantee that the returned geometries are valid or preserve the geometry
-#' class (e.g. when the intersection of polygons result into a line of a point).
+#'   geometries and corresponding column names of sfe as row names. There is no
+#'   guarantee that the returned geometries are valid or preserve the geometry
+#'   class (e.g. when the intersection of polygons result into a line of a
+#'   point).
 #' @concept Geometric operations
 #' @export
 #' @seealso annotPred
@@ -387,6 +396,8 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' )
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                     sample_id = "all", op = st_intersection) {
+    deprecate_warn("1.16.0", "annotOp()", 
+                   details = "In addition, DuckDBDataFrame is not supported")
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id)
@@ -444,7 +455,11 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                          annotColNames = 1L, sample_id = "all",
                          pred = "intersects", summary_fun = mean) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+    pred <- .check_pred(pred)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
+    # okay not to support DuckDB because this function was originally written
+    # for smaller Visium data
+    if (inherits(ag, "DuckDBDataFrame")) stop("DuckDB not supported")
     cols_use <- intersect(
         annotColNames,
         names(ag)[!names(ag) %in% c("barcode", "geometry")]
