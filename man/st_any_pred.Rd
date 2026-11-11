@@ -61,8 +61,7 @@ anything in \code{y} or a numeric vector of indices of \code{TRUE} when
 indicate which item in \code{y} each item in \code{x} intersects, which
 might not always be relevant. For \code{st_n_*}, an integer vector
 indicating the number of geometries in y returns TRUE for each geometry in
-x. For \code{DuckDB}, the output is a \code{DuckDBDataFrame} with an extra
-column \code{barcode} because rownames or names can't be set.
+x. For \code{DuckDB}, the output is a \code{DuckDBDataColumn}.
 }
 \description{
 Unlike functions in \code{sf} like \code{st_intersects}, this function simply

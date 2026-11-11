@@ -48,7 +48,9 @@ corresponding column names of sfe) as names. For \code{annotNPred}, a
 numeric vector of the same length as the number of columns in the sample(s)
 of interest with barcodes as names, indicating the number of geometries in
 the \code{annotGeometry} of interest returns TRUE for the predicate for
-each each geometry in the \code{colGeometry} of interest.
+each each geometry in the \code{colGeometry} of interest. For \code{DuckDB},
+the output is a \code{DuckDBDataFrame} with an extra column \code{barcode}
+because names can't be set.
 }
 \description{
 This function finds binary predicates for the geometry of each cell/spot
