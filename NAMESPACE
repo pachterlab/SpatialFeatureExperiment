@@ -251,6 +251,7 @@ importFrom(BiocGenerics,
   containsOutOfMemoryData,
   saveRDS,
   type,
+  unique,
   updateObject
 )
 importFrom(BiocNeighbors,

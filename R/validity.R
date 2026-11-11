@@ -15,6 +15,7 @@
         return(character(0))
     }
 }
+#' @importFrom BiocGenerics unique
 .check_annotgeometries <- function(x) {
     gs <- int_metadata(x)$annotGeometries
     ids_coldata <- sampleIDs(x)
