@@ -33,8 +33,7 @@
 #'   indicate which item in \code{y} each item in \code{x} intersects, which
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
-#'   x. For \code{DuckDB}, the output is a \code{DuckDBDataFrame} with an extra
-#'   column \code{barcode} because rownames or names can't be set.
+#'   x. For \code{DuckDB}, the output is a \code{DuckDBDataColumn}.
 #' @concept Geometric operations
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
@@ -92,6 +91,13 @@ setMethod("st_any_pred", "ANY",
     } else pred
 }
 
+.to_sf <- function(y) {
+    # Convert sfg or sfc to sf for ddbs_*
+    if (inherits(y, "sfg")) y <- st_sfc(y)
+    if (inherits(y, "sfc")) y <- st_sf(geometry = y)
+    y
+}
+
 #' @rdname st_any_pred
 #' @export
 setMethod("st_any_pred", "duckspatial_df",
@@ -101,11 +107,24 @@ setMethod("st_any_pred", "duckspatial_df",
               check_installed("DuckDBDataFrame")
               .check_y_class_pred(y)
               pred <- .st_fun2string(pred)
+              negate <- FALSE
+              y <- .to_sf(y)
+              if (grepl("^not_", pred)) {
+                  negate <- TRUE
+                  pred <- gsub("^not_", "", pred)
+              }
               out <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
               # NOTE: Still debating whether to keep it lazy. Depends on downstream use.
               # Output indices can be out of order
               out <- out |> dplyr::select(id_x) |> dplyr::distinct()
               if (sparse) {
+                  if (negate) {
+                      y_ids <- x |> 
+                          dplyr::mutate(id_x = dplyr::row_number(geometry)) |> 
+                          duckspatial::ddbs_drop_geometry() |> 
+                          dplyr::select(id_x)
+                      out <- dplyr::setdiff(y_ids, out)
+                  }
                   out <- out |> 
                       DuckDBDataFrame::DuckDBDataFrame()
                   return(out$id_x)
@@ -120,8 +139,9 @@ setMethod("st_any_pred", "duckspatial_df",
                       dplyr::left_join(out, by = "id_x") |> 
                       dplyr::mutate(ind = dplyr::case_when(is.na(ind) ~ FALSE,
                                                            TRUE ~ ind)) |> 
-                      dplyr::select(ind) |> 
-                      DuckDBDataFrame::DuckDBDataFrame()
+                      dplyr::select(ind)
+                  if (negate) out_lgl <- out_lgl |> dplyr::mutate(ind = !ind)
+                  out_lgl <- DuckDBDataFrame::DuckDBDataFrame(out_lgl)
                   return(out_lgl$ind)
               }
           })
@@ -164,6 +184,7 @@ setMethod("st_n_pred", "duckspatial_df",
               check_installed("dplyr")
               check_installed("DuckDBDataFrame")
               .check_y_class_pred(y)
+              y <- .to_sf(y)
               pred <- .st_fun2string(pred)
               res <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
               # NOTE: again, debating whether to keep it lazy
@@ -201,12 +222,25 @@ setMethod("st_n_pred", "DuckDBTable",
 #' @export
 st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 
-.crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
+.crop_geometry <- function(g, y, samples_use, difference = FALSE, sample_col = NULL,
                            id_col = "id", remove_empty = FALSE) {
     if (!nrow(g)) return(g)
+    is_duckdb <- inherits(g, "DuckDBDataFrame")
+    op_str <- if (difference) "difference" else "intersection"
+    pfx <- if (is_duckdb) "ddbs_" else "st_"
+    op_str <- paste0(pfx, op_str)
+    if (is_duckdb) {
+        restore_order <- FALSE
+        check_installed("duckspatial")
+        check_installed("DuckDBDataFrame")
+        check_installed("DuckDBSpatial")
+        k <- DuckDBDataFrame::keycols(g)
+        op <- getExportedValue("duckspatial", op_str)
+        st_is_empty <- DuckDBSpatial::st_is_empty
+    } else op <- getExportedValue("sf", op_str)
     # g may have column sample_id as in colGeometry and annotGeometry
     # g should also have row names if it is colGeometry
-    if (!id_col %in% names(g)) {
+    if (!id_col %in% names(g) && !is_duckdb) {
         rm_id <- TRUE
         if (!is.null(rownames(g))) {
             g[[id_col]] <- rownames(g)
@@ -225,33 +259,47 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
             } else {
                 y_use <- st_geometry(y)
             }
-            .g <- gs[[s]][, c("geometry", id_col)]
-            st_agr(.g) <- "constant"
-            if (!is.null(st_z_range(.g))) # ddbs_has_z, ddbs_force_3d
-                y_use <- st_zm(y_use, drop = FALSE, what = "Z")
-            o <- op(.g, y_use)
-            # Aggregate in case cropping broke some items into multiple pieces
-            # ddbs_union_agg
-            if (any(!rownames(o) %in% rownames(.g))) {
-                o <- aggregate(o,
-                               by = setNames(list(id = o[[id_col]]), id_col),
-                               FUN = unique
-                )
+            if (is_duckdb) {
+                .g <- duckspatial::as_duckspatial_df(DuckDBDataFrame::tblconn(gs[[s]]),
+                                                     crs = NA)
+                o <- op(.g, .to_sf(y_use))
+                o <- o |> dplyr::select(-row_number)
+                class(o) <- setdiff(class(o), "duckspatial_df")
+                o <- DuckDBDataFrame::DuckDBDataFrame(o)
+                if (nrow(o) > nrow(gs[[s]]))
+                    stop("Some geometries have been broken into multiple pieces")
+            } else {
+                .g <- gs[[s]][, c("geometry", id_col)]
+                st_agr(.g) <- "constant"
+                if (!is.null(st_z_range(.g))) # ddbs_has_z, ddbs_force_3d
+                    y_use <- st_zm(y_use, drop = FALSE, what = "Z")
+                o <- op(.g, y_use)
+                if (any(!rownames(o) %in% rownames(.g))) {
+                    o <- aggregate(o,
+                                   by = setNames(list(id = o[[id_col]]), id_col),
+                                   FUN = unique
+                    )
+                }
+                o <- merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
             }
-            return(merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE))
+            return(o)
         } else {
             return(gs[[s]])
         }
     })
     gs_sub <- do.call(rbind, gs_sub)
-    # Convert st_GEOMETRY to a more specific type
-    if (st_geometry_type(gs_sub, by_geometry = FALSE) == "GEOMETRY") {
-        gs_sub <- st_cast(gs_sub)
+    if (!is_duckdb) {
+        # Convert st_GEOMETRY to a more specific type
+        if (st_geometry_type(gs_sub, by_geometry = FALSE) == "GEOMETRY") {
+            gs_sub <- st_cast(gs_sub)
+        }
+        gs_sub <- gs_sub[, names(g)]
+        rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
+        if (rm_id) gs_sub[[id_col]] <- NULL
     }
-    gs_sub <- gs_sub[, names(g)]
-    rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
-    if (rm_id) gs_sub[[id_col]] <- NULL
-    if (remove_empty) gs_sub <- gs_sub[!st_is_empty(gs_sub), ]
+    
+    
+    if (remove_empty) gs_sub <- gs_sub[!st_is_empty(gs_sub$geometry), ]
     gs_sub
 }
 
@@ -296,7 +344,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
     })
     if (!return_df) {
         out <- Reduce(c, out)
-        out <- out[rownames(cg)] # change for DuckDB
+        out <- out[cg$barcode] # change for DuckDB
     } else {
         out <- do.call(rbind, out)
         if (!inherits(out, "DuckDBDataFrame")) {
@@ -329,7 +377,9 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 #'   numeric vector of the same length as the number of columns in the sample(s)
 #'   of interest with barcodes as names, indicating the number of geometries in
 #'   the \code{annotGeometry} of interest returns TRUE for the predicate for
-#'   each each geometry in the \code{colGeometry} of interest.
+#'   each each geometry in the \code{colGeometry} of interest. For \code{DuckDB},
+#'   the output is a \code{DuckDBDataFrame} with an extra column \code{barcode}
+#'   because names can't be set.
 #' @concept Geometric operations
 #' @export
 #' @seealso annotOp
@@ -520,6 +570,8 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
     bbox_sf
 }
 
+st_not_covers <- function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
+
 #' Crop an SFE object with a geometry
 #'
 #' Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
@@ -587,11 +639,10 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         keep_whole <- keep_whole[keep_whole != "none"]
     }
     pred <- if (difference) {
-        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
+        if (cover) "disjoint" else "not_covers"
     } else {
-        if (cover) st_covers else st_intersects
+        if (cover) "covers" else "intersects"
     }
-    op <- if (difference) st_difference else st_intersection
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!inherits(y, "sf") && !inherits(y, "sfc") && !inherits(y, "sfg")) {
         # y should be bbox, either named vector or matrix with samples in columns
@@ -607,9 +658,14 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         samples_use <- sample_id
     }
     preds <- .annot_fun(x, y, colGeometryName,
-        samples_use = samples_use,
+        samples_use = samples_use, sparse = FALSE,
         fun = st_any_pred, pred = pred, yx = TRUE
     )
+    # Can't subset assays with DuckDBColumn
+    if (inherits(preds, "DuckDBDataFrame")) {
+        preds <- as.data.frame(preds)
+        preds <- setNames(preds$ind, preds$barcode)
+    }
     # Don't remove anything from other samples
     other_bcs <- setdiff(colnames(x), names(preds))
     other_samples <- setNames(rep(TRUE, length(other_bcs)), other_bcs)
@@ -631,7 +687,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         # Also actually crop all geometries for the samples of interest.
         colGeometries(out) <- lapply(colGeometries(out), .crop_geometry,
                                      y = y,
-                                     samples_use = samples_use, op = op,
+                                     samples_use = samples_use, difference = difference,
                                      id_col = "barcode",
                                      sample_col = colData(out)$sample_id
         )
@@ -640,15 +696,16 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         annotGeometries(out) <- lapply(annotGeometries(out), function(x) {
             inds <- x$sample_id %in% sample_id
             other_samples <- x[!inds,]
-            in_sample <- x[inds,]
-            preds <- pred(in_sample, y, sparse = FALSE)
+            in_sample <- x[inds,] 
+            preds <- st_any_pred(in_sample, y, sparse = FALSE,
+                                 pred = pred)
             if (!any(preds)) other_samples else
                 rbind(in_sample[preds,], other_samples)
         })
     } else {
         annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
                                        y = y,
-                                       samples_use = samples_use, op = op,
+                                       samples_use = samples_use, difference = difference,
                                        remove_empty = TRUE
         )
     }
@@ -657,7 +714,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
             rgs <- rowGeometries(out, sample_id = s)
             rowGeometries(out, sample_id = s) <-
                 lapply(rgs, function(r) {
-                    r <- .crop_geometry(r, y = y, op = op, sample_col = s,
+                    r <- .crop_geometry(r, y = y, difference = difference, sample_col = s,
                                         samples_use = s)
                 })
         }

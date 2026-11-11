@@ -50,6 +50,19 @@ test_that("st_any_intersects for DuckDB, not sparse", {
     expect_equal(unname(as.vector(o)), c(TRUE, TRUE, FALSE))
 })
 
+test_that("st_any_pred for DuckDB, negate", {
+    o <- st_any_pred(pts_duck, pol_duck, pred = "not_covered_by", sparse = TRUE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_setequal(as.vector(o) |> as.integer(), 3)
+})
+
+test_that("st_any_pred for DuckDB, negate and not sparse", {
+    # When it's a bit slow, the DuckDBDataFrame constructor took most of the time
+    o <- st_any_pred(pts_duck, pol_duck, pred = "not_covered_by", sparse = FALSE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_setequal(as.vector(o) |> unname(), c(FALSE, FALSE, TRUE))
+})
+
 test_that("st_n_intersects for DuckDB", {
     o1 <- st_n_intersects(pts_duck, pol_duck)
     expect_s4_class(o1, "DuckDBColumn")
@@ -72,7 +85,7 @@ bbox_use <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 1, ymax = 6),
 bbox_use2 <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 5, ymax = 9)), crs = NA)
 bbox_sf <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
 
-cg <- colGeometry(sfe_visium, sample_id = "sample01")
+cg <- colGeometry(sfe_visium, sample_id = "sample01", withDimnames = TRUE)
 bbox_cg <- st_bbox(st_centroid(cg))
 ag <- st_bbox(cg) |> st_as_sfc() |> st_buffer(dist = 0.3)
 ag_df <- st_sf(geometry = ag, sample_id = "sample01",
@@ -92,10 +105,31 @@ test_that("All spots in the cropped SFE objects indeed are covered by the bbox",
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all",
                                                   keep_whole = "none")
     cg <- spotPoly(sfe_cropped, "all")
-    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by, sparse = FALSE)))
+    expect_true(all(st_any_pred(cg, bbox_use, pred = "covered_by", sparse = FALSE)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
     rg <- rowGeometry(sfe_cropped)
-    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by, sparse = FALSE)))
+    expect_true(all(st_any_pred(rg, bbox_use, pred = "covered_by", sparse = FALSE)))
+})
+
+test_that("Actual crop, with DuckDB geometries", {
+    fn1 <- tempfile(fileext = ".parquet")
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe_visium, "all"), fn1)
+    writeGeoParquet(annotGeometry(sfe_visium, 1L, sample_id = "all"), fn2)
+    spotPoly(sfe_visium, "all") <- readGeoParquet(fn1)
+    annotGeometry(sfe_visium, 1L, "all") <- readGeoParquet(fn2)
+    # Slow, because operating on DuckDBDataFrame adds considerable overhead
+    # like in [[, [, and in tblconn(). Defo not worth it for small datasets.
+    # Some overhaed occurs in validity when checking sample_id in annotGeometry.
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all",
+                                                  keep_whole = "none")
+    cg <- spotPoly(sfe_cropped, "all")
+    ag <- annotGeometry(sfe_cropped, sample_id = "all")
+    expect_s4_class(cg, "DuckDBDataFrame")
+    expect_s4_class(ag, "DuckDBDataFrame")
+    expect_true(all(st_any_pred(cg, bbox_use, pred = "covered_by", sparse = FALSE)))
+    expect_true(all(st_any_pred(ag, bbox_use, pred = "covered_by", sparse = FALSE)))
+    file.remove(fn1, fn2)
 })
 
 test_that("Only crop one sample out of two, with sf", {
@@ -295,8 +329,7 @@ test_that("Error for inappropriate input to difference argument", {
 test_that("Crop 3D geometry", {
     fp <- tempfile()
     dir_use <- CosMXOutput(file_path = fp)
-    sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
-                     z_option = "3d")
+    sfe <- readCosMX(dir_use, add_molecules = TRUE)
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe, bbox1, keep_whole = "none")
     bbox_new <- bbox(sfe_cropped)
