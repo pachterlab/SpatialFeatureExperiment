@@ -9,7 +9,8 @@ annotOp(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  op = st_intersection
+  op = deprecated(),
+  difference = FALSE
 )
 }
 \arguments{
@@ -22,8 +23,10 @@ annotOp(
 \item{sample_id}{Which sample(s) to operate on. Can be "all" to indicate all
 samples.}
 
-\item{op}{A binary operation function for the geometries. Defaults to
-\code{\link[sf]{st_intersection}}.}
+\item{op}{Deprecated.}
+
+\item{difference}{Logical, whether to compute remove the area occupied by
+\code{y} from the SFE object.}
 }
 \value{
 A \code{sf} data frame with \code{geometry} column containing the

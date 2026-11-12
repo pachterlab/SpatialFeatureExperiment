@@ -345,11 +345,11 @@ formatTxSpots <- function(file, dest = deprecated(),
     # TODO: rewrite to convert to POINT GeoParquet, not MULTIPOINT
     file <- normalizePath(file, mustWork = TRUE)
     if (is_present(z_option)) {
-        deprecate_warn("1.16.0", "formatTxSpots(z_option)")
+        deprecate_soft("1.16.0", "formatTxSpots(z_option)")
         z_option <- match.arg(z_option, choices = c("3d", "split"))
     } else z_option <- "3d"
     if (is_present(dest)) {
-        deprecate_warn("1.16.0", "formatTxSpots(dest)")
+        deprecate_soft("1.16.0", "formatTxSpots(dest)")
         dest <- match.arg(dest, choices = c("rowGeometry", "colGeometry"))
         if (dest == "colGeometry") {
             return <- FALSE
@@ -358,13 +358,13 @@ formatTxSpots <- function(file, dest = deprecated(),
         }
     } else dest <- "rowGeometry"
     if (is_present(z)) {
-        deprecate_warn("1.16.0", "formatTxSpots(z)")
+        deprecate_soft("1.16.0", "formatTxSpots(z)")
         if (!is.numeric(z) && z != "all") {
             stop("z must either be numeric or be 'all' indicating all z-planes.")
         }
     } else z <- "all"
     if (is_present(split_col)) {
-        deprecate_warn("1.16.0", "formatTxSpots(split_col)")
+        deprecate_soft("1.16.0", "formatTxSpots(split_col)")
     } else split_col <- NULL
     
     if (!is.null(file_out) && (file.exists(file_out) ||
@@ -522,8 +522,7 @@ addTxSpots <- function(sfe, file, sample_id = 1L,
                        z_option = deprecated(), flip = FALSE,
                        file_out = NULL, BPPARAM = SerialParam()) {
     sample_id <- .check_sample_id(sfe, sample_id)
-    dest <- "rowGeometry"
-    mols <- formatTxSpots(file, dest = dest, spatialCoordsNames = spatialCoordsNames,
+    mols <- formatTxSpots(file, spatialCoordsNames = spatialCoordsNames,
                           gene_col = gene_col, z = z, phred_col = phred_col,
                           min_phred = min_phred, split_col = split_col,
                           flip = flip, z_option = z_option, file_out = file_out,

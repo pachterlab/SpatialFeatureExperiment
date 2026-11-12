@@ -121,7 +121,7 @@ setReplaceMethod(
 
 .ag <- function(x, type = 1L, sample_id = NULL) {
     out <- int_metadata(x)$annotGeometries[[type]]
-    if (sample_id == "all") return(out)
+    if (identical(sample_id, "all")) return(out)
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!is.null(sample_id)) {
         out <- out[out$sample_id %in% sample_id, ]

@@ -350,6 +350,7 @@ importFrom(data.table,
 )
 importFrom(grDevices,col2rgb)
 importFrom(lifecycle,
+  deprecate_soft,
   deprecate_warn,
   deprecated,
   is_present

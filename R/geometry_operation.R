@@ -427,8 +427,7 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' cell/spot will only get one geometry.
 #'
 #' @inheritParams annotPred
-#' @param op A binary operation function for the geometries. Defaults to
-#'   \code{\link[sf]{st_intersection}}.
+#' @inheritParams crop
 #' @return A \code{sf} data frame with \code{geometry} column containing the
 #'   geometries and corresponding column names of sfe as row names. There is no
 #'   guarantee that the returned geometries are valid or preserve the geometry
@@ -445,15 +444,17 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     annotGeometryName = "myofiber_simplified"
 #' )
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                    sample_id = "all", op = st_intersection) {
+                    sample_id = "all", op = deprecated(), difference = FALSE) {
     deprecate_warn("1.16.0", "annotOp()", 
                    details = "In addition, DuckDBDataFrame is not supported")
+    if (is_present(op)) 
+        deprecate_warn("1.16.0", "annotOp(op)", "annotOp(difference)")
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
-    cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id)
+    cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id, withDimnames = TRUE)
     sample_index <- colData(sfe)$sample_id %in% sample_id
     out <- .crop_geometry(cg, ag,
-        samples_use = sample_id, op = op,
+        samples_use = sample_id, difference = difference,
         sample_col = colData(sfe)$sample_id[sample_index],
         id_col = "barcode"
     )
@@ -614,7 +615,7 @@ st_not_covers <- function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
 #' @importFrom sf st_intersection st_union st_agr st_covers st_disjoint
-#' @importFrom lifecycle deprecated is_present deprecate_warn
+#' @importFrom lifecycle deprecated is_present deprecate_warn deprecate_soft
 #' @export
 #' @examples
 #' library(SFEData)

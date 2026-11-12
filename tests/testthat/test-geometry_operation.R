@@ -138,10 +138,10 @@ test_that("Only crop one sample out of two, with sf", {
     sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, 
                                                    sample_id = "sample01", keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped2, "sample02"), bbox_use,
-                                 pred = st_covered_by, sparse = FALSE
+                                 pred = "covered_by", sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped2, "sample02"),
@@ -171,10 +171,10 @@ test_that("Using a bounding box to crop SFE objects, current way, one sample", {
                  "No bounding boxes for samples specified.")
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m, keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use,
-                                 pred = st_covered_by, sparse = FALSE
+                                 pred = "covered_by", sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped, "sample02"),
@@ -190,10 +190,10 @@ test_that("Using a bounding box to crop SFE objects, current way, all samples", 
                                 c("sample01", "sample02")))
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m, keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use2,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
 })
 
