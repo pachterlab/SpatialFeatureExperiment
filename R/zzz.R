@@ -9,8 +9,8 @@
     if (!"SFE_subset_crop_max" %in% names(op)) {
         options(SFE_subset_crop_max = "100 MB")
     }
-    if (!"sf_use_duckspatial" %in% names(op)) {
-        options(sf_use_duckspatial = FALSE)
+    if (!"SFE_use_duckdb" %in% names(op)) {
+        options(SFE_use_duckdb = FALSE)
     }
     invisible()
 }
