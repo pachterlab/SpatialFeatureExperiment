@@ -140,6 +140,12 @@
     g
 }
 
+.transform_geometry.DuckDBDataFrame <- function(g, mult, add) {
+    check_installed("DuckDBSpatial")
+    m_use <- cbind(mult, add)
+    DuckDBSpatial::st_affine(g, m_use)
+}
+
 # Function factory to get different kinds of transformation functions
 .transform_geometry_fun <- function(name) {
     function(g, bbox, ...) {

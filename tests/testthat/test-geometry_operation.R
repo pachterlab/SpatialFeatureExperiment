@@ -925,6 +925,26 @@ test_that("Affine transformation of SFE object with image, after cropping", {
     expect_equal(int1, int2)
 })
 
+test_that("Affine transformation when there's DuckDB geometry", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe), fn)
+    spotPoly(sfe) <- readGeoParquet(fn)
+    
+    M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
+    v <- c(0, 300)
+    sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    cg <- spotPoly(sfe2) |> st_as_sf()
+    st_crs(cg) <- NA
+    
+    # Also see if spotPoly is aligned
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(cg))))
+    expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
+    
+    file.remove(fn)
+})
+
 test_that("Transformation when there's 3D geometry", {
     fp <- tempfile()
     dir_use <- CosMXOutput(file_path = fp)
