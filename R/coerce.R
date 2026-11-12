@@ -2,16 +2,8 @@
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
                         spotDiameter, unit, endCapStyle = "ROUND", 
-                        add_centroids = FALSE) {
-    if (is.null(colGeometries)) {
-        cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
-        colGeometries <- list(foo = .sc2cg(spatialCoords(spe), spotDiameter, 
-                                           endCapStyle = endCapStyle))
-        names(colGeometries) <- cg_name
-        if (add_centroids && cg_name != "centroids") {
-            colGeometries$centroids <- .sc2cg(spatialCoords(spe))
-        }
-    }
+                        add_centroids = FALSE, flip_geometry = FALSE) {
+    # It's unlikely that SPE objects have rowGeometries and annotGeometries anyway
     if (!is.null(rowGeometries)) {
         rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
                                      spotDiameter = NA, geometryType = "MULTIPOINT"
@@ -62,6 +54,23 @@
         imgData(spe) <- imgData(spe)[inds,]
         if (length(new_imgs)) imgData(spe)$data <- new_imgs
     }
+    img_df <- imgData(spe)
+    if (!nrow(img_df)) flip_geometry <- FALSE
+    if (is.null(colGeometries)) {
+        sc <- spatialCoords(spe)
+        if (flip_geometry) {
+            ind <- which.max(img_df$scaleFactor)
+            e <- ext(img_df$data[[ind]])
+            sc[,2] <- e["ymax"] - sc[,2]
+        }
+        cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
+        colGeometries <- list(foo = .sc2cg(sc, spotDiameter, 
+                                           endCapStyle = endCapStyle))
+        names(colGeometries) <- cg_name
+        if (add_centroids && cg_name != "centroids") {
+            colGeometries$centroids <- .sc2cg(sc)
+        }
+    }
     sfe <- new("SpatialFeatureExperiment", spe)
     colGeometries(sfe, withDimnames = FALSE) <- colGeometries
     rowGeometries(sfe, withDimnames = FALSE) <- rowGeometries
@@ -86,19 +95,26 @@
 #' geometries can also be converted; the coordinates in the \code{spatialCoords}
 #' field will be used to make POINT geometries named "centroids" to add to
 #' \code{colGeometries}. The geometries can also be supplied separately when
-#' using \code{toSpatialFeatureExperiment}. Images are converted to \code{SpatRaster}.
+#' using \code{toSpatialFeatureExperiment}. Images are converted to
+#' \code{SpatRaster}.
 #'
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams SpatialExperiment::toSpatialExperiment
 #' @inheritParams readVizgen
-#' @param x A \code{SpatialExperiment} or \code{Seurat} object to be coerced to a
-#'   \code{SpatialFeatureExperiment} object.
-#' @param image_scalefactors A \code{character}, choose between "lowres" or "hires".
-#'  Only for 10X Visium, image scaling factors are from `scalefactors_json.json` file.
-#' @param unit Default unit is \code{"micron"}. However for Visium one can choose
-#'  between \code{"micron"} or \code{"full_res_image_pixel"}.
-#' @param BPPARAM Deprecated when coercing from \code{SpatialExperiment},
-#'  but is used when coercing from \code{Seurat} object.
+#' @param x A \code{SpatialExperiment} or \code{Seurat} object to be coerced to
+#'   a \code{SpatialFeatureExperiment} object.
+#' @param image_scalefactors A \code{character}, choose between "lowres" or
+#'   "hires". Only for 10X Visium, image scaling factors are from
+#'   `scalefactors_json.json` file.
+#' @param unit Default unit is \code{"micron"}. However for Visium one can
+#'   choose between \code{"micron"} or \code{"full_res_image_pixel"}.
+#' @param BPPARAM Deprecated when coercing from \code{SpatialExperiment}, but is
+#'   used when coercing from \code{Seurat} object.
+#' @param flip_geometry Logical, whether to flip \code{spatialCoords(x)} to
+#'   align with image, because geometries have (0,0) at the bottom left when
+#'   coordinate values are positive, while image pixels have (0,0) at the top
+#'   left. Ignored if \code{colGeometries} is explicitly supplied or if there
+#'   are no images.
 #' @return A \code{SpatialFeatureExperiment} object
 #' @importFrom S4Vectors make_zero_col_DFrame
 #' @importFrom SpatialExperiment spatialCoords toSpatialExperiment
@@ -141,25 +157,13 @@ NULL
 setAs(
     from = "SpatialExperiment", to = "SpatialFeatureExperiment",
     function(from) {
-      cg <- int_colData(from)[["colGeometries"]]
-        if (is.null(cg)) {
-            coords_use <- spatialCoords(from)
-            if (is.null(rownames(coords_use))) {
-                rownames(coords_use) <- colnames(from)
-            }
-            cg <- .sc2cg(coords_use) # add `endCapStyle = "SQUARE"` when VisiumHD?
-            int_colData(from)[["colGeometries"]] <-
-                make_zero_col_DFrame(nrow(int_colData(from)))
-            int_colData(from)$colGeometries$centroids <- cg
-            from
-        }
         .spe_to_sfe(from, int_colData(from)[["colGeometries"]],
             int_elementMetadata(from)[["rowGeometries"]],
             int_metadata(from)[["annotGeometries"]],
             spatialCoordsNames(from), "POLYGON",
             int_metadata(from)[["spatialGraphs"]],
             spotDiameter = NA,
-            int_metadata(from)[["unit"]]
+            int_metadata(from)[["unit"]], flip_geometry = TRUE
         )
     }
 )
@@ -177,7 +181,8 @@ setMethod(
     function(x, colGeometries = NULL, rowGeometries = NULL,
              annotGeometries = NULL, spatialCoordsNames = c("x", "y"),
              annotGeometryType = "POLYGON",
-             spatialGraphs = NULL, spotDiameter = NA, unit = NULL) {
+             spatialGraphs = NULL, spotDiameter = NA, unit = NULL,
+             flip_geometry = TRUE) {
         if (is.null(colGeometries)) {
             colGeometries <- int_colData(x)$colGeometries
         }
@@ -193,7 +198,7 @@ setMethod(
         .spe_to_sfe(
             x, colGeometries, rowGeometries, annotGeometries,
             spatialCoordsNames, annotGeometryType,
-            spatialGraphs, spotDiameter, unit
+            spatialGraphs, spotDiameter, unit, flip_geometry = flip_geometry
         )
     }
 )

@@ -15,7 +15,8 @@ read10xVisiumSFE(
   zero.policy = NULL,
   row.names = c("id", "symbol"),
   flip = c("geometry", "image", "none"),
-  read_spatial_enrichment = TRUE
+  read_spatial_enrichment = TRUE,
+  add_centroids = FALSE
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ coordinate system.}
 \item{read_spatial_enrichment}{Logical, whether to read the
 \code{spatial_enrichment.csv} file from Visium output if the file is present and
 add its contents to \code{rowData}.}
+
+\item{add_centroids}{Logical, whether to add the centroids geometry.}
 }
 \value{
 A SpatialFeatureExperiment object. The images might need to be

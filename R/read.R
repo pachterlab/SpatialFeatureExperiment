@@ -30,6 +30,7 @@
 #' @param read_spatial_enrichment Logical, whether to read the
 #'   `spatial_enrichment.csv` file from Visium output if the file is present and
 #'   add its contents to `rowData`.
+#' @param add_centroids Logical, whether to add the centroids geometry.
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
@@ -69,7 +70,8 @@ read10xVisiumSFE <- function(dirs,
                              style = "W", zero.policy = NULL,
                              row.names = c("id", "symbol"),
                              flip = c("geometry", "image", "none"),
-                             read_spatial_enrichment = TRUE) {
+                             read_spatial_enrichment = TRUE,
+                             add_centroids = FALSE) {
     check_installed("DropletUtils")
     type <- match.arg(type)
     data <- match.arg(data)
@@ -87,7 +89,7 @@ read10xVisiumSFE <- function(dirs,
                             type, data, images,
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,
                             unit = unit, zero.policy = zero.policy, style = style,
-                            use_cellseg = FALSE)
+                            use_cellseg = FALSE, add_centroids = add_centroids)
         # Add spatial enrichment if present
         fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
         if (file.exists(fn) && read_spatial_enrichment) {
@@ -221,7 +223,6 @@ read10xVisiumSFE <- function(dirs,
         # Not sure if it's 0 based or 1 based but shouldn't matter that much
         # Basically, cartesian 0 is image nrow, cartesian x is nrow-x
         ind <- which.max(img_df$scaleFactor)
-        sfct <- img_df$scaleFactor[ind]
         e <- ext(img_df$data[[ind]]) # All scaled
     }
 
@@ -455,19 +456,6 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
     }, FUN.VALUE = numeric(1))
     dists <- mean(dists) # Full res pixels per 100 microns
     100/dists
-}
-
-.get_row_angle <- function(r, df) {
-    # Check alignment
-    df2 <- df[df$array_row == r,]
-    if (max(df2$pxl_row_in_fullres) - min(df2$pxl_row_in_fullres) > 1000)
-        df2 <- df[df$array_col == r,] # In this case array_col matches with pxl_row
-    ind1 <- which.max(df2$pxl_col_in_fullres)
-    ind2 <- which.min(df2$pxl_col_in_fullres)
-    tg <- (df2$pxl_row_in_fullres[ind1] - df2$pxl_row_in_fullres[ind2])/
-        (df2$pxl_col_in_fullres[ind1] - df2$pxl_col_in_fullres[ind2])
-    out <- atan(tg)
-    out
 }
 
 .h52poly_fov <- function(fn, z) {

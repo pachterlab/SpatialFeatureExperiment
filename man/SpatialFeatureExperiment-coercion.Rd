@@ -17,7 +17,8 @@
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   spotDiameter = NA,
-  unit = NULL
+  unit = NULL,
+  flip_geometry = TRUE
 )
 
 \S4method{toSpatialFeatureExperiment}{SingleCellExperiment}(
@@ -49,8 +50,8 @@
 )
 }
 \arguments{
-\item{x}{A \code{SpatialExperiment} or \code{Seurat} object to be coerced to a
-\code{SpatialFeatureExperiment} object.}
+\item{x}{A \code{SpatialExperiment} or \code{Seurat} object to be coerced to
+a \code{SpatialFeatureExperiment} object.}
 
 \item{colGeometries}{Geometry of the entities that correspond to the columns
 of the gene count matrix, such as cells and Visium spots. It must be a
@@ -90,8 +91,14 @@ fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
-\item{unit}{Default unit is \code{"micron"}. However for Visium one can choose
-between \code{"micron"} or \code{"full_res_image_pixel"}.}
+\item{unit}{Default unit is \code{"micron"}. However for Visium one can
+choose between \code{"micron"} or \code{"full_res_image_pixel"}.}
+
+\item{flip_geometry}{Logical, whether to flip \code{spatialCoords(x)} to
+align with image, because geometries have (0,0) at the bottom left when
+coordinate values are positive, while image pixels have (0,0) at the top
+left. Ignored if \code{colGeometries} is explicitly supplied or if there
+are no images.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -134,11 +141,12 @@ bottom left, one of them needs to be flipped for them to match. If one of
 them is already flipped, then use "none". The image will not be flipped if
 it's GeoTIFF.}
 
-\item{image_scalefactors}{A \code{character}, choose between "lowres" or "hires".
-Only for 10X Visium, image scaling factors are from \code{scalefactors_json.json} file.}
+\item{image_scalefactors}{A \code{character}, choose between "lowres" or
+"hires". Only for 10X Visium, image scaling factors are from
+\code{scalefactors_json.json} file.}
 
-\item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment},
-but is used when coercing from \code{Seurat} object.}
+\item{BPPARAM}{Deprecated when coercing from \code{SpatialExperiment}, but is
+used when coercing from \code{Seurat} object.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object
@@ -155,7 +163,8 @@ to \code{SpatialFeatureExperiment} with \code{as(spe,
 geometries can also be converted; the coordinates in the \code{spatialCoords}
 field will be used to make POINT geometries named "centroids" to add to
 \code{colGeometries}. The geometries can also be supplied separately when
-using \code{toSpatialFeatureExperiment}. Images are converted to \code{SpatRaster}.
+using \code{toSpatialFeatureExperiment}. Images are converted to
+\code{SpatRaster}.
 }
 \examples{
 library(VisiumIO)
