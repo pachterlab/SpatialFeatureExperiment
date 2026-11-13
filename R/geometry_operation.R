@@ -447,8 +447,11 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                     sample_id = "all", op = deprecated(), difference = FALSE) {
     deprecate_warn("1.16.0", "annotOp()", 
                    details = "In addition, DuckDBDataFrame is not supported")
-    if (is_present(op)) 
-        deprecate_warn("1.16.0", "annotOp(op)", "annotOp(difference)")
+    if (is_present(op)) {
+        deprecate_warn("1.16.0", "crop(op)", "crop(difference)")
+        ss <- .st_fun2string(op)
+        if (ss != "intersection") difference <- TRUE
+    }
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id, withDimnames = TRUE)
@@ -629,8 +632,11 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
                  op = deprecated(), difference = FALSE,
                  keep_whole = "col",
                  cover = FALSE) {
-    if (is_present(op)) 
+    if (is_present(op)) {
         deprecate_warn("1.16.0", "crop(op)", "crop(difference)")
+        ss <- .st_fun2string(op)
+        if (ss != "intersection") difference <- TRUE
+    }
     if (!is.logical(difference) || is.na(difference)) {
         stop("difference must be logical and not NA")
     }
