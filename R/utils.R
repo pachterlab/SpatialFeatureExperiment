@@ -308,5 +308,28 @@ getTechTxFields <- function(tech, data_dir = NULL) {
 
 setMethod(".get_centroid_coords", "sf", 
           function(x) st_coordinates(st_centroid(st_geometry(x))))
-setMethod(".get_centroid_coords", "DuckDBColumn",
-          function(x) as.matrix(st_coordinates(st_centroid(x))))
+setMethod(".get_centroid_coords", "DuckDBDataFrame",
+          function(x) as.matrix(st_coordinates(st_centroid(x$geometry))))
+
+.check_affine_info <- function(tr) {
+    named <- "name" %in% names(tr)
+    mat <- setequal(names(tr), c("M", "v"))
+    if (!named && !mat) {
+        o <- "transformation must be a list with names 'name' and 'param', or alternatively 'M' and 'v'."
+    }
+    if (named) {
+        allowed_names <- c("transpose", "mirror", "rotate", "scale")
+        if (!tr$name %in% allowed_names) {
+            o <- paste0("Name of transformation must be one of ",
+                              paste0(allowed_names, collapse = ", "))
+            name <- tr$name
+        }
+    } else if (mat) {
+        M <- tr$M
+        v <- tr$v
+        if (!identical(dim(M), c(2L,2L)) || !is.numeric(M) || .numeric2NA(v)) {
+            o <- paste0("M must be a 2x2 numeric matrix, and v a numeric vector of length 2 with no NA.")
+        }
+    }
+    o
+}

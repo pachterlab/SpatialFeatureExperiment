@@ -2,6 +2,7 @@
 % Please edit documentation in R/geometry_operation.R
 \name{st_any_pred}
 \alias{st_any_pred}
+\alias{st_n_pred}
 \alias{st_any_pred,ANY-method}
 \alias{st_any_pred,duckspatial_df-method}
 \alias{st_any_pred,DuckDBTable-method}
@@ -51,7 +52,7 @@ default in \code{st_intersects} is \code{TRUE}.}
 
 \item{...}{Arguments passed to the predicate function, which would be
 \code{st_<pred>} for in memory geometries and
-\code{\link[duckspatial]{ddbs_<pred>}} when using DuckDB.}
+\code{\link[duckspatial]{ddbs_predicate}} when using DuckDB.}
 }
 \value{
 For \code{st_any_*}, a logical vector indicating whether each

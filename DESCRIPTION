@@ -86,6 +86,7 @@ Suggests:
     arrow,
     BiocStyle,
     dplyr,
+    DuckDBDataFrame,
     DuckDBSpatial,
     duckspatial,
     gmp,

@@ -18,6 +18,7 @@
 changeSampleIDs <- function(sfe, replacement) {
     for (i in seq_along(replacement)) {
         original <- names(replacement)[i]
+        # NOTE: breaks for DuckDB
         colData(sfe)$sample_id[colData(sfe)$sample_id == original] <-
             replacement[i]
         gs_names <- names(int_metadata(sfe)$spatialGraphs)
@@ -28,6 +29,7 @@ changeSampleIDs <- function(sfe, replacement) {
             for (n in names(int_metadata(sfe)$annotGeometries)) {
                 ag <- int_metadata(sfe)$annotGeometries[[n]]
                 ind <- ag$sample_id == original
+                # NOTE: breaks for DuckDB
                 int_metadata(sfe)$annotGeometries[[n]]$sample_id[ind] <- replacement[i]
             }
         }

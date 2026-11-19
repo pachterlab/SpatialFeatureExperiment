@@ -163,25 +163,7 @@ setValidity("BioFormatsImage", function(object) {
         outs[3] <- "origin must be a numeric vector of length 2 without NAs."
     }
     if (length(object@transformation)) {
-        named <- "name" %in% names(object@transformation)
-        mat <- setequal(names(object@transformation), c("M", "v"))
-        if (!named && !mat) {
-            outs[4] <- "transformation must be a list with names 'name' and 'param', or alternatively 'M' and 'v'."
-        }
-        if (named) {
-            allowed_names <- c("transpose", "mirror", "rotate", "scale")
-            if (!object@transformation$name %in% allowed_names) {
-                outs[4] <- paste0("Name of transformation must be one of ",
-                                  paste0(allowed_names, collapse = ", "))
-                name <- object@transformation$name
-            }
-        } else if (mat) {
-            M <- object@transformation$M
-            v <- object@transformation$v
-            if (!identical(dim(M), c(2L,2L)) || !is.numeric(M) || .numeric2NA(v)) {
-                outs[4] <- paste0("M must be a 2x2 numeric matrix, and v a numeric vector of length 2 with no NA.")
-            }
-        }
+        outs[4] <- .check_affine_info(object@transformation)
     }
     outs <- outs[outs != ""]
     if (length(outs)) return(outs) else TRUE

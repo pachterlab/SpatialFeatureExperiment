@@ -25,7 +25,7 @@
 #'   default in \code{st_intersects} is \code{TRUE}. 
 #' @param ... Arguments passed to the predicate function, which would be
 #'   \code{st_<pred>} for in memory geometries and
-#'   \code{\link[duckspatial]{ddbs_<pred>}} when using DuckDB.
+#'   \code{\link[duckspatial]{ddbs_predicate}} when using DuckDB.
 #' @return For \code{st_any_*}, a logical vector indicating whether each
 #'   geometry in \code{x} intersects (or other predicates such as is covered by)
 #'   anything in \code{y} or a numeric vector of indices of \code{TRUE} when
@@ -40,6 +40,7 @@
 #'   st_is_empty st_disjoint st_z_range st_zm
 #' @importFrom stats aggregate
 #' @name st_any_pred
+#' @aliases st_n_pred
 #' @examples
 #' library(sf)
 #' pts <- st_sfc(
