@@ -30,7 +30,7 @@ specifying the extent to use.}
 }
 \value{
 Getters return a numeric vector specifying the extent. Setters return
-  a \code{*Image} object of the same class as the input.
+a \code{*Image} object of the same class as the input.
 }
 \description{
 Unlike in \code{SpatialExperiment}, images in SFE have extents which are used
@@ -52,19 +52,19 @@ stored. The \code{ext} getter will apply the transformation on the fly. The
 setter sets the pre-transformation extent.
 }
 \seealso{
-Other image methods: 
+Other image methods:
 \code{\link{SFE-image}},
-\code{\link{affineImg}()},
-\code{\link{cropImg}()},
+\code{\link[=affineImg]{affineImg()}},
+\code{\link[=cropImg]{cropImg()}},
 \code{\link{dim,BioFormatsImage-method}},
 \code{\link{dim,ExtImage-method}},
-\code{\link{imgRaster}()},
-\code{\link{imgSource}()},
-\code{\link{mirrorImg}()},
-\code{\link{rotateImg}()},
-\code{\link{scaleImg}()},
-\code{\link{translateImg}()},
-\code{\link{transposeImg}()}
+\code{\link{imgRaster}},
+\code{\link{imgSource}},
+\code{\link{mirrorImg}},
+\code{\link{rotateImg}},
+\code{\link[=scaleImg]{scaleImg()}},
+\code{\link[=translateImg]{translateImg()}},
+\code{\link[=transposeImg]{transposeImg()}}
 }
 \concept{Image methods}
 \concept{image methods}

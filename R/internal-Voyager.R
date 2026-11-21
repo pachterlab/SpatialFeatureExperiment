@@ -134,10 +134,15 @@ NULL
 #' @rdname internal-Voyager
 #' @export
 .rm_empty_geometries <- function(g, MARGIN) {
-    empty_inds <- st_is_empty(g)
+    if (inherits(g, "DuckDBDataFrame")) check_installed("DuckDBSpatial")
+    if (is_installed("DuckDBSpatial")) {
+        empty_fun <- DuckDBSpatial::st_is_empty
+    } else empty_fun <- sf::st_is_empty
+    empty_inds <- empty_fun(g)
+    if (inherits(g, "DuckDBDataFrame")) empty_inds <- empty_inds$geometry
     if (MARGIN < 3) {
         if (any(empty_inds)) {
-            stop("Empty geometries found in dimGeometry.")
+            warning("Empty geometries found in dimGeometry.")
         }
     } else {
         g <- g[!empty_inds, ]

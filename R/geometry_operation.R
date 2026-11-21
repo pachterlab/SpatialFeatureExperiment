@@ -10,18 +10,22 @@
 #'
 #' @param x An object of class \code{sf}, \code{sfc}, or \code{sfg}.
 #' @param y Another object of class \code{sf}, \code{sfc}, or \code{sfg}.
-#' @param pred A geometric binary predicate function, such as
-#'   \code{\link[sf]{st_intersects}}. It should return an object of class
-#'   \code{sgbp}, for sparse predicates.
+#' @param pred Name of a predicate such as "intersects", see
+#'   \code{\link[duckspatial]{ddbs_predicate}}. It can correspond to functions
+#'   in the \code{sf} package without the \code{st_} prefix. Deprecated
+#'   behavior: A geometric binary predicate function, such as
+#'   \code{\link[sf]{st_intersects}}.
 #' @param yx Whether to do \code{pred(y, x)} instead of \code{pred(x, y)}. For
 #'   symmetric predicates, the results should be the same. When x has a large
 #'   number of geometries and y has few, \code{pred(y, x)} is much faster than
 #'   \code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
-#'   \code{st_is_within_distance}.
+#'   \code{st_is_within_distance}. Ignored for \code{DuckDBDataFrame}.
 #' @param sparse If \code{TRUE}, returns numeric indices rather than logical
 #'   vector. Defaults to \code{FALSE} for backward compatibility, though the
-#'   default in \code{st_intersects} is \code{TRUE}.
-#' @param ... Arguments passed to \code{pred}.
+#'   default in \code{st_intersects} is \code{TRUE}. 
+#' @param ... Arguments passed to the predicate function, which would be
+#'   \code{st_<pred>} for in memory geometries and
+#'   \code{\link[duckspatial]{ddbs_predicate}} when using DuckDB.
 #' @return For \code{st_any_*}, a logical vector indicating whether each
 #'   geometry in \code{x} intersects (or other predicates such as is covered by)
 #'   anything in \code{y} or a numeric vector of indices of \code{TRUE} when
@@ -29,12 +33,14 @@
 #'   indicate which item in \code{y} each item in \code{x} intersects, which
 #'   might not always be relevant. For \code{st_n_*}, an integer vector
 #'   indicating the number of geometries in y returns TRUE for each geometry in
-#'   x.
+#'   x. For \code{DuckDB}, the output is a \code{DuckDBDataColumn}.
 #' @concept Geometric operations
 #' @export
 #' @importFrom sf st_intersects st_agr<- st_drop_geometry st_as_sfc st_cast
 #'   st_is_empty st_disjoint st_z_range st_zm
 #' @importFrom stats aggregate
+#' @name st_any_pred
+#' @aliases st_n_pred
 #' @examples
 #' library(sf)
 #' pts <- st_sfc(
@@ -46,37 +52,196 @@
 #' st_any_intersects(pts, pol)
 #' st_n_pred(pts, pol, pred = st_disjoint)
 #' st_n_intersects(pts, pol)
-st_any_pred <- function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
-    if (yx) {
-        res <- unlist(unclass(pred(y, x, ...)))
-        res <- sort(unique(res))
-        if (!sparse) res <- seq_along(st_geometry(x)) %in% res
-    } else {
-        res <- lengths(pred(x, y, ...)) > 0L
-        if (sparse) res <- which(res)
-    }
-    res
+NULL
+
+.check_pred <- function(pred) {
+    if (is.function(pred)) {
+        deprecate_warn("1.16.0", "st_any_pred(pred = 'should be a string')")
+    } else if (is.character(pred)) {
+        pred <- get(paste0("st_", pred), mode = "function")
+    } else stop("`pred` of class ", class(pred)[1], " not supported.")
+    return(pred)
 }
 
 #' @rdname st_any_pred
 #' @export
-st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE) 
-    st_any_pred(x, y, st_intersects, yx = yx, sparse = sparse)
+setMethod("st_any_pred", "ANY",
+          function(x, y, pred, yx = FALSE, sparse = FALSE, ...) {
+              pred <- .check_pred(pred)
+              if (yx) {
+                  res <- unlist(unclass(pred(y, x, ...)))
+                  res <- sort(unique(res))
+                  if (!sparse) res <- seq_along(st_geometry(x)) %in% res
+              } else {
+                  res <- lengths(pred(x, y, ...)) > 0L
+                  if (sparse) res <- which(res)
+              }
+              res
+          })
+
+.check_y_class_pred <- function(y) {
+    if (!any(c("sf", "sfc", "sfg") %in% class(y)) && 
+        !inherits(y, "tbl_duckdb_connection"))
+        stop("y must be one of DuckDBTable, sf(g/c), or tbl_duckdb_connection")
+}
+
+.st_fun2string <- function(pred) {
+    if (is.function(pred)) {
+        nm <- as.character(substitute(pred))
+        gsub("^st_", "", nm)
+    } else pred
+}
+
+.to_sf <- function(y) {
+    # Convert sfg or sfc to sf for ddbs_*
+    if (inherits(y, "sfg")) y <- st_sfc(y)
+    if (inherits(y, "sfc")) y <- st_sf(geometry = y)
+    y
+}
 
 #' @rdname st_any_pred
 #' @export
-st_n_pred <- function(x, y, pred, ...) lengths(pred(x, y, ...))
+setMethod("st_any_pred", "duckspatial_df",
+          function(x, y, pred, yx = NA, sparse = FALSE, ...) {
+              check_installed("duckspatial")
+              check_installed("dplyr")
+              check_installed("DuckDBDataFrame")
+              .check_y_class_pred(y)
+              pred <- .st_fun2string(pred)
+              negate <- FALSE
+              y <- .to_sf(y)
+              if (grepl("^not_", pred)) {
+                  negate <- TRUE
+                  pred <- gsub("^not_", "", pred)
+              }
+              out <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
+              # NOTE: Still debating whether to keep it lazy. Depends on downstream use.
+              # Output indices can be out of order
+              out <- out |> dplyr::select(id_x) |> dplyr::distinct()
+              if (sparse) {
+                  if (negate) {
+                      y_ids <- x |> 
+                          dplyr::mutate(id_x = dplyr::row_number(geometry)) |> 
+                          duckspatial::ddbs_drop_geometry() |> 
+                          dplyr::select(id_x)
+                      out <- dplyr::setdiff(y_ids, out)
+                  }
+                  out <- out |> 
+                      DuckDBDataFrame::DuckDBDataFrame()
+                  return(out$id_x)
+              } else {
+                  # Gets the correct output, but could be more optimized
+                  out <- out |> 
+                      dplyr::mutate(ind = TRUE)
+                  out_lgl <- x |> 
+                      dplyr::mutate(id_x = dplyr::row_number(geometry)) |> 
+                      duckspatial::ddbs_drop_geometry() |> 
+                      dplyr::select(id_x) |> 
+                      dplyr::left_join(out, by = "id_x") |> 
+                      dplyr::mutate(ind = dplyr::case_when(is.na(ind) ~ FALSE,
+                                                           TRUE ~ ind)) |> 
+                      dplyr::select(ind)
+                  if (negate) out_lgl <- out_lgl |> dplyr::mutate(ind = !ind)
+                  out_lgl <- DuckDBDataFrame::DuckDBDataFrame(out_lgl)
+                  return(out_lgl$ind)
+              }
+          })
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_any_pred", "DuckDBTable",
+          function(x, y, pred, yx = NA, sparse = TRUE, ...) {
+              check_installed("DuckDBSpatial")
+              check_installed("DuckDBDataFrame")
+              check_installed("duckspatial")
+              if (inherits(y, "DuckDBTable")) {
+                  stopifnot(DuckDBSpatial::hasGeometry(y))
+                  y <- DuckDBDataFrame::tblconn(y) |> 
+                      duckspatial::as_duckspatial_df(crs = NA)
+              }
+              st_any_pred(DuckDBDataFrame::tblconn(x) |> 
+                              duckspatial::as_duckspatial_df(crs = NA), 
+                          y, pred = pred, sparse = sparse, ...)
+          })
+
+#' @rdname st_any_pred
+#' @export
+st_any_intersects <- function(x, y, yx = FALSE, sparse = FALSE) 
+    st_any_pred(x, y, "intersects", yx = yx, sparse = sparse)
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_n_pred", "ANY",
+          function(x, y, pred, ...) {
+              pred <- .check_pred(pred)
+              lengths(pred(x, y, ...))
+          })
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_n_pred", "duckspatial_df",
+          function(x, y, pred, ...) {
+              check_installed("duckspatial")
+              check_installed("dplyr")
+              check_installed("DuckDBDataFrame")
+              .check_y_class_pred(y)
+              y <- .to_sf(y)
+              pred <- .st_fun2string(pred)
+              res <- duckspatial::ddbs_predicate(x, y, predicate = pred, ...)
+              # NOTE: again, debating whether to keep it lazy
+              out_count <- res |> dplyr::count(id_x)
+              out <- x |> 
+                  dplyr::mutate(id_x = dplyr::row_number(geometry)) |> 
+                  duckspatial::ddbs_drop_geometry() |> 
+                  dplyr::select(id_x) |> 
+                  dplyr::left_join(out_count, by = "id_x") |> 
+                  dplyr::mutate(n = dplyr::case_when(is.na(n) ~ as.integer64(0),
+                                                     TRUE ~ n)) |> 
+                  DuckDBDataFrame::DuckDBDataFrame()
+              out$n
+          })
+
+#' @rdname st_any_pred
+#' @export
+setMethod("st_n_pred", "DuckDBTable", 
+          function(x, y, pred, ...) {
+              check_installed("DuckDBSpatial")
+              check_installed("DuckDBDataFrame")
+              check_installed("duckspatial")
+              if (inherits(y, "DuckDBTable")) {
+                  stopifnot(DuckDBSpatial::hasGeometry(y))
+                  y <- DuckDBDataFrame::tblconn(y) |> 
+                      duckspatial::as_duckspatial_df(crs = NA)
+              }
+              st_n_pred(DuckDBDataFrame::tblconn(x) |> 
+                            duckspatial::as_duckspatial_df(crs = NA), 
+                        y, pred = pred, ...)
+          })
+
 # Not doing yx here since this is usually not used when length(y) << length(x)
 #' @rdname st_any_pred
 #' @export
-st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
+st_n_intersects <- function(x, y) st_n_pred(x, y, "intersects")
 
-.crop_geometry <- function(g, y, samples_use, op, sample_col = NULL,
+.crop_geometry <- function(g, y, samples_use, difference = FALSE, sample_col = NULL,
                            id_col = "id", remove_empty = FALSE) {
     if (!nrow(g)) return(g)
+    is_duckdb <- inherits(g, "DuckDBDataFrame")
+    op_str <- if (difference) "difference" else "intersection"
+    pfx <- if (is_duckdb) "ddbs_" else "st_"
+    op_str <- paste0(pfx, op_str)
+    if (is_duckdb) {
+        restore_order <- FALSE
+        check_installed("duckspatial")
+        check_installed("DuckDBDataFrame")
+        check_installed("DuckDBSpatial")
+        k <- DuckDBDataFrame::keycols(g)
+        op <- getExportedValue("duckspatial", op_str)
+        st_is_empty <- DuckDBSpatial::st_is_empty
+    } else op <- getExportedValue("sf", op_str)
     # g may have column sample_id as in colGeometry and annotGeometry
     # g should also have row names if it is colGeometry
-    if (!id_col %in% names(g)) {
+    if (!id_col %in% names(g) && !is_duckdb) {
         rm_id <- TRUE
         if (!is.null(rownames(g))) {
             g[[id_col]] <- rownames(g)
@@ -95,65 +260,98 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
             } else {
                 y_use <- st_geometry(y)
             }
-            .g <- gs[[s]][, c("geometry", id_col)]
-            st_agr(.g) <- "constant"
-            if (!is.null(st_z_range(.g)))
-                y_use <- st_zm(y_use, drop = FALSE, what = "Z")
-            o <- op(.g, y_use)
-            # Aggregate in case cropping broke some items into multiple pieces
-            if (any(!rownames(o) %in% rownames(.g))) {
-                o <- aggregate(o,
-                               by = setNames(list(id = o[[id_col]]), id_col),
-                               FUN = unique
-                )
+            if (is_duckdb) {
+                .g <- duckspatial::as_duckspatial_df(DuckDBDataFrame::tblconn(gs[[s]]),
+                                                     crs = NA)
+                o <- op(.g, .to_sf(y_use))
+                o <- o |> dplyr::select(-row_number)
+                class(o) <- setdiff(class(o), "duckspatial_df")
+                o <- DuckDBDataFrame::DuckDBDataFrame(o)
+                if (nrow(o) > nrow(gs[[s]]))
+                    stop("Some geometries have been broken into multiple pieces")
+            } else {
+                .g <- gs[[s]][, c("geometry", id_col)]
+                st_agr(.g) <- "constant"
+                if (!is.null(st_z_range(.g))) # ddbs_has_z, ddbs_force_3d
+                    y_use <- st_zm(y_use, drop = FALSE, what = "Z")
+                o <- op(.g, y_use)
+                if (any(!rownames(o) %in% rownames(.g))) {
+                    o <- aggregate(o,
+                                   by = setNames(list(id = o[[id_col]]), id_col),
+                                   FUN = unique
+                    )
+                }
+                o <- merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE)
             }
-            return(merge(o, st_drop_geometry(gs[[s]]), by = id_col, all = TRUE))
+            return(o)
         } else {
             return(gs[[s]])
         }
     })
     gs_sub <- do.call(rbind, gs_sub)
-    # Convert st_GEOMETRY to a more specific type
-    if (st_geometry_type(gs_sub, by_geometry = FALSE) == "GEOMETRY") {
-        gs_sub <- st_cast(gs_sub)
+    if (!is_duckdb) {
+        # Convert st_GEOMETRY to a more specific type
+        if (st_geometry_type(gs_sub, by_geometry = FALSE) == "GEOMETRY") {
+            gs_sub <- st_cast(gs_sub)
+        }
+        gs_sub <- gs_sub[, names(g)]
+        rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
+        if (rm_id) gs_sub[[id_col]] <- NULL
     }
-    gs_sub <- gs_sub[, names(g)]
-    rownames(gs_sub) <- rownames(g)[match(gs_sub[[id_col]], g[[id_col]])]
-    if (rm_id) gs_sub[[id_col]] <- NULL
-    if (remove_empty) gs_sub <- gs_sub[!st_is_empty(gs_sub), ]
+    
+    
+    if (remove_empty) gs_sub <- gs_sub[!st_is_empty(gs_sub$geometry), ]
     gs_sub
 }
 
 .annot_fun <- function(x, y, colGeometryName, samples_use = NULL,
                        fun = st_any_pred, return_df = FALSE, ...) {
     cg <- colGeometry(x,
-        type = colGeometryName, sample_id = samples_use,
-        withDimnames = TRUE
+        type = colGeometryName, sample_id = "all",
+        withDimnames = FALSE # withDimnames won't work for DuckDBDF
     )
-    cg$barcode <- rownames(cg)
-    cg <- cg[, c("barcode", "geometry")]
-    cgs <- split(cg, colData(x)$sample_id[colData(x)$sample_id %in% samples_use])
+    if (inherits(cg, "DuckDBDataFrame")) {
+        check_installed("DuckDBDataFrame")
+        return_df <- TRUE
+    }
+    cg$barcode <- colnames(x)
+    cg$sample_id <- x$sample_id
+    cg <- cg[cg$barcode %in% colnames(x)[x$sample_id %in% samples_use],]
+    cg <- cg[, c("sample_id", "barcode", "geometry")]
+    cgs <- split(cg, cg$sample_id)
     out <- lapply(names(cgs), function(s) {
         if ("sample_id" %in% names(y)) {
             y_use <- y[y$sample_id == s, ]
         } else {
             y_use <- y
         }
-        o <- fun(cgs[[s]], y_use, ...)
-        if (!return_df) {
-            names(o) <- cgs[[s]]$barcode
+        df_use <- cgs[[s]]
+        df_use$sample_id <- NULL
+        o <- fun(df_use, y_use, ...)
+        if (!inherits(cg, "DuckDBDataFrame")) {
+            if (!return_df) {
+                names(o) <- df_use$barcode
+            } else {
+                o <- as.data.frame(o) # not tibble
+                rownames(o) <- df_use$barcode
+            }
         } else {
-            rownames(o) <- cgs[[s]]$barcode
+            # Can't use names or rownames. Include additional column for barcode
+            o <- DuckDBDataFrame::DuckDBDataFrame(DuckDBDataFrame::tblconn(o),
+                                                  datacols = o@table@datacols)
+            o$barcode <- as.vector(df_use$barcode)
         }
         o
     })
     if (!return_df) {
         out <- Reduce(c, out)
-        out <- out[rownames(cg)]
+        out <- out[cg$barcode] # change for DuckDB
     } else {
         out <- do.call(rbind, out)
-        out <- out[rownames(cg), ]
-        out$barcode <- NULL
+        if (!inherits(out, "DuckDBDataFrame")) {
+            out <- out[rownames(cg), ]
+            out$barcode <- NULL
+        }
     }
     out
 }
@@ -163,8 +361,9 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' This function finds binary predicates for the geometry of each cell/spot
 #' (i.e. \code{colGeometry}) and an annotation geometry for each sample. For
 #' example, whether each Visium spot intersects with the tissue boundary in each
-#' sample.
-#' 
+#' sample. This function can be useful when the \code{annotGeometries} have
+#' undergone affine transforms with the rest of the SFE object.
+#'
 #' @inheritParams st_any_pred
 #' @param sfe An SFE object.
 #' @param colGeometryName Name of column geometry for the predicate.
@@ -177,9 +376,11 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #'   number of columns in the sample(s) of interest, with barcodes (or
 #'   corresponding column names of sfe) as names. For \code{annotNPred}, a
 #'   numeric vector of the same length as the number of columns in the sample(s)
-#'   of interest with barcodes as names, indicating the number of geometries
-#'   in the \code{annotGeometry} of interest returns TRUE for the predicate for
-#'   each each geometry in the \code{colGeometry} of interest.
+#'   of interest with barcodes as names, indicating the number of geometries in
+#'   the \code{annotGeometry} of interest returns TRUE for the predicate for
+#'   each each geometry in the \code{colGeometry} of interest. For \code{DuckDB},
+#'   the output is a \code{DuckDBDataFrame} with an extra column \code{barcode}
+#'   because names can't be set.
 #' @concept Geometric operations
 #' @export
 #' @seealso annotOp
@@ -191,7 +392,7 @@ st_n_intersects <- function(x, y) st_n_pred(x, y, st_intersects)
 #' # How many nuclei are there in each Visium spot
 #' n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei")
 annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                      sample_id = "all", pred = st_intersects, yx = FALSE) {
+                      sample_id = "all", pred = "intersects", yx = FALSE) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -204,7 +405,10 @@ annotPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' @rdname annotPred
 #' @export
 annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                       sample_id = "all", pred = st_intersects) {
+                       sample_id = "all", pred = "intersects") {
+    # Question: do I still want this function? It was specifically created to
+    # relate Visium spots to nuclei segmentation from H&E, not a case where
+    # DuckDB is helpful. I won't use it with Xenium.
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
     .annot_fun(sfe, ag,
@@ -215,20 +419,21 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 
 #' Binary operations for geometry of each cell/spot and annotation
 #'
-#' Just like \code{\link{annotPred}}, but performs the operation rather than
-#' predicate. For example, this function would return the geometry of the
-#' intersections between each Visium spot and the tissue boundary for each
-#' sample, rather than whether each Visium spot intersects the tissue boundary.
-#' In case one cell/spot gets broken up into multiple geometries, the union of
-#' those geometries will be taken, so each cell/spot will only get one geometry.
+#' `r lifecycle::badge('deprecated')` Just like \code{\link{annotPred}}, but
+#' performs the operation rather than predicate. For example, this function
+#' would return the geometry of the intersections between each Visium spot and
+#' the tissue boundary for each sample, rather than whether each Visium spot
+#' intersects the tissue boundary. In case one cell/spot gets broken up into
+#' multiple geometries, the union of those geometries will be taken, so each
+#' cell/spot will only get one geometry.
 #'
 #' @inheritParams annotPred
-#' @param op A binary operation function for the geometries. Defaults to
-#' \code{\link[sf]{st_intersection}}.
+#' @inheritParams crop
 #' @return A \code{sf} data frame with \code{geometry} column containing the
-#' geometries and corresponding column names of sfe as row names. There is no
-#' guarantee that the returned geometries are valid or preserve the geometry
-#' class (e.g. when the intersection of polygons result into a line of a point).
+#'   geometries and corresponding column names of sfe as row names. There is no
+#'   guarantee that the returned geometries are valid or preserve the geometry
+#'   class (e.g. when the intersection of polygons result into a line of a
+#'   point).
 #' @concept Geometric operations
 #' @export
 #' @seealso annotPred
@@ -240,13 +445,20 @@ annotNPred <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     annotGeometryName = "myofiber_simplified"
 #' )
 annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
-                    sample_id = "all", op = st_intersection) {
+                    sample_id = "all", op = deprecated(), difference = FALSE) {
+    deprecate_warn("1.16.0", "annotOp()", 
+                   details = "In addition, DuckDBDataFrame is not supported")
+    if (is_present(op)) {
+        deprecate_warn("1.16.0", "crop(op)", "crop(difference)")
+        ss <- .st_fun2string(op)
+        if (ss != "intersection") difference <- TRUE
+    }
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
-    cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id)
+    cg <- colGeometry(sfe, type = colGeometryName, sample_id = sample_id, withDimnames = TRUE)
     sample_index <- colData(sfe)$sample_id %in% sample_id
     out <- .crop_geometry(cg, ag,
-        samples_use = sample_id, op = op,
+        samples_use = sample_id, difference = difference,
         sample_col = colData(sfe)$sample_id[sample_index],
         id_col = "barcode"
     )
@@ -296,9 +508,13 @@ annotOp <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' )
 annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
                          annotColNames = 1L, sample_id = "all",
-                         pred = st_intersects, summary_fun = mean) {
+                         pred = "intersects", summary_fun = mean) {
     sample_id <- .check_sample_id(sfe, sample_id, one = FALSE)
+    pred <- .check_pred(pred)
     ag <- annotGeometry(sfe, type = annotGeometryName, sample_id = sample_id)
+    # okay not to support DuckDB because this function was originally written
+    # for smaller Visium data
+    if (inherits(ag, "DuckDBDataFrame")) stop("DuckDB not supported")
     cols_use <- intersect(
         annotColNames,
         names(ag)[!names(ag) %in% c("barcode", "geometry")]
@@ -359,6 +575,8 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
     bbox_sf
 }
 
+st_not_covers <- function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
+
 #' Crop an SFE object with a geometry
 #'
 #' Returns an SFE object whose specified \code{colGeometry} returns \code{TRUE}
@@ -366,7 +584,7 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #' geometry of interest. This can be used to subset an SFE object with a tissue
 #' boundary or histological region polygon, or crop away empty spaces. After
 #' cropping, not only will the cells/spots be subsetted, but also all geometries
-#' will be cropped.
+#' may be cropped.
 #'
 #' 3D geometries are allowed, but geometric operations can only be performed in
 #' x and y but not z.
@@ -385,24 +603,23 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'   included in the indicated sample IDs are subsetted. If sample is not
 #'   indicated in \code{y}, then the same geometry or bounding box is used to
 #'   subset all samples specified in the \code{sample_id} argument.
-#' @param op A geometric operation function to crop the geometries in the SFE
-#'   object. Only \code{\link[sf]{st_intersection}} and \code{\link[sf]{st_difference}}
-#'   are allowed. If "intersection", then only things inside \code{y} is kept
-#'   after cropping. If "difference", then only things outside \code{y} is kept.
+#' @param op Deprecated.
+#' @param difference Logical, whether to compute remove the area occupied by
+#' \code{y} from the SFE object.
 #' @param keep_whole Character vector, can be one or more of "col" and "annot"
 #'   to keep whole items from \code{colGeometries} or \code{annotGeometries},
 #'   keeping geometries that partially intersect with \code{y} whole. This can
 #'   greatly speed up code while not breaking geometries into multiple pieces.
 #'   Can also be "none" so all geometries are actually cropped.
 #' @param cover Logical, whether the geometries in \code{x} must be entirely
-#'   covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
-#'   be entirely outside \code{y} if \code{op = st_difference}. Only relevant
+#'   covered by \code{y} if \code{difference = FALSE} or whether \code{x} must
+#'   be entirely outside \code{y} if \code{difference = TRUE}. Only relevant
 #'   when \code{keep_whole != "none"}.
 #' @return An SFE object. There is no guarantee that the geometries after
 #'   cropping are still all valid or preserve the original geometry class.
 #' @concept Geometric operations
 #' @importFrom sf st_intersection st_union st_agr st_covers st_disjoint
-#' @importFrom lifecycle deprecated is_present deprecate_warn
+#' @importFrom lifecycle deprecated is_present deprecate_warn deprecate_soft
 #' @export
 #' @examples
 #' library(SFEData)
@@ -413,22 +630,26 @@ annotSummary <- function(sfe, colGeometryName = 1L, annotGeometryName = 1L,
 #'     sample_id = "Vis5A"
 #' )
 crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
-                 op = st_intersection,
-                 keep_whole = "none",
+                 op = deprecated(), difference = FALSE,
+                 keep_whole = "col",
                  cover = FALSE) {
-    if (!(identical(op, sf::st_intersection) || identical(op, sf::st_difference))) {
-        stop("op must be either st_intersection or st_difference.")
+    if (is_present(op)) {
+        deprecate_warn("1.16.0", "crop(op)", "crop(difference)")
+        ss <- .st_fun2string(op)
+        if (ss != "intersection") difference <- TRUE
     }
-    keep_whole <- match.arg(keep_whole, choices = c("none", "col", "annot"),
+    if (!is.logical(difference) || is.na(difference)) {
+        stop("difference must be logical and not NA")
+    }
+    keep_whole <- match.arg(keep_whole, choices = c("col", "annot", "none"),
                             several.ok = TRUE)
     if (length(keep_whole) > 1L && "none" %in% keep_whole) {
         keep_whole <- keep_whole[keep_whole != "none"]
     }
-    is_difference <- identical(op, sf::st_difference)
-    pred <- if (is_difference) {
-        if (cover) st_disjoint else function(x, y, sparse = TRUE) !st_covers(x, y, sparse = sparse)
+    pred <- if (difference) {
+        if (cover) "disjoint" else "not_covers"
     } else {
-        if (cover) st_covers else st_intersects
+        if (cover) "covers" else "intersects"
     }
     sample_id <- .check_sample_id(x, sample_id, one = FALSE)
     if (!inherits(y, "sf") && !inherits(y, "sfc") && !inherits(y, "sfg")) {
@@ -445,9 +666,14 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         samples_use <- sample_id
     }
     preds <- .annot_fun(x, y, colGeometryName,
-        samples_use = samples_use,
+        samples_use = samples_use, sparse = FALSE,
         fun = st_any_pred, pred = pred, yx = TRUE
     )
+    # Can't subset assays with DuckDBColumn
+    if (inherits(preds, "DuckDBDataFrame")) {
+        preds <- as.data.frame(preds)
+        preds <- setNames(preds$ind, preds$barcode)
+    }
     # Don't remove anything from other samples
     other_bcs <- setdiff(colnames(x), names(preds))
     other_samples <- setNames(rep(TRUE, length(other_bcs)), other_bcs)
@@ -469,7 +695,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         # Also actually crop all geometries for the samples of interest.
         colGeometries(out) <- lapply(colGeometries(out), .crop_geometry,
                                      y = y,
-                                     samples_use = samples_use, op = op,
+                                     samples_use = samples_use, difference = difference,
                                      id_col = "barcode",
                                      sample_col = colData(out)$sample_id
         )
@@ -478,15 +704,16 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
         annotGeometries(out) <- lapply(annotGeometries(out), function(x) {
             inds <- x$sample_id %in% sample_id
             other_samples <- x[!inds,]
-            in_sample <- x[inds,]
-            preds <- pred(in_sample, y, sparse = FALSE)
+            in_sample <- x[inds,] 
+            preds <- st_any_pred(in_sample, y, sparse = FALSE,
+                                 pred = pred)
             if (!any(preds)) other_samples else
                 rbind(in_sample[preds,], other_samples)
         })
     } else {
         annotGeometries(out) <- lapply(annotGeometries(out), .crop_geometry,
                                        y = y,
-                                       samples_use = samples_use, op = op,
+                                       samples_use = samples_use, difference = difference,
                                        remove_empty = TRUE
         )
     }
@@ -495,7 +722,7 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
             rgs <- rowGeometries(out, sample_id = s)
             rowGeometries(out, sample_id = s) <-
                 lapply(rgs, function(r) {
-                    r <- .crop_geometry(r, y = y, op = op, sample_col = s,
+                    r <- .crop_geometry(r, y = y, difference = difference, sample_col = s,
                                         samples_use = s)
                 })
         }
@@ -504,24 +731,17 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
     out
 }
 
-.bbox_sample_g <- function(gs) {
-    # Assume that it's already properly subsetted for the sample
-    # For one sample_id, multiple geometries
-    bboxes <- lapply(gs, st_bbox)
-    aggBboxes(bboxes)
-}
-
 .bbox_sample <- function(sfe, sample_id, include_images = FALSE,
                          include_row = FALSE) { # For one sample
     sample_index <- colData(sfe)$sample_id == sample_id
     cgs <- as.list(int_colData(sfe)[["colGeometries"]][sample_index, ,
         drop = FALSE
     ])
-    cgs_bboxes <- lapply(cgs, st_bbox)
+    cgs_bboxes <- lapply(cgs, function(x) st_bbox(x$geometry))
     ags <- annotGeometries(sfe)
     if (length(ags)) {
         ags <- lapply(ags, function(g) g[g$sample_id == sample_id, ])
-        ags_bboxes <- lapply(ags, st_bbox)
+        ags_bboxes <- lapply(ags, function(x) st_bbox(x$geometry))
     } else {
         ags_bboxes <- NULL
     }
@@ -533,7 +753,8 @@ crop <- function(x, y = NULL, colGeometryName = 1L, sample_id = "all",
             has_sample <- grepl(pattern, names(rgs))
             rgs <- rgs[has_sample]
         }
-        if (length(rgs)) rgs_bboxes <- lapply(rgs, st_bbox) else rgs_bboxes <- NULL
+        if (length(rgs)) rgs_bboxes <- lapply(rgs, function(x) st_bbox(x$geometry)) 
+        else rgs_bboxes <- NULL
     } else rgs_bboxes <- NULL
     if (isEmpty(imgData(sfe))) include_images <- FALSE
     if (include_images) {

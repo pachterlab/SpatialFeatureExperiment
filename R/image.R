@@ -1,6 +1,12 @@
-# Superclass for *Image with extent
+#' Superclass for images with extent
+#' 
+#' This is a virtual class for images with spatial extents. All other images
+#' classes in this package inherits from this virtual class.
+#' 
 #' @importFrom S4Vectors showAsCell
+#' @export
 setClass("AlignedSpatialImage", contains = c("VirtualSpatialImage", "VIRTUAL"))
+
 setMethod("NROW", "AlignedSpatialImage", function(x) 1L)
 setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 
@@ -23,8 +29,7 @@ setMethod("NCOL", "AlignedSpatialImage", function(x) 1L)
 #' @param object A \code{SpatRasterImage} object.
 #' @return A \code{SpatRasterImage} object.
 #' @importClassesFrom SpatialExperiment VirtualSpatialImage
-#' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster
-#'   imgSource getImg rotateImg rmvImg
+#' @importFrom SpatialExperiment addImg mirrorImg imgData imgData<- imgRaster imgSource getImg rotateImg rmvImg
 #' @importFrom terra ext ext<- inMemory
 #' @importClassesFrom terra SpatRaster
 #' @importClassesFrom EBImage Image
@@ -76,6 +81,11 @@ setMethod("show", "SpatRasterImage", function(object) {
 setMethod("showAsCell", "SpatRasterImage", function(object) {
     d <- dim(object)
     paste(paste(d[c(2,1,3)], collapse=" x "), "SpatRasterImage")
+})
+
+#' @importFrom BiocGenerics containsOutOfMemoryData
+setMethod("containsOutOfMemoryData", "SpatRasterImage", function(object) {
+    !is.na(imgSource(object))
 })
 
 # BioFormatsImage====================
@@ -131,12 +141,13 @@ setMethod("showAsCell", "SpatRasterImage", function(object) {
 #'   for a 2x2 linear transformation matrix in the xy plane and "v" for a
 #'   translation vector of length 2 to specify general affine transformation.
 #' @return A \code{BioFormatsImage} object.
+#' @importClassesFrom BiocGenerics OutOfMemoryObject
 #' @name BioFormatsImage
 #' @aliases BioFormatsImage-class
 #' @concept Image classes
 #' @seealso [isFull()], [origin()]
 #' @exportClass BioFormatsImage
-setClass("BioFormatsImage", contains = "AlignedSpatialImage",
+setClass("BioFormatsImage", contains = c("AlignedSpatialImage", "OutOfMemoryObject"),
          slots = c(path = "character", ext = "numeric", isFull = "logical",
                    origin = "numeric", transformation = "list"))
 
@@ -152,25 +163,7 @@ setValidity("BioFormatsImage", function(object) {
         outs[3] <- "origin must be a numeric vector of length 2 without NAs."
     }
     if (length(object@transformation)) {
-        named <- "name" %in% names(object@transformation)
-        mat <- setequal(names(object@transformation), c("M", "v"))
-        if (!named && !mat) {
-            outs[4] <- "transformation must be a list with names 'name' and 'param', or alternatively 'M' and 'v'."
-        }
-        if (named) {
-            allowed_names <- c("transpose", "mirror", "rotate", "scale")
-            if (!object@transformation$name %in% allowed_names) {
-                outs[4] <- paste0("Name of transformation must be one of ",
-                                  paste0(allowed_names, collapse = ", "))
-                name <- object@transformation$name
-            }
-        } else if (mat) {
-            M <- object@transformation$M
-            v <- object@transformation$v
-            if (!identical(dim(M), c(2L,2L)) || !is.numeric(M) || .numeric2NA(v)) {
-                outs[4] <- paste0("M must be a 2x2 numeric matrix, and v a numeric vector of length 2 with no NA.")
-            }
-        }
+        outs[4] <- .check_affine_info(object@transformation)
     }
     outs <- outs[outs != ""]
     if (length(outs)) return(outs) else TRUE
@@ -728,8 +721,6 @@ setMethod("dim", "ExtImage", function(x) {
 #' library(RBioFormats)
 #' fp <- tempfile()
 #' fn <- XeniumOutput("v2", file_path = fp)
-#' # Weirdly the first time I get the null pointer error
-#' try(sfe <- readXenium(fn))
 #' sfe <- readXenium(fn)
 #' img <- getImg(sfe) |> toExtImage(resolution = 1L)
 #' img <- img[,,1] > 500
@@ -1016,8 +1007,7 @@ setMethod("affineImg", "SpatialFeatureExperiment",
 #'   will break older SFE code calling \code{imgRaster}.
 #' @export
 #' @name imgRaster
-#' @aliases imgRaster,SpatRasterImage-method imgRaster,BioFormatsImage-method
-#'   imgRaster,ExtImage-method
+#' @aliases imgRaster,SpatRasterImage-method imgRaster,BioFormatsImage-method imgRaster,ExtImage-method
 #' @concept Image methods
 #' @importFrom terra as.raster
 #' @family image methods

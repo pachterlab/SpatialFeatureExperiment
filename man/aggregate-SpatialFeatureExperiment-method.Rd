@@ -71,12 +71,12 @@ parallel computing over genes. Defaults to \code{SerialParam()}.}
 }
 \value{
 An SFE object with \code{colGeometry} the same as the geometry
-  specified in \code{by} or same as the grid specified in \code{cellsize}.
-  \code{rowGeometries} and \code{rowData} remain the same as in the input
-  \code{x}. \code{reducedDims}, \code{localResults}, \code{colFeatureData}
-  (and its \code{colGeometry}, \code{annotGeometry}, and \code{reducedDim}
-  counterparts), and \code{spatialGraphs} are dropped because those results
-  no longer apply after aggregation.
+specified in \code{by} or same as the grid specified in \code{cellsize}.
+\code{rowGeometries} and \code{rowData} remain the same as in the input
+\code{x}. \code{reducedDims}, \code{localResults}, \code{colFeatureData}
+(and its \code{colGeometry}, \code{annotGeometry}, and \code{reducedDim}
+counterparts), and \code{spatialGraphs} are dropped because those results
+no longer apply after aggregation.
 }
 \description{
 Gene expression and numeric columns of \code{colData} will be aggregated with
@@ -102,12 +102,12 @@ regular grids, and the aggregation can be performed on the transcript spots.
 }
 \note{
 For developers: When debugging this function after calling
-  \code{devtools::load_all(".")}, you may get an error that comes from S3
-  dispatch of \code{aggregate.Vector} from the \code{S4Vectors} package. When
-  that happens, either restart the R session, or run
-  \code{setGeneric("aggregate", function(x, ...)
+\code{devtools::load_all(".")}, you may get an error that comes from S3
+dispatch of \code{aggregate.Vector} from the \code{S4Vectors} package. When
+that happens, either restart the R session, or run
+\code{setGeneric("aggregate", function(x, ...)
   standardGeneric("aggregate"))} in the console to make an S4 generic as done
-  in the \code{terra} package to prioritize S4 dispatch.
+in the \code{terra} package to prioritize S4 dispatch.
 }
 \examples{
 # example code

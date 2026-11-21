@@ -10,7 +10,7 @@ annotPred(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  pred = st_intersects,
+  pred = "intersects",
   yx = FALSE
 )
 
@@ -19,7 +19,7 @@ annotNPred(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  pred = st_intersects
+  pred = "intersects"
 )
 }
 \arguments{
@@ -39,22 +39,25 @@ samples.}
 symmetric predicates, the results should be the same. When x has a large
 number of geometries and y has few, \code{pred(y, x)} is much faster than
 \code{pred(x, y)} for \code{st_intersects}, \code{st_disjoint}, and
-\code{st_is_within_distance}.}
+\code{st_is_within_distance}. Ignored for \code{DuckDBDataFrame}.}
 }
 \value{
 For \code{annotPred}, a logical vector of the same length as the
-  number of columns in the sample(s) of interest, with barcodes (or
-  corresponding column names of sfe) as names. For \code{annotNPred}, a
-  numeric vector of the same length as the number of columns in the sample(s)
-  of interest with barcodes as names, indicating the number of geometries
-  in the \code{annotGeometry} of interest returns TRUE for the predicate for
-  each each geometry in the \code{colGeometry} of interest.
+number of columns in the sample(s) of interest, with barcodes (or
+corresponding column names of sfe) as names. For \code{annotNPred}, a
+numeric vector of the same length as the number of columns in the sample(s)
+of interest with barcodes as names, indicating the number of geometries in
+the \code{annotGeometry} of interest returns TRUE for the predicate for
+each each geometry in the \code{colGeometry} of interest. For \code{DuckDB},
+the output is a \code{DuckDBDataFrame} with an extra column \code{barcode}
+because names can't be set.
 }
 \description{
 This function finds binary predicates for the geometry of each cell/spot
 (i.e. \code{colGeometry}) and an annotation geometry for each sample. For
 example, whether each Visium spot intersects with the tissue boundary in each
-sample.
+sample. This function can be useful when the \code{annotGeometries} have
+undergone affine transforms with the rest of the SFE object.
 }
 \examples{
 library(SFEData)

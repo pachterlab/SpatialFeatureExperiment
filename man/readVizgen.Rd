@@ -6,7 +6,7 @@
 \usage{
 readVizgen(
   data_dir,
-  z = "all",
+  z = deprecated(),
   sample_id = "sample01",
   min_area = NULL,
   image = c("DAPI", "PolyT", "Cellbound"),
@@ -18,16 +18,13 @@ readVizgen(
   use_cellpose = TRUE,
   BPPARAM = SerialParam(),
   file_out = file.path(data_dir, "detected_transcripts.parquet"),
-  z_option = c("3d", "split")
+  z_option = deprecated()
 )
 }
 \arguments{
 \item{data_dir}{Top level output directory.}
 
-\item{z}{Integer, z index to read, or "all", indicating z-planes of the
-images and transcript spots to read. While cell segmentation seems to have
-multiple z-planes, the segmentation in all z-planes are the same so in
-effect the cell segmentatio is only in 2D.}
+\item{z}{Deprecated.}
 
 \item{sample_id}{A \code{character} sample identifier, which matches the
 \code{sample_id} in \code{\link[SpatialExperiment]{imgData}}. The \code{sample_id} will also
@@ -36,7 +33,7 @@ Default = \code{sample01}.}
 
 \item{min_area}{Minimum cell area in square microns or pixel units (eg for CosMX).
 Anything smaller will be considered artifact or debris and removed.
-Default to `NULL`, ie no filtering of polygons.}
+Default to \code{NULL}, ie no filtering of polygons.}
 
 \item{image}{Which image(s) to load, can be "DAPI", "PolyT", "Cellbound" or
 any combination of them.}
@@ -64,31 +61,26 @@ segmentation. If \code{FALSE}, cell segmentation will be read from the HDF5
 files. Note that reading HDF5 files for numerous FOVs is very slow.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
-  processing backend and number of threads to use for parallelizable tasks:
-  \enumerate{ \item To load cell segmentation from HDF5 files from different
-  fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
-  FOVs, reading in the geometries can be time consuming, so we recommend
-  using a server and larger number of threads. This argument is not used if
-  \code{use_cellpose = TRUE} and the parquet file is present.
+processing backend and number of threads to use for parallelizable tasks:
+\enumerate{ \item To load cell segmentation from HDF5 files from different
+fields of view (FOVs) with multiple cores. A progress bar can be configured
+in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
+FOVs, reading in the geometries can be time consuming, so we recommend
+using a server and larger number of threads. This argument is not used if
+\code{use_cellpose = TRUE} and the parquet file is present.
 
-  \item To get the largest piece and see if it's larger than \code{min_area}
-  when there are multiple pieces in the cell segmentation for one cell.}}
+\item To get the largest piece and see if it's larger than \code{min_area}
+when there are multiple pieces in the cell segmentation for one cell.}}
 
 \item{file_out}{Name of file to save the geometry or raster to disk.
 Especially when the geometries are so large that it's unwieldy to load
 everything into memory. If this file (or directory for multiple files)
 already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
-extensions are determined based on `dest`.}
+extensions are determined based on \code{dest}.}
 
-\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
-geometries. "split" is to create a separate 2D geometry for each z-plane so
-geometric operations are fully supported but some data wrangling is
-required to perform 3D analyses. When the z coordinates are not integers,
-3D geometries will always be constructed since there are no z-planes to
-speak of. This argument does not apply when `spatialCoordsNames` has length
-2.}
+\item{z_option}{Deprecated. Will always be "3d" to construct 3D point
+geometries if multiple z-planes are present.}
 }
 \value{
 A \code{SpatialFeatureExperiment} object.
@@ -109,23 +101,23 @@ while to convert the spots to MULTIPOINT geometries.
 }
 \note{
 Since the transcript spots file is often very large, we recommend only
-  using \code{add_molecules = TRUE} on servers with a lot of memory. If
-  reading all z-planes, conversion of transcript spot geometry to parquet
-  file might fail due to arrow data length limit. In a future version, when
-  the transcript spot geometry is large, it will be written to multiple
-  separate parquet files which are then concatenated with DuckDB. Also, in a
-  future version, the transcript spot processing function might be rewritten
-  in C++ to stream the original CSV file so it's not entirely loaded into
-  memory.
+using \code{add_molecules = TRUE} on servers with a lot of memory. If
+reading all z-planes, conversion of transcript spot geometry to parquet
+file might fail due to arrow data length limit. In a future version, when
+the transcript spot geometry is large, it will be written to multiple
+separate parquet files which are then concatenated with DuckDB. Also, in a
+future version, the transcript spot processing function might be rewritten
+in C++ to stream the original CSV file so it's not entirely loaded into
+memory.
 }
 \examples{
 fp <- tempfile()
 dir_use <- SFEData::VizgenOutput(file_path = fp)
-sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
+sfe <- readVizgen(dir_use, image = "PolyT",
 flip = "geometry")
 
 ## Filtering of counts, and addition of molecule coordinates..
-sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
+sfe <- readVizgen(dir_use, image = "PolyT", filter_counts = TRUE,
 add_molecules = TRUE, flip = "geometry")
 
 unlink(dir_use, recursive = TRUE)

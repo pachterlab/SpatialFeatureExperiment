@@ -21,8 +21,8 @@
 }
 \value{
 For \code{isFull}: Logical scalar indicating whether the extent is
-  the full extent. For \code{origin}: Numeric vector of length 2.
-  For \code{transformation}, a list.
+the full extent. For \code{origin}: Numeric vector of length 2.
+For \code{transformation}, a list.
 }
 \description{
 \code{isFULL} indicates if the extent is the full extent of the image.

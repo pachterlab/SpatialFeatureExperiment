@@ -2,6 +2,8 @@
 # (essentially int_rowData)
 # I created this file to generalize internal functions written for dimGeometries
 # to localResults and potentially other fields in int_colData.
+# TODO: deal with `translate` for DuckDB. Maybe expand orig_bbox in metadata by copying BioFormatsImage's transformation field. Or deprecate it since I've never added geometries after calling removeEmptySpace. It's a historic relic before I implemented affine transformations. Thing is affine transformation is eager for some classes and lazy for other classes.
+# TODO: withDimnames won't work for DuckDBColumn in getters because names can't be set
 .getfun <- function(MARGIN) {
     switch(MARGIN,
         int_elementMetadata,
@@ -103,7 +105,7 @@
         if (!is.null(convertfun)) {
             value <- convertfun(value)
         }
-        if (!identical(vdimfun(value), xdimfun(x))) {
+        if (!identical(nrow(value), xdimfun(x))) {
             stop("invalid 'value' in '", funstr, "(<", class(x), ">) <- value':\n  ",
                  "'value' should have number of ", vdimstr, " equal to '", xdimstr, "(x)'")
         }
@@ -157,7 +159,7 @@
     )
 }
 
-.out_intdimdata_id <- function(x, out, MARGIN, sample_id) {
+.out_intdimdata_id <- function(x, out, MARGIN, sample_id, withDimnames) {
     if (MARGIN == 1L) {
         return(out)
     }
@@ -167,10 +169,10 @@
         if (MARGIN == 2L) {
             if (length(samples) > 1L) {
                 # Somehow I lose the rownames after row subsetting sf data frames
-                inds <- colData(x)$sample_id %in% sample_id
-                rns <- rownames(out)[inds]
+                inds <- which(colData(x)$sample_id %in% sample_id)
+                if (withDimnames) rns <- rownames(out)[inds]
                 out <- out[inds, , drop = FALSE]
-                rownames(out) <- rns
+                if (withDimnames) rownames(out) <- rns
             }
         } else { # annotGeometry
             if (length(samples) > 1L)
@@ -194,7 +196,7 @@
     if (withDimnames) {
         rownames(out) <- dimnames(x)[[MARGIN]]
     }
-    .out_intdimdata_id(x, out, MARGIN, sample_id)
+    .out_intdimdata_id(x, out, MARGIN, sample_id, withDimnames)
 }
 
 .make_na_df <- function(template, nrow, rownames, sf) {
@@ -272,6 +274,10 @@
         # Assuming that the order in value is the same as the
         # order of geometries for this sample in colGeometries
         existing <- getfun(x)[[key]][[type]]
+        if (inherits(existing, "DuckDBDataFrame") || 
+            inherits(value, "DuckDBDataFrame")) {
+            stop("Partially replacing DuckDBColumn is not supported")
+        }
         value <- .intdimdata_partial_replace(existing, value, ncol(x),
                                              colnames(x), colData(x)$sample_id,
                                              sample_id,

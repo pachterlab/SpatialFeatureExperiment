@@ -24,25 +24,25 @@ arguments.}
 }
 \value{
 A \code{*Image} object of the same class that has been shifted in
-  space.
+space.
 }
 \description{
 This function shifts the spatial extent of the image in the x-y plane.
 }
 \seealso{
-Other image methods: 
+Other image methods:
 \code{\link{SFE-image}},
-\code{\link{affineImg}()},
-\code{\link{cropImg}()},
+\code{\link[=affineImg]{affineImg()}},
+\code{\link[=cropImg]{cropImg()}},
 \code{\link{dim,BioFormatsImage-method}},
 \code{\link{dim,ExtImage-method}},
-\code{\link{ext}()},
-\code{\link{imgRaster}()},
-\code{\link{imgSource}()},
-\code{\link{mirrorImg}()},
-\code{\link{rotateImg}()},
-\code{\link{scaleImg}()},
-\code{\link{transposeImg}()}
+\code{\link{ext}},
+\code{\link{imgRaster}},
+\code{\link{imgSource}},
+\code{\link{mirrorImg}},
+\code{\link{rotateImg}},
+\code{\link[=scaleImg]{scaleImg()}},
+\code{\link[=transposeImg]{transposeImg()}}
 }
 \concept{Image affine transformation}
 \concept{image methods}

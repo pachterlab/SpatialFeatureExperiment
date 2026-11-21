@@ -58,6 +58,21 @@ test_that("Supplying colGeometries, check centroids", {
     centroids <- .sc2cg(spatialCoords(sfe))
     expect_equal(centroids, st_centroid(cg), ignore_attr = TRUE)
 })
+
+library(DuckDBSpatial)
+test_that("Use DuckDBColumn in constructor", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg, fn)
+    sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                    colGeometries = c(foo = fn)
+    )
+    cg2 <- int_colData(sfe)$colGeometries[,1]
+    expect_s4_class(cg2, "DuckDBDataFrame")
+    centroids <- .get_centroid_coords(cg2)
+    expect_equal(centroids, spatialCoords(sfe), ignore_attr = TRUE)
+    file.remove(fn)
+})
+
 library(SingleCellExperiment)
 test_that("Added object version", {
     sfe <- SpatialFeatureExperiment(list(counts = mat),

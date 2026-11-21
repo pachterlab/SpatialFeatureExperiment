@@ -10,7 +10,7 @@ annotSummary(
   annotGeometryName = 1L,
   annotColNames = 1L,
   sample_id = "all",
-  pred = st_intersects,
+  pred = "intersects",
   summary_fun = mean
 )
 }
@@ -36,8 +36,8 @@ samples.}
 }
 \value{
 A data frame whose row names are the relevant column names of
-  \code{sfe}, and each column of which is the summary of each column
-  specified in \code{annotColName}.
+\code{sfe}, and each column of which is the summary of each column
+specified in \code{annotColName}.
 }
 \description{
 In SFE objects, the annotation geometries don't have to correspond to the

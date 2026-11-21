@@ -181,8 +181,7 @@
 #' @export
 #' @concept Utilities
 #' @importFrom BiocParallel bplapply SerialParam
-#' @importFrom sfheaders sf_multipoint sf_polygon sf_multipolygon sf_linestring
-#'   sf_multilinestring
+#' @importFrom sfheaders sf_multipoint sf_polygon sf_multipolygon sf_linestring sf_multilinestring
 #' @examples
 #' # Points, use spotDiameter to convert to circle polygons
 #' # This is done to Visium spots
@@ -253,23 +252,33 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     )
     out
 }
-
+#' @importFrom BiocGenerics type
 # Call in SFE constructor and *Geometries replacement methods
 .df2sf_in_list <- function(x, spatialCoordsNames = c("x", "y"),
                            spotDiameter = NA, geometryType = "POLYGON",
                            group_col = "group", id_col = "ID", subid_col = "subID",
                            check = TRUE) {
-    if (!is.null(x) && !inherits(x, "sf") && !is.data.frame(x) && !is.matrix(x)) {
+    if (!is.null(x) && !inherits(x, "sf") && !is.data.frame(x) && !is.matrix(x) && 
+        !is.character(x) && !.is_duckdbdf_spatial(x)) {
         stop(
-            "Each element of the list for *Geometry must be an ",
-            "sf object or a data frame or a matrix."
+            "Each element of the list for *Geometry must be one of: ",
+            "sf object, GeoParquet file name, spatial DuckDBDataFrame, data frame, or a matrix."
         )
     }
     if (inherits(x, "sf") || is.null(x)) {
         return(x)
+    } else if (.is_duckdbdf_spatial(x)) {
+        return(x)
     } else if (is.data.frame(x) || is.matrix(x)) {
         return(df2sf(x, spatialCoordsNames, spotDiameter, geometryType,
                      group_col, id_col, subid_col, check = check))
+    } else if (is.character(x)) {
+        x <- normalizePath(x, mustWork = TRUE)
+        if (file_ext(x) != "parquet")
+            stop("Must use parquet file")
+        check_installed("DuckDBSpatial")
+        df <- DuckDBSpatial::readGeoParquet(x)
+        return(df)
     }
 }
 

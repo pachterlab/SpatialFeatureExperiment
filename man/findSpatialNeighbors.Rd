@@ -81,15 +81,15 @@ ignored.}
 }
 \value{
 For one sample, then a \code{listw} object representing the graph,
-  with an attribute "method" recording the function used to build the graph,
-  its arguments, and information about the geometry for which the graph was
-  built. The attribute is used to reconstruct the graphs when the SFE object
-  is subsetted since some nodes in the graph will no longer be present. If
-  sample_id = "all" or has length > 1, then a named list of \code{listw}
-  objects, whose names are the sample_ids. To add the list for multiple
-  samples to a SFE object, specify the \code{name} argument in the
-  \code{\link{spatialGraphs}} replacement method, so graph of the same name
-  will be added to the SFE object for each sample.
+with an attribute "method" recording the function used to build the graph,
+its arguments, and information about the geometry for which the graph was
+built. The attribute is used to reconstruct the graphs when the SFE object
+is subsetted since some nodes in the graph will no longer be present. If
+sample_id = "all" or has length > 1, then a named list of \code{listw}
+objects, whose names are the sample_ids. To add the list for multiple
+samples to a SFE object, specify the \code{name} argument in the
+\code{\link{spatialGraphs}} replacement method, so graph of the same name
+will be added to the SFE object for each sample.
 }
 \description{
 This function wraps all spatial neighborhood graphs implemented in the
@@ -106,10 +106,10 @@ weights of the graph in the \code{listw} object are by default style W (see
 }
 \note{
 \code{style = "raw"} is only applicable when \code{dist_type} is not
-  "none". If \code{dist_type = "none"} and \code{style = "raw"}, then style
-  will default to "W". Using distance based weights does not supplant finding
-  a spatial neighborhood graph. The spatial neighborhood graph is first found
-  and then its edges weighted based on distance in this function.
+"none". If \code{dist_type = "none"} and \code{style = "raw"}, then style
+will default to "W". Using distance based weights does not supplant finding
+a spatial neighborhood graph. The spatial neighborhood graph is first found
+and then its edges weighted based on distance in this function.
 }
 \examples{
 library(SFEData)

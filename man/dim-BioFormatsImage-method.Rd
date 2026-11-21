@@ -11,9 +11,9 @@
 }
 \value{
 An integer vector of length 5 showing the number of rows and columns
-  in the full resolution image. The 5 dimensions are in the order of XYCZT:
-  x, y, channel, z, and time. This is not changed by transformations. Use
-  \code{\link{ext}} to see the extent after transformation.
+in the full resolution image. The 5 dimensions are in the order of XYCZT:
+x, y, channel, z, and time. This is not changed by transformations. Use
+\code{\link{ext}} to see the extent after transformation.
 }
 \description{
 This is different from other classes. The metadata is read where the
@@ -21,19 +21,19 @@ dimensions in pixels can be found. The image itself is not read into memory
 here.
 }
 \seealso{
-Other image methods: 
+Other image methods:
 \code{\link{SFE-image}},
-\code{\link{affineImg}()},
-\code{\link{cropImg}()},
+\code{\link[=affineImg]{affineImg()}},
+\code{\link[=cropImg]{cropImg()}},
 \code{\link{dim,ExtImage-method}},
-\code{\link{ext}()},
-\code{\link{imgRaster}()},
-\code{\link{imgSource}()},
-\code{\link{mirrorImg}()},
-\code{\link{rotateImg}()},
-\code{\link{scaleImg}()},
-\code{\link{translateImg}()},
-\code{\link{transposeImg}()}
+\code{\link{ext}},
+\code{\link{imgRaster}},
+\code{\link{imgSource}},
+\code{\link{mirrorImg}},
+\code{\link{rotateImg}},
+\code{\link[=scaleImg]{scaleImg()}},
+\code{\link[=translateImg]{translateImg()}},
+\code{\link[=transposeImg]{transposeImg()}}
 }
 \concept{Image methods}
 \concept{image methods}

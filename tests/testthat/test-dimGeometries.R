@@ -28,12 +28,41 @@ test_that("colGeometries setter", {
     expect_true(is(cgs$buffered, "sf"))
 })
 
+library(DuckDBSpatial)
+test_that("colGeometries setter, DuckDB parquet file name", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg_toy, fn)
+    colGeometries(sfe) <- list(foo = fn)
+    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBDataFrame")
+    colGeometry(sfe, "foo") <- NULL
+    file.remove(fn)
+})
+
+test_that("colGeometries setter, DuckDBDataFrame", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg_toy, fn)
+    foo <- readGeoParquet(fn)
+    colGeometries(sfe) <- list(foo = foo)
+    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBDataFrame")
+    colGeometry(sfe, "foo") <- NULL
+    file.remove(fn)
+})
+
 test_that("colGeometry setter", {
     colGeometry(sfe, "coords") <- cg_toy
     cgs <- int_colData(sfe)$colGeometries
     expect_true(is(cgs, "DFrame"))
     expect_equal(names(cgs), "coords")
     expect_true(is(cgs$coords, "sf"))
+})
+
+test_that("colGeometry setter, DuckDB parquet file name", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg_toy, fn)
+    colGeometry(sfe, "foo") <- fn
+    expect_s4_class(colGeometry(sfe, "foo"), "DuckDBDataFrame")
+    colGeometry(sfe, "foo") <- NULL
+    file.remove(fn)
 })
 
 sfe2 <- sfe
@@ -96,11 +125,43 @@ test_that("colGeometry setter for one of the two samples (already present)", {
 test_that("colGeometry getter for one of the two samples", {
     int_colData(sfe3)$colGeometries <- make_zero_col_DFrame(nrow = ncol(sfe3))
     int_colData(sfe3)$colGeometries$coords <- cg_toy
-    coords_sample02 <- colGeometry(sfe3, "coords", "sample02")
+    coords_sample02 <- colGeometry(sfe3, "coords", "sample02", withDimnames = TRUE)
     expect_equal(nrow(coords_sample02), 2L)
     cg_expect <- cg_toy[4:5, ]
     rownames(cg_expect) <- rownames(cg_toy)[4:5]
     expect_equal(coords_sample02, cg_expect)
+})
+
+test_that("colGeometry getter, 2 samples, DuckDB", {
+    sfe3 <- addVisiumSpotPoly(sfe3, 0.3)
+    cg <- spotPoly(sfe3, sample_id = "all")
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg, fn)
+    cg2 <- readGeoParquet(fn)
+    int_colData(sfe3)$colGeometries$foo <- cg2
+    out <- colGeometry(sfe3, "foo", sample_id = 1L)
+    expect_s4_class(out, "DuckDBDataFrame")
+    out_geo <- st_as_sf(out, crs = NA)
+    expect_equal(spotPoly(sfe3, sample_id = 1L)$geometry, out_geo$geometry)
+    file.remove(fn)
+})
+
+test_that("colGeometry setter, 2 samples, DuckDB", {
+    sfe3 <- addVisiumSpotPoly(sfe3, 0.3)
+    cg <- spotPoly(sfe3, sample_id = "all")
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg, fn)
+    cg2 <- readGeoParquet(fn)
+    int_colData(sfe3)$colGeometries$foo <- cg2
+    
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(cg_toy[1:3,], fn2)
+    cg_r <- readGeoParquet(fn2)
+    expect_error(colGeometry(sfe3, "spotPoly", sample_id = 1L) <- cg_r,
+                 "not supported")
+    expect_error(colGeometry(sfe3, "foo", sample_id = 1L) <- cg_r,
+                 "not supported")
+    file.remove(fn, fn2)
 })
 
 test_that("When rownames of value don't match those of sfe", {
@@ -108,19 +169,20 @@ test_that("When rownames of value don't match those of sfe", {
     rownames(cg_sub) <- rownames(cg_toy)[1:3]
     rownames(cg_mut) <- c(rownames(cg_toy)[1:2], "D")
     # It's not a subset, get correct error message
-    expect_error(colGeometry(sfe, "foo") <- cg_mut,
+    expect_error(colGeometry(sfe, "foo", withDimnames = TRUE) <- cg_mut,
                  "should all be in")
     # It's the same set, in different orders, do the reordering
     rns <- sample(rownames(cg_toy), 5, replace = FALSE)
     cg_perm <- cg_toy[rns,]
     rownames(cg_perm) <- rns
-    colGeometry(sfe, "foo") <- cg_perm
-    expect_equal(colGeometry(sfe, "foo"), cg_toy)
+    colGeometry(sfe, "foo", withDimnames = TRUE) <- cg_perm
+    expect_equal(colGeometry(sfe, "foo", withDimnames = TRUE), cg_toy)
     # It's a subset, do the reordering
     cg_sub_perm <- cg_sub[c(2,3,1),]
     rownames(cg_sub_perm) <- rownames(cg_sub)[c(2,3,1)]
-    colGeometry(sfe, "bar") <- cg_sub_perm
-    expect_equal(colGeometry(sfe, "bar")[1:3,], cg_sub, ignore_attr = "row.names")
+    colGeometry(sfe, "bar", withDimnames = TRUE) <- cg_sub_perm
+    expect_equal(colGeometry(sfe, "bar", withDimnames = TRUE)[1:3,], cg_sub, 
+                 ignore_attr = "row.names")
 })
 
 rg_toy <- cg_toy
@@ -135,16 +197,16 @@ test_that("rowGeometries setter, one sample", {
 test_that("rowGeometries setter, one sample, partial replace", {
     foo <- rg_toy[c("d", "j"),]
     rownames(foo) <- c("d", "j")
-    rowGeometries(sfe) <- list(foo = foo)
-    expect_equal(st_equals(rowGeometry(sfe)[c("d","j"),], foo),
+    rowGeometries(sfe, withDimnames = TRUE) <- list(foo = foo)
+    expect_equal(st_equals(rowGeometry(sfe, withDimnames = TRUE)[c("d","j"),], foo),
                  list(1, 2), ignore_attr = TRUE)
     expect_true(all(st_is_empty(rowGeometry(sfe)[c(1,3,5),])))
 
     # The second time, adding more
     bar <- rg_toy[c("v", "o"),]
     rownames(bar) <- c("v", "o")
-    rowGeometries(sfe, partial = TRUE) <- list(foo = bar)
-    expect_equal(st_equals(rowGeometry(sfe)[2:5,], rg_toy[2:5,]),
+    rowGeometries(sfe, partial = TRUE, withDimnames = TRUE) <- list(foo = bar)
+    expect_equal(st_equals(rowGeometry(sfe, withDimnames = TRUE)[2:5,], rg_toy[2:5,]),
                  as.list(1:4), ignore_attr = TRUE)
     expect_true(st_is_empty(rowGeometry(sfe)[1,]))
 })
@@ -169,15 +231,15 @@ test_that("rowGeometry setter, one sample", {
 test_that("rowGeometry setter, partial replace", {
     foo <- rg_toy[c("d", "j"),]
     rownames(foo) <- c("d", "j")
-    rowGeometry(sfe, type = "foo", partial = TRUE) <- foo
-    expect_equal(st_equals(rowGeometry(sfe)[c("d","j"),], foo),
+    rowGeometry(sfe, type = "foo", partial = TRUE, withDimnames = TRUE) <- foo
+    expect_equal(st_equals(rowGeometry(sfe, withDimnames = TRUE)[c("d","j"),], foo),
                  list(1, 2), ignore_attr = TRUE)
     expect_true(all(st_is_empty(rowGeometry(sfe)[c(1,3,5),])))
 
     # The second time, adding more
     bar <- rg_toy[c("v", "o"),]
     rownames(bar) <- c("v", "o")
-    rowGeometry(sfe, type = "foo", partial = TRUE) <- bar
+    rowGeometry(sfe, type = "foo", partial = TRUE, withDimnames = TRUE) <- bar
     expect_equal(st_equals(rowGeometry(sfe)[2:5,], rg_toy[2:5,]),
                  as.list(1:4), ignore_attr = TRUE)
     expect_true(st_is_empty(rowGeometry(sfe)[1,]))
@@ -227,13 +289,13 @@ test_that("rowGeometries setter, partial replace, multiple samples", {
     rownames(bar) <- rownames(sfe_visium)[1]
     baz <- rg_toy2[2,,drop = FALSE]
     rownames(baz) <- rownames(sfe_visium)[2]
-    rowGeometries(sfe_visium) <- list(foo_sample01 = bar, foo_sample02 = baz)
+    rowGeometries(sfe_visium, withDimnames = TRUE) <- list(foo_sample01 = bar, foo_sample02 = baz)
     # Second time, adding more
     rowGeometries(sfe_visium, sample_id = "sample01",
                   partial = TRUE) <- list(foo = baz)
     expect_equal(rowGeometry(sfe_visium), rbind(bar, baz), ignore_attr = TRUE)
     rowGeometries(sfe_visium, sample_id = "sample02",
-                  partial = TRUE) <- list(foo = bar)
+                  partial = TRUE, withDimnames = TRUE) <- list(foo = bar)
     expect_equal(rowGeometry(sfe_visium, sample_id = "sample02"),
                  rbind(bar, baz), ignore_attr = TRUE)
 })

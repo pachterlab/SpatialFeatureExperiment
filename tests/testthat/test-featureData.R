@@ -1,8 +1,8 @@
 library(SFEData)
-library(scater)
+library(scrapper)
 library(spdep)
 library(Voyager)
-
+library(scater)
 sfe <- McKellarMuscleData("small")
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 
@@ -41,7 +41,7 @@ test_that("geometryFeatureData getter", {
 })
 
 sfe2 <- sfe[,sfe$in_tissue]
-sfe2 <- logNormCounts(sfe2)
+sfe2 <- normalizeRnaCounts.se(sfe2)
 sfe2 <- runPCA(sfe2, ncomponents = 10)
 annotGraph(sfe2, "myofiber_tri2nb") <-
     findSpatialNeighbors(sfe2, type = "myofiber_simplified", MARGIN = 3L,
@@ -156,7 +156,7 @@ test_that("getParams, reducedDim", {
 sfe3 <- McKellarMuscleData("small2")
 sfe3 <- sfe3[,sfe3$in_tissue]
 colGraph(sfe3, "visium") <- findVisiumGraph(sfe3, style = "S")
-sfe3 <- logNormCounts(sfe3)
+sfe3 <- normalizeRnaCounts.se(sfe3)
 sfe3 <- runPCA(sfe3, ncomponents = 10)
 annotGraph(sfe3, "myofiber_tri2nb") <-
     findSpatialNeighbors(sfe3, type = "myofiber_simplified", MARGIN = 3L,

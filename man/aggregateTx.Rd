@@ -69,7 +69,7 @@ coordinates of the spots. The defaults are for Vizgen.}
 \item{phred_col}{Column name for Phred scores of the spots.}
 
 \item{min_phred}{Minimum Phred score to keep spot. By default 20, the
-conventional threshold indicating "acceptable", meaning that there's 1%
+conventional threshold indicating "acceptable", meaning that there's 1\%
 chance that the spot was decoded in error.}
 
 \item{flip_geometry}{Logical, whether to flip the transcript spot geometries
@@ -93,8 +93,8 @@ not be very sparse so using sparse matrix will not save memory, but when
 the bins are small, sparsity is worth it.}
 
 \item{BPPARAM}{bpparam object to specify parallel computing over genes. If a
-lot of memory is used, then stick to `SerialParam()`. Using multicore in
-the R level when `save_memory = TRUE` works and results into faster
+lot of memory is used, then stick to \code{SerialParam()}. Using multicore in
+the R level when \code{save_memory = TRUE} works and results into faster
 computation.}
 
 \item{save_memory}{Logical, if TRUE, then the transcript spots will not all
@@ -125,7 +125,7 @@ than this size then the coordinates will be flipped instead.}
 }
 \value{
 A SFE object with count matrix for number of spots of each gene in
-  each geometry. Geometries with no spot are removed.
+each geometry. Geometries with no spot are removed.
 }
 \description{
 This function reads the transcript spot file from the standard output of the
@@ -136,9 +136,9 @@ can be added when \code{add_images = TRUE}.
 }
 \note{
 The resulting SFE object often includes geometries (e.g. grid cells)
-  outside tissue, because there can be transcript spots detected outside the
-  tissue. Also, bins at the edge of the tissue that don't fully overlap with
-  the tissue will have lower transcript counts; this may have implications to
-  downstream spatial analyses.
+outside tissue, because there can be transcript spots detected outside the
+tissue. Also, bins at the edge of the tissue that don't fully overlap with
+the tissue will have lower transcript counts; this may have implications to
+downstream spatial analyses.
 }
 \concept{Geometric operations}

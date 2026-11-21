@@ -18,27 +18,27 @@
 }
 \value{
 String, file path to the original image on disk. For
-  \code{SpatRasterImage}, if the image is loaded into memory, then
-  \code{NULL}.
+\code{SpatRasterImage}, if the image is loaded into memory, then
+\code{NULL}.
 }
 \description{
 Get the file path of images that are on disk and not read into memory. Only
 applies to \code{SpatRasterImage} and \code{BioFormatsImage}.
 }
 \seealso{
-Other image methods: 
+Other image methods:
 \code{\link{SFE-image}},
-\code{\link{affineImg}()},
-\code{\link{cropImg}()},
+\code{\link[=affineImg]{affineImg()}},
+\code{\link[=cropImg]{cropImg()}},
 \code{\link{dim,BioFormatsImage-method}},
 \code{\link{dim,ExtImage-method}},
-\code{\link{ext}()},
-\code{\link{imgRaster}()},
-\code{\link{mirrorImg}()},
-\code{\link{rotateImg}()},
-\code{\link{scaleImg}()},
-\code{\link{translateImg}()},
-\code{\link{transposeImg}()}
+\code{\link{ext}},
+\code{\link{imgRaster}},
+\code{\link{mirrorImg}},
+\code{\link{rotateImg}},
+\code{\link[=scaleImg]{scaleImg()}},
+\code{\link[=translateImg]{translateImg()}},
+\code{\link[=transposeImg]{transposeImg()}}
 }
 \concept{Image methods}
 \concept{image methods}

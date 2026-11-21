@@ -30,6 +30,7 @@
 #' @param read_spatial_enrichment Logical, whether to read the
 #'   `spatial_enrichment.csv` file from Visium output if the file is present and
 #'   add its contents to `rowData`.
+#' @param add_centroids Logical, whether to add the centroids geometry.
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
@@ -69,7 +70,8 @@ read10xVisiumSFE <- function(dirs,
                              style = "W", zero.policy = NULL,
                              row.names = c("id", "symbol"),
                              flip = c("geometry", "image", "none"),
-                             read_spatial_enrichment = TRUE) {
+                             read_spatial_enrichment = TRUE,
+                             add_centroids = FALSE) {
     check_installed("DropletUtils")
     type <- match.arg(type)
     data <- match.arg(data)
@@ -87,7 +89,7 @@ read10xVisiumSFE <- function(dirs,
                             type, data, images,
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,
                             unit = unit, zero.policy = zero.policy, style = style,
-                            use_cellseg = FALSE)
+                            use_cellseg = FALSE, add_centroids = add_centroids)
         # Add spatial enrichment if present
         fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
         if (file.exists(fn) && read_spatial_enrichment) {
@@ -221,7 +223,6 @@ read10xVisiumSFE <- function(dirs,
         # Not sure if it's 0 based or 1 based but shouldn't matter that much
         # Basically, cartesian 0 is image nrow, cartesian x is nrow-x
         ind <- which.max(img_df$scaleFactor)
-        sfct <- img_df$scaleFactor[ind]
         e <- ext(img_df$data[[ind]]) # All scaled
     }
 
@@ -272,13 +273,13 @@ read10xVisiumSFE <- function(dirs,
                                           spatialCoords = coords,
                                           unit = unit)
     } else {
-        if (flip == "geometry") {
-            spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
-        }
         if (unit == "micron") {
             spd$pxl_row_in_fullres <- spd$pxl_row_in_fullres * scale_fct
             spd$pxl_col_in_fullres <- spd$pxl_col_in_fullres * scale_fct
             spot_diam <- scalefactors$spot_diameter_fullres * scale_fct
+        }
+        if (flip == "geometry") {
+            spd$pxl_row_in_fullres <- e["ymax"] - spd$pxl_row_in_fullres
         }
         obs <- intersect(colnames(sce), rownames(spd))
         sce <- sce[, obs]
@@ -424,16 +425,18 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
 #' mask. Default is "POINT".
 #' @param e_ymax The ymax in the extent of the image
 #' @returns a sf object with Y-axis of the points or polygons flipped.
+#' @importFrom sf st_crs st_crs<-
 #' @noRd
 .flip_sf_Y <- function(sf, type = "POINT", e_ymax){
     coords <- st_coordinates(sf)
     coords[, 2] <- e_ymax - coords[, 2] 
     if (type == "POINT"){
-        g <- st_point(coords)
+        g <- st_as_sf(as.data.frame(coords), coords = c("X", "Y"))
     } else { # type == "POLYGON"
         g <- sfheaders::sf_polygon(coords, x = "X", y = "Y", polygon_id = "L2")
     }
-  st_geometry(sf) <- st_sfc(g, crs = st_crs(sf))
+    st_crs(g) <- st_crs(sf)
+  st_geometry(sf) <- st_geometry(g)
   
   return(sf)
 }
@@ -453,19 +456,6 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
     }, FUN.VALUE = numeric(1))
     dists <- mean(dists) # Full res pixels per 100 microns
     100/dists
-}
-
-.get_row_angle <- function(r, df) {
-    # Check alignment
-    df2 <- df[df$array_row == r,]
-    if (max(df2$pxl_row_in_fullres) - min(df2$pxl_row_in_fullres) > 1000)
-        df2 <- df[df$array_col == r,] # In this case array_col matches with pxl_row
-    ind1 <- which.max(df2$pxl_col_in_fullres)
-    ind2 <- which.min(df2$pxl_col_in_fullres)
-    tg <- (df2$pxl_row_in_fullres[ind1] - df2$pxl_row_in_fullres[ind2])/
-        (df2$pxl_col_in_fullres[ind1] - df2$pxl_col_in_fullres[ind2])
-    out <- atan(tg)
-    out
 }
 
 .h52poly_fov <- function(fn, z) {
@@ -510,8 +500,8 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
                 ">>> ..found ", length(segs.art.index),
                 " cells with (nested) polygon lists", "\n",
                 ">>> ..applying filtering") }
-    # add sequence of numbers as temporary column
-    polys$ID_row <- as.character(seq_len(length.out = nrow(polys)))
+    # add sequence of numbers as temporary column, or use existing row names
+    polys$ID_row <- rownames(polys)
     polys.ID_row <- polys$ID_row
     # remove empty elements
     polys <- polys[!st_is_empty(polys), ]
@@ -531,8 +521,7 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
     # ie, "cell_id" for Xenium; "cellID" for CosMX; "EntityID" for Vizgen
     cell_ID <- grep("cell_id|cellID|EntityID",
                     colnames(polys), value = TRUE)
-    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON" &&
-        !is_Xenium) {
+    if (st_geometry_type(polys, by_geometry = FALSE) == "MULTIPOLYGON") {
         # convert sf df to polygons directly
         message(">>> Casting MULTIPOLYGON geometry to POLYGON")
         polys <- sfheaders::sf_cast(polys, to = "POLYGON")
@@ -605,6 +594,7 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
         # convert from integer64 to character
         polys[[cell_ID]] <- as.character(polys[[cell_ID]])
     # remove ID_row
+    rownames(polys) <- polys$ID_row
     polys$ID_row <- NULL
     if (!any(names(polys) == "polygon_area"))
         polys$polygon_area <- st_area(st_geometry(polys))
@@ -730,10 +720,7 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
 #' @inheritParams SpatialFeatureExperiment
 #' @inheritParams formatTxSpots
 #' @param data_dir Top level output directory.
-#' @param z Integer, z index to read, or "all", indicating z-planes of the
-#'   images and transcript spots to read. While cell segmentation seems to have
-#'   multiple z-planes, the segmentation in all z-planes are the same so in
-#'   effect the cell segmentatio is only in 2D.
+#' @param z Deprecated.
 #' @param max_flip Maximum size of the image allowed to flip the image. Because
 #'   the image will be loaded into memory to be flipped. If the image is larger
 #'   than this size then the coordinates will be flipped instead.
@@ -788,16 +775,16 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
 #' @examples
 #' fp <- tempfile()
 #' dir_use <- SFEData::VizgenOutput(file_path = fp)
-#' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
+#' sfe <- readVizgen(dir_use, image = "PolyT",
 #' flip = "geometry")
 #'
 #' ## Filtering of counts, and addition of molecule coordinates..
-#' sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
+#' sfe <- readVizgen(dir_use, image = "PolyT", filter_counts = TRUE,
 #' add_molecules = TRUE, flip = "geometry")
 #'
 #' unlink(dir_use, recursive = TRUE)
 readVizgen <- function(data_dir,
-                       z = "all",
+                       z = deprecated(),
                        sample_id = "sample01", # How often do people read in multiple samples?
                        min_area = NULL,
                        image = c("DAPI", "PolyT", "Cellbound"),
@@ -809,15 +796,18 @@ readVizgen <- function(data_dir,
                        use_cellpose = TRUE,
                        BPPARAM = SerialParam(),
                        file_out = file.path(data_dir, "detected_transcripts.parquet"),
-                       z_option = c("3d", "split")) {
+                       z_option = deprecated()) {
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     flip <- match.arg(flip)
     if (.terra_flip()) flip <- "none"
     image <- match.arg(image, several.ok = TRUE)
-    if ((any(z < 0) || any(z > 6)) && z != "all") {
-        stop("z must be beween 0 and 6 (inclusive).")
-    }
+    if (is_present(z)) {
+        deprecate_warn("1.16.0", "readVizgen(z)")
+        if ((any(z < 0) || any(z > 6)) && z != "all") {
+            stop("z must be beween 0 and 6 (inclusive).")
+        }
+    } else z <- "all"
     c(img_df, flip) %<-% .get_vizgen_images(data_dir, image, flip, max_flip, z, sample_id)
     # Read cell segmentation-------------
     # Use segmentation output from ".parquet" file
@@ -1000,7 +990,6 @@ readVizgen <- function(data_dir,
                      }, BPPARAM = BPPARAM)
         bboxes <- st_sf(geometry = st_sfc(unlist(bboxes_sfc, recursive = FALSE)))
         rownames(bboxes) <- rownames(metadata)
-        # TODO, give proper name and getter, eg bBox()
         colGeometry(sfe, "cell_bboxes") <- bboxes
     }
 
@@ -1016,6 +1005,7 @@ readVizgen <- function(data_dir,
     imgData(sfe) <- img_df
 
     if (add_molecules) {
+        if (z == "all") z <- deprecated() # the default, avoid the warning
         message(">>> Reading transcript coordinates")
         sfe <- addTxTech(sfe, data_dir, sample_id, tech = "Vizgen",
                          z = z, file_out = file_out, flip = (flip == "geometry"),
@@ -1031,10 +1021,7 @@ readVizgen <- function(data_dir,
 #' files are the flat files in the AtoMX output.
 #'
 #' @inheritParams readVizgen
-#' @param z Integer z index or "all" to indicate which z-planes to read for the
-#' transcript spots.
-#' @param split_cell_comps Logical, whether to split transcript spot geometries
-#'   by cell compartment. Only relevant when `add_molecules = TRUE`.
+#' @param split_cell_comps Deprecated.
 #' @return An SFE object. Cell polygons are written to
 #'   `cell_boundaries_sf.parquet` in `data_dir`. If reading transcript spots
 #'   (`add_molecules = TRUE`), then the reformatted transcript spots are saved
@@ -1045,18 +1032,18 @@ readVizgen <- function(data_dir,
 #' @examples
 #' fp <- tempfile()
 #' dir_use <- SFEData::CosMXOutput(file_path = fp)
-#' sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
+#' sfe <- readCosMX(dir_use, add_molecules = TRUE)
 #' # Clean up
 #' unlink(dir_use, recursive = TRUE)
 readCosMX <- function(data_dir,
-                      z = "all",
+                      z = deprecated(),
                       sample_id = "sample01", # How often do people read in multiple samples?
                       min_area = NULL,
                       add_molecules = FALSE,
-                      split_cell_comps = FALSE,
+                      split_cell_comps = deprecated(),
                       BPPARAM = SerialParam(),
                       file_out = file.path(data_dir, "tx_spots.parquet"),
-                      z_option = c("3d", "split")) {
+                      z_option = deprecated()) {
     check_installed("sfarrow")
     data_dir <- normalizePath(data_dir, mustWork = TRUE)
     fns <- list.files(data_dir, pattern = "\\.csv.*$", full.names = TRUE)
@@ -1106,7 +1093,7 @@ readCosMX <- function(data_dir,
     meta <- fread(fn_metadata) |>
       dplyr::mutate(cell_ID = paste(cell_ID, fov, sep = "_")) |>
       dplyr::filter(cell_ID %in% polys$cellID)
-    mat <- fread(fn_mat) |> # TODO: write to h5 or mtx. Consult alabaster.sce
+    mat <- fread(fn_mat) |> 
       dplyr::mutate(cell_ID = paste(cell_ID, fov, sep = "_")) |>
       dplyr::filter(cell_ID %in% polys$cellID)
  
@@ -1330,7 +1317,9 @@ readXenium <- function(data_dir,
     c(img_df, flip) %<-% .get_xenium_images(data_dir, image, major_version,
                                             flip, max_flip, sample_id)
     # Read cell/nucleus segmentation ----
-    if (!is.null(segmentations)) {
+    polys <- list()
+    if (is.null(segmentations)) polys <- NULL
+    else {
         # get files .parquet or .csv
         # What if only cell or only nucleus is available
         no_raw_bytes <- (major_version == 1L && minor_version > 4L) || major_version > 1L
@@ -1341,6 +1330,8 @@ readXenium <- function(data_dir,
         if (length(fn_segs) == 0) {
             polys <- NULL
         }
+    }
+    if (!is.null(segmentations) && !is.null(polys)) {
         if (any(grep("_sf.parquet", fn_segs))) {
             message(">>> Preprocessed sf segmentations found\n",
                     ">>> Reading ", paste0(names(fn_segs), collapse = " and "),
@@ -1387,7 +1378,7 @@ readXenium <- function(data_dir,
                     p
                 })
             }
-
+            
             if ((major_version == 2L && instrument_version != "Development") ||
                 major_version > 2L) {
                 if ("nucleus" %in% names(polys)) {
@@ -1412,32 +1403,34 @@ readXenium <- function(data_dir,
                         df2sf(x, c("vertex_x", "vertex_y"), id_col = "cell_id",
                               geometryType = "POLYGON") })
             }
-            # sanity on geometries
-            polys <- lapply(polys, function(i) {
-                .filter_polygons(i, min_area, is_Xenium = TRUE, BPPARAM = BPPARAM)
-                })
             message(">>> Checking polygon validity")
             polys <- lapply(polys, .check_st_valid)
-
+            
+            # Only filter cell polygons by area and n pieces, not nuclear polygons
+            if ("cell" %in% names(polys)) {
+                polys[["cell"]] <- .filter_polygons(polys[["cell"]], min_area, 
+                                                    is_Xenium = TRUE, BPPARAM = BPPARAM)
+            }
+            
             fn_out <- c(cell = "cell_boundaries_sf.parquet",
                         nucleus = "nucleus_boundaries_sf.parquet")
             fn_out <- fn_out[names(fn_segs)]
             fn_out <- file.path(data_dir, fn_out)
             message(">>> Saving geometries to parquet files")
             for (i in seq_along(polys)) {
-              tryCatch(
-                {
-                  suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
-                },
-                error = function(e) {
-                  message(sprintf(" Could not write %s: %s", fn_out[[i]], e$message))
-                }
-              )
+                tryCatch(
+                    {
+                        suppressWarnings(sfarrow::st_write_parquet(polys[[i]], fn_out[[i]]))
+                    },
+                    error = function(e) {
+                        message(sprintf(" Could not write %s: %s", fn_out[[i]], e$message))
+                    }
+                )
             }
         }
         # add names to polys list
         names(polys) <- c(cell = "cellSeg", nucleus = "nucSeg")[names(fn_segs)]
-    } else { polys <- NULL }
+    }
 
     # Read metadata ----
     fn_meta <- .check_xenium_fns(data_dir, "cells.", no_raw_bytes)
@@ -1480,8 +1473,10 @@ readXenium <- function(data_dir,
         message(">>> Reading mtx gene count matrix")
         sce <- read10xCounts(file.path(data_dir, "cell_feature_matrix"),
                              col.names = TRUE, row.names = row.names)
-    } else { stop("No `cell_feature_matrix` files are found, check input directory -> `data_dir`") }
-
+    } else { 
+        stop("No `cell_feature_matrix` files are found, check input directory -> `data_dir`") 
+    }
+    
     # Filtering count matrix, metadata and segmentations ----
     # filtering metadata and count matrix
     if (any(names(metadata) == "transcript_counts") && filter_counts) {
@@ -1509,6 +1504,15 @@ readXenium <- function(data_dir,
     metadata <- as.data.frame(metadata) |> as("DataFrame")
     rownames(metadata) <- metadata$cell_id
     metadata[,1] <- NULL
+    if (!is.null(polys)) {
+        # Remove cells that are too small from the gene count matrix and metadata
+        metadata <- metadata[polys[[1]]$cell_id,]
+        sce <- sce[,polys[[1]]$cell_id]
+    }
+    # Remove nuclei of removed cells
+    if (setequal(names(polys), c("cellSeg", "nucSeg"))) {
+        polys[["nucSeg"]] <- polys[["nucSeg"]][polys[["nucSeg"]]$cell_id %in% polys[["cellSeg"]]$cell_id,]
+    }
     if (flip == "geometry") {
         metadata$y_centroid <- -metadata$y_centroid
     }
@@ -1527,7 +1531,7 @@ readXenium <- function(data_dir,
                 i$cell_id <- NULL
                 return(i)}
             )
-        colGeometries(sfe) <- c(colGeometries(sfe), polys)
+        colGeometries(sfe, withDimnames = TRUE) <- c(colGeometries(sfe), polys)
     }
 
     # add images

@@ -21,19 +21,19 @@ consistent with that of \code{Image} which \code{ExtImage} inherits from,
 overriding the \code{VirtualSpatialImage} method.
 }
 \seealso{
-Other image methods: 
+Other image methods:
 \code{\link{SFE-image}},
-\code{\link{affineImg}()},
-\code{\link{cropImg}()},
+\code{\link[=affineImg]{affineImg()}},
+\code{\link[=cropImg]{cropImg()}},
 \code{\link{dim,BioFormatsImage-method}},
-\code{\link{ext}()},
-\code{\link{imgRaster}()},
-\code{\link{imgSource}()},
-\code{\link{mirrorImg}()},
-\code{\link{rotateImg}()},
-\code{\link{scaleImg}()},
-\code{\link{translateImg}()},
-\code{\link{transposeImg}()}
+\code{\link{ext}},
+\code{\link{imgRaster}},
+\code{\link{imgSource}},
+\code{\link{mirrorImg}},
+\code{\link{rotateImg}},
+\code{\link[=scaleImg]{scaleImg()}},
+\code{\link[=translateImg]{translateImg()}},
+\code{\link[=transposeImg]{transposeImg()}}
 }
 \concept{Image methods}
 \concept{image methods}

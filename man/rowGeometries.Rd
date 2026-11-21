@@ -69,10 +69,12 @@ prior to removal of empty space so it should be translated to match the new
 coordinates after removing empty space. Default to \code{TRUE}.}
 
 \item{value}{Value to set. For \code{dimGeometry}, must be a \code{sf} data
-frame with the same number of rows as size in the dimension of interest, or
-an ordinary data frame that can be converted to such a \code{sf} data frame
-(see \code{\link{df2sf}}). For \code{dimGeometries}, must be a list of such
-\code{sf} or ordinary data frames.}
+frame with the same number of rows as size in the dimension of interest, a
+\code{DuckDBDataFrame} with geometry, or an ordinary data frame that
+can be converted to such a \code{sf} data frame (see \code{\link{df2sf}}).
+For \code{dimGeometries}, must be a named list of such \code{sf} or
+\code{DuckDBDataFrame} or ordinary data frames. Support for ordinary data
+frames is deprecated.}
 }
 \description{
 \code{rowGeometries} are geometries that corresponding to rows of the gene
@@ -108,6 +110,6 @@ txSpots(sfe)
 unlink(dir_use, recursive = TRUE)
 }
 \seealso{
-[dimGeometries()], [colGeometries()]
+\code{\link[=dimGeometries]{dimGeometries()}}, \code{\link[=colGeometries]{colGeometries()}}
 }
 \concept{Getters and setters}

@@ -1,10 +1,10 @@
 # Validity of SFE object
 .check_geometries <- function(gs, name_show) {
     msgs <- lapply(seq_along(gs), function(i) {
-        if (!inherits(gs[[i]], "sf")) {
+        if (!inherits(gs[[i]], "sf") && !.is_duckdbdf_spatial(gs[[i]])) {
             paste0(
                 "Item ", i, " in ", name_show, " is ", class(gs[[i]])[1],
-                " rather than sf.\n"
+                " rather than sf or DuckDBDataFrame from GeoParquet.\n"
             )
         }
     })
@@ -15,6 +15,7 @@
         return(character(0))
     }
 }
+#' @importFrom BiocGenerics unique
 .check_annotgeometries <- function(x) {
     gs <- int_metadata(x)$annotGeometries
     ids_coldata <- sampleIDs(x)

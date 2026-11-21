@@ -64,7 +64,7 @@ Only used for k nearest neighbor and distance based neighbor with
 \value{
 Depends on the method:
 \describe{
-\item{Spatial(Feature)Experiment}{The same object with a logical column 
+\item{Spatial(Feature)Experiment}{The same object with a logical column
 "is_debris" added to \code{colData}.}
 \item{Matrix and \code{sf(c)}}{A logical vector indicating whether each cell
 is debris.}

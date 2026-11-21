@@ -57,7 +57,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
                         phred_col = "qv", min_phred = 20, flip_geometry = FALSE,
                         cellsize = NULL, square = TRUE, flat_topped = FALSE,
                         new_geometry_name = "bins", unit = "micron", sparse = FALSE,
-                        BPPARAM = SerialParam(), save_memory = FALSE,
+                        BPPARAM = SerialParam(), save_memory = FALSE, 
                         .orig_nrows = NULL) {
     # This is only for one file, one sample
     if (!is.null(df)) {
@@ -89,6 +89,7 @@ aggregateTx <- function(file, df = NULL, by = NULL, sample_id = "sample01",
         }
     } else if (inherits(by, "sf")) by <- st_geometry(by)
     if (save_memory) {
+        check_installed("dplyr")
         # TODO: Add argument to write this stuff to disk on the fly gene by gene
         # never having the whole matrix in memory
         # Not urgent, since usually the matrix isn't that big anyway after aggregation

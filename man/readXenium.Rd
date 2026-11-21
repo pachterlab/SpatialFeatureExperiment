@@ -30,7 +30,7 @@ Default = \code{sample01}.}
 
 \item{min_area}{Minimum cell area in square microns or pixel units (eg for CosMX).
 Anything smaller will be considered artifact or debris and removed.
-Default to `NULL`, ie no filtering of polygons.}
+Default to \code{NULL}, ie no filtering of polygons.}
 
 \item{image}{Which image(s) to load, can be "morphology_mip",
 "morphology_focus" or both. Note that in Xenium Onboarding Analysis (XOA)
@@ -44,7 +44,7 @@ and Vimentin. So this argument is ignored for XOA v2.}
 \item{row.names}{String specifying whether to use Ensembl IDs ("id") or gene
 symbols ("symbol") as row names. If using symbols, the Ensembl ID will be
 appended to disambiguate in case the same symbol corresponds to multiple
-Ensembl IDs. Always "symbol" if `add_molecules = TRUE` because only gene
+Ensembl IDs. Always "symbol" if \code{add_molecules = TRUE} because only gene
 symbols are used in the transcript spot files.}
 
 \item{flip}{To flip the image, geometry coordinates, or none. Because the
@@ -63,38 +63,38 @@ than this size then the coordinates will be flipped instead.}
 object.}
 
 \item{min_phred}{Minimum Phred score to keep spot. By default 20, the
-conventional threshold indicating "acceptable", meaning that there's 1%
+conventional threshold indicating "acceptable", meaning that there's 1\%
 chance that the spot was decoded in error.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object specifying parallel
-  processing backend and number of threads to use for parallelizable tasks:
-  \enumerate{ \item To load cell segmentation from HDF5 files from different
-  fields of view (FOVs) with multiple cores. A progress bar can be configured
-  in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
-  FOVs, reading in the geometries can be time consuming, so we recommend
-  using a server and larger number of threads. This argument is not used if
-  \code{use_cellpose = TRUE} and the parquet file is present.
+processing backend and number of threads to use for parallelizable tasks:
+\enumerate{ \item To load cell segmentation from HDF5 files from different
+fields of view (FOVs) with multiple cores. A progress bar can be configured
+in the \code{\link[BiocParallel]{BiocParallelParam}} object. When there are numerous
+FOVs, reading in the geometries can be time consuming, so we recommend
+using a server and larger number of threads. This argument is not used if
+\code{use_cellpose = TRUE} and the parquet file is present.
 
-  \item To get the largest piece and see if it's larger than \code{min_area}
-  when there are multiple pieces in the cell segmentation for one cell.}}
+\item To get the largest piece and see if it's larger than \code{min_area}
+when there are multiple pieces in the cell segmentation for one cell.}}
 
 \item{file_out}{Name of file to save the geometry or raster to disk.
 Especially when the geometries are so large that it's unwieldy to load
 everything into memory. If this file (or directory for multiple files)
 already exists, then the existing file(s) will be read, skipping the
 processing. When writing the file, extensions supplied are ignored and
-extensions are determined based on `dest`.}
+extensions are determined based on \code{dest}.}
 }
 \value{
 An SFE object. If reading segmentations, the cell or nuclei
-  segmentation will be saved to `cell_boundaries_sf.parquet` and
-  `nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time the
-  boundaries can be read much more quickly. If reading transcript spots
-  (`add_molecules = TRUE`), then the reformatted transcript spots are saved
-  to file specified in the `file_out` argument, which is by default
-  `tx_spots.parquet` in the same directory as the rest of the data. If images
-  are present, then the images will be of the \code{BioFormatsImage} class
-  and not loaded into memory until necessary in later operations.
+segmentation will be saved to \code{cell_boundaries_sf.parquet} and
+\code{nucleus_boundaries_sf.parquet} respectively in \code{data.dir} so next time the
+boundaries can be read much more quickly. If reading transcript spots
+(\code{add_molecules = TRUE}), then the reformatted transcript spots are saved
+to file specified in the \code{file_out} argument, which is by default
+\code{tx_spots.parquet} in the same directory as the rest of the data. If images
+are present, then the images will be of the \code{BioFormatsImage} class
+and not loaded into memory until necessary in later operations.
 }
 \description{
 This function reads the standard 10X Xenium output into an SFE object.

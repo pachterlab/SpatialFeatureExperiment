@@ -70,7 +70,7 @@ setMethod("findDebrisCells", "sf",
 setMethod("findDebrisCells", "SpatialExperiment",
           function(x, max_cells = 5, distance_cutoff = 50,
                    BNPARAM = NULL, BPPARAM = SerialParam()) {
-              sfe$is_debris <- findDebrisCells(spatialCoords(x), max_cells, distance_cutoff,
+              x$is_debris <- findDebrisCells(spatialCoords(x), max_cells, distance_cutoff,
                                                BNPARAM, BPPARAM)
-              sfe
+              x
           })
