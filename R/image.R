@@ -4,6 +4,7 @@
 #' classes in this package inherits from this virtual class.
 #' 
 #' @importFrom S4Vectors showAsCell
+#' @concept Image classes
 #' @export
 setClass("AlignedSpatialImage", contains = c("VirtualSpatialImage", "VIRTUAL"))
 
