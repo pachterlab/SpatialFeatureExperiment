@@ -3,6 +3,7 @@
 * Deprecated geometryFeatureData except for annotGeometry because I never used it for colGeometries
 * Allow out of memory geometries and geometric operations with DuckDBSpatial and DuckDBDataFrame
 * Fixed bug in coercion method from SPE when the geometries aren't flipped for SpatRaster image
+* Breaking change: withDimNames in colGeometry getters and setters now defaults to FALSE instead of TRUE because DuckDBDataFrame does not allow row names and must have withDimNames = FALSE
 
 # Version 1.9.9 (06/13/2025)
 * Added functions to get tissue boundary, either from images or from concave hull
