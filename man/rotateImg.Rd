@@ -33,8 +33,7 @@ arguments.}
 \code{ExtImage}. Otherwise \code{*Image} object of the same class.
 }
 \description{
-As in \code{SpatialExperiment}, rotation here must be a multiple of 90
-degrees.
+Rotate image
 }
 \seealso{
 Other image methods:

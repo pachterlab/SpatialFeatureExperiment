@@ -86,9 +86,16 @@ export(colGeometryNames)
 export(colGraph)
 export(colGraphNames)
 export(colGraphs)
+export(combineTransforms)
 export(counts)
 export(crop)
 export(cropImg)
+export(ct_affine)
+export(ct_identity)
+export(ct_mirror)
+export(ct_rotate)
+export(ct_scale)
+export(ct_transpose)
 export(df2sf)
 export(dimGeometries)
 export(dimGeometry)
@@ -171,6 +178,7 @@ export(transpose)
 export(transposeImg)
 export(txSpots)
 export(unit)
+exportClasses(AffineTransform)
 exportClasses(AlignedSpatialImage)
 exportClasses(BioFormatsImage)
 exportClasses(ExtImage)
@@ -366,6 +374,7 @@ importFrom(methods,
   setClassUnion,
   setGeneric,
   setMethod,
+  setOldClass,
   setReplaceMethod,
   show,
   signature,

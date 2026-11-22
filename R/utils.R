@@ -314,6 +314,7 @@ setMethod(".get_centroid_coords", "DuckDBDataFrame",
 .check_affine_info <- function(tr) {
     named <- "name" %in% names(tr)
     mat <- setequal(names(tr), c("M", "v"))
+    o <- ""
     if (!named && !mat) {
         o <- "transformation must be a list with names 'name' and 'param', or alternatively 'M' and 'v'."
     }

@@ -21,6 +21,7 @@
 # Anything where I need to move the thing to origin before transformation and
 # then move it back to its original center
 .center_mv <- function(bbox, M) {
+    bbox <- bbox %||% c(xmin=0, xmax=0, ymin=0, ymax=0) # if NULL center around origin
     center <- bbox_center(bbox)
     v <- as.vector(center - M %*% center)
     list(M = M, v = v)
@@ -64,7 +65,7 @@
            rotate = .rotate(bbox, degrees),
            scale = .scale(bbox, factor),
            affine = list(M = M, v = v)
-    )
+    ) |> structure(class = "AffineTransformation")
 }
 
 .transform_geometry <- function(g, mult, add) UseMethod(".transform_geometry")

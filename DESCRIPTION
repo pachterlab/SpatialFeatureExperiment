@@ -51,6 +51,7 @@ Collate:
     'utils.R'
     'SFE-class.R'
     'SpatialFeatureExperiment-package.R'
+    'affine_class.R'
     'aggregate.R'
     'align.R'
     'annotGeometries.R'

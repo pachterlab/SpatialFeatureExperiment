@@ -97,8 +97,8 @@ setMethod("containsOutOfMemoryData", "SpatRasterImage", function(object) {
 #' that can be read with \code{BioFormats}. The image is not loaded into memory,
 #' and when it is, the the \code{BioFormatsImage} object is converted into
 #' \code{\link{ExtImage}} because the loaded image is of a class that inherits
-#' from \code{\link[EBImage]{Image}}. The \code{\link{ExtImage}} class is a thin wrapper
-#' inheriting from \code{VirtualSpatialImage} so it's compatible with
+#' from \code{\link[EBImage]{Image}}. The \code{\link{ExtImage}} class is a thin
+#' wrapper inheriting from \code{VirtualSpatialImage} so it's compatible with
 #' \code{SpatialExperiment} from which SFE is derived. This class might
 #' drastically change as it matures, say to accommodate other formats supported
 #' by \code{BioFormats} and to store the transformation matrix rather than
@@ -136,10 +136,12 @@ setMethod("containsOutOfMemoryData", "SpatRasterImage", function(object) {
 #'   corresponds to.
 #' @param transformation Named list specifying affine transformation. The list
 #'   can have names "name" and named parameter of the transformation, e.g.
-#'   \code{list(name = "mirror", direction = "vertical")}, "rotate" and degrees = 90
-#'   (clockwise), and "scale" and factor = 2. The list can also have names "M"
-#'   for a 2x2 linear transformation matrix in the xy plane and "v" for a
+#'   \code{list(name = "mirror", direction = "vertical")}, "rotate" and degrees
+#'   = 90 (clockwise), and "scale" and factor = 2. The list can also have names
+#'   "M" for a 2x2 linear transformation matrix in the xy plane and "v" for a
 #'   translation vector of length 2 to specify general affine transformation.
+#'   Alternatively, use the \code{AffineTransform} constructors such as
+#'   \code{\link{ct_affine}}.
 #' @return A \code{BioFormatsImage} object.
 #' @importClassesFrom BiocGenerics OutOfMemoryObject
 #' @name BioFormatsImage
@@ -149,7 +151,7 @@ setMethod("containsOutOfMemoryData", "SpatRasterImage", function(object) {
 #' @exportClass BioFormatsImage
 setClass("BioFormatsImage", contains = c("AlignedSpatialImage", "OutOfMemoryObject"),
          slots = c(path = "character", ext = "numeric", isFull = "logical",
-                   origin = "numeric", transformation = "list"))
+                   origin = "numeric", transformation = "AffineTransform"))
 
 .numeric2NA <- function(x) {
     length(x) != 2L || anyNA(x) || !is.numeric(x)
@@ -222,11 +224,13 @@ setMethod("showAsCell", "BioFormatsImage", function(object) {
 #' @rdname BioFormatsImage
 #' @export
 BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
-                            transformation = list()) {
+                            transformation = ct_identity()) {
     if (is.null(ext)) {
         if (isFull) ext <- .get_full_ext(path)
         else stop("Extent must be specified when isFull = FALSE")
     }
+    if (!inherits(transformation, "AffineTransform"))
+        class(transformation) <- "AffineTransform"
     new("BioFormatsImage", path = path, ext = ext, isFull = isFull,
         origin = origin, transformation = transformation)
 }
@@ -236,28 +240,6 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
     if ("name" %in% names(tr))
         do.call(.get_affine_mat, c(tr, list(bbox = bbox)))
     else tr
-}
-# The bbox argument here is used when the image is smaller than the overall
-# bbox of the entire SFE object
-.combine_transforms <- function(bfi, new, bbox = ext(bfi)) {
-    old <- transformation(bfi)
-    if (!length(old)) {
-        nms <- c("xmin", "xmax", "ymin", "ymax")
-        if (!isTRUE(all.equal(bbox[nms], ext(bfi)[nms]))) {
-            new <- .get_mv(new, bbox)
-        }
-        transformation(bfi) <- new
-    }else {
-        old <- .get_mv(old, bbox)
-        new <- .get_mv(new, bbox)
-        out <- list(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
-        if (isTRUE(all.equal(out$M, diag(nrow = 2))) &&
-            isTRUE(all.equal(as.vector(out$v), c(0,0)))) {
-            out <- list()
-        }
-        transformation(bfi) <- out
-    }
-    bfi
 }
 
 #' Other \code{BioFormatsImage} getters
@@ -1129,7 +1111,7 @@ setMethod("transposeImg", "SpatRasterImage",
 
 setMethod(".transpose_img", "BioFormatsImage",
           function(x, bbox_all = ext(x), ...) {
-              .combine_transforms(x, list(name = "transpose"), bbox = bbox_all)
+              .combine_transforms_bfi(x, list(name = "transpose"), bbox = bbox_all)
           })
 
 #' @rdname transposeImg
@@ -1201,7 +1183,7 @@ setMethod(".mirror_img", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
                    bbox_all = ext(x), ...) {
               direction <- match.arg(direction)
-              .combine_transforms(x, list(name = "mirror", direction = direction),
+              .combine_transforms_bfi(x, list(name = "mirror", direction = direction),
                                   bbox = bbox_all)
           })
 
@@ -1243,9 +1225,6 @@ setMethod("mirrorImg", "ExtImage",
 
 #' Rotate image
 #'
-#' As in \code{SpatialExperiment}, rotation here must be a multiple of 90
-#' degrees.
-#'
 #' @inheritParams transposeImg
 #' @param degrees How many degrees to rotate. Positive number means clockwise
 #'   and negative number means counterclockwise.
@@ -1275,7 +1254,7 @@ setMethod("rotateImg", "SpatRasterImage",
 
 setMethod(".rotate_img", "BioFormatsImage",
           function(x, degrees, bbox_all = ext(x), ...) {
-              .combine_transforms(x, list(name = "rotate", degrees = degrees),
+              .combine_transforms_bfi(x, list(name = "rotate", degrees = degrees),
                                   bbox = bbox_all)
           })
 
@@ -1352,7 +1331,7 @@ setMethod(".scale_img", "AlignedSpatialImage",
 
 setMethod(".scale_img", "BioFormatsImage", 
           function(x, factor, bbox_all = ext(x), ...) {
-              .combine_transforms(x, list(name="scale", factor=factor),
+              .combine_transforms_bfi(x, list(name="scale", factor=factor),
                                   bbox = bbox_all)
           })
 #' Scale image
@@ -1418,7 +1397,7 @@ setMethod("affineImg", "SpatRasterImage", # Deal with rotating SpatRaster?
 #' @export
 setMethod("affineImg", "BioFormatsImage",
           function(x, M, v, ...) {
-              .combine_transforms(x, list(M=M, v=v))
+              .combine_transforms_bfi(x, list(M=M, v=v))
           })
 
 #' @rdname affineImg

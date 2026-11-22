@@ -14,7 +14,7 @@ BioFormatsImage(
   ext = NULL,
   isFull = TRUE,
   origin = c(0, 0),
-  transformation = list()
+  transformation = ct_identity()
 )
 }
 \arguments{
@@ -40,10 +40,12 @@ corresponds to.}
 
 \item{transformation}{Named list specifying affine transformation. The list
 can have names "name" and named parameter of the transformation, e.g.
-\code{list(name = "mirror", direction = "vertical")}, "rotate" and degrees = 90
-(clockwise), and "scale" and factor = 2. The list can also have names "M"
-for a 2x2 linear transformation matrix in the xy plane and "v" for a
-translation vector of length 2 to specify general affine transformation.}
+\code{list(name = "mirror", direction = "vertical")}, "rotate" and degrees
+= 90 (clockwise), and "scale" and factor = 2. The list can also have names
+"M" for a 2x2 linear transformation matrix in the xy plane and "v" for a
+translation vector of length 2 to specify general affine transformation.
+Alternatively, use the \code{AffineTransform} constructors such as
+\code{\link{ct_affine}}.}
 }
 \value{
 A \code{BioFormatsImage} object.
@@ -54,8 +56,8 @@ is designed for OME-TIFF from Xenium and has not been tested on other formats
 that can be read with \code{BioFormats}. The image is not loaded into memory,
 and when it is, the the \code{BioFormatsImage} object is converted into
 \code{\link{ExtImage}} because the loaded image is of a class that inherits
-from \code{\link[EBImage]{Image}}. The \code{\link{ExtImage}} class is a thin wrapper
-inheriting from \code{VirtualSpatialImage} so it's compatible with
+from \code{\link[EBImage]{Image}}. The \code{\link{ExtImage}} class is a thin
+wrapper inheriting from \code{VirtualSpatialImage} so it's compatible with
 \code{SpatialExperiment} from which SFE is derived. This class might
 drastically change as it matures, say to accommodate other formats supported
 by \code{BioFormats} and to store the transformation matrix rather than
