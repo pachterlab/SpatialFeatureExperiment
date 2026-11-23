@@ -190,11 +190,8 @@ getMeta(obj_xen) %>% str
 
 ```{r}
 # manual check
-ggplot() &
-    geom_sf(data = cellSeg(sfe_conv_xen)) &
-    geom_sf(data = 
-              rowGeometry(sfe_conv_xen, "txSpots") %>% 
-              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
+ggplot() +
+    geom_sf(data = cellSeg(sfe_conv_xen))
 ```
 
 ## Plot converted Seurat to SFE - Xenium
@@ -219,10 +216,7 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
                    dark = TRUE,
                    #sample_id = "",
                    scattermore = FALSE # will plot only centroids!
-                  ) & # add molecules
-  geom_sf(data = 
-              rowGeometry(sfe_conv_xen, "txSpots") %>% 
-              dplyr::filter(ID == rownames(sfe_conv_xen)[1]), size = 0.02, color = "red")
+                  )
 ```
 
 ## Convert Seurat -> SFE - Vizgen
@@ -240,9 +234,8 @@ getMeta(obj_vz) %>% str
 
 ```{r}
 # manual check
-ggplot() & 
-    geom_sf(data = cellSeg(sfe_conv_vz)) &
-    geom_sf(data = rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5)
+ggplot() + 
+    geom_sf(data = cellSeg(sfe_conv_vz))
 ```
 
 ## Plot converted Seurat to SFE - Vizgen
@@ -254,9 +247,7 @@ plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
                    dark = TRUE, #show_axes = T,
                    #sample_id = "",
                    scattermore = FALSE
-                  ) & # add molecules
-  geom_sf(data = 
-            rowGeometry(sfe_conv_vz , "txSpots"), size = 0.5, color = "red", alpha = 0.4)
+                  )
 ```
 
 ## Test when Seurat object has > 1 Assay - Xenium
