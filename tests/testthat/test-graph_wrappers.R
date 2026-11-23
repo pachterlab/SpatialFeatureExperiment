@@ -167,17 +167,21 @@ test_that("Correct Visium graph", {
 
 library(OSTA.data)
 id <- "VisiumHD_HumanColon_Oliveira"
-pa <- OSTA.data_load(id)
-dir.create(dir <- tempfile())
-unzip(pa, exdir=dir)
+pa <- tryCatch(OSTA.data_load(id), error = function(e) NULL)
+if (!is.null(pa)) {
+    dir.create(dir <- tempfile())
+    unzip(pa, exdir=dir)
+}
 
 test_that("Correct Visium HD graph", {
+    skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
     g <- findVisiumHDGraph(sfe)
     expect_s3_class(g, "listw")
 })
 
 test_that("Error message when cell segmentation are read", {
+    skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, bin_size = 16)
     expect_error(findVisiumHDGraph(sfe), "are required")
 })
