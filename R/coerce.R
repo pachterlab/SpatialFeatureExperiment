@@ -470,7 +470,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
           # TODO: this code is a bit clunky, make pretty later
           assays_sfe <-
             list(counts = .GetCounts(seu_obj,
-                                     cells = cell_ids_fov,
                                      if (!slot_names[["slots_ok"]] &&
                                          length(slot_names[["slot_n"]]) == 1)
                                        slot_names[["slot_n"]]
@@ -480,17 +479,16 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                      else "counts",
                                      assay = assay_master),
                  logcounts = .GetCounts(seu_obj,
-                                        cells = cell_ids_fov,
                                         if (!slot_names[["slots_ok"]] && length(slot_names[["slot_n"]]) == 2)
                                           slot_names[["slot_n"]][2]
                                         else "data",
                                         assay = assay_master),
                  scaledata = .GetCounts(seu_obj,
-                                        cells = cell_ids_fov,
                                         "scale.data",
                                         assay = assay_master))
           # remove empty elements, if eg "scale.data" is not present
           assays_sfe <- assays_sfe[lapply(assays_sfe, length) > 0]
+          assays_sfe <- lapply(assays_sfe, function(x) x[,cell_ids_fov])
 
           # remove this afterwards
           #assays_sfe_out <<- assays_sfe
@@ -684,7 +682,6 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                 # prepare assays
                 assays_add <-
                   list(counts = .GetCounts(seu_obj,
-                                           cells = cell_ids_fov,
                                            if (!slot_names[["slots_ok"]] && length(slot_names) == 1)
                                              slot_names
                                            else if (!slot_names[["slots_ok"]] && length(slot_names[["slot_n"]]) == 2)
@@ -692,17 +689,16 @@ setMethod("toSpatialFeatureExperiment", "SingleCellExperiment",
                                            else "counts",
                                            assay = assays_name[a]),
                        logcounts = .GetCounts(seu_obj,
-                                              cells = cell_ids_fov,
                                               if (!slot_names[["slots_ok"]] && length(slot_names[["slot_n"]]) == 2)
                                                 slot_names[2]
                                               else "data",
                                               assay = assays_name[a]),
                        scaledata = .GetCounts(seu_obj,
-                                              cells = cell_ids_fov,
                                               "scale.data",
                                               assay = assays_name[a]))
                 # remove empty elements
                 assays_add <- assays_add[lapply(assays_add, length) > 0]
+                assays_add <- lapply(assays_add, function(x) x[,cell_ids_fov])
                 altExp(sfe, assays_name[a]) <-
                   SingleCellExperiment(assays = assays_add) |>
                   toSpatialExperiment(sample_id = gsub("_|-|[.]", "", x = fov_names[fov_section])) |>
