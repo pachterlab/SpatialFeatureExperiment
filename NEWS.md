@@ -1,3 +1,7 @@
+# Version 1.99.0
+* Made affine transform specifications user-facing with the AffineTransform S3 class
+* Added option to use DuckDB for geometries in read functions
+
 # Version 1.16.0 (11/25/2026)
 * Deprecated some functionalities in `formatTxSpots()`: split spots by z-planes (and related arguments), split spots by cell compartments in CosMX, and option to format the transcript spots for colGeometires
 * Deprecated geometryFeatureData except for annotGeometry because I never used it for colGeometries
