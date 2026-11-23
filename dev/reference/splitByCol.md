@@ -59,9 +59,8 @@ splitContiguity(
 
 - cover:
 
-  Logical, whether the geometries in `x` must be entirely covered by `y`
-  if `op = st_intersection` or whether `x` must be entirely outside `y`
-  if `op = st_difference`. Only relevant when `keep_whole != "none"`.
+  Logical, whether the geometries in `x` must be entirely covered by
+  `f`.
 
 - annotGeometryName:
 

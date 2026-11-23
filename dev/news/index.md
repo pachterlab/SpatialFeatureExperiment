@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 1.16.0 (11/25/2026)
+
+- Deprecated some functionalities in
+  [`formatTxSpots()`](https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/formatTxSpots.md):
+  split spots by z-planes (and related arguments), split spots by cell
+  compartments in CosMX, and option to format the transcript spots for
+  colGeometires
+- Deprecated geometryFeatureData except for annotGeometry because I
+  never used it for colGeometries
+- Allow out of memory geometries and geometric operations with
+  DuckDBSpatial and DuckDBDataFrame
+- Fixed bug in coercion method from SPE when the geometries aren’t
+  flipped for SpatRaster image
+
+## Version 1.9.9 (06/13/2025)
+
+- Added functions to get tissue boundary, either from images or from
+  concave hull
+- Optimized aggregateTx()
+- Added findDebrisCells() to find small bits of tissue that are likely
+  to be debris in QC
+
 ## Version 1.7.1 (07/20/2024)
 
 - Added image setter, Img\<-

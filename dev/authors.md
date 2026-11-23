@@ -13,7 +13,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/pachterlab/SpatialFeatureExperiment/blob/documentation/inst/CITATION)
+[`inst/CITATION`](https://github.com/pachterlab/SpatialFeatureExperiment/blob/documentation-devel/inst/CITATION)
 
 Moses L, Einarsson PH, Jackson K, Luebbert L, Booeshaghi S, Antonsson S,
 Melsted P, Pachter L (2023). “Voyager: exploratory single-cell genomics

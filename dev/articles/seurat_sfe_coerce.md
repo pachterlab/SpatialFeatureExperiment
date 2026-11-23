@@ -3,6 +3,7 @@
 ## Setup
 
 ``` r
+
 # set R options, paths, object params, names, functions, etc..
 message("Setting options, paths and object params..")
 ```
@@ -10,6 +11,7 @@ message("Setting options, paths and object params..")
     ## Setting options, paths and object params..
 
 ``` r
+
 Sys.setenv(LANG = "en")
 
 # To get metadata df from SFE or Seurat object
@@ -39,6 +41,7 @@ BPPARAM <- BiocParallel::MulticoreParam(3,
 ## Load R packages
 
 ``` r
+
 suppressPackageStartupMessages({
     library(ggplot2)
     #library(SingleCellExperiment)
@@ -62,7 +65,8 @@ suppressPackageStartupMessages({
     })
 ```
 
-    ## There appears to be a problem with the PROJ installation
+    ## Warning: replacing previous import 'BiocGenerics::version' by
+    ## 'BiocManager::version' when loading 'AnnotationHub'
 
 ## Load Seurat v5 objects - 1 sample
 
@@ -70,6 +74,7 @@ Note, these object were generated a priori, object names with (eg
 `*_vis` for Visium) correspond to specific spatial tech
 
 ``` r
+
 obj_vz <- SeuratTestData("Vizgen")
 ```
 
@@ -82,6 +87,7 @@ obj_vz <- SeuratTestData("Vizgen")
     ## loading from cache
 
 ``` r
+
 obj_vz
 ```
 
@@ -92,6 +98,7 @@ obj_vz
     ##  1 spatial field of view present: vz.toy.1
 
 ``` r
+
 obj_xen <- SeuratTestData("Xenium")
 ```
 
@@ -104,6 +111,7 @@ obj_xen <- SeuratTestData("Xenium")
     ## loading from cache
 
 ``` r
+
 obj_xen
 ```
 
@@ -115,6 +123,7 @@ obj_xen
     ##  1 spatial field of view present: xen.toy.1
 
 ``` r
+
 obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
 obj_vis
 ```
@@ -126,6 +135,7 @@ obj_vis
     ##  1 image present: sample01
 
 ``` r
+
 obj_vishd <- SeuratTestData("VisiumHD8") # Visium HD
 ```
 
@@ -138,6 +148,7 @@ obj_vishd <- SeuratTestData("VisiumHD8") # Visium HD
     ## loading from cache
 
 ``` r
+
 obj_vishd
 ```
 
@@ -150,6 +161,7 @@ obj_vishd
 ## Convert Seurat -\> SFE - Visium (toy data)
 
 ``` r
+
 showMethods("toSpatialFeatureExperiment")
 ```
 
@@ -159,6 +171,7 @@ showMethods("toSpatialFeatureExperiment")
     ## x="SpatialExperiment"
 
 ``` r
+
 # real Visium data
 sfe_conv_vis <-
   toSpatialFeatureExperiment(x = obj_vis, 
@@ -187,6 +200,7 @@ sfe_conv_vis <-
     ## >>> Converting pixels to microns
 
 ``` r
+
 sfe_conv_vis
 ```
 
@@ -213,6 +227,7 @@ sfe_conv_vis
     ## sample01:
 
 ``` r
+
 getMeta(sfe_conv_vis) %>% str
 ```
 
@@ -228,6 +243,7 @@ getMeta(sfe_conv_vis) %>% str
 ## Plot converted SFE Visium (toy data)
 
 ``` r
+
 plotSpatialFeature(sfe_conv_vis, exprs_values = "counts",
                    features = rownames(sfe_conv_vis)[1], 
                    size = 1, colGeometryName = "spotPoly",
@@ -248,16 +264,9 @@ the spot diameter was added manually as `80`, since older Seurat version
 had a bug when adding spatial infos to `scale.factors`, `$spot` was too
 small and same as `$hires`
 
-Note that as of April 2026,
-[`Seurat::SpatialFeaturePlot`](https://satijalab.org/seurat/reference/SpatialPlot.html)
-has an error regarding
-[`UpdateSeuratObject`](https://github.com/satijalab/seurat/issues/10261).
-This problem is resolved in version `5.4.0.9002`, which does not seem to
-on CRAN yet as of writing. Use `pak::pak("satijalab/seurat")` to install
-this version.
-
 ``` r
-obj_vis2 <- SeuratTestData("Visium") |> UpdateSeuratObject()
+
+obj_vis2 <- SeuratTestData("Visium")
 ```
 
     ## see ?SFEData and browseVignettes('SFEData') for documentation
@@ -268,31 +277,8 @@ obj_vis2 <- SeuratTestData("Visium") |> UpdateSeuratObject()
 
     ## loading from cache
 
-    ## Warning: Not validating Assay objects
-    ## Not validating Assay objects
-
-    ## Warning: Not validating Seurat objects
-
-    ## Validating object structure
-
-    ## Updating object slots
-
-    ## Ensuring keys are in the proper structure
-    ## Ensuring keys are in the proper structure
-
-    ## Ensuring feature names don't have underscores or pipes
-
-    ## Updating slots in Spatial
-
-    ## Updating slots in anterior1
-
-    ## Validating object structure for Assay 'Spatial'
-
-    ## Validating object structure for VisiumV1 'anterior1'
-
-    ## Object representation is consistent with the most current Seurat version
-
 ``` r
+
 obj_vis2
 ```
 
@@ -303,6 +289,7 @@ obj_vis2
     ##  1 image present: anterior1
 
 ``` r
+
 # plot it
 SpatialFeaturePlot(obj_vis2, features = rownames(obj_vis2)[1])
 ```
@@ -311,6 +298,7 @@ SpatialFeaturePlot(obj_vis2, features = rownames(obj_vis2)[1])
 Convert Seurat -\> SFE - Visium (real data)
 
 ``` r
+
 # real Visium data
 sfe_conv_vis2 <-
   toSpatialFeatureExperiment(x = obj_vis2, 
@@ -329,14 +317,13 @@ sfe_conv_vis2 <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> anterior1
 
     ## >>> Converting pixels to microns
 
 ``` r
+
 sfe_conv_vis2
 ```
 
@@ -363,6 +350,7 @@ sfe_conv_vis2
     ## anterior1:
 
 ``` r
+
 getMeta(sfe_conv_vis2) %>% str
 ```
 
@@ -380,6 +368,7 @@ getMeta(sfe_conv_vis2) %>% str
 ## Plot converted Seurat to SFE - Visium
 
 ``` r
+
 plotSpatialFeature(sfe_conv_vis2, exprs_values = "counts",
                    features = rownames(sfe_conv_vis2)[1], 
                    #size = 1, colGeometryName = "spotPoly",
@@ -395,6 +384,7 @@ plotSpatialFeature(sfe_conv_vis2, exprs_values = "counts",
 ## Convert Seurat -\> SFE - Visium HD
 
 ``` r
+
 sfe_vishd <-
   toSpatialFeatureExperiment(x = obj_vishd, 
                              image_scalefactors = "lowres",
@@ -419,6 +409,7 @@ sfe_vishd <-
     ## >>> Converting pixels to microns
 
 ``` r
+
 sfe_vishd
 ```
 
@@ -446,6 +437,7 @@ sfe_vishd
     ## slice1_008um:
 
 ``` r
+
 getMeta(sfe_vishd) %>% str
 ```
 
@@ -458,6 +450,7 @@ getMeta(sfe_vishd) %>% str
 ## Plot converted Seurat to SFE - Visium HD
 
 ``` r
+
 plotSpatialFeature(sfe_vishd, exprs_values = "counts",
                    features = rownames(sfe_vishd)[1], 
                    size = 1, colGeometryName = "spotPoly",
@@ -473,6 +466,7 @@ plotSpatialFeature(sfe_vishd, exprs_values = "counts",
 ![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-9-1.png)
 
 ``` r
+
 plotSpatialFeature(sfe_vishd, exprs_values = "counts",
                    features = rownames(sfe_vishd)[1], 
                    size = 0, colGeometryName = "spotPoly",
@@ -488,36 +482,14 @@ plotSpatialFeature(sfe_vishd, exprs_values = "counts",
 ## Convert Seurat -\> SFE - Xenium
 
 ``` r
+
 # slim down Xenium obj to keep only 1 Assay
 if (!exists("obj_xen_slim"))
   obj_xen_slim <- DietSeurat(obj_xen, assays = "Xenium")
-obj_xen_slim <- UpdateSeuratObject(obj_xen_slim)
-```
-
-    ## Validating object structure
-
-    ## Updating object slots
-
-    ## Ensuring keys are in the proper structure
-    ## Ensuring keys are in the proper structure
-
-    ## Ensuring feature names don't have underscores or pipes
-
-    ## Updating slots in Xenium
-
-    ## Updating slots in xen.toy.1
-
-    ## Validating object structure for Assay 'Xenium'
-
-    ## Validating object structure for FOV 'xen.toy.1'
-
-    ## Object representation is consistent with the most current Seurat version
-
-``` r
 #real data subset
 sfe_conv_xen <-
   toSpatialFeatureExperiment(x = obj_xen_slim,
-                             add_molecules = FALSE,
+                             add_molecules = TRUE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM
@@ -534,12 +506,11 @@ sfe_conv_xen <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.1
 
 ``` r
+
 sfe_conv_xen
 ```
 
@@ -566,6 +537,7 @@ sfe_conv_xen
     ## xen_toy_1:
 
 ``` r
+
 getMeta(sfe_conv_xen) %>% str
 ```
 
@@ -582,6 +554,7 @@ getMeta(sfe_conv_xen) %>% str
     ##  $ sample_id               : chr  "xen_toy_1" "xen_toy_1" "xen_toy_1" "xen_toy_1" ...
 
 ``` r
+
 getMeta(obj_xen) %>% str
 ```
 
@@ -597,8 +570,9 @@ getMeta(obj_xen) %>% str
     ##  $ nFeature_ControlProbe   : int  0 0 0 0 0 0 0 0 0 0 ...
 
 ``` r
+
 # manual check
-ggplot() &
+ggplot() +
     geom_sf(data = cellSeg(sfe_conv_xen))
 ```
 
@@ -607,6 +581,7 @@ ggplot() &
 ## Plot converted Seurat to SFE - Xenium
 
 ``` r
+
 plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
                    features = rownames(sfe_conv_xen)[1],
                    size = 1, colGeometryName = "centroids", 
@@ -619,6 +594,7 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
 ![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-12-1.png)
 
 ``` r
+
 plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
                    features = rownames(sfe_conv_xen)[1],
                    size = 1, colGeometryName = "cellSeg", 
@@ -630,12 +606,26 @@ plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
 
 ![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-12-2.png)
 
+``` r
+
+plotSpatialFeature(sfe_conv_xen, exprs_values = "counts",
+                   features = rownames(sfe_conv_xen)[1],
+                   size = 1, colGeometryName = "cellSeg", 
+                   dark = TRUE,
+                   #sample_id = "",
+                   scattermore = FALSE # will plot only centroids!
+                  )
+```
+
+![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-12-3.png)
+
 ## Convert Seurat -\> SFE - Vizgen
 
 ``` r
+
 sfe_conv_vz <-
   toSpatialFeatureExperiment(x = obj_vz,
-                             add_molecules = FALSE,
+                             add_molecules = TRUE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM)
@@ -651,12 +641,11 @@ sfe_conv_vz <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> vz.toy.1
 
 ``` r
+
 sfe_conv_vz
 ```
 
@@ -683,6 +672,7 @@ sfe_conv_vz
     ## vz_toy_1:
 
 ``` r
+
 getMeta(sfe_conv_vz) %>% str
 ```
 
@@ -696,6 +686,7 @@ getMeta(sfe_conv_vz) %>% str
     ##  $ sample_id      : chr  "vz_toy_1" "vz_toy_1" "vz_toy_1" "vz_toy_1" ...
 
 ``` r
+
 getMeta(obj_vz) %>% str
 ```
 
@@ -708,8 +699,9 @@ getMeta(obj_vz) %>% str
     ##  $ fov            : logi  NA NA NA NA NA NA ...
 
 ``` r
+
 # manual check
-ggplot() & 
+ggplot() + 
     geom_sf(data = cellSeg(sfe_conv_vz))
 ```
 
@@ -718,6 +710,7 @@ ggplot() &
 ## Plot converted Seurat to SFE - Vizgen
 
 ``` r
+
 #options(repr.plot.height = 5, repr.plot.width = 10)
 plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
                    features = rownames(sfe_conv_vz)[1],
@@ -733,9 +726,10 @@ plotSpatialFeature(sfe_conv_vz, exprs_values = "counts",
 ## Test when Seurat object has \> 1 Assay - Xenium
 
 ``` r
+
 sfe_conv_xen2 <-
   toSpatialFeatureExperiment(x = obj_xen,
-                             add_molecules = FALSE,
+                             add_molecules = TRUE,
                              flip = "geometry",
                              unit = "micron",
                              BPPARAM = BPPARAM
@@ -752,8 +746,6 @@ sfe_conv_xen2 <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.1
 
@@ -762,11 +754,8 @@ sfe_conv_xen2 <-
     ## ControlCodeword
     ## ControlProbe
 
-    ## Warning: Layer 'scale.data' is empty
-    ## Layer 'scale.data' is empty
-    ## Layer 'scale.data' is empty
-
 ``` r
+
 sfe_conv_xen2
 ```
 
@@ -793,6 +782,7 @@ sfe_conv_xen2
     ## xen_toy_1:
 
 ``` r
+
 getMeta(sfe_conv_xen2) %>% str
 ```
 
@@ -809,6 +799,7 @@ getMeta(sfe_conv_xen2) %>% str
     ##  $ sample_id               : chr  "xen_toy_1" "xen_toy_1" "xen_toy_1" "xen_toy_1" ...
 
 ``` r
+
 getMeta(obj_xen) %>% str
 ```
 
@@ -826,6 +817,7 @@ getMeta(obj_xen) %>% str
 ## Plot converted Seurat to SFE with several `altExp` - Xenium
 
 ``` r
+
 plotSpatialFeature(sfe_conv_xen2, exprs_values = "counts",
                    features = rownames(sfe_conv_xen2)[1],
                    size = 1, colGeometryName = "cellSeg", 
@@ -840,6 +832,7 @@ plotSpatialFeature(sfe_conv_xen2, exprs_values = "counts",
 ## Plot one of the `altExp` - Xenium
 
 ``` r
+
 plotSpatialFeature(altExp(sfe_conv_xen2, 1), exprs_values = "counts",
                    features = rownames(altExp(sfe_conv_xen2, 1))[1],
                    size = 1, colGeometryName = "centroids", 
@@ -856,26 +849,12 @@ plotSpatialFeature(altExp(sfe_conv_xen2, 1), exprs_values = "counts",
 eg including SCT Assays, as well as PCA, UMAP embedding etc..
 
 ``` r
+
 # normalize data
 obj_vz %<>% 
     SCTransform(assay = DefaultAssay(obj_vz), verbose = F) %>%
     RunPCA(npcs = 5, verbose = F) %>% 
     RunUMAP(dims = 1:5, verbose = F)
-```
-
-    ## `vst.flavor` is set to 'v2' but could not find glmGamPoi installed.
-    ## Please install the glmGamPoi package for much faster estimation.
-    ## --------------------------------------------
-    ## install.packages('BiocManager')
-    ## BiocManager::install('glmGamPoi')
-    ## --------------------------------------------
-    ## Falling back to native (slower) implementation.
-
-    ## Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
-    ## To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
-    ## This message will be shown once per session
-
-``` r
 obj_vz
 ```
 
@@ -888,9 +867,10 @@ obj_vz
     ##  1 spatial field of view present: vz.toy.1
 
 ``` r
+
 sfe_conv_vz2 <-
   toSpatialFeatureExperiment(x = obj_vz,
-                             add_molecules = FALSE,
+                             add_molecules = TRUE,
                              flip = "geometry",
                              unit = "micron",
                              BPPARAM = BPPARAM
@@ -915,9 +895,8 @@ sfe_conv_vz2 <-
     ## >>> Adding Seurat Assay(s) as Alternative Experiment(s): 
     ## Vizgen
 
-    ## Warning: Layer 'scale.data' is empty
-
 ``` r
+
 sfe_conv_vz2
 ```
 
@@ -944,6 +923,7 @@ sfe_conv_vz2
     ## vz_toy_1:
 
 ``` r
+
 getMeta(sfe_conv_vz2) %>% str
 ```
 
@@ -954,19 +934,21 @@ getMeta(sfe_conv_vz2) %>% str
     ##  $ z              : int  3 3 3 3 3 3 3 3 3 3 ...
     ##  $ volume         : num  839 803 527 461 584 ...
     ##  $ fov            : logi  NA NA NA NA NA NA ...
-    ##  $ nCount_SCT     : num  60 60 63 57 61 52 55 62 55 56 ...
-    ##  $ nFeature_SCT   : int  19 18 24 19 13 13 16 14 13 14 ...
+    ##  $ nCount_SCT     : num  60 60 62 57 61 52 55 62 55 56 ...
+    ##  $ nFeature_SCT   : int  19 18 23 19 13 13 16 14 13 14 ...
     ##  $ sample_id      : chr  "vz_toy_1" "vz_toy_1" "vz_toy_1" "vz_toy_1" ...
 
 ### Check `reducedDim`
 
 ``` r
+
 ElbowPlot(sfe_conv_vz2, ndims = 5)
 ```
 
 ![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-20-1.png)
 
 ``` r
+
 plotDimLoadings(sfe_conv_vz2, dims = 1:5, nfeatures = 5, reduction = "PCA")
 ```
 
@@ -975,6 +957,7 @@ plotDimLoadings(sfe_conv_vz2, dims = 1:5, nfeatures = 5, reduction = "PCA")
 ## Load Seurat objects with several samples/FOVs
 
 ``` r
+
 obj_vz_multi <- SeuratTestData("VizgenMulti") # Vizgen
 ```
 
@@ -987,6 +970,7 @@ obj_vz_multi <- SeuratTestData("VizgenMulti") # Vizgen
     ## loading from cache
 
 ``` r
+
 obj_vz_multi
 ```
 
@@ -997,6 +981,7 @@ obj_vz_multi
     ##  2 spatial fields of view present: vz.toy.1 vz.toy.2
 
 ``` r
+
 obj_xen_multi <- SeuratTestData("XeniumMulti") # Xenium
 ```
 
@@ -1009,6 +994,7 @@ obj_xen_multi <- SeuratTestData("XeniumMulti") # Xenium
     ## loading from cache
 
 ``` r
+
 obj_xen_multi
 ```
 
@@ -1020,6 +1006,7 @@ obj_xen_multi
     ##  2 spatial fields of view present: xen.toy.1 xen.toy.2
 
 ``` r
+
 obj_vis_multi <- readRDS(file.path(dir_extdata, "seu_vis_toy_multi.rds")) # Visium
 obj_vis_multi
 ```
@@ -1031,6 +1018,7 @@ obj_vis_multi
     ##  2 images present: sample01, sample02
 
 ``` r
+
 obj_vishd_multi <- SeuratTestData("VisiumHDmulti") # Visium HD
 ```
 
@@ -1043,6 +1031,7 @@ obj_vishd_multi <- SeuratTestData("VisiumHDmulti") # Visium HD
     ## loading from cache
 
 ``` r
+
 obj_vishd_multi
 ```
 
@@ -1059,6 +1048,7 @@ NOTE, the function will automatically check how many FOVs Seurat object
 has and combine those samples in a single SFE object
 
 ``` r
+
 # toy Visium data
 sfe_vis_multi <-
   toSpatialFeatureExperiment(x = obj_vis_multi, 
@@ -1111,6 +1101,7 @@ sfe_vis_multi <-
     ## >>> Combining 2 SFE object(s) with unique `sample_id`
 
 ``` r
+
 sfe_vis_multi
 ```
 
@@ -1138,6 +1129,7 @@ sfe_vis_multi
     ## sample02:
 
 ``` r
+
 getMeta(sfe_vis_multi) %>% str
 ```
 
@@ -1153,6 +1145,7 @@ getMeta(sfe_vis_multi) %>% str
 ## Plot several samples - Visium
 
 ``` r
+
 plotSpatialFeature(sfe_vis_multi, exprs_values = "counts",
                    features = rownames(sfe_vis_multi)[1], 
                    #size = 1, colGeometryName = "spotPoly",
@@ -1168,6 +1161,7 @@ plotSpatialFeature(sfe_vis_multi, exprs_values = "counts",
 ## TODO: Convert multiple samples/FOVs - Visium HD
 
 ``` r
+
 sfe_vishd_multi <-
   toSpatialFeatureExperiment(x = obj_vishd_multi, 
                              image_scalefactors = "lowres",
@@ -1218,6 +1212,7 @@ sfe_vishd_multi <-
     ## counts
 
 ``` r
+
 sfe_vishd_multi
 ```
 
@@ -1246,6 +1241,7 @@ sfe_vishd_multi
     ## slice1_016um:
 
 ``` r
+
 getMeta(sfe_vishd_multi) %>% str
 ```
 
@@ -1260,6 +1256,7 @@ getMeta(sfe_vishd_multi) %>% str
 ## Plot several samples - Visium HD
 
 ``` r
+
 plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
                    features = rownames(sfe_vishd_multi)[1], 
                    #size = 1, colGeometryName = "spotPoly",
@@ -1275,6 +1272,7 @@ plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
 ![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-25-1.png)
 
 ``` r
+
 # 16 microns better plotted using polygons
 plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
                    features = rownames(sfe_vishd_multi)[1], 
@@ -1291,13 +1289,14 @@ plotSpatialFeature(sfe_vishd_multi, exprs_values = "counts",
 ## Convert multiple samples/FOVs - Xenium
 
 ``` r
+
 # slim down Xenium obj to keep only 1 Assay
 if (!exists("obj_xen_multi.slim"))
   obj_xen_multi.slim <- DietSeurat(obj_xen_multi, assays = "Xenium")
 #real data subset
 sfe_xen_multi <-
   toSpatialFeatureExperiment(x = obj_xen_multi.slim,
-                             add_molecules = FALSE,
+                             add_molecules = TRUE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM
@@ -1318,8 +1317,6 @@ sfe_xen_multi <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.1
 
@@ -1333,14 +1330,13 @@ sfe_xen_multi <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.2
 
     ## >>> Combining 2 SFE object(s) with unique `sample_id`
 
 ``` r
+
 sfe_xen_multi
 ```
 
@@ -1368,6 +1364,7 @@ sfe_xen_multi
     ## xen_toy_2:
 
 ``` r
+
 getMeta(sfe_xen_multi) %>% str
 ```
 
@@ -1386,6 +1383,7 @@ getMeta(sfe_xen_multi) %>% str
 ## Plot several samples - Xenium
 
 ``` r
+
 plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
                    features = rownames(sfe_xen_multi)[1],
                    size = 1, colGeometryName = "cellSeg", 
@@ -1398,6 +1396,7 @@ plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
 ![](seurat_sfe_coerce_files/figure-html/unnamed-chunk-27-1.png)
 
 ``` r
+
 plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
                    features = rownames(sfe_xen_multi)[1],
                    size = 1, colGeometryName = "cellSeg", 
@@ -1412,9 +1411,10 @@ plotSpatialFeature(sfe_xen_multi, exprs_values = "counts",
 ## Convert multiple samples/FOVs - Vizgen
 
 ``` r
+
 sfe_vz_multi <-
   toSpatialFeatureExperiment(x = obj_vz_multi,
-                             add_molecules = FALSE,
+                             add_molecules = TRUE,
                              flip = "geometry",
                              #unit = "micron",
                              BPPARAM = BPPARAM)
@@ -1434,8 +1434,6 @@ sfe_vz_multi <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> vz.toy.1
 
@@ -1449,14 +1447,13 @@ sfe_vz_multi <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> vz.toy.2
 
     ## >>> Combining 2 SFE object(s) with unique `sample_id`
 
 ``` r
+
 sfe_vz_multi
 ```
 
@@ -1484,6 +1481,7 @@ sfe_vz_multi
     ## vz_toy_2:
 
 ``` r
+
 getMeta(sfe_vz_multi) %>% str
 ```
 
@@ -1499,6 +1497,7 @@ getMeta(sfe_vz_multi) %>% str
 ## Plot several samples - Vizgen
 
 ``` r
+
 plotSpatialFeature(sfe_vz_multi, exprs_values = "counts",
                    features = rownames(sfe_vz_multi)[1],
                    size = 4, colGeometryName = "cellSeg", 
@@ -1515,5 +1514,6 @@ plotSpatialFeature(sfe_vz_multi, exprs_values = "counts",
 ## TODO: quick analysis using Voyager
 
 ``` r
+
 # 
 ```

@@ -6,6 +6,7 @@
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/authors.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/index.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/news/index.html</loc></url>
+<url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/AlignedSpatialImage-class.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/BioFormatsImage-getters.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/BioFormatsImage.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/ExtImage.html</loc></url>
@@ -15,6 +16,7 @@
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatRasterImage.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-class.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-coercion.html</loc></url>
+<url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-package.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment-subset.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/SpatialFeatureExperiment.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/addVisiumSpotPoly.html</loc></url>
@@ -32,7 +34,6 @@
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/changeSampleIDs.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/colFeatureData.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/colGeometries.html</loc></url>
-<url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/containsOutOfMemoryData-SpatialFeatureExperiment-method.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/crop.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/cropImg.html</loc></url>
 <url><loc>https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/df2sf.html</loc></url>

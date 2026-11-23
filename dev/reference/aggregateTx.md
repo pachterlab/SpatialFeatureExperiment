@@ -91,7 +91,7 @@ aggregateTxTech(
 - min_phred:
 
   Minimum Phred score to keep spot. By default 20, the conventional
-  threshold indicating "acceptable", meaning that there's 1 chance that
+  threshold indicating "acceptable", meaning that there's 1% chance that
   the spot was decoded in error.
 
 - flip_geometry:
@@ -136,8 +136,8 @@ aggregateTxTech(
 - BPPARAM:
 
   bpparam object to specify parallel computing over genes. If a lot of
-  memory is used, then stick to \`SerialParam()\`. Using multicore in
-  the R level when \`save_memory = TRUE\` works and results into faster
+  memory is used, then stick to `SerialParam()`. Using multicore in the
+  R level when `save_memory = TRUE` works and results into faster
   computation.
 
 - save_memory:

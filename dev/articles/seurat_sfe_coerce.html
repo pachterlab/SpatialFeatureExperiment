@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Seurat_to_SFE • SpatialFeatureExperiment</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Seurat_to_SFE">
 <meta name="robots" content="noindex">
@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SpatialFeatureExperiment</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.13.2</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.15.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,9 +64,9 @@ Vizgen and Xenium</h3>
                         <h4 data-toc-skip class="author">Alik
 Huseynov</h4>
             
-            <h4 data-toc-skip class="date">2026-04-24</h4>
+            <h4 data-toc-skip class="date">2026-11-23</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/pachterlab/SpatialFeatureExperiment/blob/documentation/vignettes/seurat_sfe_coerce.Rmd" class="external-link"><code>vignettes/seurat_sfe_coerce.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pachterlab/SpatialFeatureExperiment/blob/documentation-devel/vignettes/seurat_sfe_coerce.Rmd" class="external-link"><code>vignettes/seurat_sfe_coerce.Rmd</code></a></small>
       <div class="d-none name"><code>seurat_sfe_coerce.Rmd</code></div>
     </div>
 
@@ -113,7 +113,7 @@ Huseynov</h4>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span>    <span class="co">#library(SingleCellExperiment)</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://bioconductor.org/packages/scater/" class="external-link">scater</a></span><span class="op">)</span></span>
-<span>    <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">scuttle</span><span class="op">)</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/LTLA/scuttle" class="external-link">scuttle</a></span><span class="op">)</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span>    <span class="co">#library(SeuratData)</span></span>
 <span>    <span class="co">#library(dplyr)</span></span>
@@ -130,7 +130,8 @@ Huseynov</h4>
 <span>    <span class="co">#library(BiocParallel)</span></span>
 <span>    <span class="co">#library(sf)    </span></span>
 <span>    <span class="op">}</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## There appears to be a problem with the PROJ installation</span></span></code></pre>
+<pre><code><span><span class="co">## Warning: replacing previous import 'BiocGenerics::version' by</span></span>
+<span><span class="co">## 'BiocManager::version' when loading 'AnnotationHub'</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="load-seurat-v5-objects---1-sample">Load Seurat v5 objects - 1 sample<a class="anchor" aria-label="anchor" href="#load-seurat-v5-objects---1-sample"></a>
@@ -271,43 +272,25 @@ added to <code>./inst/extdata/</code>. Note, the spot diameter was added
 manually as <code>80</code>, since older Seurat version had a bug when
 adding spatial infos to <code>scale.factors</code>, <code>$spot</code>
 was too small and same as <code>$hires</code></p>
-<p>Note that as of April 2026, <code><a href="https://satijalab.org/seurat/reference/SpatialPlot.html" class="external-link">Seurat::SpatialFeaturePlot</a></code>
-has an error regarding <a href="https://github.com/satijalab/seurat/issues/10261" class="external-link"><code>UpdateSeuratObject</code></a>.
-This problem is resolved in version <code>5.4.0.9002</code>, which does
-not seem to on CRAN yet as of writing. Use
-<code>pak::pak("satijalab/seurat")</code> to install this version.</p>
 <div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">obj_vis2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/SeuratTestData.html" class="external-link">SeuratTestData</a></span><span class="op">(</span><span class="st">"Visium"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/UpdateSeuratObject.html" class="external-link">UpdateSeuratObject</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">obj_vis2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/SeuratTestData.html" class="external-link">SeuratTestData</a></span><span class="op">(</span><span class="st">"Visium"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## see ?SFEData and browseVignettes('SFEData') for documentation</span></span></code></pre>
 <pre><code><span><span class="co">## downloading 1 resources</span></span></code></pre>
 <pre><code><span><span class="co">## retrieving 1 resource</span></span></code></pre>
 <pre><code><span><span class="co">## loading from cache</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Not validating Assay objects</span></span>
-<span><span class="co">## Not validating Assay objects</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Not validating Seurat objects</span></span></code></pre>
-<pre><code><span><span class="co">## Validating object structure</span></span></code></pre>
-<pre><code><span><span class="co">## Updating object slots</span></span></code></pre>
-<pre><code><span><span class="co">## Ensuring keys are in the proper structure</span></span>
-<span><span class="co">## Ensuring keys are in the proper structure</span></span></code></pre>
-<pre><code><span><span class="co">## Ensuring feature names don't have underscores or pipes</span></span></code></pre>
-<pre><code><span><span class="co">## Updating slots in Spatial</span></span></code></pre>
-<pre><code><span><span class="co">## Updating slots in anterior1</span></span></code></pre>
-<pre><code><span><span class="co">## Validating object structure for Assay 'Spatial'</span></span></code></pre>
-<pre><code><span><span class="co">## Validating object structure for VisiumV1 'anterior1'</span></span></code></pre>
-<pre><code><span><span class="co">## Object representation is consistent with the most current Seurat version</span></span></code></pre>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_vis2</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
 <span><span class="co">## 50 features across 2696 samples within 1 assay </span></span>
 <span><span class="co">## Active assay: Spatial (50 features, 0 variable features)</span></span>
 <span><span class="co">##  2 layers present: counts, data</span></span>
 <span><span class="co">##  1 image present: anterior1</span></span></code></pre>
-<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># plot it</span></span>
 <span><span class="fu"><a href="https://satijalab.org/seurat/reference/SpatialPlot.html" class="external-link">SpatialFeaturePlot</a></span><span class="op">(</span><span class="va">obj_vis2</span>, features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">obj_vis2</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700">
 ## Convert Seurat -&gt; SFE - Visium (real data)</p>
-<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># real Visium data</span></span>
 <span><span class="va">sfe_conv_vis2</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vis2</span>, </span>
@@ -321,11 +304,10 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## ie 'imagerow' &amp; 'imagecol' without scaling factors</span></span>
 <span><span class="co">## &gt;&gt;&gt; set `unit = 'micron'` to convert spot coordinates to micron space</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; anterior1</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Converting pixels to microns</span></span></code></pre>
-<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_vis2</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 50 2696 </span></span>
@@ -348,7 +330,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## </span></span>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## anterior1:</span></span></code></pre>
-<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_conv_vis2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    2696 obs. of  9 variables:</span></span>
 <span><span class="co">##  $ orig.ident      : Factor w/ 1 level "anterior1": 1 1 1 1 1 1 1 1 1 1 ...</span></span>
@@ -364,7 +346,7 @@ not seem to on CRAN yet as of writing. Use
 <div class="section level2">
 <h2 id="plot-converted-seurat-to-sfe---visium">Plot converted Seurat to SFE - Visium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe---visium"></a>
 </h2>
-<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_conv_vis2</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_conv_vis2</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, </span>
 <span>                   <span class="co">#size = 1, colGeometryName = "spotPoly",</span></span>
@@ -378,7 +360,7 @@ not seem to on CRAN yet as of writing. Use
 <div class="section level2">
 <h2 id="convert-seurat---sfe---visium-hd">Convert Seurat -&gt; SFE - Visium HD<a class="anchor" aria-label="anchor" href="#convert-seurat---sfe---visium-hd"></a>
 </h2>
-<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vishd</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vishd</span>, </span>
 <span>                             image_scalefactors <span class="op">=</span> <span class="st">"lowres"</span>,</span>
@@ -393,7 +375,7 @@ not seem to on CRAN yet as of writing. Use
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; slice1.008um</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Converting pixels to microns</span></span></code></pre>
-<div class="sourceCode" id="cb83"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vishd</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 50 393543 </span></span>
@@ -417,7 +399,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## </span></span>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## slice1_008um:</span></span></code></pre>
-<div class="sourceCode" id="cb85"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_vishd</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    393543 obs. of  4 variables:</span></span>
 <span><span class="co">##  $ orig.ident            : chr  "s" "s" "s" "s" ...</span></span>
@@ -428,7 +410,7 @@ not seem to on CRAN yet as of writing. Use
 <div class="section level2">
 <h2 id="plot-converted-seurat-to-sfe---visium-hd">Plot converted Seurat to SFE - Visium HD<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe---visium-hd"></a>
 </h2>
-<div class="sourceCode" id="cb87"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_vishd</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_vishd</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, </span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"spotPoly"</span>,</span>
@@ -439,7 +421,7 @@ not seem to on CRAN yet as of writing. Use
 <span>                  <span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## scattermore and binning only apply to points. Using centroids.</span></span></code></pre>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
-<div class="sourceCode" id="cb89"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_vishd</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_vishd</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, </span>
 <span>                   size <span class="op">=</span> <span class="fl">0</span>, colGeometryName <span class="op">=</span> <span class="st">"spotPoly"</span>,</span>
@@ -453,26 +435,14 @@ not seem to on CRAN yet as of writing. Use
 <div class="section level2">
 <h2 id="convert-seurat---sfe---xenium">Convert Seurat -&gt; SFE - Xenium<a class="anchor" aria-label="anchor" href="#convert-seurat---sfe---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb90"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slim down Xenium obj to keep only 1 Assay</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"obj_xen_slim"</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">obj_xen_slim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/DietSeurat.html" class="external-link">DietSeurat</a></span><span class="op">(</span><span class="va">obj_xen</span>, assays <span class="op">=</span> <span class="st">"Xenium"</span><span class="op">)</span></span>
-<span><span class="va">obj_xen_slim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/UpdateSeuratObject.html" class="external-link">UpdateSeuratObject</a></span><span class="op">(</span><span class="va">obj_xen_slim</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Validating object structure</span></span></code></pre>
-<pre><code><span><span class="co">## Updating object slots</span></span></code></pre>
-<pre><code><span><span class="co">## Ensuring keys are in the proper structure</span></span>
-<span><span class="co">## Ensuring keys are in the proper structure</span></span></code></pre>
-<pre><code><span><span class="co">## Ensuring feature names don't have underscores or pipes</span></span></code></pre>
-<pre><code><span><span class="co">## Updating slots in Xenium</span></span></code></pre>
-<pre><code><span><span class="co">## Updating slots in xen.toy.1</span></span></code></pre>
-<pre><code><span><span class="co">## Validating object structure for Assay 'Xenium'</span></span></code></pre>
-<pre><code><span><span class="co">## Validating object structure for FOV 'xen.toy.1'</span></span></code></pre>
-<pre><code><span><span class="co">## Object representation is consistent with the most current Seurat version</span></span></code></pre>
-<div class="sourceCode" id="cb100"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#real data subset</span></span>
+<span><span class="co">#real data subset</span></span>
 <span><span class="va">sfe_conv_xen</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_xen_slim</span>,</span>
-<span>                             add_molecules <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                             add_molecules <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                             flip <span class="op">=</span> <span class="st">"geometry"</span>,</span>
 <span>                             <span class="co">#unit = "micron",</span></span>
 <span>                             BPPARAM <span class="op">=</span> <span class="va">BPPARAM</span></span>
@@ -484,10 +454,9 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; xen.toy.1</span></span></code></pre>
-<div class="sourceCode" id="cb106"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb83"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_xen</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 27 16324 </span></span>
@@ -510,7 +479,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## </span></span>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## xen_toy_1:</span></span></code></pre>
-<div class="sourceCode" id="cb108"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb85"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_conv_xen</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    16324 obs. of  10 variables:</span></span>
 <span><span class="co">##  $ orig.ident              : chr  "xen.toy.1" "xen.toy.1" "xen.toy.1" "xen.toy.1" ...</span></span>
@@ -523,7 +492,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">##  $ nCount_ControlProbe     : num  0 0 0 0 0 0 0 0 0 0 ...</span></span>
 <span><span class="co">##  $ nFeature_ControlProbe   : int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
 <span><span class="co">##  $ sample_id               : chr  "xen_toy_1" "xen_toy_1" "xen_toy_1" "xen_toy_1" ...</span></span></code></pre>
-<div class="sourceCode" id="cb110"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb87"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">obj_xen</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    16324 obs. of  9 variables:</span></span>
 <span><span class="co">##  $ orig.ident              : chr  "xen.toy.1" "xen.toy.1" "xen.toy.1" "xen.toy.1" ...</span></span>
@@ -535,16 +504,16 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">##  $ nFeature_ControlCodeword: int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
 <span><span class="co">##  $ nCount_ControlProbe     : num  0 0 0 0 0 0 0 0 0 0 ...</span></span>
 <span><span class="co">##  $ nFeature_ControlProbe   : int  0 0 0 0 0 0 0 0 0 0 ...</span></span></code></pre>
-<div class="sourceCode" id="cb112"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb89"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># manual check</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&amp;</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/colGeometries.html">cellSeg</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="plot-converted-seurat-to-sfe---xenium">Plot converted Seurat to SFE - Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb113"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb90"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"centroids"</span>, </span>
@@ -553,7 +522,7 @@ not seem to on CRAN yet as of writing. Use
 <span>                   scattermore <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># will plot only centroids!</span></span>
 <span>                  <span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
-<div class="sourceCode" id="cb114"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb91"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"cellSeg"</span>, </span>
@@ -562,14 +531,23 @@ not seem to on CRAN yet as of writing. Use
 <span>                   scattermore <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># will plot only centroids!</span></span>
 <span>                  <span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-12-2.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb92"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
+<span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_conv_xen</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"cellSeg"</span>, </span>
+<span>                   dark <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                   <span class="co">#sample_id = "",</span></span>
+<span>                   scattermore <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># will plot only centroids!</span></span>
+<span>                  <span class="op">)</span></span></code></pre></div>
+<p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-12-3.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="convert-seurat---sfe---vizgen">Convert Seurat -&gt; SFE - Vizgen<a class="anchor" aria-label="anchor" href="#convert-seurat---sfe---vizgen"></a>
 </h2>
-<div class="sourceCode" id="cb115"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb93"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_vz</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vz</span>,</span>
-<span>                             add_molecules <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                             add_molecules <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                             flip <span class="op">=</span> <span class="st">"geometry"</span>,</span>
 <span>                             <span class="co">#unit = "micron",</span></span>
 <span>                             BPPARAM <span class="op">=</span> <span class="va">BPPARAM</span><span class="op">)</span></span></code></pre></div>
@@ -580,10 +558,9 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; vz.toy.1</span></span></code></pre>
-<div class="sourceCode" id="cb121"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb98"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_vz</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 49 1046 </span></span>
@@ -606,7 +583,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## </span></span>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## vz_toy_1:</span></span></code></pre>
-<div class="sourceCode" id="cb123"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb100"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_conv_vz</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    1046 obs. of  7 variables:</span></span>
 <span><span class="co">##  $ orig.ident     : chr  "vz.toy.1" "vz.toy.1" "vz.toy.1" "vz.toy.1" ...</span></span>
@@ -616,7 +593,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">##  $ volume         : num  839 803 527 461 584 ...</span></span>
 <span><span class="co">##  $ fov            : logi  NA NA NA NA NA NA ...</span></span>
 <span><span class="co">##  $ sample_id      : chr  "vz_toy_1" "vz_toy_1" "vz_toy_1" "vz_toy_1" ...</span></span></code></pre>
-<div class="sourceCode" id="cb125"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb102"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">obj_vz</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    1058 obs. of  6 variables:</span></span>
 <span><span class="co">##  $ orig.ident     : chr  "vz.toy.1" "vz.toy.1" "vz.toy.1" "vz.toy.1" ...</span></span>
@@ -625,16 +602,16 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">##  $ z              : int  3 3 3 3 3 3 3 3 3 3 ...</span></span>
 <span><span class="co">##  $ volume         : num  654 487 839 803 527 ...</span></span>
 <span><span class="co">##  $ fov            : logi  NA NA NA NA NA NA ...</span></span></code></pre>
-<div class="sourceCode" id="cb127"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb104"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># manual check</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&amp;</span> </span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/colGeometries.html">cellSeg</a></span><span class="op">(</span><span class="va">sfe_conv_vz</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="plot-converted-seurat-to-sfe---vizgen">Plot converted Seurat to SFE - Vizgen<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe---vizgen"></a>
 </h2>
-<div class="sourceCode" id="cb128"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb105"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#options(repr.plot.height = 5, repr.plot.width = 10)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_conv_vz</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_conv_vz</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
@@ -648,10 +625,10 @@ not seem to on CRAN yet as of writing. Use
 <div class="section level2">
 <h2 id="test-when-seurat-object-has-1-assay---xenium">Test when Seurat object has &gt; 1 Assay - Xenium<a class="anchor" aria-label="anchor" href="#test-when-seurat-object-has-1-assay---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb129"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb106"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_xen2</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_xen</span>,</span>
-<span>                             add_molecules <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                             add_molecules <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                             flip <span class="op">=</span> <span class="st">"geometry"</span>,</span>
 <span>                             unit <span class="op">=</span> <span class="st">"micron"</span>,</span>
 <span>                             BPPARAM <span class="op">=</span> <span class="va">BPPARAM</span></span>
@@ -663,17 +640,13 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; xen.toy.1</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Adding Seurat Assay(s) as Alternative Experiment(s): </span></span>
 <span><span class="co">## BlankCodeword</span></span>
 <span><span class="co">## ControlCodeword</span></span>
 <span><span class="co">## ControlProbe</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span>
-<span><span class="co">## Layer 'scale.data' is empty</span></span>
-<span><span class="co">## Layer 'scale.data' is empty</span></span></code></pre>
-<div class="sourceCode" id="cb137"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb112"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_xen2</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 27 16324 </span></span>
@@ -696,7 +669,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">## </span></span>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## xen_toy_1:</span></span></code></pre>
-<div class="sourceCode" id="cb139"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb114"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_conv_xen2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    16324 obs. of  10 variables:</span></span>
 <span><span class="co">##  $ orig.ident              : chr  "xen.toy.1" "xen.toy.1" "xen.toy.1" "xen.toy.1" ...</span></span>
@@ -709,7 +682,7 @@ not seem to on CRAN yet as of writing. Use
 <span><span class="co">##  $ nCount_ControlProbe     : num  0 0 0 0 0 0 0 0 0 0 ...</span></span>
 <span><span class="co">##  $ nFeature_ControlProbe   : int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
 <span><span class="co">##  $ sample_id               : chr  "xen_toy_1" "xen_toy_1" "xen_toy_1" "xen_toy_1" ...</span></span></code></pre>
-<div class="sourceCode" id="cb141"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb116"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">obj_xen</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    16324 obs. of  9 variables:</span></span>
 <span><span class="co">##  $ orig.ident              : chr  "xen.toy.1" "xen.toy.1" "xen.toy.1" "xen.toy.1" ...</span></span>
@@ -726,7 +699,7 @@ not seem to on CRAN yet as of writing. Use
 <h2 id="plot-converted-seurat-to-sfe-with-several-altexp---xenium">Plot converted Seurat to SFE with several <code>altExp</code> -
 Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-with-several-altexp---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb143"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb118"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_conv_xen2</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_conv_xen2</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"cellSeg"</span>, </span>
@@ -739,7 +712,7 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <div class="section level2">
 <h2 id="plot-one-of-the-altexp---xenium">Plot one of the <code>altExp</code> - Xenium<a class="anchor" aria-label="anchor" href="#plot-one-of-the-altexp---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb144"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb119"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SingleCellExperiment/man/altExps.html" class="external-link">altExp</a></span><span class="op">(</span><span class="va">sfe_conv_xen2</span>, <span class="fl">1</span><span class="op">)</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SingleCellExperiment/man/altExps.html" class="external-link">altExp</a></span><span class="op">(</span><span class="va">sfe_conv_xen2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"centroids"</span>, </span>
@@ -753,24 +726,13 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <h2 id="test-when-seurat-object-has-1-assay---vizgen">Test when Seurat object has &gt; 1 Assay - Vizgen<a class="anchor" aria-label="anchor" href="#test-when-seurat-object-has-1-assay---vizgen"></a>
 </h2>
 <p>eg including SCT Assays, as well as PCA, UMAP embedding etc..</p>
-<div class="sourceCode" id="cb145"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb120"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># normalize data</span></span>
 <span><span class="va">obj_vz</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/compound.html" class="external-link">%&lt;&gt;%</a></span> </span>
 <span>    <span class="fu"><a href="https://satijalab.org/seurat/reference/SCTransform.html" class="external-link">SCTransform</a></span><span class="op">(</span>assay <span class="op">=</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/DefaultAssay.html" class="external-link">DefaultAssay</a></span><span class="op">(</span><span class="va">obj_vz</span><span class="op">)</span>, verbose <span class="op">=</span> <span class="cn">F</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://satijalab.org/seurat/reference/RunPCA.html" class="external-link">RunPCA</a></span><span class="op">(</span>npcs <span class="op">=</span> <span class="fl">5</span>, verbose <span class="op">=</span> <span class="cn">F</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
-<span>    <span class="fu"><a href="https://satijalab.org/seurat/reference/RunUMAP.html" class="external-link">RunUMAP</a></span><span class="op">(</span>dims <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, verbose <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## `vst.flavor` is set to 'v2' but could not find glmGamPoi installed.</span></span>
-<span><span class="co">## Please install the glmGamPoi package for much faster estimation.</span></span>
-<span><span class="co">## --------------------------------------------</span></span>
-<span><span class="co">## install.packages('BiocManager')</span></span>
-<span><span class="co">## BiocManager::install('glmGamPoi')</span></span>
-<span><span class="co">## --------------------------------------------</span></span>
-<span><span class="co">## Falling back to native (slower) implementation.</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric</span></span>
-<span><span class="co">## To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'</span></span>
-<span><span class="co">## This message will be shown once per session</span></span></code></pre>
-<div class="sourceCode" id="cb148"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">obj_vz</span></span></code></pre></div>
+<span>    <span class="fu"><a href="https://satijalab.org/seurat/reference/RunUMAP.html" class="external-link">RunUMAP</a></span><span class="op">(</span>dims <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, verbose <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
+<span><span class="va">obj_vz</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
 <span><span class="co">## 98 features across 1058 samples within 2 assays </span></span>
 <span><span class="co">## Active assay: SCT (49 features, 49 variable features)</span></span>
@@ -778,10 +740,10 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <span><span class="co">##  1 other assay present: Vizgen</span></span>
 <span><span class="co">##  2 dimensional reductions calculated: pca, umap</span></span>
 <span><span class="co">##  1 spatial field of view present: vz.toy.1</span></span></code></pre>
-<div class="sourceCode" id="cb150"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb122"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_vz2</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vz</span>,</span>
-<span>                             add_molecules <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                             add_molecules <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                             flip <span class="op">=</span> <span class="st">"geometry"</span>,</span>
 <span>                             unit <span class="op">=</span> <span class="st">"micron"</span>,</span>
 <span>                             BPPARAM <span class="op">=</span> <span class="va">BPPARAM</span></span>
@@ -798,8 +760,7 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <pre><code><span><span class="co">## &gt;&gt;&gt; Adding Dimensionality Reduction: pca, umap</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Adding Seurat Assay(s) as Alternative Experiment(s): </span></span>
 <span><span class="co">## Vizgen</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
-<div class="sourceCode" id="cb158"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb129"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_conv_vz2</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 49 1046 </span></span>
@@ -822,7 +783,7 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <span><span class="co">## </span></span>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## vz_toy_1:</span></span></code></pre>
-<div class="sourceCode" id="cb160"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb131"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_conv_vz2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    1046 obs. of  9 variables:</span></span>
 <span><span class="co">##  $ orig.ident     : chr  "vz.toy.1" "vz.toy.1" "vz.toy.1" "vz.toy.1" ...</span></span>
@@ -831,16 +792,16 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <span><span class="co">##  $ z              : int  3 3 3 3 3 3 3 3 3 3 ...</span></span>
 <span><span class="co">##  $ volume         : num  839 803 527 461 584 ...</span></span>
 <span><span class="co">##  $ fov            : logi  NA NA NA NA NA NA ...</span></span>
-<span><span class="co">##  $ nCount_SCT     : num  60 60 63 57 61 52 55 62 55 56 ...</span></span>
-<span><span class="co">##  $ nFeature_SCT   : int  19 18 24 19 13 13 16 14 13 14 ...</span></span>
+<span><span class="co">##  $ nCount_SCT     : num  60 60 62 57 61 52 55 62 55 56 ...</span></span>
+<span><span class="co">##  $ nFeature_SCT   : int  19 18 23 19 13 13 16 14 13 14 ...</span></span>
 <span><span class="co">##  $ sample_id      : chr  "vz_toy_1" "vz_toy_1" "vz_toy_1" "vz_toy_1" ...</span></span></code></pre>
 <div class="section level3">
 <h3 id="check-reduceddim">Check <code>reducedDim</code><a class="anchor" aria-label="anchor" href="#check-reduceddim"></a>
 </h3>
-<div class="sourceCode" id="cb162"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb133"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://satijalab.org/seurat/reference/ElbowPlot.html" class="external-link">ElbowPlot</a></span><span class="op">(</span><span class="va">sfe_conv_vz2</span>, ndims <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="700"></p>
-<div class="sourceCode" id="cb163"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb134"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotDimLoadings.html" class="external-link">plotDimLoadings</a></span><span class="op">(</span><span class="va">sfe_conv_vz2</span>, dims <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, nfeatures <span class="op">=</span> <span class="fl">5</span>, reduction <span class="op">=</span> <span class="st">"PCA"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-20-2.png" class="r-plt" alt="" width="700"></p>
 </div>
@@ -848,26 +809,26 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <div class="section level2">
 <h2 id="load-seurat-objects-with-several-samplesfovs">Load Seurat objects with several samples/FOVs<a class="anchor" aria-label="anchor" href="#load-seurat-objects-with-several-samplesfovs"></a>
 </h2>
-<div class="sourceCode" id="cb164"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb135"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_vz_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/SeuratTestData.html" class="external-link">SeuratTestData</a></span><span class="op">(</span><span class="st">"VizgenMulti"</span><span class="op">)</span> <span class="co"># Vizgen</span></span></code></pre></div>
 <pre><code><span><span class="co">## see ?SFEData and browseVignettes('SFEData') for documentation</span></span></code></pre>
 <pre><code><span><span class="co">## downloading 1 resources</span></span></code></pre>
 <pre><code><span><span class="co">## retrieving 1 resource</span></span></code></pre>
 <pre><code><span><span class="co">## loading from cache</span></span></code></pre>
-<div class="sourceCode" id="cb169"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb140"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_vz_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
 <span><span class="co">## 49 features across 1058 samples within 1 assay </span></span>
 <span><span class="co">## Active assay: Vizgen (49 features, 0 variable features)</span></span>
 <span><span class="co">##  2 layers present: counts, data</span></span>
 <span><span class="co">##  2 spatial fields of view present: vz.toy.1 vz.toy.2</span></span></code></pre>
-<div class="sourceCode" id="cb171"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb142"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_xen_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/SeuratTestData.html" class="external-link">SeuratTestData</a></span><span class="op">(</span><span class="st">"XeniumMulti"</span><span class="op">)</span> <span class="co"># Xenium</span></span></code></pre></div>
 <pre><code><span><span class="co">## see ?SFEData and browseVignettes('SFEData') for documentation</span></span></code></pre>
 <pre><code><span><span class="co">## downloading 1 resources</span></span></code></pre>
 <pre><code><span><span class="co">## retrieving 1 resource</span></span></code></pre>
 <pre><code><span><span class="co">## loading from cache</span></span></code></pre>
-<div class="sourceCode" id="cb176"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb147"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_xen_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
 <span><span class="co">## 541 features across 16324 samples within 4 assays </span></span>
@@ -875,7 +836,7 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <span><span class="co">##  2 layers present: counts, data</span></span>
 <span><span class="co">##  3 other assays present: BlankCodeword, ControlCodeword, ControlProbe</span></span>
 <span><span class="co">##  2 spatial fields of view present: xen.toy.1 xen.toy.2</span></span></code></pre>
-<div class="sourceCode" id="cb178"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb149"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_vis_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir_extdata</span>, <span class="st">"seu_vis_toy_multi.rds"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Visium</span></span>
 <span><span class="va">obj_vis_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
@@ -883,13 +844,13 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 <span><span class="co">## Active assay: RNA (5 features, 0 variable features)</span></span>
 <span><span class="co">##  2 layers present: counts.1, counts.2</span></span>
 <span><span class="co">##  2 images present: sample01, sample02</span></span></code></pre>
-<div class="sourceCode" id="cb180"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb151"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_vishd_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SFEData/man/SeuratTestData.html" class="external-link">SeuratTestData</a></span><span class="op">(</span><span class="st">"VisiumHDmulti"</span><span class="op">)</span> <span class="co"># Visium HD</span></span></code></pre></div>
 <pre><code><span><span class="co">## see ?SFEData and browseVignettes('SFEData') for documentation</span></span></code></pre>
 <pre><code><span><span class="co">## downloading 1 resources</span></span></code></pre>
 <pre><code><span><span class="co">## retrieving 1 resource</span></span></code></pre>
 <pre><code><span><span class="co">## loading from cache</span></span></code></pre>
-<div class="sourceCode" id="cb185"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb156"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obj_vishd_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
 <span><span class="co">## 100 features across 492460 samples within 2 assays </span></span>
@@ -903,7 +864,7 @@ Xenium<a class="anchor" aria-label="anchor" href="#plot-converted-seurat-to-sfe-
 </h2>
 <p>NOTE, the function will automatically check how many FOVs Seurat
 object has and combine those samples in a single SFE object</p>
-<div class="sourceCode" id="cb187"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb158"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># toy Visium data</span></span>
 <span><span class="va">sfe_vis_multi</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vis_multi</span>, </span>
@@ -938,7 +899,7 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; sample02</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Converting pixels to microns</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Combining 2 SFE object(s) with unique `sample_id`</span></span></code></pre>
-<div class="sourceCode" id="cb203"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb174"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vis_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 5 25 </span></span>
@@ -962,7 +923,7 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## sample01: </span></span>
 <span><span class="co">## sample02:</span></span></code></pre>
-<div class="sourceCode" id="cb205"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb176"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_vis_multi</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    25 obs. of  7 variables:</span></span>
 <span><span class="co">##  $ orig.ident  : chr  "SeuratProject" "SeuratProject" "SeuratProject" "SeuratProject" ...</span></span>
@@ -976,7 +937,7 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="plot-several-samples---visium">Plot several samples - Visium<a class="anchor" aria-label="anchor" href="#plot-several-samples---visium"></a>
 </h2>
-<div class="sourceCode" id="cb207"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb178"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_vis_multi</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_vis_multi</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, </span>
 <span>                   <span class="co">#size = 1, colGeometryName = "spotPoly",</span></span>
@@ -990,7 +951,7 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="todo-convert-multiple-samplesfovs---visium-hd">TODO: Convert multiple samples/FOVs - Visium HD<a class="anchor" aria-label="anchor" href="#todo-convert-multiple-samplesfovs---visium-hd"></a>
 </h2>
-<div class="sourceCode" id="cb208"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb179"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vishd_multi</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vishd_multi</span>, </span>
 <span>                             image_scalefactors <span class="op">=</span> <span class="st">"lowres"</span>,</span>
@@ -1021,7 +982,7 @@ object has and combine those samples in a single SFE object</p>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Combining 2 SFE object(s) with unique `sample_id`</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Only following assay(s) are identical and will be kept:</span></span>
 <span><span class="co">## counts</span></span></code></pre>
-<div class="sourceCode" id="cb226"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb197"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vishd_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 50 492460 </span></span>
@@ -1046,7 +1007,7 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## slice1_008um: </span></span>
 <span><span class="co">## slice1_016um:</span></span></code></pre>
-<div class="sourceCode" id="cb228"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb199"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_vishd_multi</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    492460 obs. of  6 variables:</span></span>
 <span><span class="co">##  $ orig.ident            : chr  "s" "s" "s" "s" ...</span></span>
@@ -1059,7 +1020,7 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="plot-several-samples---visium-hd">Plot several samples - Visium HD<a class="anchor" aria-label="anchor" href="#plot-several-samples---visium-hd"></a>
 </h2>
-<div class="sourceCode" id="cb230"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb201"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_vishd_multi</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_vishd_multi</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, </span>
 <span>                   <span class="co">#size = 1, colGeometryName = "spotPoly",</span></span>
@@ -1070,7 +1031,7 @@ object has and combine those samples in a single SFE object</p>
 <span>                  <span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## scattermore and binning only apply to points. Using centroids.</span></span></code></pre>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="700"></p>
-<div class="sourceCode" id="cb232"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb203"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 16 microns better plotted using polygons</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_vishd_multi</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_vishd_multi</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, </span>
@@ -1085,14 +1046,14 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="convert-multiple-samplesfovs---xenium">Convert multiple samples/FOVs - Xenium<a class="anchor" aria-label="anchor" href="#convert-multiple-samplesfovs---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb233"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb204"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slim down Xenium obj to keep only 1 Assay</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists</a></span><span class="op">(</span><span class="st">"obj_xen_multi.slim"</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">obj_xen_multi.slim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.org/seurat/reference/DietSeurat.html" class="external-link">DietSeurat</a></span><span class="op">(</span><span class="va">obj_xen_multi</span>, assays <span class="op">=</span> <span class="st">"Xenium"</span><span class="op">)</span></span>
 <span><span class="co">#real data subset</span></span>
 <span><span class="va">sfe_xen_multi</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_xen_multi.slim</span>,</span>
-<span>                             add_molecules <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                             add_molecules <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                             flip <span class="op">=</span> <span class="st">"geometry"</span>,</span>
 <span>                             <span class="co">#unit = "micron",</span></span>
 <span>                             BPPARAM <span class="op">=</span> <span class="va">BPPARAM</span></span>
@@ -1107,7 +1068,6 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; xen.toy.1</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Seurat Assays found: Xenium</span></span>
@@ -1117,11 +1077,10 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; xen.toy.2</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Combining 2 SFE object(s) with unique `sample_id`</span></span></code></pre>
-<div class="sourceCode" id="cb246"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb215"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_xen_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 27 16324 </span></span>
@@ -1145,7 +1104,7 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## xen_toy_1: </span></span>
 <span><span class="co">## xen_toy_2:</span></span></code></pre>
-<div class="sourceCode" id="cb248"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb217"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_xen_multi</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    16324 obs. of  10 variables:</span></span>
 <span><span class="co">##  $ orig.ident              : chr  "xen.toy.1" "xen.toy.1" "xen.toy.1" "xen.toy.1" ...</span></span>
@@ -1162,7 +1121,7 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="plot-several-samples---xenium">Plot several samples - Xenium<a class="anchor" aria-label="anchor" href="#plot-several-samples---xenium"></a>
 </h2>
-<div class="sourceCode" id="cb250"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb219"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_xen_multi</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_xen_multi</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"cellSeg"</span>, </span>
@@ -1171,7 +1130,7 @@ object has and combine those samples in a single SFE object</p>
 <span>                   scattermore <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>                  <span class="op">)</span></span></code></pre></div>
 <p><img src="seurat_sfe_coerce_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="700"></p>
-<div class="sourceCode" id="cb251"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb220"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_xen_multi</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_xen_multi</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">1</span>, colGeometryName <span class="op">=</span> <span class="st">"cellSeg"</span>, </span>
@@ -1184,10 +1143,10 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="convert-multiple-samplesfovs---vizgen">Convert multiple samples/FOVs - Vizgen<a class="anchor" aria-label="anchor" href="#convert-multiple-samplesfovs---vizgen"></a>
 </h2>
-<div class="sourceCode" id="cb252"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb221"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vz_multi</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="../reference/SpatialFeatureExperiment-coercion.html">toSpatialFeatureExperiment</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">obj_vz_multi</span>,</span>
-<span>                             add_molecules <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                             add_molecules <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                             flip <span class="op">=</span> <span class="st">"geometry"</span>,</span>
 <span>                             <span class="co">#unit = "micron",</span></span>
 <span>                             BPPARAM <span class="op">=</span> <span class="va">BPPARAM</span><span class="op">)</span></span></code></pre></div>
@@ -1201,7 +1160,6 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; vz.toy.1</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Seurat Assays found: Vizgen</span></span>
@@ -1211,11 +1169,10 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## segmentation</span></span>
 <span><span class="co">## molecules</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Generating `sf` geometries</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Layer 'scale.data' is empty</span></span></code></pre>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## &gt;&gt;&gt; Creating `SFE` object -&gt; vz.toy.2</span></span></code></pre>
 <pre><code><span><span class="co">## &gt;&gt;&gt; Combining 2 SFE object(s) with unique `sample_id`</span></span></code></pre>
-<div class="sourceCode" id="cb265"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb232"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sfe_vz_multi</span></span></code></pre></div>
 <pre><code><span><span class="co">## class: SpatialFeatureExperiment </span></span>
 <span><span class="co">## dim: 49 1046 </span></span>
@@ -1239,7 +1196,7 @@ object has and combine those samples in a single SFE object</p>
 <span><span class="co">## Graphs:</span></span>
 <span><span class="co">## vz_toy_1: </span></span>
 <span><span class="co">## vz_toy_2:</span></span></code></pre>
-<div class="sourceCode" id="cb267"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb234"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">getMeta</span><span class="op">(</span><span class="va">sfe_vz_multi</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="va">str</span></span></code></pre></div>
 <pre><code><span><span class="co">## 'data.frame':    1046 obs. of  7 variables:</span></span>
 <span><span class="co">##  $ orig.ident     : chr  "vz.toy.1" "vz.toy.1" "vz.toy.1" "vz.toy.1" ...</span></span>
@@ -1253,7 +1210,7 @@ object has and combine those samples in a single SFE object</p>
 <div class="section level2">
 <h2 id="plot-several-samples---vizgen">Plot several samples - Vizgen<a class="anchor" aria-label="anchor" href="#plot-several-samples---vizgen"></a>
 </h2>
-<div class="sourceCode" id="cb269"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb236"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/Voyager/man/plotSpatialFeature.html" class="external-link">plotSpatialFeature</a></span><span class="op">(</span><span class="va">sfe_vz_multi</span>, exprs_values <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>                   features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sfe_vz_multi</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
 <span>                   size <span class="op">=</span> <span class="fl">4</span>, colGeometryName <span class="op">=</span> <span class="st">"cellSeg"</span>, </span>
@@ -1271,7 +1228,7 @@ object<a class="anchor" aria-label="anchor" href="#todo-test-when-multiple-sampl
 <div class="section level2">
 <h2 id="todo-quick-analysis-using-voyager">TODO: quick analysis using Voyager<a class="anchor" aria-label="anchor" href="#todo-quick-analysis-using-voyager"></a>
 </h2>
-<div class="sourceCode" id="cb270"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb237"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># </span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -1285,7 +1242,7 @@ object<a class="anchor" aria-label="anchor" href="#todo-test-when-multiple-sampl
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

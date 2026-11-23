@@ -6,6 +6,7 @@ This package is available on Bioconductor version 3.16 and above. It can
 be installed with
 
 ``` r
+
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install("SpatialFeatureExperiment")

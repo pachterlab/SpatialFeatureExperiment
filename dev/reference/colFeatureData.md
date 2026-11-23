@@ -13,6 +13,8 @@ rowFeatureData(sfe)
 
 geometryFeatureData(sfe, type, MARGIN = 2L)
 
+annotFeatureData(sfe, type)
+
 reducedDimFeatureData(sfe, dimred)
 ```
 

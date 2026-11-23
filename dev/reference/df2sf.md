@@ -71,9 +71,10 @@ df2sf(
 
 - ...:
 
-  Other arguments passed to \`sf::st_buffer\`, mainly to make polygon
-  shapes, eg Visium spot \`endCapStyle = "ROUND"\` and VisiumHD bin
-  \`endCapStyle = "SQUARE"\`
+  Other arguments passed to
+  [`sf::st_buffer`](https://r-spatial.github.io/sf/reference/geos_unary.html),
+  mainly to make polygon shapes, eg Visium spot `endCapStyle = "ROUND"`
+  and VisiumHD bin `endCapStyle = "SQUARE"`
 
 ## Value
 

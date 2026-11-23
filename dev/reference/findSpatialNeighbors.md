@@ -175,7 +175,7 @@ attr(g, "method")
 #> [1] "SpatialFeatureExperiment"
 #> 
 #> $package[[2]]
-#> [1] "1.13.2"
+#> [1] "1.15.1"
 #> 
 #> 
 #> $args

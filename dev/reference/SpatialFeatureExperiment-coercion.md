@@ -25,7 +25,8 @@ toSpatialFeatureExperiment(
   annotGeometryType = "POLYGON",
   spatialGraphs = NULL,
   spotDiameter = NA,
-  unit = NULL
+  unit = NULL,
+  flip_geometry = TRUE
 )
 
 # S4 method for class 'SingleCellExperiment'
@@ -70,43 +71,25 @@ toSpatialFeatureExperiment(
 
   Geometry of the entities that correspond to the columns of the gene
   count matrix, such as cells and Visium spots. It must be a named list
-  of one of the following:
+  or vector of one or more of the following:
 
   An `sf` data frame
 
   :   The geometry column specifies the geometry of the entities.
 
-  An ordinary data frame specifying centroids
+  File names of GeoParquet files
 
-  :   Column names for the coordinates are specified in the
-      `spatialCoordsNames` argument. For Visium and ST, in addition to
-      the centroid coordinate data frame, the spot diameter in the same
-      unit as the coordinates can be specified in the `spotDiamter`
-      argument.
+  :   These will be used to represent geometries out of memory with
+      `DuckDBSpatial`.
 
-  An ordinary data frame specifying polygons
+  DuckDBDataFrame with geometries
 
-  :   Also use `spatialCoordsNames`. There should an additional column
-      "ID" to specify which vertices belong to which polygon. The
-      coordinates should not be in list columns. Rather, the data frame
-      should look like it is passed to
-      [`ggplot2::geom_polygon`](https://ggplot2.tidyverse.org/reference/geom_polygon.html).
-      If there are holes, then there must also be a column "subID" that
-      differentiates between the outer polygon and the holes.
+  :   As read from GeoParquet file with
+      [`readGeoParquet`](https://rdrr.io/pkg/DuckDBSpatial/man/readGeoParquet.html)
 
-  In all cases, the data frame should specify the same number of
-  geometries as the number of columns in the gene count matrix. If the
-  column "barcode" is present, then it will be matched to column names
-  of the gene count matrix. Otherwise, the geometries are assumed to be
-  in the same order as columns in the gene count matrix. If the
-  geometries are specified in an ordinary data frame, then it will be
-  converted into `sf` internally. Named list of data frames because each
-  entity can have multiple geometries, such as whole cell and nuclei
-  segmentations. The geometries are assumed to be POINTs for centroids
-  and POLYGONs for segmentations. If polygons are specified in an
-  ordinary data frame, then anything with fewer than 3 vertices will be
-  removed. For anything other than POINTs, attributes of the geometry
-  will be ignored.
+  An ordinary data frame specifying centroids or polygons
+
+  :   Deprecated
 
 - rowGeometries:
 
@@ -118,11 +101,7 @@ toSpatialFeatureExperiment(
   Geometry of entities that do not correspond to columns or rows of the
   gene count matrix, such as tissue boundary and pathologist annotations
   of histological regions, and nuclei segmentation in a Visium dataset.
-  Also a named list as in `colGeometries`. The ordinary data frame may
-  specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI versions.
-  Each data frame can only specify one type of geometry. For MULTI
-  versions, there must be a column "group" to identify each MULTI
-  geometry.
+  Also a named list as in `colGeometries`.
 
 - spatialCoordsNames:
 
@@ -135,12 +114,8 @@ toSpatialFeatureExperiment(
 
 - annotGeometryType:
 
-  Character vector specifying geometry type of each element of the list
-  if `annotGeometry` is specified. Each element of the vector must be
-  one of POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, and
-  MULTIPOLYGON. Must be either length 1 (same for all elements of the
-  list) or the same length as the list. Ignored if the corresponding
-  element is an `sf` object.
+  Deprecated. Ignored if the corresponding element is an `sf` object or
+  file path of a GeoParquet file.
 
 - spatialGraphs:
 
@@ -156,8 +131,16 @@ toSpatialFeatureExperiment(
 
 - unit:
 
-  \# Default unit is `"micron"`. However for Visium one can choose
-  between `"micron"` or `"full_res_image_pixel"`.
+  Default unit is `"micron"`. However for Visium one can choose between
+  `"micron"` or `"full_res_image_pixel"`.
+
+- flip_geometry:
+
+  Logical, whether to flip `spatialCoords(x)` to align with image,
+  because geometries have (0,0) at the bottom left when coordinate
+  values are positive, while image pixels have (0,0) at the top left.
+  Ignored if `colGeometries` is explicitly supplied or if there are no
+  images.
 
 - sample_id:
 
@@ -220,9 +203,8 @@ toSpatialFeatureExperiment(
 
 - image_scalefactors:
 
-  \# A `character`, choose between "lowres" or "hires". Only for 10X
-  Visium, image scaling factors are from \`scalefactors_json.json\`
-  file.
+  A `character`, choose between "lowres" or "hires". Only for 10X
+  Visium, image scaling factors are from `scalefactors_json.json` file.
 
 - BPPARAM:
 
@@ -273,17 +255,23 @@ library(VisiumIO)
 #>     setequal, union
 #> 
 #> Attaching package: ‘BiocGenerics’
+#> The following objects are masked from ‘package:SpatialFeatureExperiment’:
+#> 
+#>     rotate, scale
 #> The following objects are masked from ‘package:stats’:
 #> 
 #>     IQR, mad, sd, var, xtabs
+#> The following object is masked from ‘package:utils’:
+#> 
+#>     data
 #> The following objects are masked from ‘package:base’:
 #> 
 #>     Filter, Find, Map, Position, Reduce, anyDuplicated, aperm, append,
 #>     as.data.frame, basename, cbind, colnames, dirname, do.call,
 #>     duplicated, eval, evalq, get, grep, grepl, is.unsorted, lapply,
 #>     mapply, match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-#>     rank, rbind, rownames, sapply, saveRDS, table, tapply, unique,
-#>     unsplit, which.max, which.min
+#>     rank, rbind, rownames, sapply, saveRDS, scale, sequence, table,
+#>     tapply, transform, unique, unsplit, which.max, which.min
 #> Loading required package: S4Vectors
 #> 
 #> Attaching package: ‘S4Vectors’

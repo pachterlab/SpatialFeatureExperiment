@@ -59,8 +59,9 @@ library(EBImage)
 #> Attaching package: ‘EBImage’
 #> The following objects are masked from ‘package:SpatialFeatureExperiment’:
 #> 
-#>     affine, rotate, translate, transpose
+#>     affine, translate, transpose
 library(SFEData)
+#> Warning: replacing previous import ‘BiocGenerics::version’ by ‘BiocManager::version’ when loading ‘AnnotationHub’
 library(RBioFormats)
 #> BioFormats library version 7.3.0
 fp <- tempfile()
@@ -71,25 +72,14 @@ fn <- XeniumOutput("v2", file_path = fp)
 #> retrieving 1 resource
 #> 
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce82f5a1322/xenium2 
-# Weirdly the first time I get the null pointer error
-try(sfe <- readXenium(fn))
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file180836e49db1/xenium2 
+sfe <- readXenium(fn)
 #> >>> Cell segmentations are found in `.parquet` file(s)
 #> >>> Reading cell and nucleus segmentations
 #> >>> Making MULTIPOLYGON nuclei geometries
 #> >>> Making POLYGON cell geometries
-#> Sanity checks on cell segmentation polygons:
-#> >>> ..found 132 cells with (nested) polygon lists
-#> >>> ..applying filtering
 #> >>> Checking polygon validity
 #> >>> Saving geometries to parquet files
-#> >>> Reading cell metadata -> `cells.parquet`
-#> >>> Reading h5 gene count matrix
-#> >>> filtering cellSeg geometries to match 6272 cells with counts > 0
-#> >>> filtering nucSeg geometries to match 6158 cells with counts > 0
-sfe <- readXenium(fn)
-#> >>> Preprocessed sf segmentations found
-#> >>> Reading cell and nucleus segmentations
 #> >>> Reading cell metadata -> `cells.parquet`
 #> >>> Reading h5 gene count matrix
 #> >>> filtering cellSeg geometries to match 6272 cells with counts > 0

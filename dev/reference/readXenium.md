@@ -40,7 +40,7 @@ readXenium(
 
   Minimum cell area in square microns or pixel units (eg for CosMX).
   Anything smaller will be considered artifact or debris and removed.
-  Default to \`NULL\`, ie no filtering of polygons.
+  Default to `NULL`, ie no filtering of polygons.
 
 - image:
 
@@ -59,7 +59,7 @@ readXenium(
   String specifying whether to use Ensembl IDs ("id") or gene symbols
   ("symbol") as row names. If using symbols, the Ensembl ID will be
   appended to disambiguate in case the same symbol corresponds to
-  multiple Ensembl IDs. Always "symbol" if \`add_molecules = TRUE\`
+  multiple Ensembl IDs. Always "symbol" if `add_molecules = TRUE`
   because only gene symbols are used in the transcript spot files.
 
 - flip:
@@ -87,7 +87,7 @@ readXenium(
 - min_phred:
 
   Minimum Phred score to keep spot. By default 20, the conventional
-  threshold indicating "acceptable", meaning that there's 1 chance that
+  threshold indicating "acceptable", meaning that there's 1% chance that
   the spot was decoded in error.
 
 - BPPARAM:
@@ -117,17 +117,17 @@ readXenium(
   memory. If this file (or directory for multiple files) already exists,
   then the existing file(s) will be read, skipping the processing. When
   writing the file, extensions supplied are ignored and extensions are
-  determined based on \`dest\`.
+  determined based on `dest`.
 
 ## Value
 
 An SFE object. If reading segmentations, the cell or nuclei segmentation
-will be saved to \`cell_boundaries_sf.parquet\` and
-\`nucleus_boundaries_sf.parquet\` respectively in \`data.dir\` so next
-time the boundaries can be read much more quickly. If reading transcript
-spots (\`add_molecules = TRUE\`), then the reformatted transcript spots
-are saved to file specified in the \`file_out\` argument, which is by
-default \`tx_spots.parquet\` in the same directory as the rest of the
+will be saved to `cell_boundaries_sf.parquet` and
+`nucleus_boundaries_sf.parquet` respectively in `data.dir` so next time
+the boundaries can be read much more quickly. If reading transcript
+spots (`add_molecules = TRUE`), then the reformatted transcript spots
+are saved to file specified in the `file_out` argument, which is by
+default `tx_spots.parquet` in the same directory as the rest of the
 data. If images are present, then the images will be of the
 `BioFormatsImage` class and not loaded into memory until necessary in
 later operations.
@@ -150,7 +150,7 @@ fp <- tempfile()
 dir_use <- XeniumOutput("v2", file_path = fp)
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce815cba3fd/xenium2 
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file1808635e8dbc/xenium2 
 # RBioFormats issue
 try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #> >>> Must use gene symbols as row names when adding transcript spots.
@@ -158,9 +158,6 @@ try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #> >>> Reading cell and nucleus segmentations
 #> >>> Making MULTIPOLYGON nuclei geometries
 #> >>> Making POLYGON cell geometries
-#> Sanity checks on cell segmentation polygons:
-#> >>> ..found 132 cells with (nested) polygon lists
-#> >>> ..applying filtering
 #> >>> Checking polygon validity
 #> >>> Saving geometries to parquet files
 #> >>> Reading cell metadata -> `cells.parquet`

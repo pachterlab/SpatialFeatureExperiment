@@ -41,6 +41,12 @@ Version 1.1.4 adds package version to the SFE object. We are considering
 an overhaul of the `spatialGraphs` slot in a future version using the
 `sfdep` package to decouple the adjacency graph from the edge weights.
 
+## Note
+
+The first version of the SFE object that supports DuckDB for geometries
+is 1.16.0. Older versions don't need to be converted, but the new
+version can't be used with older versions of the SFE package.
+
 ## See also
 
 [`objectVersion`](https://rdrr.io/pkg/SingleCellExperiment/man/miscellaneous.html),
@@ -55,9 +61,9 @@ sfe <- McKellarMuscleData("small")
 #> loading from cache
 # First version of SFE object doesn't log SFE package version, so should be NULL
 SFEVersion(sfe)
-#> [1] ‘1.13.2’
+#> [1] ‘1.15.1’
 sfe <- updateObject(sfe)
 # See current version
 SFEVersion(sfe)
-#> [1] ‘1.13.2’
+#> [1] ‘1.15.1’
 ```

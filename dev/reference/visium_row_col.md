@@ -5,7 +5,7 @@ From Space Ranger 1.3.1.
 ## Usage
 
 ``` r
-visium_row_col
+data(visium_row_col)
 ```
 
 ## Format

@@ -11,10 +11,24 @@ polygons or a bounding box.
 ## Usage
 
 ``` r
+# S4 method for class 'ANY'
 st_any_pred(x, y, pred, yx = FALSE, sparse = FALSE, ...)
+
+# S4 method for class 'duckspatial_df'
+st_any_pred(x, y, pred, yx = NA, sparse = FALSE, ...)
+
+# S4 method for class 'DuckDBTable'
+st_any_pred(x, y, pred, yx = NA, sparse = TRUE, ...)
 
 st_any_intersects(x, y, yx = FALSE, sparse = FALSE)
 
+# S4 method for class 'ANY'
+st_n_pred(x, y, pred, ...)
+
+# S4 method for class 'duckspatial_df'
+st_n_pred(x, y, pred, ...)
+
+# S4 method for class 'DuckDBTable'
 st_n_pred(x, y, pred, ...)
 
 st_n_intersects(x, y)
@@ -32,9 +46,12 @@ st_n_intersects(x, y)
 
 - pred:
 
-  A geometric binary predicate function, such as
+  Name of a predicate such as "intersects", see
+  [`ddbs_predicate`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.html).
+  It can correspond to functions in the `sf` package without the `st_`
+  prefix. Deprecated behavior: A geometric binary predicate function,
+  such as
   [`st_intersects`](https://r-spatial.github.io/sf/reference/geos_binary_pred.html).
-  It should return an object of class `sgbp`, for sparse predicates.
 
 - yx:
 
@@ -42,7 +59,7 @@ st_n_intersects(x, y)
   predicates, the results should be the same. When x has a large number
   of geometries and y has few, `pred(y, x)` is much faster than
   `pred(x, y)` for `st_intersects`, `st_disjoint`, and
-  `st_is_within_distance`.
+  `st_is_within_distance`. Ignored for `DuckDBDataFrame`.
 
 - sparse:
 
@@ -52,7 +69,10 @@ st_n_intersects(x, y)
 
 - ...:
 
-  Arguments passed to `pred`.
+  Arguments passed to the predicate function, which would be `st_<pred>`
+  for in memory geometries and
+  [`ddbs_predicate`](https://cidree.github.io/duckspatial/reference/ddbs_predicate.html)
+  when using DuckDB.
 
 ## Value
 
@@ -62,19 +82,25 @@ or a numeric vector of indices of `TRUE` when `sparse = TRUE`.
 Simplified from the `sgbp` results which indicate which item in `y` each
 item in `x` intersects, which might not always be relevant. For
 `st_n_*`, an integer vector indicating the number of geometries in y
-returns TRUE for each geometry in x.
+returns TRUE for each geometry in x. For `DuckDB`, the output is a
+`DuckDBDataColumn`.
 
 ## Examples
 
 ``` r
 library(sf)
-#> Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 pts <- st_sfc(
     st_point(c(.5, .5)), st_point(c(1.5, 1.5)),
     st_point(c(2.5, 2.5))
 )
 pol <- st_polygon(list(rbind(c(0, 0), c(2, 0), c(2, 2), c(0, 2), c(0, 0))))
 st_any_pred(pts, pol, pred = st_disjoint)
+#> Warning: The `pred` argument of `st_any_pred()` should be a string as of
+#> SpatialFeatureExperiment 1.16.0.
+#> ℹ The deprecated feature was likely used in the SpatialFeatureExperiment
+#>   package.
+#>   Please report the issue at
+#>   <https://github.com/pachterlab/SpatialFeatureExperiment/issues>.
 #> [1] FALSE FALSE  TRUE
 st_any_intersects(pts, pol)
 #> [1]  TRUE  TRUE FALSE

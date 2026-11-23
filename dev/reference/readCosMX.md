@@ -9,14 +9,14 @@ these files are the flat files in the AtoMX output.
 ``` r
 readCosMX(
   data_dir,
-  z = "all",
+  z = deprecated(),
   sample_id = "sample01",
   min_area = NULL,
   add_molecules = FALSE,
-  split_cell_comps = FALSE,
+  split_cell_comps = deprecated(),
   BPPARAM = SerialParam(),
   file_out = file.path(data_dir, "tx_spots.parquet"),
-  z_option = c("3d", "split")
+  z_option = deprecated()
 )
 ```
 
@@ -28,8 +28,7 @@ readCosMX(
 
 - z:
 
-  Integer z index or "all" to indicate which z-planes to read for the
-  transcript spots.
+  Deprecated.
 
 - sample_id:
 
@@ -43,7 +42,7 @@ readCosMX(
 
   Minimum cell area in square microns or pixel units (eg for CosMX).
   Anything smaller will be considered artifact or debris and removed.
-  Default to \`NULL\`, ie no filtering of polygons.
+  Default to `NULL`, ie no filtering of polygons.
 
 - add_molecules:
 
@@ -51,8 +50,7 @@ readCosMX(
 
 - split_cell_comps:
 
-  Logical, whether to split transcript spot geometries by cell
-  compartment. Only relevant when \`add_molecules = TRUE\`.
+  Deprecated.
 
 - BPPARAM:
 
@@ -81,26 +79,20 @@ readCosMX(
   memory. If this file (or directory for multiple files) already exists,
   then the existing file(s) will be read, skipping the processing. When
   writing the file, extensions supplied are ignored and extensions are
-  determined based on \`dest\`.
+  determined based on `dest`.
 
 - z_option:
 
-  What to do with z coordinates. "3d" is to construct 3D geometries.
-  "split" is to create a separate 2D geometry for each z-plane so
-  geometric operations are fully supported but some data wrangling is
-  required to perform 3D analyses. When the z coordinates are not
-  integers, 3D geometries will always be constructed since there are no
-  z-planes to speak of. This argument does not apply when
-  \`spatialCoordsNames\` has length 2.
+  Deprecated. Will always be "3d" to construct 3D point geometries if
+  multiple z-planes are present.
 
 ## Value
 
-An SFE object. Cell polygons are written to
-\`cell_boundaries_sf.parquet\` in \`data_dir\`. If reading transcript
-spots (\`add_molecules = TRUE\`), then the reformatted transcript spots
-are saved to file specified in the \`file_out\` argument, which is by
-default \`tx_spots.parquet\` in the same directory as the rest of the
-data.
+An SFE object. Cell polygons are written to `cell_boundaries_sf.parquet`
+in `data_dir`. If reading transcript spots (`add_molecules = TRUE`),
+then the reformatted transcript spots are saved to file specified in the
+`file_out` argument, which is by default `tx_spots.parquet` in the same
+directory as the rest of the data.
 
 ## Examples
 
@@ -108,9 +100,12 @@ data.
 fp <- tempfile()
 dir_use <- SFEData::CosMXOutput(file_path = fp)
 #> see ?SFEData and browseVignettes('SFEData') for documentation
+#> downloading 1 resources
+#> retrieving 1 resource
+#> 
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce86d1d730b/cosmx 
-sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE)
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file18081dc9f2dc/cosmx 
+sfe <- readCosMX(dir_use, add_molecules = TRUE)
 #> >>> Constructing cell polygons
 #> >>> Checking polygon validity
 #> >>> Reading transcript coordinates

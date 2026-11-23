@@ -5,6 +5,7 @@
 This package can be installed from Bioconductor:
 
 ``` r
+
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install("SpatialFeatureExperiment")
@@ -102,8 +103,8 @@ Below is a list of SFE features that extend the SPE object:
   can be stored in `reducedDims`.
 
 ``` r
+
 library(SpatialFeatureExperiment)
-#> There appears to be a problem with the PROJ installation
 #> 
 #> Attaching package: 'SpatialFeatureExperiment'
 #> The following object is masked from 'package:base':
@@ -145,17 +146,23 @@ library(SpatialExperiment)
 #>     setequal, union
 #> 
 #> Attaching package: 'BiocGenerics'
+#> The following objects are masked from 'package:SpatialFeatureExperiment':
+#> 
+#>     rotate, scale
 #> The following objects are masked from 'package:stats':
 #> 
 #>     IQR, mad, sd, var, xtabs
+#> The following object is masked from 'package:utils':
+#> 
+#>     data
 #> The following objects are masked from 'package:base':
 #> 
 #>     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
 #>     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
 #>     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,
 #>     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-#>     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,
-#>     unsplit, which.max, which.min
+#>     rbind, Reduce, rownames, sapply, saveRDS, scale, sequence, table,
+#>     tapply, transform, unique, unsplit, which.max, which.min
 #> Loading required package: S4Vectors
 #> 
 #> Attaching package: 'S4Vectors'
@@ -182,8 +189,10 @@ library(SpatialExperiment)
 #> 
 #>     anyMissing, rowMedians
 library(SFEData)
+#> Warning: replacing previous import 'BiocGenerics::version' by
+#> 'BiocManager::version' when loading 'AnnotationHub'
 library(sf)
-#> Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
+#> Linking to GEOS 3.14.1, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 library(Matrix)
 #> 
 #> Attaching package: 'Matrix'
@@ -203,6 +212,7 @@ set.SubgraphOption(FALSE)
 ```
 
 ``` r
+
 # Example dataset
 (sfe <- McKellarMuscleData(dataset = "small"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
@@ -253,6 +263,7 @@ means row, and `MARGIN = 2` means column.
 gets or sets one particular geometry by name of index.
 
 ``` r
+
 # Get Visium spot polygons
 (spots <- dimGeometry(sfe, "spotPoly", MARGIN = 2))
 #> Simple feature collection with 77 features and 1 field
@@ -275,12 +286,14 @@ gets or sets one particular geometry by name of index.
 ```
 
 ``` r
+
 plot(st_geometry(spots))
 ```
 
 ![](SFE_files/figure-html/unnamed-chunk-6-1.png)
 
 ``` r
+
 # Setter
 dimGeometry(sfe, "foobar", MARGIN = 2) <- spots
 ```
@@ -289,6 +302,7 @@ dimGeometry(sfe, "foobar", MARGIN = 2) <- spots
 gets or sets all geometry of the given margin.
 
 ``` r
+
 # Getter, all geometries of one margin
 (cgs <- dimGeometries(sfe, MARGIN = 2))
 #> List of length 2
@@ -296,6 +310,7 @@ gets or sets all geometry of the given margin.
 ```
 
 ``` r
+
 # Setter, all geometries
 dimGeometries(sfe, MARGIN = 2) <- cgs
 ```
@@ -304,11 +319,13 @@ dimGeometries(sfe, MARGIN = 2) <- cgs
 gets or sets the names of the geometries
 
 ``` r
+
 (cg_names <- dimGeometryNames(sfe, MARGIN = 2))
 #> [1] "spotPoly" "foobar"
 ```
 
 ``` r
+
 # Setter
 dimGeometryNames(sfe, MARGIN = 2) <- cg_names
 ```
@@ -328,6 +345,7 @@ for Visium spot polygons, and `txSpots(sfe)` is equivalent to
 technologies.
 
 ``` r
+
 # Getter
 (spots <- spotPoly(sfe))
 #> Simple feature collection with 77 features and 1 field
@@ -350,6 +368,7 @@ technologies.
 ```
 
 ``` r
+
 # Setter
 spotPoly(sfe) <- spots
 ```
@@ -376,6 +395,7 @@ and
 getters and setters.
 
 ``` r
+
 # Getter, by name or index
 (tb <- annotGeometry(sfe, "tissueBoundary"))
 #> Simple feature collection with 1 feature and 2 fields
@@ -388,27 +408,32 @@ getters and setters.
 ```
 
 ``` r
+
 plot(st_geometry(tb))
 ```
 
 ![](SFE_files/figure-html/unnamed-chunk-15-1.png)
 
 ``` r
+
 # Setter, by name or index
 annotGeometry(sfe, "tissueBoundary") <- tb
 ```
 
 ``` r
+
 # Get all annoation geometries as named list
 ags <- annotGeometries(sfe)
 ```
 
 ``` r
+
 # Set all annotation geometries with a named list
 annotGeometries(sfe) <- ags
 ```
 
 ``` r
+
 # Get names of annotation geometries
 (ag_names <- annotGeometryNames(sfe))
 #> [1] "tissueBoundary"      "myofiber_full"       "myofiber_simplified"
@@ -416,6 +441,7 @@ annotGeometries(sfe) <- ags
 ```
 
 ``` r
+
 # Set names
 annotGeometryNames(sfe) <- ag_names
 ```
@@ -434,6 +460,7 @@ microdissection technologies, equivalent to
 `annotGeometry(sfe, "cellSeg")` or `annotGeometry(sfe, "nucSeg")`).
 
 ``` r
+
 # Getter
 (tb <- tissueBoundary(sfe))
 #> Simple feature collection with 1 feature and 2 fields
@@ -446,6 +473,7 @@ microdissection technologies, equivalent to
 ```
 
 ``` r
+
 # Setter
 tissueBoundary(sfe) <- tb
 ```
@@ -471,6 +499,7 @@ spatial graph; many other methods are also supported, such as k nearest
 neighbors, distance based neighbors, and polygon contiguity.
 
 ``` r
+
 (g <- findSpatialNeighbors(sfe, MARGIN = 2, method = "tri2nb"))
 #> Characteristics of weights list object:
 #> Neighbour list object:
@@ -486,12 +515,14 @@ neighbors, distance based neighbors, and polygon contiguity.
 ```
 
 ``` r
+
 plot(g, coords = spatialCoords(sfe))
 ```
 
 ![](SFE_files/figure-html/unnamed-chunk-24-1.png)
 
 ``` r
+
 # Set graph by name
 spatialGraph(sfe, "graph1", MARGIN = 2) <- g
 # Or equivalently
@@ -499,6 +530,7 @@ colGraph(sfe, "graph1") <- g
 ```
 
 ``` r
+
 # Get graph by name
 g <- spatialGraph(sfe, "graph1", MARGIN = 2L)
 # Or equivalently
@@ -521,10 +553,12 @@ For Visium, spatial neighborhood graph of the hexagonal grid can be
 found with the known locations of the barcodes.
 
 ``` r
+
 colGraph(sfe, "visium") <- findVisiumGraph(sfe, zero.policy = TRUE)
 ```
 
 ``` r
+
 plot(colGraph(sfe, "visium"), coords = spatialCoords(sfe))
 ```
 
@@ -536,6 +570,7 @@ interest, can be get or set with
 and the margin specific wrappers.
 
 ``` r
+
 colGraphs(sfe)
 #> $col
 #> Characteristics of weights list object:
@@ -558,6 +593,7 @@ the graphs have
 getter and setter and the margin specific wrappers.
 
 ``` r
+
 colGraphNames(sfe)
 #> [1] "graph1" "visium"
 ```
@@ -583,6 +619,7 @@ multiple samples or “all” for all samples. Below are examples of using
 the getters and setters for multiple samples.
 
 ``` r
+
 # Construct toy dataset with 2 samples
 sfe1 <- McKellarMuscleData(dataset = "small")
 #> see ?SFEData and browseVignettes('SFEData') for documentation
@@ -621,11 +658,13 @@ spotPoly(sfe2)$sample_id <- "sample02"
 Use the `sampleIDs` function to see the names of all samples
 
 ``` r
+
 sampleIDs(sfe_combined)
 #> [1] "Vis5A"    "sample02"
 ```
 
 ``` r
+
 # Only get the geometries for the second sample
 (spots2 <- colGeometry(sfe_combined, "spotPoly", sample_id = "sample02"))
 #> Simple feature collection with 72 features and 1 field
@@ -648,18 +687,21 @@ sampleIDs(sfe_combined)
 ```
 
 ``` r
+
 # Only set the geometries for the second sample
 # Leaving geometries of the first sample intact
 colGeometry(sfe_combined, "spotPoly", sample_id = "sample02") <- spots2
 ```
 
 ``` r
+
 # Set graph only for the second sample
 colGraph(sfe_combined, "foo", sample_id = "sample02") <- 
   findSpatialNeighbors(sfe_combined, sample_id = "sample02")
 ```
 
 ``` r
+
 # Get graph only for the second sample
 colGraph(sfe_combined, "foo", sample_id = "sample02")
 #> Characteristics of weights list object:
@@ -676,6 +718,7 @@ colGraph(sfe_combined, "foo", sample_id = "sample02")
 ```
 
 ``` r
+
 # Set graph of the same name for both samples
 # The graphs are computed separately for each sample
 colGraphs(sfe_combined, sample_id = "all", name = "visium") <- 
@@ -683,6 +726,7 @@ colGraphs(sfe_combined, sample_id = "all", name = "visium") <-
 ```
 
 ``` r
+
 # Get multiple graphs of the same name
 colGraphs(sfe_combined, sample_id = "all", name = "visium")
 #> $Vis5A
@@ -713,6 +757,7 @@ colGraphs(sfe_combined, sample_id = "all", name = "visium")
 ```
 
 ``` r
+
 # Or just all graphs of the margin
 colGraphs(sfe_combined, sample_id = "all")
 #> $Vis5A
@@ -764,6 +809,7 @@ function, with a named vector whose names are the old names and values
 are the new names.
 
 ``` r
+
 sfe_combined <- changeSampleIDs(sfe, replacement = c(Vis5A = "foo", sample02 = "bar"))
 sfe_combined
 #> class: SpatialFeatureExperiment 
@@ -801,6 +847,7 @@ inherits from SingleCellExperiment (SCE), other types of arrays
 supported by SCE such as delayed arrays should also work.
 
 ``` r
+
 # Visium barcode location from Space Ranger
 data("visium_row_col")
 coords1 <- visium_row_col[visium_row_col$col < 6 & visium_row_col$row < 6,]
@@ -825,6 +872,7 @@ in full resolution image can be found in the `scalefactors_json.json`
 file in Space Ranger output.
 
 ``` r
+
 sfe3 <- SpatialFeatureExperiment(list(counts = mat), colData = coords1,
                                 spatialCoordsNames = c("col", "row"),
                                 spotDiameter = 0.7)
@@ -837,6 +885,7 @@ If the coordinates are not in `colData`, they can be specified
 separately in the `spatialCoords` argument:
 
 ``` r
+
 sfe3 <- SpatialFeatureExperiment(list(counts = mat), 
                                  spatialCoords = as.matrix(coords1[, c("col", "row")]),
                                  spotDiameter = 0.7)
@@ -848,6 +897,7 @@ constructor.
 Geometries can also be supplied in the constructor.
 
 ``` r
+
 # Convert regular data frame with coordinates to sf data frame
 cg <- df2sf(coords1[,c("col", "row")], c("col", "row"), spotDiameter = 0.7)
 rownames(cg) <- colnames(mat)
@@ -865,6 +915,7 @@ computed if all spots are read in regardless of whether they are on
 tissue.
 
 ``` r
+
 dir <- system.file("extdata", package = "SpatialFeatureExperiment")
 sample_ids <- c("sample01", "sample02")
 samples <- file.path(dir, sample_ids)
@@ -873,6 +924,7 @@ samples <- file.path(dir, sample_ids)
 Inside the `outs` directory:
 
 ``` r
+
 list.files(file.path(samples[1], "outs"))
 #> [1] "filtered_feature_bc_matrix" "spatial"
 ```
@@ -883,6 +935,7 @@ only has the filtered matrix.
 Inside the matrix directory:
 
 ``` r
+
 list.files(file.path(samples[1], "outs", "filtered_feature_bc_matrix"))
 #> [1] "barcodes.tsv" "features.tsv" "matrix.mtx"
 ```
@@ -890,6 +943,7 @@ list.files(file.path(samples[1], "outs", "filtered_feature_bc_matrix"))
 Inside the `spatial` directory:
 
 ``` r
+
 list.files(file.path(samples[1], "outs", "spatial"))
 #> [1] "aligned_fiducials.jpg"              "barcode_fluorescence_intensity.csv"
 #> [3] "detected_tissue_image.jpg"          "scalefactors_json.json"            
@@ -902,6 +956,7 @@ Not all Visium datasets have all the files here. The
 with fluorescent imaging rather than bright field H&E.
 
 ``` r
+
 (sfe3 <- read10xVisiumSFE(samples, sample_id = sample_ids, type = "sparse", 
                           data = "filtered", images = "hires"))
 #> >>> 10X Visium data will be loaded: outs
@@ -944,6 +999,7 @@ The unit can be set in the `unit` argument; for now only “micron” and
 “full_res_image_pixel” are supported for Visium:
 
 ``` r
+
 (sfe3 <- read10xVisiumSFE(samples, sample_id = sample_ids, type = "sparse", 
                           data = "filtered", images = "hires", unit = "micron"))
 #> >>> 10X Visium data will be loaded: outs
@@ -980,6 +1036,7 @@ The unit can be set in the `unit` argument; for now only “micron” and
 The unit of the SFE object can be checked:
 
 ``` r
+
 unit(sfe3)
 #> [1] "micron"
 ```
@@ -995,6 +1052,7 @@ it will not be fully loaded into memory when plotted; rather, it’s
 downsampled.
 
 ``` r
+
 class(getImg(sfe3))
 #> [1] "SpatRasterImage"
 #> attr(,"package")
@@ -1015,11 +1073,12 @@ read into R. This requires the installation of `arrow`. Here we read a
 toy dataset which is the first FOV from a real dataset:
 
 ``` r
+
 fp <- tempdir()
 dir_use <- VizgenOutput(file_path = file.path(fp, "vizgen"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/vizgen/vizgen_cellbound
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp1gX3JM/vizgen/vizgen_cellbound
 list.files(dir_use)
 #> [1] "cell_boundaries"          "cell_boundaries.parquet" 
 #> [3] "cell_by_gene.csv"         "cell_metadata.csv"       
@@ -1030,10 +1089,16 @@ The optional `add_molecules` argument can be set to `TRUE` to read in
 the transcript spots
 
 ``` r
+
 (sfe_mer <- readVizgen(dir_use, z = 3L, image = "PolyT", add_molecules = TRUE))
+#> Warning: The `z` argument of `readVizgen()` is deprecated as of SpatialFeatureExperiment
+#> 1.16.0.
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 #> >>> 1 `.parquet` files exist:
-#> /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/vizgen/vizgen_cellbound/cell_boundaries.parquet
-#> >>> using -> /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/vizgen/vizgen_cellbound/cell_boundaries.parquet
+#> /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp1gX3JM/vizgen/vizgen_cellbound/cell_boundaries.parquet
+#> >>> using -> /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp1gX3JM/vizgen/vizgen_cellbound/cell_boundaries.parquet
 #> >>> Cell segmentations are found in `.parquet` file
 #> >>> Checking polygon validity
 #> >>> Reading transcript coordinates
@@ -1069,6 +1134,7 @@ transcript spots are written to the same directory where the data
 resides:
 
 ``` r
+
 list.files(dir_use)
 #> [1] "cell_boundaries"              "cell_boundaries.parquet"     
 #> [3] "cell_by_gene.csv"             "cell_metadata.csv"           
@@ -1090,10 +1156,11 @@ makes `sf` data frames from the vertices and transcript spots and saves
 them as GeoParquet files.
 
 ``` r
+
 dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/xenium/xenium2
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp1gX3JM/xenium/xenium2
 list.files(dir_use)
 #>  [1] "cell_boundaries.csv.gz"     "cell_boundaries.parquet"   
 #>  [3] "cell_feature_matrix.h5"     "cells.csv.gz"              
@@ -1104,15 +1171,13 @@ list.files(dir_use)
 ```
 
 ``` r
+
 (sfe_xen <- readXenium(dir_use, add_molecules = TRUE))
 #> >>> Must use gene symbols as row names when adding transcript spots.
 #> >>> Cell segmentations are found in `.parquet` file(s)
 #> >>> Reading cell and nucleus segmentations
 #> >>> Making MULTIPOLYGON nuclei geometries
 #> >>> Making POLYGON cell geometries
-#> Sanity checks on cell segmentation polygons:
-#> >>> ..found 132 cells with (nested) polygon lists
-#> >>> ..applying filtering
 #> >>> Checking polygon validity
 #> >>> Saving geometries to parquet files
 #> >>> Reading cell metadata -> `cells.parquet`
@@ -1150,6 +1215,7 @@ list.files(dir_use)
 ```
 
 ``` r
+
 list.files(dir_use)
 #>  [1] "cell_boundaries_sf.parquet"    "cell_boundaries.csv.gz"       
 #>  [3] "cell_boundaries.parquet"       "cell_feature_matrix.h5"       
@@ -1169,10 +1235,11 @@ and
 except that the output doesn’t come with images.
 
 ``` r
+
 dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpmqMsQ8/cosmx/cosmx
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp1gX3JM/cosmx/cosmx
 list.files(dir_use)
 #> [1] "Run5642_S3_Quarter_exprMat_file.csv" 
 #> [2] "Run5642_S3_Quarter_metadata_file.csv"
@@ -1181,6 +1248,7 @@ list.files(dir_use)
 ```
 
 ``` r
+
 (sfe_cosmx <- readCosMX(dir_use, add_molecules = TRUE))
 #> >>> Constructing cell polygons
 #> >>> Checking polygon validity
@@ -1211,6 +1279,7 @@ list.files(dir_use)
 ```
 
 ``` r
+
 list.files(dir_use)
 #> [1] "cell_boundaries_sf.parquet"          
 #> [2] "Run5642_S3_Quarter_exprMat_file.csv" 
@@ -1233,6 +1302,7 @@ spot diameter are not specified, then a column geometry called
 “centroids” will be created.
 
 ``` r
+
 spe <- TENxVisium(spacerangerOut = file.path(samples[1], "outs"), processing = "filtered",
                   images = c("lowres", "hires")) |> import()
 ```
@@ -1240,11 +1310,13 @@ spe <- TENxVisium(spacerangerOut = file.path(samples[1], "outs"), processing = "
 For the coercion, column names must not be duplicate.
 
 ``` r
+
 colnames(spe) <- make.unique(colnames(spe), sep = "-")
 rownames(spatialCoords(spe)) <- colnames(spe)
 ```
 
 ``` r
+
 (sfe3 <- toSpatialFeatureExperiment(spe))
 #> class: SpatialFeatureExperiment 
 #> dim: 5 12 
@@ -1281,11 +1353,13 @@ Seurat objects canbe coerced into SFE objects though coercion from SFE
 to Seurat is not yet implemented.
 
 ``` r
+
 dir_extdata <- system.file("extdata", package = "SpatialFeatureExperiment")
 obj_vis <- readRDS(file.path(dir_extdata, "seu_vis_toy.rds"))
 ```
 
 ``` r
+
 sfe_conv_vis <-
   toSpatialFeatureExperiment(x = obj_vis, 
                              image_scalefactors = "lowres",
@@ -1335,6 +1409,7 @@ SFE objects can be concatenated with `cbind`, as was done just now to
 create a toy example with 2 samples.
 
 ``` r
+
 sfe_combined <- cbind(sfe1, sfe2)
 ```
 
@@ -1344,6 +1419,7 @@ argument of the SFE method `[` determines what to do with the spatial
 graphs.
 
 ``` r
+
 (sfe_subset <- sfe[1:10, 1:10])
 #> class: SpatialFeatureExperiment 
 #> dim: 10 10 
@@ -1381,6 +1457,7 @@ tolerated. If `NULL`, then there will be a warning. If `FALSE`, then
 there will be an error.
 
 ``` r
+
 plot(colGraph(sfe_subset, "visium"), coords = spatialCoords(sfe_subset))
 ```
 
@@ -1409,6 +1486,7 @@ images are present, they are cropped by the bounding box of the cropped
 geometries.
 
 ``` r
+
 # Before
 plot(st_geometry(tissueBoundary(sfe)))
 plot(spotPoly(sfe), col = "gray", add = TRUE)
@@ -1417,6 +1495,7 @@ plot(spotPoly(sfe), col = "gray", add = TRUE)
 ![](SFE_files/figure-html/unnamed-chunk-70-1.png)
 
 ``` r
+
 sfe_in_tissue <- crop(sfe, y = tissueBoundary(sfe), colGeometryName = "spotPoly")
 ```
 
@@ -1424,6 +1503,7 @@ Note that for large datasets with many geometries, cropping can take a
 while to run.
 
 ``` r
+
 # After
 plot(st_geometry(tissueBoundary(sfe)))
 plot(spotPoly(sfe_in_tissue), col = "gray", add = TRUE)
@@ -1435,6 +1515,7 @@ plot(spotPoly(sfe_in_tissue), col = "gray", add = TRUE)
 i.e. specifying a bounding box.
 
 ``` r
+
 sfe_cropped <- crop(sfe, y = c(xmin = 5500, xmax = 6500, ymin = 13500, ymax = 14500),
                     colGeometryName = "spotPoly", sample_id = "Vis5A")
 ```
@@ -1461,6 +1542,7 @@ independently for each sample, and the `sample_id` argument is optional
 when there is only one sample.
 
 ``` r
+
 # Get logical vector
 colData(sfe)$in_tissue <- annotPred(sfe, colGeometryName = "spotPoly", 
                                     annotGeometryName = "tissueBoundary",
@@ -1470,6 +1552,11 @@ colData(sfe)$n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei
 # Get geometries of intersections of Visium spots and myofibers
 spot_intersections <- annotOp(sfe, colGeometryName = "spotPoly", 
                               annotGeometryName = "myofiber_simplified")
+#> Warning: `annotOp()` was deprecated in SpatialFeatureExperiment 1.16.0.
+#> ℹ In addition, DuckDBDataFrame is not supported
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 ```
 
 Sometimes the spatial coordinates of different samples can take very
@@ -1482,6 +1569,7 @@ To find the bounding box of all geometries in each sample of an SFE
 object:
 
 ``` r
+
 SpatialFeatureExperiment::bbox(sfe, sample_id = "Vis5A")
 #>  xmin  ymin  xmax  ymax 
 #>  5000 13000  7000 15000
@@ -1490,6 +1578,7 @@ SpatialFeatureExperiment::bbox(sfe, sample_id = "Vis5A")
 To move the coordinates:
 
 ``` r
+
 sfe_moved <- removeEmptySpace(sfe, sample_id = "Vis5A")
 ```
 
@@ -1520,6 +1609,7 @@ When an image is transposed, it is flipped about the line going from top
 left to bottom right:
 
 ``` r
+
 img <- getImg(sfe3, image_id = "hires")
 plot(img)
 ```
@@ -1527,6 +1617,7 @@ plot(img)
 ![](SFE_files/figure-html/unnamed-chunk-77-1.png)
 
 ``` r
+
 plot(transposeImg(img))
 ```
 
@@ -1538,12 +1629,14 @@ differ from those of the SPE method, to match
 [`terra::flip()`](https://rspatial.github.io/terra/reference/flip.html):
 
 ``` r
+
 plot(mirrorImg(img, direction = "vertical"))
 ```
 
 ![](SFE_files/figure-html/unnamed-chunk-78-1.png)
 
 ``` r
+
 plot(mirrorImg(img, direction = "horizontal"))
 ```
 
@@ -1553,6 +1646,7 @@ Here we apply the transformation to an SFE object, where the image
 specified by the sample and image IDs are transformed:
 
 ``` r
+
 sfe3 <- mirrorImg(sfe3, sample_id = "sample01", image_id = "hires")
 ```
 
@@ -1564,11 +1658,13 @@ only transform the image. But the entire SFE object, including all the
 geometries and images, can be transformed at once.
 
 ``` r
+
 sfe_mirrored <- mirror(sfe_in_tissue)
 sfe_transposed <- transpose(sfe_in_tissue)
 ```
 
 ``` r
+
 par(mfrow = c(1, 3), mar = rep(1.5, 4))
 plot(st_geometry(tissueBoundary(sfe_in_tissue)))
 plot(spotPoly(sfe_in_tissue), col = "gray", add = TRUE)
@@ -1625,6 +1721,7 @@ These are the limitations of the current version of SFE:
     and helpful to plotting scale bars when plotting geometries.
 
 ``` r
+
 # Clean up
 unlink(file.path(fp, "vizgen"), recursive = TRUE)
 unlink(file.path(fp, "xenium"), recursive = TRUE)
@@ -1634,10 +1731,11 @@ unlink(file.path(fp, "cosmx"), recursive = TRUE)
 ## Session info
 
 ``` r
+
 sessionInfo()
-#> R version 4.6.0 Patched (2026-04-24 r89960)
+#> R version 4.6.2 (2026-10-29)
 #> Platform: aarch64-apple-darwin23
-#> Running under: macOS Sequoia 15.7.4
+#> Running under: macOS Tahoe 26.7.2
 #> 
 #> Matrix products: default
 #> BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
@@ -1654,118 +1752,108 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] VisiumIO_1.7.9                  TENxIO_1.13.4                  
-#>  [3] spdep_1.4-2                     spData_2.3.4                   
-#>  [5] RBioFormats_1.11.0              Matrix_1.7-5                   
-#>  [7] sf_1.1-0                        SFEData_1.13.0                 
-#>  [9] SpatialExperiment_1.21.0        SingleCellExperiment_1.33.2    
-#> [11] SummarizedExperiment_1.41.1     Biobase_2.71.0                 
-#> [13] GenomicRanges_1.63.2            Seqinfo_1.1.0                  
-#> [15] IRanges_2.45.0                  S4Vectors_0.49.2               
-#> [17] BiocGenerics_0.57.1             generics_0.1.4                 
-#> [19] MatrixGenerics_1.23.0           matrixStats_1.5.0              
-#> [21] SpatialFeatureExperiment_1.13.2 BiocStyle_2.39.0               
+#>  [1] VisiumIO_1.9.5                  TENxIO_1.15.0                  
+#>  [3] spdep_1.4-3                     spData_2.3.5                   
+#>  [5] RBioFormats_1.13.0              Matrix_1.7-6                   
+#>  [7] sf_1.1-3                        SFEData_1.15.0                 
+#>  [9] SpatialExperiment_1.23.0        SingleCellExperiment_1.35.2    
+#> [11] SummarizedExperiment_1.43.0     Biobase_2.73.2                 
+#> [13] GenomicRanges_1.65.4            Seqinfo_1.3.2                  
+#> [15] IRanges_2.47.5                  S4Vectors_0.51.10              
+#> [17] BiocGenerics_0.59.13            generics_0.1.4                 
+#> [19] MatrixGenerics_1.25.0           matrixStats_1.5.0              
+#> [21] SpatialFeatureExperiment_1.15.1 BiocStyle_2.41.0               
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] spatstat.sparse_3.1-0     fs_2.1.0                 
-#>   [3] spatialreg_1.4-3          bitops_1.0-9             
-#>   [5] EBImage_4.53.0            httr_1.4.8               
-#>   [7] RColorBrewer_1.1-3        sctransform_0.4.3        
-#>   [9] tools_4.6.0               backports_1.5.1          
-#>  [11] R6_2.6.1                  HDF5Array_1.39.1         
-#>  [13] uwot_0.2.4                lazyeval_0.2.3           
-#>  [15] rhdf5filters_1.23.3       withr_3.0.2              
-#>  [17] sp_2.2-1                  gridExtra_2.3            
-#>  [19] progressr_0.19.0          cli_3.6.6                
-#>  [21] textshaping_1.0.5         spatstat.explore_3.8-0   
-#>  [23] fastDummies_1.7.6         sandwich_3.1-1           
-#>  [25] marginaleffects_0.32.0    sass_0.4.10              
-#>  [27] Seurat_5.5.0.9000         spatstat.data_3.1-9      
-#>  [29] mvtnorm_1.3-7             arrow_23.0.1.2           
-#>  [31] S7_0.2.2                  readr_2.2.0              
-#>  [33] pbapply_1.7-4             proxy_0.4-29             
-#>  [35] ggridges_0.5.7            pkgdown_2.2.0            
-#>  [37] systemfonts_1.3.2         R.utils_2.13.0           
-#>  [39] parallelly_1.47.0         limma_3.67.3             
-#>  [41] RSQLite_2.4.6             BiocIO_1.21.0            
-#>  [43] spatstat.random_3.4-5     ica_1.0-3                
-#>  [45] dplyr_1.2.1               abind_1.4-8              
-#>  [47] R.methodsS3_1.8.2         terra_1.9-11             
-#>  [49] lifecycle_1.0.5           multcomp_1.4-30          
-#>  [51] yaml_2.3.12               edgeR_4.9.9              
-#>  [53] rhdf5_2.55.16             SparseArray_1.11.13      
-#>  [55] BiocFileCache_3.1.0       Rtsne_0.17               
-#>  [57] grid_4.6.0                blob_1.3.0               
-#>  [59] promises_1.5.0            dqrng_0.4.1              
-#>  [61] ExperimentHub_3.1.0       crayon_1.5.3             
-#>  [63] miniUI_0.1.2              lattice_0.22-9           
-#>  [65] beachmat_2.27.5           cowplot_1.2.0            
-#>  [67] KEGGREST_1.51.1           magick_2.9.1             
-#>  [69] zeallot_0.2.0             pillar_1.11.1            
-#>  [71] knitr_1.51                rjson_0.2.23             
-#>  [73] boot_1.3-32               future.apply_1.20.2      
-#>  [75] sfarrow_0.4.1             codetools_0.2-20         
-#>  [77] wk_0.9.5                  glue_1.8.1               
-#>  [79] spatstat.univar_3.1-7     data.table_1.18.2.1      
-#>  [81] vctrs_0.7.3               png_0.1-9                
-#>  [83] spam_2.11-3               gtable_0.3.6             
-#>  [85] assertthat_0.2.1          cachem_1.1.0             
-#>  [87] xfun_0.57                 mime_0.13                
-#>  [89] S4Arrays_1.11.1           DropletUtils_1.31.1      
-#>  [91] coda_0.19-4.1             survival_3.8-6           
-#>  [93] sfheaders_0.4.5           rJava_1.0-18             
-#>  [95] units_1.0-1               statmod_1.5.1            
-#>  [97] fitdistrplus_1.2-6        TH.data_1.1-5            
-#>  [99] ROCR_1.0-12               nlme_3.1-169             
-#> [101] bit64_4.8.0               filelock_1.0.3           
-#> [103] RcppAnnoy_0.0.23          bslib_0.10.0             
-#> [105] irlba_2.3.7               KernSmooth_2.23-26       
-#> [107] otel_0.2.0                DBI_1.3.0                
-#> [109] tidyselect_1.2.1          bit_4.6.0                
-#> [111] compiler_4.6.0            curl_7.1.0               
-#> [113] httr2_1.2.2               BiocNeighbors_2.5.4      
-#> [115] h5mread_1.3.3             xml2_1.5.2               
-#> [117] plotly_4.12.0             desc_1.4.3               
-#> [119] DelayedArray_0.37.1       bookdown_0.46            
-#> [121] scales_1.4.0              classInt_0.4-11          
-#> [123] lmtest_0.9-40             rappdirs_0.3.4           
-#> [125] goftest_1.2-3             stringr_1.6.0            
-#> [127] tiff_0.1-12               digest_0.6.39            
-#> [129] spatstat.utils_3.2-2      fftwtools_0.9-11         
-#> [131] rmarkdown_2.31            XVector_0.51.0           
-#> [133] htmltools_0.5.9           pkgconfig_2.0.3          
-#> [135] jpeg_0.1-11               sparseMatrixStats_1.23.0 
-#> [137] dbplyr_2.5.2              fastmap_1.2.0            
-#> [139] rlang_1.2.0               htmlwidgets_1.6.4        
-#> [141] shiny_1.13.0              DelayedMatrixStats_1.33.0
-#> [143] farver_2.1.2              jquerylib_0.1.4          
-#> [145] zoo_1.8-15                jsonlite_2.0.0           
-#> [147] BiocParallel_1.45.0       R.oo_1.27.1              
-#> [149] RCurl_1.98-1.18           magrittr_2.0.5           
-#> [151] scuttle_1.21.6            s2_1.1.9                 
-#> [153] dotCall64_1.2             patchwork_1.3.2          
-#> [155] Rhdf5lib_1.99.6           Rcpp_1.1.1-1.1           
-#> [157] reticulate_1.46.0         stringi_1.8.7            
-#> [159] MASS_7.3-65               plyr_1.8.9               
-#> [161] AnnotationHub_4.1.0       parallel_4.6.0           
-#> [163] listenv_0.10.1            ggrepel_0.9.8            
-#> [165] deldir_2.0-4              Biostrings_2.79.5        
-#> [167] splines_4.6.0             tensor_1.5.1             
-#> [169] hms_1.1.4                 locfit_1.5-9.12          
-#> [171] igraph_2.3.0              spatstat.geom_3.7-3      
-#> [173] RcppHNSW_0.6.0            reshape2_1.4.5           
-#> [175] LearnBayes_2.15.2         BiocVersion_3.23.1       
-#> [177] evaluate_1.0.5            SeuratObject_5.4.0       
-#> [179] BiocManager_1.30.27       httpuv_1.6.17            
-#> [181] tzdb_0.5.0                polyclip_1.10-7          
-#> [183] RANN_2.6.2                tidyr_1.3.2              
-#> [185] purrr_1.2.2               scattermore_1.2          
-#> [187] future_1.70.0             ggplot2_4.0.3            
-#> [189] BiocBaseUtils_1.13.0      xtable_1.8-8             
-#> [191] e1071_1.7-17              RSpectra_0.16-2          
-#> [193] later_1.4.8               viridisLite_0.4.3        
-#> [195] class_7.3-23              ragg_1.5.2               
-#> [197] tibble_3.3.1              memoise_2.0.1            
-#> [199] AnnotationDbi_1.73.1      cluster_2.1.8.2          
-#> [201] globals_0.19.1
+#>   [1] fs_2.1.0                  spatialreg_1.4-3         
+#>   [3] bitops_1.1-0              EBImage_4.55.2           
+#>   [5] httr_1.4.9                RColorBrewer_1.1-3       
+#>   [7] sctransform_0.4.3         tools_4.6.2              
+#>   [9] backports_1.5.1           R6_2.6.1                 
+#>  [11] HDF5Array_1.41.6          uwot_0.2.5               
+#>  [13] rhdf5filters_1.25.5       withr_3.0.3              
+#>  [15] sp_2.2-4                  gridExtra_2.3.1          
+#>  [17] progressr_1.1.0           cli_3.6.6                
+#>  [19] textshaping_1.1.0         fastDummies_1.7.6        
+#>  [21] sandwich_3.1-3            marginaleffects_1.0.0    
+#>  [23] sass_0.5.0                Seurat_6.0.0             
+#>  [25] mvtnorm_1.4-2             arrow_26.0.1.1           
+#>  [27] S7_1.0.0                  readr_2.2.0              
+#>  [29] pbapply_1.7-5             proxy_0.4-29             
+#>  [31] ggridges_0.5.7            pkgdown_2.2.1            
+#>  [33] systemfonts_1.3.4         R.utils_2.13.0           
+#>  [35] parallelly_1.50.0         limma_3.99.5             
+#>  [37] RSQLite_3.53.3            BiocIO_1.23.3            
+#>  [39] ica_1.0-3                 dplyr_1.2.1              
+#>  [41] abind_1.4-8               DuckDBDataFrame_0.99.35  
+#>  [43] R.methodsS3_1.8.2         terra_1.9-60             
+#>  [45] lifecycle_1.0.5           multcomp_1.4-32          
+#>  [47] yaml_2.3.12               edgeR_4.99.13            
+#>  [49] rhdf5_2.57.20             SparseArray_1.13.5       
+#>  [51] BiocFileCache_3.3.3       Rtsne_0.17               
+#>  [53] grid_4.6.2                blob_1.3.0               
+#>  [55] pls_2.9-0                 dqrng_0.4.1              
+#>  [57] ExperimentHub_3.3.2       crayon_1.5.3             
+#>  [59] lattice_0.23-1            beachmat_2.29.3          
+#>  [61] cowplot_1.2.0             KEGGREST_1.53.6          
+#>  [63] magick_2.9.1              zeallot_0.2.0            
+#>  [65] pillar_1.11.1             knitr_1.52               
+#>  [67] rjson_0.2.23              boot_1.3-32              
+#>  [69] future.apply_1.21.0       sfarrow_0.4.1            
+#>  [71] codetools_0.2-20          wk_0.9.5                 
+#>  [73] glue_1.8.1                data.table_1.18.6.1      
+#>  [75] vctrs_0.7.3               png_0.1-9                
+#>  [77] spam_2.11-4               gtable_0.3.6             
+#>  [79] assertthat_0.2.1          cachem_1.1.0             
+#>  [81] xfun_0.62                 S4Arrays_1.13.3          
+#>  [83] DropletUtils_1.33.2       coda_0.19-4.1            
+#>  [85] survival_3.8-12           sfheaders_0.4.5          
+#>  [87] rJava_1.0-18              units_1.0-1              
+#>  [89] statmod_1.5.2             TH.data_1.1-5            
+#>  [91] nlme_3.1-172              bit64_4.8.6              
+#>  [93] filelock_1.0.3            RcppAnnoy_0.0.23         
+#>  [95] bslib_0.12.0              irlba_2.4.1              
+#>  [97] KernSmooth_2.23-27        otel_0.3.0               
+#>  [99] DBI_1.3.0                 duckdb_2.0.0             
+#> [101] tidyselect_1.2.1          bit_4.6.0                
+#> [103] compiler_4.6.2            curl_8.1.0               
+#> [105] httr2_1.3.0               BiocNeighbors_2.7.3      
+#> [107] h5mread_1.5.7             xml2_1.6.0               
+#> [109] desc_1.4.3                DelayedArray_0.39.8      
+#> [111] bookdown_0.48             scales_1.4.0             
+#> [113] classInt_0.4-11           rappdirs_0.3.4           
+#> [115] stringr_1.6.0             tiff_0.1-12              
+#> [117] digest_0.6.39             fftwtools_0.9-11         
+#> [119] rmarkdown_2.32            XVector_0.53.0           
+#> [121] htmltools_0.5.9           pkgconfig_2.0.3          
+#> [123] jpeg_0.1-11               sparseMatrixStats_1.25.0 
+#> [125] dbplyr_2.6.0              fastmap_1.2.0            
+#> [127] rlang_1.3.0               htmlwidgets_1.6.4        
+#> [129] DelayedMatrixStats_1.35.0 farver_2.1.2             
+#> [131] jquerylib_0.1.4           zoo_1.9-1                
+#> [133] jsonlite_2.0.0            BiocParallel_1.47.0      
+#> [135] R.oo_1.27.1               RCurl_1.98-1.20          
+#> [137] magrittr_2.0.5            scuttle_1.23.2           
+#> [139] s2_1.1.13                 dotCall64_1.2            
+#> [141] patchwork_1.3.2           Rhdf5lib_2.1.1           
+#> [143] Rcpp_1.1.2                stringi_1.8.9            
+#> [145] MASS_7.3-66               plyr_1.8.9               
+#> [147] AnnotationHub_4.3.3       parallel_4.6.2           
+#> [149] listenv_1.1.0             ggrepel_0.9.8            
+#> [151] deldir_2.0-4              Biostrings_2.81.9        
+#> [153] splines_4.6.2             hms_1.1.4                
+#> [155] locfit_1.5-9.12           igraph_2.3.4             
+#> [157] RcppHNSW_0.7.0            reshape2_1.4.5           
+#> [159] LearnBayes_2.15.2         BiocVersion_3.24.0       
+#> [161] evaluate_1.0.5            SeuratObject_5.4.0       
+#> [163] BiocManager_1.30.27       tzdb_0.5.0               
+#> [165] DuckDBSpatial_0.99.21     RANN_2.6.3               
+#> [167] tidyr_1.3.2               purrr_1.2.2              
+#> [169] scattermore_1.2           future_1.82.0            
+#> [171] ggplot2_4.0.4             BiocBaseUtils_1.15.1     
+#> [173] e1071_1.7-17              RSpectra_0.16-2          
+#> [175] class_7.3-24              ragg_1.5.2               
+#> [177] tibble_3.3.1              memoise_2.0.1            
+#> [179] AnnotationDbi_1.75.2      cluster_2.1.8.3          
+#> [181] globals_0.20.0
 ```

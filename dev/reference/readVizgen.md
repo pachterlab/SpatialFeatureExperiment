@@ -21,7 +21,7 @@ while to convert the spots to MULTIPOINT geometries.
 ``` r
 readVizgen(
   data_dir,
-  z = "all",
+  z = deprecated(),
   sample_id = "sample01",
   min_area = NULL,
   image = c("DAPI", "PolyT", "Cellbound"),
@@ -33,7 +33,7 @@ readVizgen(
   use_cellpose = TRUE,
   BPPARAM = SerialParam(),
   file_out = file.path(data_dir, "detected_transcripts.parquet"),
-  z_option = c("3d", "split")
+  z_option = deprecated()
 )
 ```
 
@@ -45,10 +45,7 @@ readVizgen(
 
 - z:
 
-  Integer, z index to read, or "all", indicating z-planes of the images
-  and transcript spots to read. While cell segmentation seems to have
-  multiple z-planes, the segmentation in all z-planes are the same so in
-  effect the cell segmentatio is only in 2D.
+  Deprecated.
 
 - sample_id:
 
@@ -62,7 +59,7 @@ readVizgen(
 
   Minimum cell area in square microns or pixel units (eg for CosMX).
   Anything smaller will be considered artifact or debris and removed.
-  Default to \`NULL\`, ie no filtering of polygons.
+  Default to `NULL`, ie no filtering of polygons.
 
 - image:
 
@@ -129,17 +126,12 @@ readVizgen(
   memory. If this file (or directory for multiple files) already exists,
   then the existing file(s) will be read, skipping the processing. When
   writing the file, extensions supplied are ignored and extensions are
-  determined based on \`dest\`.
+  determined based on `dest`.
 
 - z_option:
 
-  What to do with z coordinates. "3d" is to construct 3D geometries.
-  "split" is to create a separate 2D geometry for each z-plane so
-  geometric operations are fully supported but some data wrangling is
-  required to perform 3D analyses. When the z coordinates are not
-  integers, 3D geometries will always be constructed since there are no
-  z-planes to speak of. This argument does not apply when
-  \`spatialCoordsNames\` has length 2.
+  Deprecated. Will always be "3d" to construct 3D point geometries if
+  multiple z-planes are present.
 
 ## Value
 
@@ -164,21 +156,21 @@ fp <- tempfile()
 dir_use <- SFEData::VizgenOutput(file_path = fp)
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce87cc78621/vizgen_cellbound 
-sfe <- readVizgen(dir_use, z = 3L, image = "PolyT",
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file18087810b087/vizgen_cellbound 
+sfe <- readVizgen(dir_use, image = "PolyT",
 flip = "geometry")
 #> >>> 1 `.parquet` files exist:
-#> /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce87cc78621/vizgen_cellbound/cell_boundaries.parquet
-#> >>> using -> /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce87cc78621/vizgen_cellbound/cell_boundaries.parquet
+#> /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file18087810b087/vizgen_cellbound/cell_boundaries.parquet
+#> >>> using -> /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file18087810b087/vizgen_cellbound/cell_boundaries.parquet
 #> >>> Cell segmentations are found in `.parquet` file
 #> >>> Checking polygon validity
 
 ## Filtering of counts, and addition of molecule coordinates..
-sfe <- readVizgen(dir_use, z = 3L, image = "PolyT", filter_counts = TRUE,
+sfe <- readVizgen(dir_use, image = "PolyT", filter_counts = TRUE,
 add_molecules = TRUE, flip = "geometry")
 #> >>> 1 `.parquet` files exist:
-#> /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce87cc78621/vizgen_cellbound/cell_boundaries.parquet
-#> >>> using -> /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce87cc78621/vizgen_cellbound/cell_boundaries.parquet
+#> /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file18087810b087/vizgen_cellbound/cell_boundaries.parquet
+#> >>> using -> /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file18087810b087/vizgen_cellbound/cell_boundaries.parquet
 #> >>> Cell segmentations are found in `.parquet` file
 #> >>> filtering `cell_metadata` - keep cells with `transcript_count` > 0
 #> >>> Checking polygon validity

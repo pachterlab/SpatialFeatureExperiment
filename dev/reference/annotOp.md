@@ -1,6 +1,6 @@
 # Binary operations for geometry of each cell/spot and annotation
 
-Just like
+**\[deprecated\]** Just like
 [`annotPred`](https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/annotPred.md),
 but performs the operation rather than predicate. For example, this
 function would return the geometry of the intersections between each
@@ -17,7 +17,8 @@ annotOp(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  op = st_intersection
+  op = deprecated(),
+  difference = FALSE
 )
 ```
 
@@ -41,8 +42,12 @@ annotOp(
 
 - op:
 
-  A binary operation function for the geometries. Defaults to
-  [`st_intersection`](https://r-spatial.github.io/sf/reference/geos_binary_ops.html).
+  Deprecated.
+
+- difference:
+
+  Logical, whether to compute remove the area occupied by `y` from the
+  SFE object.
 
 ## Value
 
@@ -66,4 +71,6 @@ sfe <- McKellarMuscleData("small")
 myofibers_on_spots <- annotOp(sfe, "spotPoly",
     annotGeometryName = "myofiber_simplified"
 )
+#> Warning: `annotOp()` was deprecated in SpatialFeatureExperiment 1.16.0.
+#> ℹ In addition, DuckDBDataFrame is not supported
 ```

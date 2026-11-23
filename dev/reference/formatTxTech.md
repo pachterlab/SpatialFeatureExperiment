@@ -11,10 +11,10 @@ formatTxTech(
   data_dir,
   tech = c("Vizgen", "Xenium", "CosMX"),
   dest = c("rowGeometry", "colGeometry"),
-  z = "all",
+  z = deprecated(),
   min_phred = 20,
-  split_cell_comps = FALSE,
-  z_option = c("3d", "split"),
+  split_cell_comps = deprecated(),
+  z_option = deprecated(),
   flip = FALSE,
   file_out = NULL,
   BPPARAM = SerialParam(),
@@ -26,10 +26,10 @@ addTxTech(
   data_dir,
   sample_id = 1L,
   tech = c("Vizgen", "Xenium", "CosMX"),
-  z = "all",
+  z = deprecated(),
   min_phred = 20,
-  split_cell_comps = FALSE,
-  z_option = c("3d", "split"),
+  split_cell_comps = deprecated(),
+  z_option = deprecated(),
   flip = FALSE,
   file_out = NULL,
   BPPARAM = SerialParam()
@@ -49,20 +49,8 @@ addTxTech(
 
 - dest:
 
-  Where in the SFE object to store the spot geometries. This affects how
-  the data is processed. Options:
-
-  rowGeometry
-
-  :   All spots for each gene will be a \`MULTIPOINT\` geometry,
-      regardless of whether they are in cells or which cells they are
-      assigned to.
-
-  colGeometry
-
-  :   The spots for each gene assigned to a cell of interest will be a
-      \`MULTIPOINT\` geometry; since the gene count matrix is sparse,
-      the geometries are NOT returned to memory.
+  This argument and the "colGeometry" option is deprecated. Only
+  "rowGeometry" will be allowed.
 
 - z:
 
@@ -72,23 +60,17 @@ addTxTech(
 - min_phred:
 
   Minimum Phred score to keep spot. By default 20, the conventional
-  threshold indicating "acceptable", meaning that there's 1 chance that
+  threshold indicating "acceptable", meaning that there's 1% chance that
   the spot was decoded in error.
 
 - split_cell_comps:
 
-  Only relevant to CosMX whose transcript spot file assigns the spots to
-  cell components. Setting this argument to `TRUE`
+  Deprecated.
 
 - z_option:
 
-  What to do with z coordinates. "3d" is to construct 3D geometries.
-  "split" is to create a separate 2D geometry for each z-plane so
-  geometric operations are fully supported but some data wrangling is
-  required to perform 3D analyses. When the z coordinates are not
-  integers, 3D geometries will always be constructed since there are no
-  z-planes to speak of. This argument does not apply when
-  \`spatialCoordsNames\` has length 2.
+  Deprecated. Will always be "3d" to construct 3D point geometries if
+  multiple z-planes are present.
 
 - flip:
 
@@ -103,7 +85,7 @@ addTxTech(
   memory. If this file (or directory for multiple files) already exists,
   then the existing file(s) will be read, skipping the processing. When
   writing the file, extensions supplied are ignored and extensions are
-  determined based on \`dest\`.
+  determined based on `dest`.
 
 - BPPARAM:
 
@@ -114,12 +96,12 @@ addTxTech(
 - return:
 
   Logical, whether to return the geometries in memory. This does not
-  depend on whether the geometries are written to file. Always \`FALSE\`
-  when \`dest = "colGeometry"\`.
+  depend on whether the geometries are written to file. Always `FALSE`
+  when `dest = "colGeometry"`.
 
 - sfe:
 
-  A \`SpatialFeatureExperiment\` object.
+  A `SpatialFeatureExperiment` object.
 
 - sample_id:
 
@@ -128,8 +110,8 @@ addTxTech(
 
 ## Value
 
-The \`sf\` data frame, or path to file where geometries are written if
-\`return = FALSE\`.
+The `sf` data frame, or path to file where geometries are written if
+`return = FALSE`.
 
 ## Examples
 
@@ -139,7 +121,7 @@ fp <- tempfile()
 dir_use <- XeniumOutput("v2", file_path = fp)
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /private/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/RtmpNrtF20/file1ce8635f7e99/xenium2 
+#> The downloaded files are in /private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/Rtmp4UEbWg/file1808404a2270/xenium2 
 fn_tx <- formatTxTech(dir_use, tech = "Xenium", flip = TRUE, return = FALSE,
                       file_out = file.path(dir_use, "tx_spots.parquet"))
 #> >>> Converting transcript spots to geometry

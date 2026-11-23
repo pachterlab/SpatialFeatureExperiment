@@ -65,12 +65,12 @@ tissueBoundary(x, sample_id = 1L, translate = TRUE, ...) <- value
 
 - value:
 
-  Value to set. For `annotGeometry`, must be a `sf` data frame, or an
-  ordinary data frame that can be converted to a `sf` data frame (see
-  [`df2sf`](https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/df2sf.md)).
-  For `annotGeometries`, must be a list of such `sf` or ordinary data
-  frames. There must be a column `sample_id` to indicate the sample the
-  geometries are for, and the `sample_id` must also appear in `colData`.
+  Value to set. For `annotGeometry`, must be a `sf` data frame, a
+  GeoParquet file name, a `DuckDBDataFrame`, or an ordinary data frame
+  that can be converted to a `sf` data frame (deprecated). For
+  `annotGeometries`, must be a named list of the above. There must be a
+  column `sample_id` to indicate the sample the geometries are for, and
+  the `sample_id` must also appear in `colData`.
 
 - type:
 

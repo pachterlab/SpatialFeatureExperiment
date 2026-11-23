@@ -1,10 +1,9 @@
 # On disk representation of BioFormats images in SFE object
 
-\`r lifecycle::badge("experimental")\` At present, the `BioFormatsImage`
-is designed for OME-TIFF from Xenium and has not been tested on other
-formats that can be read with `BioFormats`. The image is not loaded into
-memory, and when it is, the the `BioFormatsImage` object is converted
-into
+**\[experimental\]** At present, the `BioFormatsImage` is designed for
+OME-TIFF from Xenium and has not been tested on other formats that can
+be read with `BioFormats`. The image is not loaded into memory, and when
+it is, the the `BioFormatsImage` object is converted into
 [`ExtImage`](https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/ExtImage.md)
 because the loaded image is of a class that inherits from
 [`Image`](https://rdrr.io/pkg/EBImage/man/Image.html). The
@@ -96,4 +95,5 @@ specifications will be removed.
 
 ## See also
 
-\[isFull()\], \[origin()\]
+[`isFull()`](https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/BioFormatsImage-getters.md),
+[`origin()`](https://pachterlab.github.io/SpatialFeatureExperiment/dev/reference/BioFormatsImage-getters.md)
