@@ -37,10 +37,10 @@ splitComponent(
 - colGraphName:
 
   Name of graph to use for `splitComponent`. We recommend distance based
-  neighbors (\`dnearneigh\` in
+  neighbors (`dnearneigh` in
   [`findSpatialNeighbors`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/findSpatialNeighbors.md)),
-  and recommend NOT using k nearest neighbors (\`knearneigh\`) or
-  triangulation (\`tri2nb\`).
+  and recommend NOT using k nearest neighbors (`knearneigh`) or
+  triangulation (`tri2nb`).
 
 - min_cells:
 

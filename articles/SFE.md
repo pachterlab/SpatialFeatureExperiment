@@ -146,17 +146,23 @@ library(SpatialExperiment)
 #>     setequal, union
 #> 
 #> Attaching package: 'BiocGenerics'
+#> The following objects are masked from 'package:SpatialFeatureExperiment':
+#> 
+#>     rotate, scale
 #> The following objects are masked from 'package:stats':
 #> 
 #>     IQR, mad, sd, var, xtabs
+#> The following object is masked from 'package:utils':
+#> 
+#>     data
 #> The following objects are masked from 'package:base':
 #> 
 #>     anyDuplicated, aperm, append, as.data.frame, basename, cbind,
 #>     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
 #>     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,
 #>     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-#>     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,
-#>     unsplit, which.max, which.min
+#>     rbind, Reduce, rownames, sapply, saveRDS, scale, sequence, table,
+#>     tapply, transform, unique, unsplit, which.max, which.min
 #> Loading required package: S4Vectors
 #> 
 #> Attaching package: 'S4Vectors'
@@ -183,8 +189,10 @@ library(SpatialExperiment)
 #> 
 #>     anyMissing, rowMedians
 library(SFEData)
+#> Warning: replacing previous import 'BiocGenerics::version' by
+#> 'BiocManager::version' when loading 'AnnotationHub'
 library(sf)
-#> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+#> Linking to GEOS 3.14.1, GDAL 3.12.2, PROJ 9.7.1; sf_use_s2() is TRUE
 library(Matrix)
 #> 
 #> Attaching package: 'Matrix'
@@ -1070,7 +1078,7 @@ fp <- tempdir()
 dir_use <- VizgenOutput(file_path = file.path(fp, "vizgen"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /tmp/Rtmp7Gln1Z/vizgen/vizgen_cellbound
+#> The downloaded files are in /tmp/RtmpbzbvML/vizgen/vizgen_cellbound
 list.files(dir_use)
 #> [1] "cell_boundaries"          "cell_boundaries.parquet" 
 #> [3] "cell_by_gene.csv"         "cell_metadata.csv"       
@@ -1083,9 +1091,14 @@ the transcript spots
 ``` r
 
 (sfe_mer <- readVizgen(dir_use, z = 3L, image = "PolyT", add_molecules = TRUE))
+#> Warning: The `z` argument of `readVizgen()` is deprecated as of SpatialFeatureExperiment
+#> 1.16.0.
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 #> >>> 1 `.parquet` files exist:
-#> /tmp/Rtmp7Gln1Z/vizgen/vizgen_cellbound/cell_boundaries.parquet
-#> >>> using -> /tmp/Rtmp7Gln1Z/vizgen/vizgen_cellbound/cell_boundaries.parquet
+#> /tmp/RtmpbzbvML/vizgen/vizgen_cellbound/cell_boundaries.parquet
+#> >>> using -> /tmp/RtmpbzbvML/vizgen/vizgen_cellbound/cell_boundaries.parquet
 #> >>> Cell segmentations are found in `.parquet` file
 #> >>> Checking polygon validity
 #> >>> Reading transcript coordinates
@@ -1147,7 +1160,7 @@ them as GeoParquet files.
 dir_use <- XeniumOutput("v2", file_path = file.path(fp, "xenium"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /tmp/Rtmp7Gln1Z/xenium/xenium2
+#> The downloaded files are in /tmp/RtmpbzbvML/xenium/xenium2
 list.files(dir_use)
 #>  [1] "cell_boundaries.csv.gz"     "cell_boundaries.parquet"   
 #>  [3] "cell_feature_matrix.h5"     "cells.csv.gz"              
@@ -1165,9 +1178,6 @@ list.files(dir_use)
 #> >>> Reading cell and nucleus segmentations
 #> >>> Making MULTIPOLYGON nuclei geometries
 #> >>> Making POLYGON cell geometries
-#> Sanity checks on cell segmentation polygons:
-#> >>> ..found 132 cells with (nested) polygon lists
-#> >>> ..applying filtering
 #> >>> Checking polygon validity
 #> >>> Saving geometries to parquet files
 #> >>> Reading cell metadata -> `cells.parquet`
@@ -1229,7 +1239,7 @@ except that the output doesn’t come with images.
 dir_use <- CosMXOutput(file_path = file.path(fp, "cosmx"))
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /tmp/Rtmp7Gln1Z/cosmx/cosmx
+#> The downloaded files are in /tmp/RtmpbzbvML/cosmx/cosmx
 list.files(dir_use)
 #> [1] "Run5642_S3_Quarter_exprMat_file.csv" 
 #> [2] "Run5642_S3_Quarter_metadata_file.csv"
@@ -1542,6 +1552,11 @@ colData(sfe)$n_nuclei <- annotNPred(sfe, "spotPoly", annotGeometryName = "nuclei
 # Get geometries of intersections of Visium spots and myofibers
 spot_intersections <- annotOp(sfe, colGeometryName = "spotPoly", 
                               annotGeometryName = "myofiber_simplified")
+#> Warning: `annotOp()` was deprecated in SpatialFeatureExperiment 1.16.0.
+#> ℹ In addition, DuckDBDataFrame is not supported
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 ```
 
 Sometimes the spatial coordinates of different samples can take very
@@ -1718,13 +1733,13 @@ unlink(file.path(fp, "cosmx"), recursive = TRUE)
 ``` r
 
 sessionInfo()
-#> R Under development (unstable) (2026-05-05 r90004)
+#> R version 4.6.2 (2026-10-29)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.4 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8          LC_NUMERIC=C             
@@ -1742,118 +1757,108 @@ sessionInfo()
 #> [8] base     
 #> 
 #> other attached packages:
-#>  [1] VisiumIO_1.8.0                  TENxIO_1.14.0                  
+#>  [1] VisiumIO_1.9.5                  TENxIO_1.15.0                  
 #>  [3] spdep_1.4-2                     spData_2.3.5                   
-#>  [5] RBioFormats_1.12.0              Matrix_1.7-5                   
-#>  [7] sf_1.1-1                        SFEData_1.14.0                 
-#>  [9] SpatialExperiment_1.22.0        SingleCellExperiment_1.34.0    
-#> [11] SummarizedExperiment_1.42.0     Biobase_2.72.0                 
-#> [13] GenomicRanges_1.64.0            Seqinfo_1.2.0                  
-#> [15] IRanges_2.46.0                  S4Vectors_0.50.0               
-#> [17] BiocGenerics_0.58.0             generics_0.1.4                 
-#> [19] MatrixGenerics_1.24.0           matrixStats_1.5.0              
-#> [21] SpatialFeatureExperiment_1.14.0 BiocStyle_2.40.0               
+#>  [5] RBioFormats_1.13.0              Matrix_1.7-6                   
+#>  [7] sf_1.1-3                        SFEData_1.15.0                 
+#>  [9] SpatialExperiment_1.23.0        SingleCellExperiment_1.35.2    
+#> [11] SummarizedExperiment_1.43.0     Biobase_2.73.2                 
+#> [13] GenomicRanges_1.65.4            Seqinfo_1.3.2                  
+#> [15] IRanges_2.47.5                  S4Vectors_0.51.10              
+#> [17] BiocGenerics_0.59.13            generics_0.1.4                 
+#> [19] MatrixGenerics_1.25.0           matrixStats_1.5.0              
+#> [21] SpatialFeatureExperiment_1.15.1 BiocStyle_2.41.0               
 #> 
 #> loaded via a namespace (and not attached):
-#>   [1] spatstat.sparse_3.1-0     fs_2.1.0                 
-#>   [3] spatialreg_1.4-3          bitops_1.0-9             
-#>   [5] EBImage_4.54.0            httr_1.4.8               
-#>   [7] RColorBrewer_1.1-3        sctransform_0.4.3        
-#>   [9] tools_4.7.0               backports_1.5.1          
-#>  [11] R6_2.6.1                  HDF5Array_1.40.0         
-#>  [13] uwot_0.2.4                lazyeval_0.2.3           
-#>  [15] rhdf5filters_1.24.0       withr_3.0.2              
-#>  [17] sp_2.2-1                  gridExtra_2.3            
-#>  [19] progressr_0.19.0          cli_3.6.6                
-#>  [21] textshaping_1.0.5         spatstat.explore_3.8-0   
-#>  [23] fastDummies_1.7.6         sandwich_3.1-1           
-#>  [25] marginaleffects_0.32.0    sass_0.4.10              
-#>  [27] Seurat_5.5.0.9000         spatstat.data_3.1-9      
-#>  [29] mvtnorm_1.3-7             arrow_24.0.0             
-#>  [31] S7_0.2.2                  readr_2.2.0              
-#>  [33] pbapply_1.7-4             proxy_0.4-29             
-#>  [35] ggridges_0.5.7            pkgdown_2.2.0            
-#>  [37] systemfonts_1.3.2         R.utils_2.13.0           
-#>  [39] parallelly_1.47.0         limma_3.68.2             
-#>  [41] RSQLite_2.4.6             BiocIO_1.22.0            
-#>  [43] spatstat.random_3.4-5     ica_1.0-3                
-#>  [45] vroom_1.7.1               dplyr_1.2.1              
-#>  [47] abind_1.4-8               R.methodsS3_1.8.2        
-#>  [49] terra_1.9-11              lifecycle_1.0.5          
-#>  [51] multcomp_1.4-30           yaml_2.3.12              
-#>  [53] edgeR_4.10.0              rhdf5_2.56.0             
-#>  [55] SparseArray_1.12.2        BiocFileCache_3.2.0      
-#>  [57] Rtsne_0.17                grid_4.7.0               
-#>  [59] blob_1.3.0                promises_1.5.0           
-#>  [61] dqrng_0.4.1               ExperimentHub_3.2.0      
-#>  [63] crayon_1.5.3              miniUI_0.1.2             
-#>  [65] lattice_0.22-9            beachmat_2.28.0          
-#>  [67] cowplot_1.2.0             KEGGREST_1.52.0          
-#>  [69] magick_2.9.1              zeallot_0.2.0            
-#>  [71] pillar_1.11.1             knitr_1.51               
-#>  [73] rjson_0.2.23              boot_1.3-32              
-#>  [75] future.apply_1.20.2       sfarrow_0.4.1            
-#>  [77] codetools_0.2-20          wk_0.9.5                 
-#>  [79] glue_1.8.1                spatstat.univar_3.1-7    
-#>  [81] data.table_1.18.4         vctrs_0.7.3              
-#>  [83] png_0.1-9                 spam_2.11-3              
-#>  [85] gtable_0.3.6              assertthat_0.2.1         
-#>  [87] cachem_1.1.0              xfun_0.57                
-#>  [89] mime_0.13                 S4Arrays_1.12.0          
-#>  [91] DropletUtils_1.32.0       coda_0.19-4.1            
-#>  [93] survival_3.8-6            sfheaders_0.4.5          
-#>  [95] rJava_1.0-18              units_1.0-1              
-#>  [97] statmod_1.5.1             fitdistrplus_1.2-6       
-#>  [99] TH.data_1.1-5             ROCR_1.0-12              
-#> [101] nlme_3.1-169              bit64_4.8.0              
-#> [103] filelock_1.0.3            RcppAnnoy_0.0.23         
-#> [105] bslib_0.10.0              irlba_2.3.7              
-#> [107] KernSmooth_2.23-26        otel_0.2.0               
-#> [109] DBI_1.3.0                 tidyselect_1.2.1         
-#> [111] bit_4.6.0                 compiler_4.7.0           
-#> [113] curl_7.1.0                httr2_1.2.2              
-#> [115] BiocNeighbors_2.6.0       h5mread_1.4.0            
-#> [117] xml2_1.5.2                plotly_4.12.0            
-#> [119] desc_1.4.3                DelayedArray_0.38.1      
-#> [121] bookdown_0.46             scales_1.4.0             
-#> [123] classInt_0.4-11           lmtest_0.9-40            
-#> [125] rappdirs_0.3.4            goftest_1.2-3            
-#> [127] stringr_1.6.0             tiff_0.1-12              
-#> [129] digest_0.6.39             spatstat.utils_3.2-2     
-#> [131] fftwtools_0.9-11          rmarkdown_2.31           
-#> [133] XVector_0.52.0            htmltools_0.5.9          
-#> [135] pkgconfig_2.0.3           jpeg_0.1-11              
-#> [137] sparseMatrixStats_1.24.0  dbplyr_2.5.2             
-#> [139] fastmap_1.2.0             rlang_1.2.0              
-#> [141] htmlwidgets_1.6.4         shiny_1.13.0             
-#> [143] DelayedMatrixStats_1.34.0 farver_2.1.2             
-#> [145] jquerylib_0.1.4           zoo_1.8-15               
-#> [147] jsonlite_2.0.0            BiocParallel_1.46.0      
-#> [149] R.oo_1.27.1               RCurl_1.98-1.18          
-#> [151] magrittr_2.0.5            scuttle_1.22.0           
-#> [153] s2_1.1.9                  dotCall64_1.2            
-#> [155] patchwork_1.3.2           Rhdf5lib_2.0.0           
-#> [157] Rcpp_1.1.1-1.1            reticulate_1.46.0        
-#> [159] stringi_1.8.7             MASS_7.3-65              
-#> [161] plyr_1.8.9                AnnotationHub_4.2.0      
-#> [163] parallel_4.7.0            listenv_0.10.1           
-#> [165] ggrepel_0.9.8             deldir_2.0-4             
-#> [167] Biostrings_2.80.0         splines_4.7.0            
-#> [169] tensor_1.5.1              hms_1.1.4                
-#> [171] locfit_1.5-9.12           igraph_2.3.1             
-#> [173] spatstat.geom_3.7-3       RcppHNSW_0.6.0           
-#> [175] reshape2_1.4.5            LearnBayes_2.15.2        
-#> [177] BiocVersion_3.23.1        evaluate_1.0.5           
-#> [179] SeuratObject_5.4.0        BiocManager_1.30.27      
-#> [181] httpuv_1.6.17             tzdb_0.5.0               
-#> [183] polyclip_1.10-7           RANN_2.6.2               
-#> [185] tidyr_1.3.2               purrr_1.2.2              
-#> [187] scattermore_1.2           future_1.70.0            
-#> [189] ggplot2_4.0.3             BiocBaseUtils_1.14.0     
-#> [191] xtable_1.8-8              e1071_1.7-17             
-#> [193] RSpectra_0.16-2           later_1.4.8              
-#> [195] viridisLite_0.4.3         class_7.3-23             
-#> [197] ragg_1.5.2                tibble_3.3.1             
-#> [199] memoise_2.0.1             AnnotationDbi_1.74.0     
-#> [201] cluster_2.1.8.2           globals_0.19.1
+#>   [1] fs_2.1.0                  spatialreg_1.4-3         
+#>   [3] bitops_1.1-0              EBImage_4.55.2           
+#>   [5] httr_1.4.9                RColorBrewer_1.1-3       
+#>   [7] sctransform_0.4.3         tools_4.6.2              
+#>   [9] backports_1.5.1           R6_2.6.1                 
+#>  [11] HDF5Array_1.41.6          uwot_0.2.5               
+#>  [13] rhdf5filters_1.25.5       withr_3.0.3              
+#>  [15] sp_2.2-4                  gridExtra_2.3.1          
+#>  [17] progressr_1.1.0           cli_3.6.6                
+#>  [19] textshaping_1.1.0         fastDummies_1.7.6        
+#>  [21] sandwich_3.1-3            marginaleffects_1.0.0    
+#>  [23] sass_0.5.0                Seurat_6.0.0.9000        
+#>  [25] mvtnorm_1.4-2             arrow_26.0.1.1           
+#>  [27] S7_1.0.0                  readr_2.2.0              
+#>  [29] pbapply_1.7-5             proxy_0.4-29             
+#>  [31] ggridges_0.5.7            pkgdown_2.2.1            
+#>  [33] systemfonts_1.3.4         R.utils_2.13.0           
+#>  [35] parallelly_1.50.0         limma_3.99.5             
+#>  [37] RSQLite_3.53.3            BiocIO_1.23.3            
+#>  [39] ica_1.0-3                 vroom_1.7.1              
+#>  [41] dplyr_1.2.1               abind_1.4-8              
+#>  [43] DuckDBDataFrame_0.99.35   R.methodsS3_1.8.2        
+#>  [45] terra_1.9-60              lifecycle_1.0.5          
+#>  [47] multcomp_1.4-32           yaml_2.3.12              
+#>  [49] edgeR_4.99.15             rhdf5_2.57.20            
+#>  [51] SparseArray_1.13.5        BiocFileCache_3.3.3      
+#>  [53] Rtsne_0.17                grid_4.6.2               
+#>  [55] blob_1.3.0                pls_2.9-0                
+#>  [57] dqrng_0.4.1               ExperimentHub_3.3.2      
+#>  [59] crayon_1.5.3              lattice_0.23-1           
+#>  [61] beachmat_2.29.3           cowplot_1.2.0            
+#>  [63] KEGGREST_1.53.6           magick_2.9.1             
+#>  [65] zeallot_0.2.0             pillar_1.11.1            
+#>  [67] knitr_1.52                rjson_0.2.23             
+#>  [69] boot_1.3-32               future.apply_1.21.0      
+#>  [71] sfarrow_0.4.1             codetools_0.2-20         
+#>  [73] wk_0.9.5                  glue_1.8.1               
+#>  [75] data.table_1.18.6.1       vctrs_0.7.3              
+#>  [77] png_0.1-9                 spam_2.11-4              
+#>  [79] gtable_0.3.6              assertthat_0.2.1         
+#>  [81] cachem_1.1.0              xfun_0.62                
+#>  [83] S4Arrays_1.13.3           DropletUtils_1.33.2      
+#>  [85] coda_0.19-4.1             survival_3.8-12          
+#>  [87] sfheaders_0.4.5           rJava_1.0-18             
+#>  [89] units_1.0-1               statmod_1.5.2            
+#>  [91] TH.data_1.1-5             nlme_3.1-171             
+#>  [93] bit64_4.8.6               filelock_1.0.3           
+#>  [95] RcppAnnoy_0.0.23          bslib_0.12.0             
+#>  [97] irlba_2.4.1               KernSmooth_2.23-27       
+#>  [99] otel_0.3.0                DBI_1.3.0                
+#> [101] duckdb_2.0.0              tidyselect_1.2.1         
+#> [103] bit_4.6.0                 compiler_4.6.2           
+#> [105] curl_8.1.0                httr2_1.3.0              
+#> [107] BiocNeighbors_2.7.3       h5mread_1.5.7            
+#> [109] xml2_1.6.0                desc_1.4.3               
+#> [111] DelayedArray_0.39.8       bookdown_0.48            
+#> [113] scales_1.4.0              classInt_0.4-11          
+#> [115] rappdirs_0.3.4            stringr_1.6.0            
+#> [117] tiff_0.1-12               digest_0.6.39            
+#> [119] fftwtools_0.9-11          rmarkdown_2.32           
+#> [121] XVector_0.53.0            htmltools_0.5.9          
+#> [123] pkgconfig_2.0.3           jpeg_0.1-11              
+#> [125] sparseMatrixStats_1.25.0  dbplyr_2.6.0             
+#> [127] fastmap_1.2.0             rlang_1.3.0              
+#> [129] htmlwidgets_1.6.4         DelayedMatrixStats_1.35.0
+#> [131] farver_2.1.2              jquerylib_0.1.4          
+#> [133] zoo_1.9-1                 jsonlite_2.0.0           
+#> [135] BiocParallel_1.47.0       R.oo_1.27.1              
+#> [137] RCurl_1.98-1.20           magrittr_2.0.5           
+#> [139] scuttle_1.23.2            s2_1.1.13                
+#> [141] dotCall64_1.2             patchwork_1.3.2          
+#> [143] Rhdf5lib_2.1.1            Rcpp_1.1.2               
+#> [145] stringi_1.8.9             MASS_7.3-66              
+#> [147] plyr_1.8.9                AnnotationHub_4.3.3      
+#> [149] parallel_4.6.2            listenv_1.1.0            
+#> [151] ggrepel_0.9.8             deldir_2.0-4             
+#> [153] Biostrings_2.81.9         splines_4.6.2            
+#> [155] hms_1.1.4                 locfit_1.5-9.12          
+#> [157] igraph_2.3.4              RcppHNSW_0.7.0           
+#> [159] reshape2_1.4.5            LearnBayes_2.15.2        
+#> [161] BiocVersion_3.24.0        evaluate_1.0.5           
+#> [163] SeuratObject_5.4.0        BiocManager_1.30.27      
+#> [165] tzdb_0.5.0                DuckDBSpatial_0.99.21    
+#> [167] RANN_2.6.3                tidyr_1.3.2              
+#> [169] purrr_1.2.2               scattermore_1.2          
+#> [171] future_1.82.0             ggplot2_4.0.4            
+#> [173] BiocBaseUtils_1.15.1      e1071_1.7-17             
+#> [175] RSpectra_0.16-2           class_7.3-24             
+#> [177] ragg_1.5.2                tibble_3.3.1             
+#> [179] memoise_2.0.1             AnnotationDbi_1.75.2     
+#> [181] cluster_2.1.8.3           globals_0.20.0
 ```

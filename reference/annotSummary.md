@@ -17,7 +17,7 @@ annotSummary(
   annotGeometryName = 1L,
   annotColNames = 1L,
   sample_id = "all",
-  pred = st_intersects,
+  pred = "intersects",
   summary_fun = mean
 )
 ```

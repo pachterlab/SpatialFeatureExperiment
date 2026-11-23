@@ -37,7 +37,7 @@ dir_use <- XeniumOutput("v1", file_path = fp)
 #> retrieving 1 resource
 #> 
 #> loading from cache
-#> The downloaded files are in /tmp/RtmphTOllm/fileea9d66d27291/xenium_lr 
+#> The downloaded files are in /tmp/RtmpfxrSIn/file6c0744e155b1/xenium_lr 
 # RBioFormats null pointer error
 try(getPixelSize(file.path(dir_use, "morphology_focus.ome.tif")))
 #> [1] 1.7 1.7

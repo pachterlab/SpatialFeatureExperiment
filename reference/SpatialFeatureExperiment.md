@@ -16,7 +16,7 @@ SpatialFeatureExperiment(
   rowGeometries = NULL,
   annotGeometries = NULL,
   spotDiameter = NA_real_,
-  annotGeometryType = "POLYGON",
+  annotGeometryType = deprecated(),
   spatialGraphs = NULL,
   unit = c("full_res_image_pixel", "micron"),
   ...
@@ -87,43 +87,25 @@ SpatialFeatureExperiment(
 
   Geometry of the entities that correspond to the columns of the gene
   count matrix, such as cells and Visium spots. It must be a named list
-  of one of the following:
+  or vector of one or more of the following:
 
   An `sf` data frame
 
   :   The geometry column specifies the geometry of the entities.
 
-  An ordinary data frame specifying centroids
+  File names of GeoParquet files
 
-  :   Column names for the coordinates are specified in the
-      `spatialCoordsNames` argument. For Visium and ST, in addition to
-      the centroid coordinate data frame, the spot diameter in the same
-      unit as the coordinates can be specified in the `spotDiamter`
-      argument.
+  :   These will be used to represent geometries out of memory with
+      `DuckDBSpatial`.
 
-  An ordinary data frame specifying polygons
+  DuckDBDataFrame with geometries
 
-  :   Also use `spatialCoordsNames`. There should an additional column
-      "ID" to specify which vertices belong to which polygon. The
-      coordinates should not be in list columns. Rather, the data frame
-      should look like it is passed to
-      [`ggplot2::geom_polygon`](https://ggplot2.tidyverse.org/reference/geom_polygon.html).
-      If there are holes, then there must also be a column "subID" that
-      differentiates between the outer polygon and the holes.
+  :   As read from GeoParquet file with
+      [`readGeoParquet`](https://rdrr.io/pkg/DuckDBSpatial/man/readGeoParquet.html)
 
-  In all cases, the data frame should specify the same number of
-  geometries as the number of columns in the gene count matrix. If the
-  column "barcode" is present, then it will be matched to column names
-  of the gene count matrix. Otherwise, the geometries are assumed to be
-  in the same order as columns in the gene count matrix. If the
-  geometries are specified in an ordinary data frame, then it will be
-  converted into `sf` internally. Named list of data frames because each
-  entity can have multiple geometries, such as whole cell and nuclei
-  segmentations. The geometries are assumed to be POINTs for centroids
-  and POLYGONs for segmentations. If polygons are specified in an
-  ordinary data frame, then anything with fewer than 3 vertices will be
-  removed. For anything other than POINTs, attributes of the geometry
-  will be ignored.
+  An ordinary data frame specifying centroids or polygons
+
+  :   Deprecated
 
 - rowGeometries:
 
@@ -135,11 +117,7 @@ SpatialFeatureExperiment(
   Geometry of entities that do not correspond to columns or rows of the
   gene count matrix, such as tissue boundary and pathologist annotations
   of histological regions, and nuclei segmentation in a Visium dataset.
-  Also a named list as in `colGeometries`. The ordinary data frame may
-  specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI versions.
-  Each data frame can only specify one type of geometry. For MULTI
-  versions, there must be a column "group" to identify each MULTI
-  geometry.
+  Also a named list as in `colGeometries`.
 
 - spotDiameter:
 
@@ -150,12 +128,8 @@ SpatialFeatureExperiment(
 
 - annotGeometryType:
 
-  Character vector specifying geometry type of each element of the list
-  if `annotGeometry` is specified. Each element of the vector must be
-  one of POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, and
-  MULTIPOLYGON. Must be either length 1 (same for all elements of the
-  list) or the same length as the list. Ignored if the corresponding
-  element is an `sf` object.
+  Deprecated. Ignored if the corresponding element is an `sf` object or
+  file path of a GeoParquet file.
 
 - spatialGraphs:
 
@@ -217,4 +191,82 @@ sfe <- SpatialFeatureExperiment(list(counts = mat),
 sfe2 <- SpatialFeatureExperiment(list(counts = mat),
     colGeometries = list(foo = cg)
 )
+
+# Use DuckDBSpatial to not load geometry into memory
+# Geometry is written to disk first in this toy example
+library(DuckDBSpatial)
+#> Loading required package: DuckDBDataFrame
+#> Loading required package: bit64
+#> ********************************************************
+#> R-core is collecting use cases for 64-bit integers as they explore native support for these vectors.
+#> 
+#> See https://stat.ethz.ch/pipermail/r-devel/2026-July/084631.html and reach out to Luke Tierney (luke-tierney@uiowa.edu).
+#> ********************************************************
+#> 
+#> Attaching package: ‘bit64’
+#> The following objects are masked from ‘package:Matrix’:
+#> 
+#>     colSums, rowSums
+#> The following objects are masked from ‘package:SummarizedExperiment’:
+#> 
+#>     match, order, rank
+#> The following object is masked from ‘package:Biobase’:
+#> 
+#>     cache
+#> The following objects are masked from ‘package:GenomicRanges’:
+#> 
+#>     as.factor, intersect, match, order, rank, setdiff, union
+#> The following object is masked from ‘package:Seqinfo’:
+#> 
+#>     intersect
+#> The following objects are masked from ‘package:IRanges’:
+#> 
+#>     as.factor, intersect, match, order, setdiff, table, union
+#> The following objects are masked from ‘package:S4Vectors’:
+#> 
+#>     %in%, as.factor, intersect, match, order, rank, setdiff, setequal,
+#>     union
+#> The following objects are masked from ‘package:BiocGenerics’:
+#> 
+#>     %in%, intersect, match, order, rank, setdiff, setequal, table,
+#>     union
+#> The following objects are masked from ‘package:generics’:
+#> 
+#>     as.factor, as.ordered, intersect, is.element, setdiff, setequal,
+#>     union
+#> The following objects are masked from ‘package:MatrixGenerics’:
+#> 
+#>     colSums, rowSums
+#> The following object is masked from ‘package:utils’:
+#> 
+#>     hashtab
+#> The following objects are masked from ‘package:base’:
+#> 
+#>     %in%, :, array, as.factor, as.ordered, colSums, factor, intersect,
+#>     is.double, is.element, match, matrix, order, rank, rowSums,
+#>     setdiff, setequal, table, union
+#> Loading required package: sf
+#> Linking to GEOS 3.14.1, GDAL 3.12.2, PROJ 9.7.1; sf_use_s2() is TRUE
+#> 
+#> Attaching package: ‘DuckDBSpatial’
+#> The following objects are masked from ‘package:sf’:
+#> 
+#>     st_contains, st_contains_properly, st_covered_by, st_covers,
+#>     st_crosses, st_dimension, st_disjoint, st_distance, st_equals,
+#>     st_geometry_type, st_inscribed_circle, st_is_empty, st_is_simple,
+#>     st_is_within_distance, st_length, st_line_interpolate,
+#>     st_line_project, st_overlaps, st_perimeter, st_touches, st_within
+fn <- tempfile(fileext = ".parquet") # a file name
+writeGeoParquet(cg, fn)
+sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                colGeometries = c(foo = fn)
+)
+# Or use DuckDBDataFrame
+cg2 <- readGeoParquet(fn)
+sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                colGeometries = c(foo = cg2)
+)
+
+file.remove(fn)
+#> [1] TRUE
 ```

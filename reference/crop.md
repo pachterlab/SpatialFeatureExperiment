@@ -5,7 +5,7 @@ a geometric predicate function (usually intersects) with another
 geometry of interest. This can be used to subset an SFE object with a
 tissue boundary or histological region polygon, or crop away empty
 spaces. After cropping, not only will the cells/spots be subsetted, but
-also all geometries will be cropped.
+also all geometries may be cropped.
 
 ## Usage
 
@@ -15,8 +15,9 @@ crop(
   y = NULL,
   colGeometryName = 1L,
   sample_id = "all",
-  op = st_intersection,
-  keep_whole = "none",
+  op = deprecated(),
+  difference = FALSE,
+  keep_whole = "col",
   cover = FALSE
 )
 ```
@@ -50,13 +51,12 @@ crop(
 
 - op:
 
-  A geometric operation function to crop the geometries in the SFE
-  object. Only
-  [`st_intersection`](https://r-spatial.github.io/sf/reference/geos_binary_ops.html)
-  and
-  [`st_difference`](https://r-spatial.github.io/sf/reference/geos_binary_ops.html)
-  are allowed. If "intersection", then only things inside `y` is kept
-  after cropping. If "difference", then only things outside `y` is kept.
+  Deprecated.
+
+- difference:
+
+  Logical, whether to compute remove the area occupied by `y` from the
+  SFE object.
 
 - keep_whole:
 
@@ -69,8 +69,8 @@ crop(
 - cover:
 
   Logical, whether the geometries in `x` must be entirely covered by `y`
-  if `op = st_intersection` or whether `x` must be entirely outside `y`
-  if `op = st_difference`. Only relevant when `keep_whole != "none"`.
+  if `difference = FALSE` or whether `x` must be entirely outside `y` if
+  `difference = TRUE`. Only relevant when `keep_whole != "none"`.
 
 ## Value
 

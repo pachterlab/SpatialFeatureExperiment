@@ -62,14 +62,6 @@ A named list showing the parameters
 
 ``` r
 library(SFEData)
-library(scater)
-#> Loading required package: scuttle
-#> Loading required package: ggplot2
-#> 
-#> Attaching package: ‘ggplot2’
-#> The following object is masked from ‘package:SpatialFeatureExperiment’:
-#> 
-#>     unit
 library(Voyager)
 sfe <- McKellarMuscleData("small")
 #> see ?SFEData and browseVignettes('SFEData') for documentation
@@ -101,7 +93,7 @@ getParams(sfe, "moran", colData = TRUE)
 #> [1] "SpatialFeatureExperiment"
 #> 
 #> $graph_params$package[[2]]
-#> [1] "1.14.0"
+#> [1] "1.15.1"
 #> 
 #> 
 #> $graph_params$args

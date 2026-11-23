@@ -1,5 +1,8 @@
 # Seurat_to_SFE
 
+This vignette and the Seurat to SFE coercion function have been updated
+for Seurat v6, which has some breaking changes from v5.
+
 ## Setup
 
 ``` r
@@ -64,6 +67,9 @@ suppressPackageStartupMessages({
     #library(sf)    
     })
 ```
+
+    ## Warning: replacing previous import 'BiocGenerics::version' by
+    ## 'BiocManager::version' when loading 'AnnotationHub'
 
 ## Load Seurat v5 objects - 1 sample
 
@@ -346,8 +352,6 @@ sfe_conv_vis2 <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> anterior1
 
@@ -561,8 +565,6 @@ sfe_conv_xen <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.1
 
@@ -629,7 +631,7 @@ getMeta(obj_xen) %>% str
 ``` r
 
 # manual check
-ggplot() &
+ggplot() +
     geom_sf(data = cellSeg(sfe_conv_xen))
 ```
 
@@ -684,8 +686,6 @@ sfe_conv_vz <-
     ## molecules
 
     ## >>> Generating `sf` geometries
-
-    ## Warning: Layer 'scale.data' is empty
 
     ## 
     ## >>> Creating `SFE` object -> vz.toy.1
@@ -747,7 +747,7 @@ getMeta(obj_vz) %>% str
 ``` r
 
 # manual check
-ggplot() & 
+ggplot() + 
     geom_sf(data = cellSeg(sfe_conv_vz))
 ```
 
@@ -792,8 +792,6 @@ sfe_conv_xen2 <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.1
 
@@ -801,10 +799,6 @@ sfe_conv_xen2 <-
     ## BlankCodeword
     ## ControlCodeword
     ## ControlProbe
-
-    ## Warning: Layer 'scale.data' is empty
-    ## Layer 'scale.data' is empty
-    ## Layer 'scale.data' is empty
 
 ``` r
 
@@ -907,22 +901,6 @@ obj_vz %<>%
     SCTransform(assay = DefaultAssay(obj_vz), verbose = F) %>%
     RunPCA(npcs = 5, verbose = F) %>% 
     RunUMAP(dims = 1:5, verbose = F)
-```
-
-    ## `vst.flavor` is set to 'v2' but could not find glmGamPoi installed.
-    ## Please install the glmGamPoi package for much faster estimation.
-    ## --------------------------------------------
-    ## install.packages('BiocManager')
-    ## BiocManager::install('glmGamPoi')
-    ## --------------------------------------------
-    ## Falling back to native (slower) implementation.
-
-    ## Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
-    ## To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
-    ## This message will be shown once per session
-
-``` r
-
 obj_vz
 ```
 
@@ -963,8 +941,6 @@ sfe_conv_vz2 <-
     ## >>> Adding Seurat Assay(s) as Alternative Experiment(s): 
     ## Vizgen
 
-    ## Warning: Layer 'scale.data' is empty
-
 ``` r
 
 sfe_conv_vz2
@@ -1004,8 +980,8 @@ getMeta(sfe_conv_vz2) %>% str
     ##  $ z              : int  3 3 3 3 3 3 3 3 3 3 ...
     ##  $ volume         : num  839 803 527 461 584 ...
     ##  $ fov            : logi  NA NA NA NA NA NA ...
-    ##  $ nCount_SCT     : num  60 60 63 57 61 52 55 62 55 56 ...
-    ##  $ nFeature_SCT   : int  19 18 24 19 13 13 16 14 13 14 ...
+    ##  $ nCount_SCT     : num  60 60 62 57 61 52 55 62 55 56 ...
+    ##  $ nFeature_SCT   : int  19 18 23 19 13 13 16 14 13 14 ...
     ##  $ sample_id      : chr  "vz_toy_1" "vz_toy_1" "vz_toy_1" "vz_toy_1" ...
 
 ### Check `reducedDim`
@@ -1387,8 +1363,6 @@ sfe_xen_multi <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> xen.toy.1
 
@@ -1401,8 +1375,6 @@ sfe_xen_multi <-
     ## molecules
 
     ## >>> Generating `sf` geometries
-
-    ## Warning: Layer 'scale.data' is empty
 
     ## 
     ## >>> Creating `SFE` object -> xen.toy.2
@@ -1508,8 +1480,6 @@ sfe_vz_multi <-
 
     ## >>> Generating `sf` geometries
 
-    ## Warning: Layer 'scale.data' is empty
-
     ## 
     ## >>> Creating `SFE` object -> vz.toy.1
 
@@ -1522,8 +1492,6 @@ sfe_vz_multi <-
     ## molecules
 
     ## >>> Generating `sf` geometries
-
-    ## Warning: Layer 'scale.data' is empty
 
     ## 
     ## >>> Creating `SFE` object -> vz.toy.2

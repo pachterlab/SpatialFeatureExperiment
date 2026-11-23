@@ -102,7 +102,7 @@ readVisiumHD(
 
 ## Value
 
-An SFE object if \`length(bin_size) == 1L\`, otherwise a list of SFE
+An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
 objects each element of which is for one bin size. They're not
 concatenated since it might not make sense to perform joint analyses on
 the different resolutions that benefit from having them in the same SFE
@@ -119,10 +119,10 @@ plotting when there are many spots when not zooming in. See the
 library(OSTA.data)
 id <- "VisiumHD_HumanColon_Oliveira"
 pa <- OSTA.data_load(id)
-#> Requesting folder 'segmented_outputs' from OSF
-#> Downloaded 6 file(s) from OSF folder 'segmented_outputs'
 #> Requesting folder 'binned_outputs' from OSF
 #> Downloaded 11 file(s) from OSF folder 'binned_outputs'
+#> Requesting folder 'segmented_outputs' from OSF
+#> Downloaded 6 file(s) from OSF folder 'segmented_outputs'
 dir.create(dir <- tempfile())
 unzip(pa, exdir=dir)
 
@@ -130,7 +130,7 @@ unzip(pa, exdir=dir)
 sfe1 <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
 #> >>> 10X VisiumHD data will be loaded: square_016um
 #> Skipping missing images
-#>   /tmp/RtmphTOllm/fileea9d3b885057/binned_outputs/square_016um/spatial/tissue_hires_image.png
+#>   /tmp/RtmpfxrSIn/file6c073e6abe0e/binned_outputs/square_016um/spatial/tissue_hires_image.png
 
 # Use cell segmentations
 sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")

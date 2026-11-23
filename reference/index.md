@@ -45,6 +45,7 @@
 - [`colFeatureData()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colFeatureData.md)
   [`rowFeatureData()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colFeatureData.md)
   [`geometryFeatureData()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colFeatureData.md)
+  [`annotFeatureData()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colFeatureData.md)
   [`reducedDimFeatureData()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colFeatureData.md)
   : Get global spatial analysis results and metadata of colData,
   rowData, and geometries
@@ -171,7 +172,8 @@
   [`aggregateTxTech()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/aggregateTx.md)
   : Aggregate transcript spots from file
 - [`annotOp()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/annotOp.md)
-  : Binary operations for geometry of each cell/spot and annotation
+  **\[deprecated\]** : Binary operations for geometry of each cell/spot
+  and annotation
 - [`annotPred()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/annotPred.md)
   [`annotNPred()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/annotPred.md)
   : Binary predicates for geometry of each cell/spot and annotation
@@ -198,9 +200,13 @@
   [`splitComponent(`*`<sf>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/splitComponent.md)
   [`splitComponent(`*`<sfc>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/splitComponent.md)
   : Split by graph component
-- [`st_any_pred()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
+- [`st_any_pred(`*`<ANY>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
+  [`st_any_pred(`*`<duckspatial_df>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
+  [`st_any_pred(`*`<DuckDBTable>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
   [`st_any_intersects()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
-  [`st_n_pred()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
+  [`st_n_pred(`*`<ANY>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
+  [`st_n_pred(`*`<duckspatial_df>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
+  [`st_n_pred(`*`<DuckDBTable>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
   [`st_n_intersects()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/st_any_pred.md)
   : Simple geometry predicates
 
@@ -213,6 +219,9 @@
 
 ## Image classes
 
+- [`AlignedSpatialImage-class`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/AlignedSpatialImage-class.md)
+  : Superclass for images with extent
+
 - [`isFull(`*`<BioFormatsImage>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/BioFormatsImage-getters.md)
   [`origin(`*`<BioFormatsImage>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/BioFormatsImage-getters.md)
   [`transformation(`*`<BioFormatsImage>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/BioFormatsImage-getters.md)
@@ -222,7 +231,8 @@
 
 - [`show(`*`<BioFormatsImage>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/BioFormatsImage.md)
   [`BioFormatsImage()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/BioFormatsImage.md)
-  : On disk representation of BioFormats images in SFE object
+  **\[experimental\]** : On disk representation of BioFormats images in
+  SFE object
 
 - [`show(`*`<ExtImage>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/ExtImage.md)
   [`ExtImage()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/ExtImage.md)
@@ -312,8 +322,6 @@
   : Find center of bounding box
 - [`changeSampleIDs()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/changeSampleIDs.md)
   : Change sample IDs
-- [`containsOutOfMemoryData(`*`<SpatialFeatureExperiment>`*`)`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/containsOutOfMemoryData-SpatialFeatureExperiment-method.md)
-  : Whether an SFE object contains out of memory data
 - [`df2sf()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/df2sf.md)
   : From ordinary data frame to sf to construct SFE object
 - [`gdalParquetAvailable()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/gdalParquetAvailable.md)

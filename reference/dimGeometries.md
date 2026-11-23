@@ -15,10 +15,10 @@ in `SingleCellExperiment`.
 
 ``` r
 # S4 method for class 'SpatialFeatureExperiment'
-dimGeometries(x, MARGIN = 2, withDimnames = TRUE)
+dimGeometries(x, MARGIN = 2, withDimnames = FALSE)
 
 # S4 method for class 'SpatialFeatureExperiment'
-dimGeometries(x, MARGIN, withDimnames = TRUE, translate = TRUE, ...) <- value
+dimGeometries(x, MARGIN, withDimnames = FALSE, translate = TRUE, ...) <- value
 
 # S4 method for class 'SpatialFeatureExperiment'
 dimGeometryNames(x, MARGIN)
@@ -27,7 +27,7 @@ dimGeometryNames(x, MARGIN)
 dimGeometryNames(x, MARGIN) <- value
 
 # S4 method for class 'SpatialFeatureExperiment'
-dimGeometry(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = TRUE)
+dimGeometry(x, type = 1L, MARGIN, sample_id = 1L, withDimnames = FALSE)
 
 # S4 method for class 'SpatialFeatureExperiment'
 dimGeometry(
@@ -35,7 +35,7 @@ dimGeometry(
   type = 1L,
   MARGIN,
   sample_id = 1L,
-  withDimnames = TRUE,
+  withDimnames = FALSE,
   translate = TRUE,
   ...
 ) <- value
@@ -81,12 +81,13 @@ dimGeometry(
 - value:
 
   Value to set. For `dimGeometry`, must be a `sf` data frame with the
-  same number of rows as size in the dimension of interest, or an
-  ordinary data frame that can be converted to such a `sf` data frame
-  (see
+  same number of rows as size in the dimension of interest, a
+  `DuckDBDataFrame` with geometry, or an ordinary data frame that can be
+  converted to such a `sf` data frame (see
   [`df2sf`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/df2sf.md)).
-  For `dimGeometries`, must be a list of such `sf` or ordinary data
-  frames.
+  For `dimGeometries`, must be a named list of such `sf` or
+  `DuckDBDataFrame` or ordinary data frames. Support for ordinary data
+  frames is deprecated.
 
 - type:
 
@@ -106,7 +107,8 @@ return an `sf` data frame. Setters return an SFE object.
 
 ## See also
 
-\[colGeometries()\], \[rowGeometries()\]
+[`colGeometries()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colGeometries.md),
+[`rowGeometries()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/rowGeometries.md)
 
 ## Examples
 
@@ -168,4 +170,17 @@ spotPoly(sfe) <- spots
 colGeometry(sfe_combined, "foobar", sample_id = "Vis5A") <- spots1
 # Only entries for the specified sample are set.
 foobar <- colGeometry(sfe_combined, "foobar", sample_id = "sample02")
+
+# Use DuckDBSpatial to add out of memory geometry
+library(DuckDBSpatial)
+fn <- tempfile(fileext = ".parquet") # a file name
+writeGeoParquet(spotPoly(sfe), fn)
+colGeometry(sfe, "ondisk") <- fn
+
+# Or use DuckDBDataFrame instead of file name
+cg2 <- readGeoParquet(fn)
+colGeometry(sfe, "ondisk") <- cg2
+
+file.remove(fn)
+#> [1] TRUE
 ```

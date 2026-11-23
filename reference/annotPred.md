@@ -3,7 +3,8 @@
 This function finds binary predicates for the geometry of each cell/spot
 (i.e. `colGeometry`) and an annotation geometry for each sample. For
 example, whether each Visium spot intersects with the tissue boundary in
-each sample.
+each sample. This function can be useful when the `annotGeometries` have
+undergone affine transforms with the rest of the SFE object.
 
 ## Usage
 
@@ -13,7 +14,7 @@ annotPred(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  pred = st_intersects,
+  pred = "intersects",
   yx = FALSE
 )
 
@@ -22,7 +23,7 @@ annotNPred(
   colGeometryName = 1L,
   annotGeometryName = 1L,
   sample_id = "all",
-  pred = st_intersects
+  pred = "intersects"
 )
 ```
 
@@ -55,7 +56,7 @@ annotNPred(
   predicates, the results should be the same. When x has a large number
   of geometries and y has few, `pred(y, x)` is much faster than
   `pred(x, y)` for `st_intersects`, `st_disjoint`, and
-  `st_is_within_distance`.
+  `st_is_within_distance`. Ignored for `DuckDBDataFrame`.
 
 ## Value
 
@@ -65,7 +66,9 @@ column names of sfe) as names. For `annotNPred`, a numeric vector of the
 same length as the number of columns in the sample(s) of interest with
 barcodes as names, indicating the number of geometries in the
 `annotGeometry` of interest returns TRUE for the predicate for each each
-geometry in the `colGeometry` of interest.
+geometry in the `colGeometry` of interest. For `DuckDB`, the output is a
+`DuckDBDataFrame` with an extra column `barcode` because names can't be
+set.
 
 ## See also
 

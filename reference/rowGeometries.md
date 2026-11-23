@@ -84,12 +84,13 @@ txSpots(
 - value:
 
   Value to set. For `dimGeometry`, must be a `sf` data frame with the
-  same number of rows as size in the dimension of interest, or an
-  ordinary data frame that can be converted to such a `sf` data frame
-  (see
+  same number of rows as size in the dimension of interest, a
+  `DuckDBDataFrame` with geometry, or an ordinary data frame that can be
+  converted to such a `sf` data frame (see
   [`df2sf`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/df2sf.md)).
-  For `dimGeometries`, must be a list of such `sf` or ordinary data
-  frames.
+  For `dimGeometries`, must be a named list of such `sf` or
+  `DuckDBDataFrame` or ordinary data frames. Support for ordinary data
+  frames is deprecated.
 
 ## Details
 
@@ -107,7 +108,8 @@ because they can have overlapping coordinate values.
 
 ## See also
 
-\[dimGeometries()\], \[colGeometries()\]
+[`dimGeometries()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/dimGeometries.md),
+[`colGeometries()`](https://pachterlab.github.io/SpatialFeatureExperiment/reference/colGeometries.md)
 
 ## Examples
 
@@ -118,7 +120,7 @@ fp <- tempfile()
 dir_use <- XeniumOutput("v2", file_path = fp)
 #> see ?SFEData and browseVignettes('SFEData') for documentation
 #> loading from cache
-#> The downloaded files are in /tmp/RtmphTOllm/fileea9d3dabca41/xenium2 
+#> The downloaded files are in /tmp/RtmpfxrSIn/file6c076929e6ab/xenium2 
 # RBioFormats issue
 try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #> >>> Must use gene symbols as row names when adding transcript spots.
@@ -126,9 +128,6 @@ try(sfe <- readXenium(dir_use, add_molecules = TRUE))
 #> >>> Reading cell and nucleus segmentations
 #> >>> Making MULTIPOLYGON nuclei geometries
 #> >>> Making POLYGON cell geometries
-#> Sanity checks on cell segmentation polygons:
-#> >>> ..found 132 cells with (nested) polygon lists
-#> >>> ..applying filtering
 #> >>> Checking polygon validity
 #> >>> Saving geometries to parquet files
 #> >>> Reading cell metadata -> `cells.parquet`
