@@ -140,11 +140,13 @@ test_that("Micron spot spacing works when there're singletons", {
 # Read Visium HD==================
 library(OSTA.data)
 id <- "VisiumHD_HumanColon_Oliveira"
-pa <- OSTA.data_load(id)
+pa <- tryCatch(OSTA.data_load(id), error = function(e) NULL)
 dir.create(dir <- tempfile())
-unzip(pa, exdir=dir)
-
+if (!is.null(pa)) {
+    unzip(pa, exdir=dir)
+}
 test_that("readVisiumHD, one resolution, not segmented", {
+    skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, bin_size = 16, sample_id = "UW", use_cellseg = FALSE,
                         add_graph = TRUE)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
@@ -170,6 +172,7 @@ test_that("readVisiumHD, one resolution, not segmented", {
 })
 
 test_that("Read multiple resolutions", {
+    skip_if(is.null(pa))
     sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW", use_cellseg = FALSE)
     expect_type(sfes, "list")
     classes <- vapply(sfes, class, FUN.VALUE = character(1))
@@ -179,12 +182,14 @@ test_that("Read multiple resolutions", {
 })
 
 test_that("When sample_id is not set", {
+    skip_if(is.null(pa))
     sfes <- readVisiumHD(dir, sample_id = "foo", bin_size = c(8, 16), use_cellseg = FALSE)
     expect_equal(sampleIDs(sfes[[1]]), "foo_8um")
     expect_equal(sampleIDs(sfes[[2]]), "foo_16um")
 })
 
 test_that("Micron space, including image alignment", {
+    skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron", use_cellseg = FALSE)
     expect_equal(SpatialFeatureExperiment::unit(sfe), "micron")
     areas <- st_area(spotPoly(sfe))
@@ -200,6 +205,7 @@ test_that("Micron space, including image alignment", {
 })
 
 test_that("Use cell segmentation", {
+    skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = TRUE)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), "sample01")
@@ -215,6 +221,7 @@ test_that("Use cell segmentation", {
 })
 
 test_that("Use microns", {
+    skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
     expect_equal(unit(sfe), "micron")
 })

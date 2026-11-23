@@ -168,8 +168,8 @@ test_that("Correct Visium graph", {
 library(OSTA.data)
 id <- "VisiumHD_HumanColon_Oliveira"
 pa <- tryCatch(OSTA.data_load(id), error = function(e) NULL)
+dir.create(dir <- tempfile())
 if (!is.null(pa)) {
-    dir.create(dir <- tempfile())
     unzip(pa, exdir=dir)
 }
 

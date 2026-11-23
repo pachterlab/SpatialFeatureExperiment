@@ -86,7 +86,9 @@ This function reads Visium HD Space Ranger output into R.
 \examples{
 library(OSTA.data)
 id <- "VisiumHD_HumanColon_Oliveira"
-pa <- OSTA.data_load(id)
+# Because OSF downloads don't work on GitHub Actions
+pa <- tryCatch(OSTA.data_load(id), error = function(e) NULL)
+if (!is.null(pa)) {
 dir.create(dir <- tempfile())
 unzip(pa, exdir=dir)
 
@@ -97,5 +99,6 @@ sfe1 <- readVisiumHD(dir, bin_size = 16, use_cellseg = FALSE)
 sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
 
 unlink(dir, recursive = TRUE)
+}
 }
 \concept{Read data into SFE}
