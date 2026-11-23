@@ -237,9 +237,10 @@ BioFormatsImage <- function(path, ext = NULL, isFull = TRUE, origin = c(0,0),
 
 # Combine transformations
 .get_mv <- function(tr, bbox) {
-    if ("name" %in% names(tr))
+    out <- if ("name" %in% names(tr))
         do.call(.get_affine_mat, c(tr, list(bbox = bbox)))
     else tr
+    structure(out, class = "AffineTransform")
 }
 
 #' Other \code{BioFormatsImage} getters

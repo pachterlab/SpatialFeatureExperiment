@@ -72,14 +72,21 @@ ct_identity <- function() {
 #'   specifying the new combined transform.
 #' @export
 combineTransforms <- function(x, y, bbox) {
-    if (!length(x)) return(y)
-    if (!length(y)) return(x)
-    old <- .get_mv(old, bbox)
-    new <- .get_mv(new, bbox)
+    if (!length(x)) return(.get_mv(y, bbox))
+    if (!length(y)) return(.get_mv(x, bbox))
+    old <- .get_mv(x, bbox)
+    new <- .get_mv(y, bbox)
     out <- ct_affine(M = new$M %*% old$M, v = new$M %*% old$v + new$v)
     if (isTRUE(all.equal(out$M, diag(nrow = 2))) &&
         isTRUE(all.equal(as.vector(out$v), c(0,0)))) {
         out <- ct_identity()
     }
     out
+}
+
+.combine_transforms_bfi <- function(bfi, new, bbox = ext(bfi)) {
+    old <- transformation(bfi)
+    out <- combineTransforms(old, new, bbox)
+    transformation(bfi) <- out
+    bfi
 }
