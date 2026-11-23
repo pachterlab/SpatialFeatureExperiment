@@ -15,7 +15,8 @@ read10xVisiumSFE(
   zero.policy = NULL,
   row.names = c("id", "symbol"),
   flip = c("geometry", "image", "none"),
-  read_spatial_enrichment = TRUE
+  read_spatial_enrichment = TRUE,
+  add_centroids = FALSE
 )
 }
 \arguments{
@@ -56,13 +57,15 @@ image or the geometry needs to be flipped for them match in the Cartesian
 coordinate system.}
 
 \item{read_spatial_enrichment}{Logical, whether to read the
-`spatial_enrichment.csv` file from Visium output if the file is present and
-add its contents to `rowData`.}
+\code{spatial_enrichment.csv} file from Visium output if the file is present and
+add its contents to \code{rowData}.}
+
+\item{add_centroids}{Logical, whether to add the centroids geometry.}
 }
 \value{
 A SpatialFeatureExperiment object. The images might need to be
-  manually transposed and/or mirrored to match the spots in this version of
-  this package.
+manually transposed and/or mirrored to match the spots in this version of
+this package.
 }
 \description{
 Read Space Ranger output from Visium v1 (not HD) as a
@@ -75,7 +78,7 @@ spatial analyses.
 }
 \note{
 It is assumed that the images have not been cropped. Otherwise the
-  images might not align with the spots.
+images might not align with the spots.
 }
 \examples{
 dir <- system.file("extdata", package = "SpatialFeatureExperiment")

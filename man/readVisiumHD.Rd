@@ -70,15 +70,15 @@ This is optional because for larger datasets, the graph can take a while to
 compute.}
 }
 \value{
-An SFE object if `length(bin_size) == 1L`, otherwise a list of SFE
-  objects each element of which is for one bin size. They're not concatenated
-  since it might not make sense to perform joint analyses on the different
-  resolutions that benefit from having them in the same SFE object, unlike
-  different biological replica. Here unlike in
-  \code{\link{read10xVisiumSFE}}, the centroids geometry is also added
-  because it will greatly facilitate plotting when there are many spots when
-  not zooming in. See the \code{scattermore} argument in
-  \code{\link[Voyager]{plotSpatialFeature}}.
+An SFE object if \code{length(bin_size) == 1L}, otherwise a list of SFE
+objects each element of which is for one bin size. They're not concatenated
+since it might not make sense to perform joint analyses on the different
+resolutions that benefit from having them in the same SFE object, unlike
+different biological replica. Here unlike in
+\code{\link{read10xVisiumSFE}}, the centroids geometry is also added
+because it will greatly facilitate plotting when there are many spots when
+not zooming in. See the \code{scattermore} argument in
+\code{\link[Voyager]{plotSpatialFeature}}.
 }
 \description{
 This function reads Visium HD Space Ranger output into R.

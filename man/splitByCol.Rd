@@ -41,9 +41,7 @@ cells or spots should belong to which new SFE object when splitting by
 \code{sf} or \code{sfc}. Default to the first one.}
 
 \item{cover}{Logical, whether the geometries in \code{x} must be entirely
-covered by \code{y} if \code{op = st_intersection} or whether \code{x} must
-be entirely outside \code{y} if \code{op = st_difference}. Only relevant
-when \code{keep_whole != "none"}.}
+covered by \code{f}.}
 
 \item{annotGeometryName}{Name of \code{annotGeometry} to use to split by
 contiguity.}
@@ -63,7 +61,7 @@ SFE object by \code{sample_id} so each sample will become a separate SFE
 object. The \code{splitContiguity} function splits the SFE object by
 contiguity of an \code{annotGeometry}, which by default is "tissueBoundary".
 The \code{splitComponent} function splits the SFE object by graph component,
-so if there are disconnected components in the graph, then each component 
+so if there are disconnected components in the graph, then each component
 will become a new SFE object.
 }
 \examples{

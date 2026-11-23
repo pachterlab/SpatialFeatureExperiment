@@ -23,9 +23,9 @@ of empty space surrounding the tissue.}
 }
 \value{
 For one sample, then a named vector with names \code{xmin},
-  \code{ymin}, \code{xmax}, and \code{ymax} specifying the bounding box. For
-  multiple samples, then a matrix whose columns are samples and whose rows
-  delineate the bounding box.
+\code{ymin}, \code{xmax}, and \code{ymax} specifying the bounding box. For
+multiple samples, then a matrix whose columns are samples and whose rows
+delineate the bounding box.
 }
 \description{
 Find bounding box of the union of all \code{colGeometries} and

@@ -31,8 +31,7 @@
 #'   of the SFE object are Ensembl IDs and gene symbols are in the "symbol"
 #'   column in \code{rowData}, then putting "symbol" for this argument will use
 #'   the gene symbols to identify which gene's local results to get or set.
-#' @aliases localResults localResults<- localResult localResult<-
-#'   localResultNames localResultNames<- localResultFeatures localResultAttrs
+#' @aliases localResults localResults<- localResult localResult<- localResultNames localResultNames<- localResultFeatures localResultAttrs
 #' @return \code{localResults} returns a named list each element of which is a
 #'   set of local results of interest. \code{localResult} returns a matrix or a
 #'   data frame, whichever the original is when it's set.

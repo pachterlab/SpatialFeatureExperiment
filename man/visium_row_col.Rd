@@ -11,7 +11,7 @@ A data frame with 4992 rows with columns barcode, col, and row.
 Space Ranger 1.3.1
 }
 \usage{
-visium_row_col
+data(visium_row_col)
 }
 \description{
 From Space Ranger 1.3.1.

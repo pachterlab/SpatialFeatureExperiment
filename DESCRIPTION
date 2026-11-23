@@ -1,9 +1,9 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.14.0
+Version: 1.15.1
 Authors@R: 
-    c(person("Lambda", "Moses", email = "dl3764@columbia.edu", 
+    c(person("Lambda", "Moses", email = "lambda.calc29@gmail.com", 
     role = c("aut", "cre"),
     comment = c(ORCID = "0000-0002-7092-9427")),
     person("Alik", "Huseynov",
@@ -46,11 +46,11 @@ Imports:
     zeallot
 License: Artistic-2.0
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 Collate: 
     'AllGenerics.R'
     'utils.R'
     'SFE-class.R'
+    'SpatialFeatureExperiment-package.R'
     'aggregate.R'
     'align.R'
     'annotGeometries.R'
@@ -86,17 +86,23 @@ Suggests:
     arrow,
     BiocStyle,
     dplyr,
+    DuckDBDataFrame,
+    DuckDBSpatial,
+    duckspatial,
     gmp,
+    glmGamPoi,
     knitr,
+    nanoparquet,
     OSTA.data,
     RBioFormats,
     rhdf5,
     rmarkdown,
     scater,
-    sfarrow,
+    scrapper,
     SFEData (>= 1.5.3),
     Seurat,
     SeuratObject,
+    sfarrow,
     sparseMatrixStats,
     testthat (>= 3.0.0),
     tidyr,
@@ -114,3 +120,5 @@ biocViews:
     Spatial
 URL: https://pachterlab.github.io/SpatialFeatureExperiment
 BugReports: https://github.com/pachterlab/SpatialFeatureExperiment/issues
+Config/roxygen2/version: 8.1.1
+Roxygen: list(markdown = TRUE)

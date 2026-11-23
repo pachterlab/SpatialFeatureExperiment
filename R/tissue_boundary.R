@@ -141,6 +141,7 @@ getTissueBoundaryImg <- function(sfe, sample_id = NULL, image_id = NULL,
 #' @return A \code{sf} data frame with columns \code{sample_id} and
 #'   \code{geometry}.
 #' @concept Preprocessing and QC
+#' @importFrom sf st_concave_hull
 #' @name getTissueBoundaryConcave
 NULL
 

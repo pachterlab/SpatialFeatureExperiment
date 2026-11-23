@@ -15,7 +15,7 @@ SpatialFeatureExperiment(
   rowGeometries = NULL,
   annotGeometries = NULL,
   spotDiameter = NA_real_,
-  annotGeometryType = "POLYGON",
+  annotGeometryType = deprecated(),
   spatialGraphs = NULL,
   unit = c("full_res_image_pixel", "micron"),
   ...
@@ -70,30 +70,15 @@ of the centroids will be stored in the \code{colGeometry} called
 
 \item{colGeometries}{Geometry of the entities that correspond to the columns
 of the gene count matrix, such as cells and Visium spots. It must be a
-named list of one of the following: \describe{ \item{An \code{sf} data
-frame}{The geometry column specifies the geometry of the entities.}
-\item{An ordinary data frame specifying centroids}{Column names for the
-coordinates are specified in the \code{spatialCoordsNames} argument. For
-Visium and ST, in addition to the centroid coordinate data frame, the spot
-diameter in the same unit as the coordinates can be specified in the
-\code{spotDiamter} argument.} \item{An ordinary data frame specifying
-polygons}{Also use \code{spatialCoordsNames}. There should an additional
-column "ID" to specify which vertices belong to which polygon. The
-coordinates should not be in list columns. Rather, the data frame should
-look like it is passed to \code{ggplot2::geom_polygon}. If there are holes,
-then there must also be a column "subID" that differentiates between the
-outer polygon and the holes.}} In all cases, the data frame should specify
-the same number of geometries as the number of columns in the gene count
-matrix. If the column "barcode" is present, then it will be matched to
-column names of the gene count matrix. Otherwise, the geometries are
-assumed to be in the same order as columns in the gene count matrix. If the
-geometries are specified in an ordinary data frame, then it will be
-converted into \code{sf} internally. Named list of data frames because each
-entity can have multiple geometries, such as whole cell and nuclei
-segmentations. The geometries are assumed to be POINTs for centroids and
-POLYGONs for segmentations. If polygons are specified in an ordinary data
-frame, then anything with fewer than 3 vertices will be removed. For
-anything other than POINTs, attributes of the geometry will be ignored.}
+named list or vector of one or more of the following:
+\describe{
+\item{An \code{sf} data frame}{The geometry column specifies the geometry of the entities.}
+\item{File names of GeoParquet files}{These will be used to represent geometries
+out of memory with \code{DuckDBSpatial}.}
+\item{DuckDBDataFrame with geometries}{As read from GeoParquet file with
+\code{\link[DuckDBSpatial]{readGeoParquet}}}
+\item{An ordinary data frame specifying centroids or polygons}{Deprecated}
+}}
 
 \item{rowGeometries}{Geometry associated with genes or features, which
 correspond to rows of the gene count matrix.}
@@ -101,22 +86,15 @@ correspond to rows of the gene count matrix.}
 \item{annotGeometries}{Geometry of entities that do not correspond to columns
 or rows of the gene count matrix, such as tissue boundary and pathologist
 annotations of histological regions, and nuclei segmentation in a Visium
-dataset. Also a named list as in \code{colGeometries}. The ordinary data
-frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
-versions. Each data frame can only specify one type of geometry. For MULTI
-versions, there must be a column "group" to identify each MULTI geometry.}
+dataset. Also a named list as in \code{colGeometries}.}
 
 \item{spotDiameter}{Spot diameter for technologies with arrays of spots of
 fixed diameter per slide, such as Visium, ST, DBiT-seq, and slide-seq. The
 diameter must be in the same unit as the coordinates in the *Geometry
 arguments. Ignored for geometries that are not POINT or MULTIPOINT.}
 
-\item{annotGeometryType}{Character vector specifying geometry type of each
-element of the list if \code{annotGeometry} is specified. Each element of
-the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
-MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
-elements of the list) or the same length as the list. Ignored if the
-corresponding element is an \code{sf} object.}
+\item{annotGeometryType}{Deprecated. Ignored if the corresponding element is
+an \code{sf} object or file path of a GeoParquet file.}
 
 \item{spatialGraphs}{A named list of \code{listw} objects (see \code{spdep})
 for spatial neighborhood graphs.}
@@ -124,18 +102,19 @@ for spatial neighborhood graphs.}
 \item{unit}{Unit the coordinates are in, either microns or pixels in full
 resolution image.}
 
-\item{...}{Additional arguments passed to the \code{\link[SpatialExperiment]{SpatialExperiment}}
+\item{...}{Additional arguments passed to the
+\code{\link[SpatialExperiment]{SpatialExperiment}}
 and \code{\link[SingleCellExperiment]{SingleCellExperiment}} constructors.}
 }
 \value{
 A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
-  is specified, then a \code{colGeometry} called "centroids" will be made,
-  which is essentially the spatial coordinates as sf POINTs. If
-  \code{spotDiameter} is specified, but not \code{colGeometries}, then the
-  spatial coordinates will be buffered by half the diameter to get spots with
-  the desired diameter, and the resulting \code{colGeometry} will be called
-  "spotPoly", for which there's a convenience getter and setter,
-  \code{\link{spotPoly}}.
+is specified, then a \code{colGeometry} called "centroids" will be made,
+which is essentially the spatial coordinates as sf POINTs. If
+\code{spotDiameter} is specified, but not \code{colGeometries}, then the
+spatial coordinates will be buffered by half the diameter to get spots with
+the desired diameter, and the resulting \code{colGeometry} will be called
+"spotPoly", for which there's a convenience getter and setter,
+\code{\link{spotPoly}}.
 }
 \description{
 Create a \code{SpatialFeatureExperiment} object.
@@ -164,5 +143,21 @@ sfe <- SpatialFeatureExperiment(list(counts = mat),
 sfe2 <- SpatialFeatureExperiment(list(counts = mat),
     colGeometries = list(foo = cg)
 )
+
+# Use DuckDBSpatial to not load geometry into memory
+# Geometry is written to disk first in this toy example
+library(DuckDBSpatial)
+fn <- tempfile(fileext = ".parquet") # a file name
+writeGeoParquet(cg, fn)
+sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                colGeometries = c(foo = fn)
+)
+# Or use DuckDBDataFrame
+cg2 <- readGeoParquet(fn)
+sfe <- SpatialFeatureExperiment(list(counts = mat),
+                                colGeometries = c(foo = cg2)
+)
+
+file.remove(fn)
 }
 \concept{SpatialFeatureExperiment class}

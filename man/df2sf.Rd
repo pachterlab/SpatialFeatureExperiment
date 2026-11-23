@@ -47,8 +47,8 @@ related to constructing the geometry of interese such as number of vertices
 per geometry. If \code{FALSE}, it will save a bit of time, which is useful
 when the input is already known to be good.}
 
-\item{...}{Other arguments passed to `sf::st_buffer`, mainly to make polygon shapes,
-eg Visium spot `endCapStyle = "ROUND"` and VisiumHD bin `endCapStyle = "SQUARE"`}
+\item{...}{Other arguments passed to \code{sf::st_buffer}, mainly to make polygon shapes,
+eg Visium spot \code{endCapStyle = "ROUND"} and VisiumHD bin \code{endCapStyle = "SQUARE"}}
 }
 \value{
 An \code{sf} object.

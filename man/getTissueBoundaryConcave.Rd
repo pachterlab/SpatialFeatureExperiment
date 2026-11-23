@@ -76,7 +76,7 @@ Only used for k nearest neighbor and distance based neighbor with
 }
 \value{
 A \code{sf} data frame with columns \code{sample_id} and
-  \code{geometry}.
+\code{geometry}.
 }
 \description{
 The concave hull will be a smoothed outline, and the smoothness can be

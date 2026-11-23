@@ -134,7 +134,7 @@ setMethod(
         for (i in seq_along(args)) {
             if (length(sids_list[[i]]) == 1L) {
                 rgns <- rowGeometryNames(args[[i]])
-                if (is.null(rgns)) next
+                if (!length(rgns)) next
                 s <- sampleIDs(args[[i]])
                 to_add <- !grepl(paste0(s, "$"), rgns)
                 rgns[to_add] <- paste(rgns[to_add], s, sep = "_")
@@ -199,7 +199,7 @@ setMethod(
             int_metadata(out)[["annotGeometries"]] <- new_ag
         }
         # Combine reducedDims featureData
-        if (!is.null(reducedDimNames(out))) {
+        if (length(reducedDimNames(out))) {
             fds <- lapply(args, function(x) {
                 rdns <- reducedDimNames(x)
                 f <- lapply(rdns, reducedDimFeatureData, sfe = x)
@@ -213,7 +213,7 @@ setMethod(
             }
         }
         # Combine colGeometry featureData
-        if (!is.null(colGeometryNames(out))) {
+        if (length(colGeometryNames(out))) {
             fds <- lapply(args, function(x) {
                 cgns <- colGeometryNames(x)
                 f <- lapply(cgns, geometryFeatureData, sfe = x, MARGIN = 2L)
@@ -221,10 +221,13 @@ setMethod(
                 f
             })
             new_cg_fds <- Reduce(.combine_reduceddim_fd, fds)
-            cgns <- colGeometryNames(out)
-            for (n in cgns) {
-                geometryFeatureData(out, n, MARGIN = 2) <- new_cg_fds[[n]]
+            all_null <- is.null(unlist(new_cg_fds))
+            if (!all_null) {
+                for (n in cgns) {
+                    geometryFeatureData(out, n, MARGIN = 2) <- new_cg_fds[[n]]
+                }
             }
+            cgns <- colGeometryNames(out)
         }
         # Combine colData featureData
         cd_fds <- lapply(args, colFeatureData)

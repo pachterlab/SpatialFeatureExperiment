@@ -44,9 +44,7 @@
 #' @return Getters for multiple graphs return a named list. Getters for names
 #'   return a character vector of the names. Getters for single graphs return a
 #'   \code{listw} object. Setters return an SFE object.
-#' @aliases rowGraphs rowGraphs<- spatialGraph spatialGraph<- spatialGraphNames
-#'   colGraphs colGraphs<- spatialGraphNames<- spatialGraphs<- annotGraphs
-#'   annotGraphs<-
+#' @aliases rowGraphs rowGraphs<- spatialGraph spatialGraph<- spatialGraphNames colGraphs colGraphs<- spatialGraphNames<- spatialGraphs<- annotGraphs annotGraphs<-
 #' @importFrom methods as validObject show
 #' @importFrom stats setNames
 #' @docType methods

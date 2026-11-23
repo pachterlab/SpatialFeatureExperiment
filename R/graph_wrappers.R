@@ -472,8 +472,7 @@
 #'   samples to a SFE object, specify the \code{name} argument in the
 #'   \code{\link{spatialGraphs}} replacement method, so graph of the same name
 #'   will be added to the SFE object for each sample.
-#' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh
-#'   soi.graph knn2nb graph2nb nb2listw poly2nb nb2listwdist
+#' @importFrom spdep tri2nb knearneigh dnearneigh gabrielneigh relativeneigh soi.graph knn2nb graph2nb nb2listw poly2nb nb2listwdist
 #' @aliases findSpatialNeighbors
 #' @note \code{style = "raw"} is only applicable when \code{dist_type} is not
 #'   "none". If \code{dist_type = "none"} and \code{style = "raw"}, then style

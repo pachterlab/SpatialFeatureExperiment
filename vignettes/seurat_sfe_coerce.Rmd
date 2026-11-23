@@ -193,7 +193,7 @@ getMeta(obj_xen) %>% str
 
 ```{r}
 # manual check
-ggplot() &
+ggplot() +
     geom_sf(data = cellSeg(sfe_conv_xen))
 ```
 
@@ -230,7 +230,7 @@ getMeta(obj_vz) %>% str
 
 ```{r}
 # manual check
-ggplot() & 
+ggplot() + 
     geom_sf(data = cellSeg(sfe_conv_vz))
 ```
 

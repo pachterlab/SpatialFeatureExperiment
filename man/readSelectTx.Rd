@@ -5,15 +5,15 @@
 \alias{addSelectTx}
 \title{Read transcript spots of select genes}
 \usage{
-readSelectTx(file, gene_select, z = "all", z_option = c("3d", "split"))
+readSelectTx(file, gene_select, z = deprecated(), z_option = deprecated())
 
 addSelectTx(
   sfe,
   file,
   gene_select,
   sample_id = 1L,
-  z = "all",
-  z_option = c("3d", "split"),
+  z = deprecated(),
+  z_option = deprecated(),
   swap_rownames = NULL
 )
 }
@@ -27,19 +27,12 @@ then all genes that have transcript spots are added. Only relevant when
 reading data from formatted files on disk. If specified, then \code{return
 = TRUE}.}
 
-\item{z}{Index of z plane to read. Can be "all" to read all z-planes into
-MULTIPOINT geometries with XYZ coordinates. If z values are not integer,
-then spots with all z values will be read.}
+\item{z}{Selecting z-planes is deprecated. All z-planes are read by default.}
 
-\item{z_option}{What to do with z coordinates. "3d" is to construct 3D
-geometries. "split" is to create a separate 2D geometry for each z-plane so
-geometric operations are fully supported but some data wrangling is
-required to perform 3D analyses. When the z coordinates are not integers,
-3D geometries will always be constructed since there are no z-planes to
-speak of. This argument does not apply when `spatialCoordsNames` has length
-2.}
+\item{z_option}{Deprecated. Will always be "3d" to construct 3D point
+geometries if multiple z-planes are present.}
 
-\item{sfe}{A `SpatialFeatureExperiment` object.}
+\item{sfe}{A \code{SpatialFeatureExperiment} object.}
 
 \item{sample_id}{Which sample in the SFE object the transcript spots should
 be added to.}
@@ -51,9 +44,9 @@ needed to match each transcript spot MULTIPOINT geometry to rows of
 }
 \value{
 When there are multipel parquet files to be read, a list of sf data
-  frames with MULTIPOINT geometry for genes selected. When there is only one
-  file, then one sf data frame. For \code{addSelectTx}, an SFE object with
-  the transcript spots of the selected genes added.
+frames with MULTIPOINT geometry for genes selected. When there is only one
+file, then one sf data frame. For \code{addSelectTx}, an SFE object with
+the transcript spots of the selected genes added.
 }
 \description{
 I speculate that in practice, the most common use of the transcript spots is
@@ -66,10 +59,10 @@ object.
 }
 \note{
 The GDAL Parquet driver is required for this function, though not for
-  other functions that work with GeoParquet files. GDAL Parquet driver has
-  been supported since GDAL 3.5.0, but is not part of the default
-  installation. The \code{z} and \code{z_option} arguments are there since
-  the file names contain z-plane information when relevant.
+other functions that work with GeoParquet files. GDAL Parquet driver has
+been supported since GDAL 3.5.0, but is not part of the default
+installation. The \code{z} and \code{z_option} arguments are there since
+the file names contain z-plane information when relevant.
 See the \href{https://gdal.org/drivers/vector/parquet.html}{GDAL documentation
 page for the Parquet driver}.
 }

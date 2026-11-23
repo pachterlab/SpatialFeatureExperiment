@@ -10,3 +10,5 @@
 inst/extdata/xenium_toy
 ^\.positai$
 ^\.claude$
+^.*\.parquet$
+^.*\.ods$

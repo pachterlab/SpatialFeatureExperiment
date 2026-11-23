@@ -1,7 +1,9 @@
 library(sf)
 library(SFEData)
 library(terra)
+library(DuckDBSpatial)
 
+# Predicate helpers=============
 # From sf's examples
 pts = st_sfc(st_point(c(.5,.5)), st_point(c(1.5, 1.5)), st_point(c(2.5, 2.5)))
 pol = st_polygon(list(rbind(c(0,0), c(2,0), c(2,2), c(0,2), c(0,0))))
@@ -26,6 +28,51 @@ test_that("trivial, st_n_intersects", {
     expect_equal(n2, 2)
 })
 
+# DuckDB geometries
+pts_df <- st_sf(geometry = pts)
+pol_df <- st_sf(geometry = st_sfc(pol))
+fn1 <- tempfile(fileext = ".parquet")
+fn2 <- tempfile(fileext = ".parquet")
+writeGeoParquet(pts_df, fn1)
+writeGeoParquet(pol_df, fn2)
+pts_duck <- readGeoParquet(fn1)
+pol_duck <- readGeoParquet(fn2)
+
+test_that("st_any_intersects for DuckDB", {
+    o <- st_any_intersects(pts_duck, pol_duck, sparse = TRUE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_setequal(as.vector(o) |> as.integer(), 1:2)
+})
+
+test_that("st_any_intersects for DuckDB, not sparse", {
+    o <- st_any_intersects(pts_duck, pol_duck, sparse = FALSE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_equal(unname(as.vector(o)), c(TRUE, TRUE, FALSE))
+})
+
+test_that("st_any_pred for DuckDB, negate", {
+    o <- st_any_pred(pts_duck, pol_duck, pred = "not_covered_by", sparse = TRUE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_setequal(as.vector(o) |> as.integer(), 3)
+})
+
+test_that("st_any_pred for DuckDB, negate and not sparse", {
+    # When it's a bit slow, the DuckDBDataFrame constructor took most of the time
+    o <- st_any_pred(pts_duck, pol_duck, pred = "not_covered_by", sparse = FALSE)
+    expect_s4_class(o, "DuckDBColumn")
+    expect_setequal(as.vector(o) |> unname(), c(FALSE, FALSE, TRUE))
+})
+
+test_that("st_n_intersects for DuckDB", {
+    o1 <- st_n_intersects(pts_duck, pol_duck)
+    expect_s4_class(o1, "DuckDBColumn")
+    expect_equal(as.vector(o1) |> as.integer(), c(1,1,0))
+    o2 <- st_n_intersects(pol_duck, pts_duck)
+    expect_equal(as.vector(o2) |> as.integer(), 2)
+})
+
+file.remove(fn1, fn2)
+
 # Crop============
 
 sfe_visium <- readRDS(system.file("extdata/sfe_visium.rds",
@@ -38,12 +85,13 @@ bbox_use <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 1, ymax = 6),
 bbox_use2 <- st_as_sfc(st_bbox(c(xmin = 1, xmax = 3, ymin = 5, ymax = 9)), crs = NA)
 bbox_sf <- st_sf(geometry = bbox_use, sample_id = "sample01", crs = NA)
 
-cg <- colGeometry(sfe_visium, sample_id = "sample01")
+cg <- colGeometry(sfe_visium, sample_id = "sample01", withDimnames = TRUE)
 bbox_cg <- st_bbox(st_centroid(cg))
 ag <- st_bbox(cg) |> st_as_sfc() |> st_buffer(dist = 0.3)
-annotGeometry(sfe_visium, "box", sample_id = "sample01") <- st_sf(geometry = ag, sample_id = "sample01",
-                                                                  sf_column_name = "geometry",
-                                                                  crs = NA)
+ag_df <- st_sf(geometry = ag, sample_id = "sample01",
+               sf_column_name = "geometry",
+               crs = NA)
+annotGeometry(sfe_visium, "box", sample_id = "sample01") <- ag_df
 rg_bbox <- st_bbox(ag)
 set.seed(29)
 rg1 <- cbind(runif(20, rg_bbox["xmin"], rg_bbox["xmax"]),
@@ -54,23 +102,46 @@ rg_use <- st_sf(geometry = st_sfc(st_multipoint(rg1), st_multipoint(rg2)),
 rowGeometry(sfe_visium, "points", sample_id = "sample01", withDimnames = FALSE) <- rg_use
 
 test_that("All spots in the cropped SFE objects indeed are covered by the bbox", {
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all")
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all",
+                                                  keep_whole = "none")
     cg <- spotPoly(sfe_cropped, "all")
-    expect_true(all(st_any_pred(cg, bbox_use, pred = st_covered_by, sparse = FALSE)))
+    expect_true(all(st_any_pred(cg, bbox_use, pred = "covered_by", sparse = FALSE)))
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "POLYGON")
     rg <- rowGeometry(sfe_cropped)
-    expect_true(all(st_any_pred(rg, bbox_use, pred = st_covered_by, sparse = FALSE)))
+    expect_true(all(st_any_pred(rg, bbox_use, pred = "covered_by", sparse = FALSE)))
+})
+
+test_that("Actual crop, with DuckDB geometries", {
+    fn1 <- tempfile(fileext = ".parquet")
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe_visium, "all"), fn1)
+    writeGeoParquet(annotGeometry(sfe_visium, 1L, sample_id = "all"), fn2)
+    spotPoly(sfe_visium, "all") <- readGeoParquet(fn1)
+    annotGeometry(sfe_visium, 1L, "all") <- readGeoParquet(fn2)
+    # Slow, because operating on DuckDBDataFrame adds considerable overhead
+    # like in [[, [, and in tblconn(). Defo not worth it for small datasets.
+    # Some overhaed occurs in validity when checking sample_id in annotGeometry.
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "all",
+                                                  keep_whole = "none")
+    cg <- spotPoly(sfe_cropped, "all")
+    ag <- annotGeometry(sfe_cropped, sample_id = "all")
+    expect_s4_class(cg, "DuckDBDataFrame")
+    expect_s4_class(ag, "DuckDBDataFrame")
+    expect_true(all(st_any_pred(cg, bbox_use, pred = "covered_by", sparse = FALSE)))
+    expect_true(all(st_any_pred(ag, bbox_use, pred = "covered_by", sparse = FALSE)))
+    file.remove(fn1, fn2)
 })
 
 test_that("Only crop one sample out of two, with sf", {
     expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample02"),
                  "No bounding boxes for samples specified.")
-    sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, sample_id = "sample01")
+    sfe_cropped2 <- SpatialFeatureExperiment::crop(sfe_visium, y = bbox_sf, 
+                                                   sample_id = "sample01", keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped2, "sample01"), bbox_use,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped2, "sample02"), bbox_use,
-                                 pred = st_covered_by, sparse = FALSE
+                                 pred = "covered_by", sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped2, "sample02"),
@@ -96,14 +167,14 @@ test_that("Using a bounding box to crop SFE objects, current way, one sample", {
     m <- matrix(c(1, 3, 1, 6), ncol = 1,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 "sample01"))
-    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample02"),
+    expect_error(SpatialFeatureExperiment::crop(sfe_visium, y = m, sample_id = "sample02", keep_whole = "none"),
                  "No bounding boxes for samples specified.")
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m, keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
     expect_false(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use,
-                                 pred = st_covered_by, sparse = FALSE
+                                 pred = "covered_by", sparse = FALSE
     )))
     expect_equal(sum(st_any_intersects(
         spotPoly(sfe_cropped, "sample02"),
@@ -117,19 +188,20 @@ test_that("Using a bounding box to crop SFE objects, current way, all samples", 
     m <- matrix(c(1, 3, 1, 6, 1, 3, 5, 9), ncol = 2,
                 dimnames = list(c("xmin", "xmax", "ymin", "ymax"),
                                 c("sample01", "sample02")))
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, y = m, keep_whole = "none")
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample01"), bbox_use,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
     expect_true(all(st_any_pred(spotPoly(sfe_cropped, "sample02"), bbox_use2,
-                                pred = st_covered_by, sparse = FALSE
+                                pred = "covered_by", sparse = FALSE
     )))
 })
 
 test_that("When a geometry is broken into multiple pieces", {
     notch <- st_as_sfc(st_bbox(c(xmin = 0, xmax = 1.5, ymin = 1.7, ymax = 1.9)))
     bbox_use3 <- st_difference(bbox_use, notch)
-    sfe_cropped3 <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use3, sample_id = "sample01")
+    sfe_cropped3 <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use3, 
+                                                   sample_id = "sample01", keep_whole = "none")
     cg <- spotPoly(sfe_cropped3, "all")
     expect_true(st_geometry_type(cg, by_geometry = FALSE) == "MULTIPOLYGON")
 })
@@ -148,7 +220,7 @@ test_that("Keep whole colGeometry items", {
     # bbox of the remaining items of the colGeometry
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_cg, sample_id = "sample01",
                         keep_whole = "col")
-    cg2 <- colGeometry(sfe_cropped, sample_id = "sample01")
+    cg2 <- colGeometry(sfe_cropped, sample_id = "sample01", withDimnames = TRUE)
     # colGeometry not cropped
     expect_equal(cg, cg2)
     # annotGeometry cropped
@@ -194,7 +266,7 @@ test_that("Use st_difference for cropping, not cover", {
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
-                        op = st_difference)
+                        difference = TRUE, keep_whole = "none")
     cg2 <- spotPoly(sfe_cropped, "sample01")
     ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
     expect_false(any(st_overlaps(cg2, st_as_sfc(st_bbox(bbox_use)), sparse = FALSE)))
@@ -214,7 +286,7 @@ test_that("Use st_difference for cropping, cover", {
     ag_use$sample_id <- "sample01"
     annotGeometry(sfe_visium, "circles", "sample01") <- ag_use
     sfe_cropped <- SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
-                        op = st_difference, cover = TRUE,
+                        difference = TRUE, cover = TRUE,
                         keep_whole = c("col", "annot"))
     cg2 <- spotPoly(sfe_cropped, "sample01")
     ag2 <- annotGeometry(sfe_cropped, "circles", "sample01")
@@ -247,20 +319,19 @@ test_that("Only cells/spots covered by y if keep whole", {
     expect_true(all(lengths(st_equals(ag2, ag_use))))
 })
 
-test_that("Error when other spatial operations are specified", {
+test_that("Error for inappropriate input to difference argument", {
     bbox_use <- c(xmin = 2.5, xmax = 3.5, ymin = 1.75, ymax = 2.5)
     expect_error(SpatialFeatureExperiment::crop(sfe_visium, bbox_use, sample_id = "sample01",
-                      op = st_sym_difference),
-                 "op must be either st_intersection or st_difference")
+                      difference = NA),
+                 "difference must be logical and not NA")
 })
 
 test_that("Crop 3D geometry", {
     fp <- tempfile()
     dir_use <- CosMXOutput(file_path = fp)
-    sfe <- readCosMX(dir_use, z = "all", add_molecules = TRUE,
-                     z_option = "3d")
+    sfe <- readCosMX(dir_use, add_molecules = TRUE)
     bbox1 <- c(xmin = 171500, ymin = 11500, xmax = 172000, ymax = 12000)
-    sfe_cropped <- SpatialFeatureExperiment::crop(sfe, bbox1)
+    sfe_cropped <- SpatialFeatureExperiment::crop(sfe, bbox1, keep_whole = "none")
     bbox_new <- bbox(sfe_cropped)
     expect_true(st_covered_by(st_as_sfc(st_bbox(bbox_new)), st_as_sfc(st_bbox(bbox1)),
                               sparse = FALSE))
@@ -287,6 +358,26 @@ test_that("annotPred", {
     expect_false(any(out[3:4]))
 })
 
+test_that("annotPred for DuckDB", {
+    fn1 <- tempfile(fileext = ".parquet")
+    fn2 <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe_visium, sample_id = "all"), fn1)
+    writeGeoParquet(annotGeometry(sfe_visium, "bbox", "sample01"), fn2)
+    foo <- readGeoParquet(fn1)
+    bar <- readGeoParquet(fn2)
+    int_colData(sfe_visium)$colGeometries$foo <- foo
+    annotGeometry(sfe_visium, "bar", sample_id = "sample01") <- bar
+    # Slow, much of the time taken up by S4 dispatch. Might pay off for large datasets.
+    out <- annotPred(sfe_visium, colGeometryName = "foo", annotGeometryName = "bar",
+                     sample_id = "sample01")
+    expect_s4_class(out, "DuckDBDataFrame")
+    expect_equal(names(out), c("ind", "barcode"))
+    expect_equal(unname(as.vector(out$ind)), c(TRUE, TRUE, FALSE, FALSE, TRUE))
+    expect_equal(unname(as.vector(out$barcode)), 
+                 colnames(sfe_visium)[sfe_visium$sample_id=="sample01"])
+    file.remove(fn1, fn2)
+})
+
 test_that("annotOp", {
     out <- annotOp(sfe_visium,
         colGeometryName = "spotPoly",
@@ -304,7 +395,6 @@ test_that("annotOp", {
 
 # bbox=============
 test_that("Find bbox of samples", {
-    cg1 <- spotPoly(sfe_visium, "sample01")
     bbox1 <- bbox(sfe_visium, "sample01")
     expect_equal(st_bbox(rowGeometry(sfe_visium)), bbox1,
         ignore_attr = c("class", "crs")
@@ -343,6 +433,17 @@ test_that("Remove empty space", {
     diff2 <- unname(coord_diffs[sfe_visium$sample_id == "sample02",][1,])
     expect_equal(diff1, unname(bboxes[c("xmin", "ymin"), "sample01"]))
     expect_equal(diff2, unname(bboxes[c("xmin", "ymin"), "sample02"]))
+})
+
+test_that("bbox when there's DuckDB geometry", {
+    bbox1 <- bbox(sfe_visium, "sample01")
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe_visium, sample_id = "all"), fn)
+    foo <- readGeoParquet(fn)
+    int_colData(sfe_visium)$colGeometries$foo <- foo
+    bb <- bbox(sfe_visium, sample_id = "sample01")
+    expect_equal(bb, bbox1)
+    file.remove(fn)
 })
 
 # removeEmptySpace===============
@@ -822,6 +923,26 @@ test_that("Affine transformation of SFE object with image, after cropping", {
     int1 <- st_intersects(ag, spotPoly(sfe))
     int2 <- st_intersects(annotGeometry(sfe2), spotPoly(sfe2))
     expect_equal(int1, int2)
+})
+
+test_that("Affine transformation when there's DuckDB geometry", {
+    fn <- tempfile(fileext = ".parquet")
+    writeGeoParquet(spotPoly(sfe), fn)
+    spotPoly(sfe) <- readGeoParquet(fn)
+    
+    M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
+    v <- c(0, 300)
+    sfe2 <- SpatialFeatureExperiment::affine(sfe, M = M, v = v)
+    img <- getImg(sfe2) |> toSpatRasterImage(save_geotiff = FALSE)
+    nCounts <- Matrix::colSums(counts(sfe2))
+    cg <- spotPoly(sfe2) |> st_as_sf()
+    st_crs(cg) <- NA
+    
+    # Also see if spotPoly is aligned
+    v2 <- terra::extract(terra::mean(img), vect(st_centroid(st_geometry(cg))))
+    expect_true(abs(cor(nCounts, v2$mean)) > 0.4)
+    
+    file.remove(fn)
 })
 
 test_that("Transformation when there's 3D geometry", {

@@ -127,18 +127,18 @@ type and one feature.}
 }
 \value{
 \code{localResults} returns a named list each element of which is a
-  set of local results of interest. \code{localResult} returns a matrix or a
-  data frame, whichever the original is when it's set.
-  \code{localResultNames} returns a character vector. Setters return an SFE
-  object with the desired field set. For genes and \code{colData} columns,
-  the local results are stored in the \code{localResults} field in
-  \code{int_colData}, whereas for \code{colGeometries} and
-  \code{annotGeometries}, the local results are stored as columns in the same
-  \code{sf} data frames. \code{localResultFeatures} returns a character
-  vector of names of features for which local results are available.
-  \code{localResultAttrs} returns a character vector of the column names of
-  the local results of one type for one feature. It returns \code{NULL} if
-  the results are a vector.
+set of local results of interest. \code{localResult} returns a matrix or a
+data frame, whichever the original is when it's set.
+\code{localResultNames} returns a character vector. Setters return an SFE
+object with the desired field set. For genes and \code{colData} columns,
+the local results are stored in the \code{localResults} field in
+\code{int_colData}, whereas for \code{colGeometries} and
+\code{annotGeometries}, the local results are stored as columns in the same
+\code{sf} data frames. \code{localResultFeatures} returns a character
+vector of names of features for which local results are available.
+\code{localResultAttrs} returns a character vector of the column names of
+the local results of one type for one feature. It returns \code{NULL} if
+the results are a vector.
 }
 \description{
 Local spatial statics like local Moran's I, local Geary's C, Getis-Ord Gi*,

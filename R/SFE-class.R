@@ -12,8 +12,7 @@
 #'
 #' @rdname SpatialFeatureExperiment-class
 #' @include utils.R
-#' @importFrom methods setClass new setAs setMethod setGeneric setReplaceMethod
-#' callNextMethod is
+#' @importFrom methods setClass new setAs setMethod setGeneric setReplaceMethod callNextMethod is
 #' @importClassesFrom SpatialExperiment SpatialExperiment
 #' @exportClass SpatialFeatureExperiment
 #' @concept SpatialFeatureExperiment class
@@ -27,47 +26,25 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' @inheritParams SpatialExperiment::SpatialExperiment
 #' @param colGeometries Geometry of the entities that correspond to the columns
 #'   of the gene count matrix, such as cells and Visium spots. It must be a
-#'   named list of one of the following: \describe{ \item{An \code{sf} data
-#'   frame}{The geometry column specifies the geometry of the entities.}
-#'   \item{An ordinary data frame specifying centroids}{Column names for the
-#'   coordinates are specified in the \code{spatialCoordsNames} argument. For
-#'   Visium and ST, in addition to the centroid coordinate data frame, the spot
-#'   diameter in the same unit as the coordinates can be specified in the
-#'   \code{spotDiamter} argument.} \item{An ordinary data frame specifying
-#'   polygons}{Also use \code{spatialCoordsNames}. There should an additional
-#'   column "ID" to specify which vertices belong to which polygon. The
-#'   coordinates should not be in list columns. Rather, the data frame should
-#'   look like it is passed to \code{ggplot2::geom_polygon}. If there are holes,
-#'   then there must also be a column "subID" that differentiates between the
-#'   outer polygon and the holes.}} In all cases, the data frame should specify
-#'   the same number of geometries as the number of columns in the gene count
-#'   matrix. If the column "barcode" is present, then it will be matched to
-#'   column names of the gene count matrix. Otherwise, the geometries are
-#'   assumed to be in the same order as columns in the gene count matrix. If the
-#'   geometries are specified in an ordinary data frame, then it will be
-#'   converted into \code{sf} internally. Named list of data frames because each
-#'   entity can have multiple geometries, such as whole cell and nuclei
-#'   segmentations. The geometries are assumed to be POINTs for centroids and
-#'   POLYGONs for segmentations. If polygons are specified in an ordinary data
-#'   frame, then anything with fewer than 3 vertices will be removed. For
-#'   anything other than POINTs, attributes of the geometry will be ignored.
+#'   named list or vector of one or more of the following:
+#'   \describe{
+#'   \item{An \code{sf} data frame}{The geometry column specifies the geometry of the entities.}
+#'   \item{File names of GeoParquet files}{These will be used to represent geometries
+#'   out of memory with \code{DuckDBSpatial}.}
+#'   \item{DuckDBDataFrame with geometries}{As read from GeoParquet file with
+#'    \code{\link[DuckDBSpatial]{readGeoParquet}}}
+#'   \item{An ordinary data frame specifying centroids or polygons}{Deprecated}
+#'   }
 #' @param rowGeometries Geometry associated with genes or features, which
 #'   correspond to rows of the gene count matrix.
 #' @param annotGeometries Geometry of entities that do not correspond to columns
 #'   or rows of the gene count matrix, such as tissue boundary and pathologist
 #'   annotations of histological regions, and nuclei segmentation in a Visium
-#'   dataset. Also a named list as in \code{colGeometries}. The ordinary data
-#'   frame may specify POINTs, POLYGONs, or LINESTRINGs, or their MULTI
-#'   versions. Each data frame can only specify one type of geometry. For MULTI
-#'   versions, there must be a column "group" to identify each MULTI geometry.
+#'   dataset. Also a named list as in \code{colGeometries}.
 #' @param spatialGraphs A named list of \code{listw} objects (see \code{spdep})
 #'   for spatial neighborhood graphs.
-#' @param annotGeometryType Character vector specifying geometry type of each
-#'   element of the list if \code{annotGeometry} is specified. Each element of
-#'   the vector must be one of POINT, LINESTRING, POLYGON, MULTIPOINT,
-#'   MULTILINESTRING, and MULTIPOLYGON. Must be either length 1 (same for all
-#'   elements of the list) or the same length as the list. Ignored if the
-#'   corresponding element is an \code{sf} object.
+#' @param annotGeometryType Deprecated. Ignored if the corresponding element is 
+#'   an \code{sf} object or file path of a GeoParquet file.
 #' @param spatialCoordsNames A \code{character} vector of column names if
 #'   \code{*Geometries} arguments have ordinary data frames, to identify the
 #'   columns in the ordinary data frames that specify the spatial coordinates.
@@ -87,7 +64,8 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #'   arguments. Ignored for geometries that are not POINT or MULTIPOINT.
 #' @param unit Unit the coordinates are in, either microns or pixels in full
 #'   resolution image.
-#' @param ... Additional arguments passed to the \code{\link[SpatialExperiment]{SpatialExperiment}}
+#' @param ... Additional arguments passed to the
+#'   \code{\link[SpatialExperiment]{SpatialExperiment}}
 #'   and \code{\link[SingleCellExperiment]{SingleCellExperiment}} constructors.
 #' @return A SFE object. If neither \code{colGeometries} nor \code{spotDiameter}
 #'   is specified, then a \code{colGeometry} called "centroids" will be made,
@@ -130,6 +108,22 @@ setClass("SpatialFeatureExperiment", contains = "SpatialExperiment")
 #' sfe2 <- SpatialFeatureExperiment(list(counts = mat),
 #'     colGeometries = list(foo = cg)
 #' )
+#' 
+#' # Use DuckDBSpatial to not load geometry into memory
+#' # Geometry is written to disk first in this toy example
+#' library(DuckDBSpatial)
+#' fn <- tempfile(fileext = ".parquet") # a file name
+#' writeGeoParquet(cg, fn)
+#' sfe <- SpatialFeatureExperiment(list(counts = mat),
+#'                                 colGeometries = c(foo = fn)
+#' )
+#' # Or use DuckDBDataFrame
+#' cg2 <- readGeoParquet(fn)
+#' sfe <- SpatialFeatureExperiment(list(counts = mat),
+#'                                 colGeometries = c(foo = cg2)
+#' )
+#' 
+#' file.remove(fn)
 SpatialFeatureExperiment <- function(assays,
                                      colData = DataFrame(), rowData = NULL,
                                      sample_id = "sample01",
@@ -138,11 +132,15 @@ SpatialFeatureExperiment <- function(assays,
                                      colGeometries = NULL, rowGeometries = NULL,
                                      annotGeometries = NULL,
                                      spotDiameter = NA_real_,
-                                     annotGeometryType = "POLYGON",
+                                     annotGeometryType = deprecated(),
                                      spatialGraphs = NULL,
                                      unit = c("full_res_image_pixel", "micron"),
                                      ...) {
     unit <- match.arg(unit)
+    if (is_present(annotGeometryType)) {
+        deprecate_warn("1.16.0", "SpatialFeatureExperiment(annotGeometryType)",
+                       details = "Using non-spatial data frames in SFE constructor is deprecated.")
+    } else annotGeometryType <- "POLYGON"
     if (!length(colData)) {
         colData <- make_zero_col_DFrame(nrow = ncol(assays[[1]]))
     }
@@ -166,7 +164,7 @@ SpatialFeatureExperiment <- function(assays,
             colGeometries, spatialCoordsNames,
             spotDiameter, "POLYGON"
         )
-        spe_coords <- st_coordinates(st_centroid(st_geometry(colGeometries[[1]])))
+        spe_coords <- .get_centroid_coords(colGeometries[[1]])
         spe <- SpatialExperiment(
             assays = assays, colData = colData,
             rowData = rowData, sample_id = sample_id,
@@ -183,10 +181,14 @@ SpatialFeatureExperiment <- function(assays,
     return(sfe)
 }
 
+setMethod(".st_geometry_type_show", "sf", function(x) as.character(st_geometry_type(x, by_geometry = FALSE)))
+setMethod(".st_geometry_type_show", "DuckDBDataFrame", function(x) {
+    check_installed("DuckDBSpatial")
+    df <- DuckDBSpatial::st_geometry_type(head(x)$geometry) |> as.data.frame()
+    unique(df[,1]) |> as.character()
+})
 .names_types <- function(l) {
-    types <- vapply(l, function(t) as.character(st_geometry_type(t, by_geometry = FALSE)),
-        FUN.VALUE = character(1)
-    )
+    types <- vapply(l, .st_geometry_type_show, FUN.VALUE = character(1))
     paste(paste0(names(l), " (", types, ")"), collapse = ", ")
 }
 
