@@ -86,6 +86,13 @@ combineTransforms <- function(x, y, bbox) {
 
 .combine_transforms_bfi <- function(bfi, new, bbox = ext(bfi)) {
     old <- transformation(bfi)
+    if (!length(old)) {
+        nms <- c("xmin", "xmax", "ymin", "ymax")
+        if (isTRUE(all.equal(bbox[nms], ext(bfi)[nms]))) {
+            transformation(bfi) <- new
+            return(bfi)
+        }
+    }
     out <- combineTransforms(old, new, bbox)
     transformation(bfi) <- out
     bfi

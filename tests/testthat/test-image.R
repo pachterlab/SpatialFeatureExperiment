@@ -477,7 +477,7 @@ test_that("transpose, check ext", {
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     bfi2 <- transposeImg(bfi, resolution = 1L)
     expect_s4_class(bfi2, "BioFormatsImage")
-    expect_equal(transformation(bfi2), list(name="transpose"))
+    expect_equal(transformation(bfi2), ct_transpose())
     ext_bfi2 <- ext(bfi2)
     expect_true(ext_bfi2["ymax"] > ext_bfi2["xmax"])
     # Internally the ext is not changed
@@ -489,7 +489,7 @@ test_that("mirror, vertical", {
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     bfi2 <- mirrorImg(bfi, direction = "vertical")
     expect_s4_class(bfi2, "BioFormatsImage")
-    expect_equal(transformation(bfi2), list(name="mirror", direction="vertical"))
+    expect_equal(transformation(bfi2), ct_mirror(direction = "vertical"))
     expect_equal(ext(bfi), ext(bfi2))
 })
 
@@ -498,7 +498,7 @@ test_that("mirror, horizontal", {
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     bfi2 <- mirrorImg(bfi, direction = "horizontal")
     expect_s4_class(bfi2, "BioFormatsImage")
-    expect_equal(transformation(bfi2), list(name="mirror", direction="horizontal"))
+    expect_equal(transformation(bfi2), ct_mirror(direction="horizontal"))
     expect_equal(ext(bfi), ext(bfi2))
 })
 
@@ -507,7 +507,7 @@ test_that("rotate BFI", {
     bfi <- BioFormatsImage(xenium_fn, ext_use2, isFull = FALSE)
     bfi2 <- rotateImg(bfi, degrees = 45)
     expect_s4_class(bfi2, "BioFormatsImage")
-    expect_equal(transformation(bfi2), list(name="rotate", degrees=45))
+    expect_equal(transformation(bfi2), ct_rotate(degrees=45))
     expect_equal(bbox_center(ext(bfi)), bbox_center(ext(bfi2)))
     ext_exp <- st_bbox(ext(bfi)) |> st_as_sfc()
     m <- matrix(c(cos(pi/4), sin(pi/4), -sin(pi/4), cos(pi/4)), ncol = 2)
@@ -549,7 +549,7 @@ test_that("affineImg, BioFormatsImage method", {
     M <- matrix(c(0.6, -0.2, 0.2, 0.3), nrow = 2)
     v <- c(0, 300)
     bfi2 <- affineImg(bfi, M, v)
-    expect_equal(transformation(bfi2), list(M=M, v=v))
+    expect_equal(transformation(bfi2), ct_affine(M=M, v=v))
     ext_exp <- ext(bfi) |> st_bbox() |> st_as_sfc()
     ext_exp <- st_bbox(ext_exp * t(M) + v) |> as.vector()
     expect_equal(ext_exp, unname(ext(bfi2)[c("xmin", "ymin", "xmax", "ymax")]))
@@ -560,7 +560,7 @@ test_that("Combine transformations for BFI", {
     # When they cancel out
     bfi2 <- mirrorImg(bfi, "vertical")
     bfi2 <- mirrorImg(bfi2, "vertical")
-    expect_equal(transformation(bfi2), list())
+    expect_equal(transformation(bfi2), ct_identity())
     # Create new matrix
     bfi3 <- mirrorImg(bfi, "vertical")
     bfi3 <- rotateImg(bfi3, degrees = 30)

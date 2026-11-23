@@ -1097,7 +1097,7 @@ setMethod(".transpose_img", "SpatRasterImage",
               ext_orig <- ext(x)
               x <- terra::trans(x, filename = filename)
               # Shift extent for overall bbox
-              ext(x) <- .transform_bbox(ext_orig, tr = list(name = "transpose"),
+              ext(x) <- .transform_bbox(ext_orig, tr = ct_transpose(),
                                         bbox_all = bbox_all)
               x
           })
@@ -1112,7 +1112,7 @@ setMethod("transposeImg", "SpatRasterImage",
 
 setMethod(".transpose_img", "BioFormatsImage",
           function(x, bbox_all = ext(x), ...) {
-              .combine_transforms_bfi(x, list(name = "transpose"), bbox = bbox_all)
+              .combine_transforms_bfi(x, ct_transpose(), bbox = bbox_all)
           })
 
 #' @rdname transposeImg
@@ -1126,7 +1126,7 @@ setMethod(".transpose_img", "ExtImage",
           function(x, bbox_all = ext(x), ...) {
               x <- EBImage::transpose(x)
               # Extent
-              ext(x) <- .transform_bbox(ext(x), list(name="transpose"),
+              ext(x) <- .transform_bbox(ext(x), ct_transpose(),
                                         bbox_all = bbox_all)
               x
           })
@@ -1164,8 +1164,7 @@ setMethod(".mirror_img", "SpatRasterImage",
               # Shift extent for overall bbox
               if (!is.null(bbox_all)) {
                   ext(x) <- .transform_bbox(ext(x),
-                                            tr = list(name = "mirror",
-                                                      direction = direction),
+                                            tr = ct_mirror(direction),
                                             bbox_all = bbox_all)
               }
               x
@@ -1184,7 +1183,7 @@ setMethod(".mirror_img", "BioFormatsImage",
           function(x, direction = c("vertical", "horizontal"),
                    bbox_all = ext(x), ...) {
               direction <- match.arg(direction)
-              .combine_transforms_bfi(x, list(name = "mirror", direction = direction),
+              .combine_transforms_bfi(x, ct_mirror(direction),
                                   bbox = bbox_all)
           })
 
@@ -1255,7 +1254,7 @@ setMethod("rotateImg", "SpatRasterImage",
 
 setMethod(".rotate_img", "BioFormatsImage",
           function(x, degrees, bbox_all = ext(x), ...) {
-              .combine_transforms_bfi(x, list(name = "rotate", degrees = degrees),
+              .combine_transforms_bfi(x, ct_rotate(degrees),
                                   bbox = bbox_all)
           })
 
@@ -1269,7 +1268,7 @@ setMethod("rotateImg", "BioFormatsImage",
 setMethod(".rotate_img", "ExtImage",
           function(x, degrees, bbox_all = ext(x), ...) {
               x <- EBImage::rotate(x, degrees)
-              ext(x) <- .transform_bbox(ext(x), list(name="rotate", degrees=degrees),
+              ext(x) <- .transform_bbox(ext(x), ct_rotate(degrees),
                                         bbox_all = bbox_all)
               x
           })
@@ -1325,14 +1324,14 @@ setMethod("translateImg", "ExtImage", function(x, v, ...) {
 # Scale------------------
 setMethod(".scale_img", "AlignedSpatialImage", 
           function(x, factor, bbox_all = ext(x), ...) {
-              ext(x) <- .transform_bbox(ext(x), list(name="scale", factor=factor),
+              ext(x) <- .transform_bbox(ext(x), ct_scale(factor),
                                         bbox_all = bbox_all)
               x
           })
 
 setMethod(".scale_img", "BioFormatsImage", 
           function(x, factor, bbox_all = ext(x), ...) {
-              .combine_transforms_bfi(x, list(name="scale", factor=factor),
+              .combine_transforms_bfi(x, ct_scale(factor),
                                   bbox = bbox_all)
           })
 #' Scale image
@@ -1398,7 +1397,7 @@ setMethod("affineImg", "SpatRasterImage", # Deal with rotating SpatRaster?
 #' @export
 setMethod("affineImg", "BioFormatsImage",
           function(x, M, v, ...) {
-              .combine_transforms_bfi(x, list(M=M, v=v))
+              .combine_transforms_bfi(x, ct_affine(M=M, v=v))
           })
 
 #' @rdname affineImg
