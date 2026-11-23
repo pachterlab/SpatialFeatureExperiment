@@ -210,7 +210,7 @@
 }
 
 .transform <- function(sfe, sample_id, bbox, geometry_fun, img_fun,
-                       use_bbox = TRUE, ...) {
+                       use_bbox = TRUE, affine_tr, ...) {
     # For one sample, bbox is different for each sample
     inds <- colData(sfe)$sample_id == sample_id
     sc <- spatialCoords(sfe)[inds,]

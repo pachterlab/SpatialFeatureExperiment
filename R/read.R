@@ -31,6 +31,10 @@
 #'   `spatial_enrichment.csv` file from Visium output if the file is present and
 #'   add its contents to `rowData`.
 #' @param add_centroids Logical, whether to add the centroids geometry.
+#' @param use_duckdb Logical, whether to use DuckDB for the geometries. If
+#'   \code{TRUE}, then GeoParquet files for the spot polygons and centroids will
+#'   be written to \code{dirs} if not already present. Defaults to \code{FALSE}
+#'   for Visium but \code{TRUE} for Visium HD, Vizgen, Xenium, and CosMX.
 #' @importFrom rjson fromJSON
 #' @importFrom SummarizedExperiment rowData<-
 #' @importFrom utils read.csv
@@ -71,7 +75,7 @@ read10xVisiumSFE <- function(dirs,
                              row.names = c("id", "symbol"),
                              flip = c("geometry", "image", "none"),
                              read_spatial_enrichment = TRUE,
-                             add_centroids = FALSE) {
+                             add_centroids = FALSE, use_duckdb = FALSE) {
     check_installed("DropletUtils")
     type <- match.arg(type)
     data <- match.arg(data)
@@ -89,7 +93,8 @@ read10xVisiumSFE <- function(dirs,
                             type, data, images,
                             row.names  = row.names, flip = flip, VisiumHD = FALSE,
                             unit = unit, zero.policy = zero.policy, style = style,
-                            use_cellseg = FALSE, add_centroids = add_centroids)
+                            use_cellseg = FALSE, add_centroids = add_centroids,
+                            use_duckdb = use_duckdb)
         # Add spatial enrichment if present
         fn <- file.path(dirs[i], "spatial", "spatial_enrichment.csv")
         if (file.exists(fn) && read_spatial_enrichment) {
@@ -125,6 +130,49 @@ read10xVisiumSFE <- function(dirs,
     out
 }
 
+.read_hd_geometries <- function(sample, barcodes, flip, unit) {
+    cell_seg <- st_read(file.path(sample, "cell_segmentations.geojson"), 
+                        crs = NA, agr = "constant", quiet = TRUE)
+    nuc_seg <- st_read(file.path(sample, "nucleus_segmentations.geojson"), 
+                       crs = NA, agr = "constant", quiet = TRUE)
+    rownames(cell_seg) <- cell_seg$cell_id
+    rownames(nuc_seg) <- nuc_seg$cell_id
+    centroids <- st_centroid(cell_seg)
+    centroids$cell_id <- as.character(centroids$cell_id)
+    common_cells <- intersect(centroids$cell_id, barcodes)
+    
+    cell_seg <- cell_seg[cell_seg$cell_id %in% common_cells, ]
+    nuc_seg <- nuc_seg[nuc_seg$cell_id %in% common_cells, ]
+    centroids <- centroids[centroids$cell_id %in% common_cells, ]
+    
+    # # Sanity check on ordering of cell ids
+    # all(as.character(centroids$cell_id) == colnames(vhdcellsce))
+    
+    if (flip == "geometry") {
+        centroids <- .flip_sf_Y(centroids, type = "POINT", e_ymax = e["ymax"])
+        cell_seg <- .flip_sf_Y(cell_seg, type = "POLYGON", e_ymax = e["ymax"])
+        nuc_seg <- .flip_sf_Y(nuc_seg, type = "POLYGON", e_ymax = e["ymax"])
+    }
+    if (unit == "micron") {
+        st_geometry(centroids) <- st_geometry(centroids) * scale_fct
+        st_geometry(cell_seg) <- st_geometry(cell_seg) * scale_fct
+        st_geometry(nuc_seg) <- st_geometry(nuc_seg) * scale_fct
+    }
+    list(cell_seg = cell_seg, nuc_seg = nuc_seg, centroids = centroids, 
+         common_cells = common_cells)
+}
+
+.read_hd_geometries_duckdb <- function(sample, barcodes, flip, unit) {
+    check_installed("DuckDBSpatial")
+    cell_parquet <- file.path(sample, "cell_segmentations.parquet")
+    nuc_parquet <- file.path(sample, "nucleus_segmentations.parquet")
+    cell_fn <- if (file.exists(cell_parquet)) cell_parquet 
+    else file.path(sample, "cell_segmentations.geojson")
+    nuc_fn <- if (file.exists(nuc_parquet)) nuc_parquet 
+    else file.path(sample, "nucleus_segmentations.geojson")
+    cell_seg <- DuckDBSpatial::readGeoParquet()
+}
+
 # Modified version of SpatialExperiment::read10xVisium to support VisiumHD
 # and for SFE specific needs
 # This internal function reads one sample, and for HD one bin size
@@ -137,8 +185,9 @@ read10xVisiumSFE <- function(dirs,
            row.names = "id",
            VisiumHD = FALSE, flip = c("geometry", "image"),
            add_graph = TRUE, unit = c("full_res_image_pixel", "micron"),
-           rotate_hd = FALSE, zero.policy = TRUE, style = "W",
-           add_centroids = FALSE, use_cellseg = TRUE) {
+           zero.policy = TRUE, style = "W",
+           add_centroids = FALSE, use_cellseg = TRUE,
+           use_duckdb = FALSE) {
     type <- match.arg(type)
     data <- match.arg(data)
     imgs <- c("lowres", "hires", "detected", "aligned")
@@ -233,34 +282,11 @@ read10xVisiumSFE <- function(dirs,
                                        row.names = row.names)
     if (use_cellseg) {
         colnames(sce) <- sub("cellid_0*([0-9]+)-.*", "\\1", sce$Barcode)
-        cell_seg <- st_read(file.path(sample, "cell_segmentations.geojson"), 
-                            crs = NA, agr = "constant", quiet = TRUE)
-        nuc_seg <- st_read(file.path(sample, "nucleus_segmentations.geojson"), 
-                           crs = NA, agr = "constant", quiet = TRUE)
-        rownames(cell_seg) <- cell_seg$cell_id
-        rownames(nuc_seg) <- nuc_seg$cell_id
-        centroids <- st_centroid(cell_seg)
-        centroids$cell_id <- as.character(centroids$cell_id)
-        common_cells <- intersect(centroids$cell_id, colnames(sce))
+        read_geometry_fun <- if (use_duckdb) .read_hd_geometries_duckdb else .read_hd_geometries
+        c(cell_seg, nuc_seg, centroids, common_cells) %<-%
+            read_geometry_fun(sample, colnames(sce), flip = flip, unit = unit)
         
-        cell_seg <- cell_seg[cell_seg$cell_id %in% common_cells, ]
-        nuc_seg <- nuc_seg[nuc_seg$cell_id %in% common_cells, ]
-        centroids <- centroids[centroids$cell_id %in% common_cells, ]
         sce <- sce[, colnames(sce) %in% common_cells]
-        
-        # # Sanity check on ordering of cell ids
-        # all(as.character(centroids$cell_id) == colnames(vhdcellsce))
-        
-        if (flip == "geometry") {
-            centroids <- .flip_sf_Y(centroids, type = "POINT", e_ymax = e["ymax"])
-            cell_seg <- .flip_sf_Y(cell_seg, type = "POLYGON", e_ymax = e["ymax"])
-            nuc_seg <- .flip_sf_Y(nuc_seg, type = "POLYGON", e_ymax = e["ymax"])
-        }
-        if (unit == "micron") {
-            st_geometry(centroids) <- st_geometry(centroids) * scale_fct
-            st_geometry(cell_seg) <- st_geometry(cell_seg) * scale_fct
-            st_geometry(nuc_seg) <- st_geometry(nuc_seg) * scale_fct
-        }
         # Extract coordinates
         coords <- st_coordinates(centroids)
         colnames(coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
@@ -350,7 +376,9 @@ read10xVisiumSFE <- function(dirs,
 #' @examples
 #' library(OSTA.data)
 #' id <- "VisiumHD_HumanColon_Oliveira"
-#' pa <- OSTA.data_load(id)
+#' # Because OSF downloads don't work on GitHub Actions
+#' pa <- tryCatch(OSTA.data_load(id), error = function(e) NULL)
+#' if (!is.null(pa)) {
 #' dir.create(dir <- tempfile())
 #' unzip(pa, exdir=dir)
 #' 
@@ -361,6 +389,7 @@ read10xVisiumSFE <- function(dirs,
 #' sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
 #' 
 #' unlink(dir, recursive = TRUE)
+#' }
 readVisiumHD <- function(data_dir, bin_size = 8L,
                          sample_id = "sample01", use_cellseg = TRUE,
                          type = c("HDF5", "sparse"),

@@ -16,7 +16,8 @@ read10xVisiumSFE(
   row.names = c("id", "symbol"),
   flip = c("geometry", "image", "none"),
   read_spatial_enrichment = TRUE,
-  add_centroids = FALSE
+  add_centroids = FALSE,
+  use_duckdb = FALSE
 )
 }
 \arguments{
@@ -61,6 +62,11 @@ coordinate system.}
 add its contents to \code{rowData}.}
 
 \item{add_centroids}{Logical, whether to add the centroids geometry.}
+
+\item{use_duckdb}{Logical, whether to use DuckDB for the geometries. If
+\code{TRUE}, then GeoParquet files for the spot polygons and centroids will
+be written to \code{dirs} if not already present. Defaults to \code{FALSE}
+for Visium but \code{TRUE} for Visium HD, Vizgen, Xenium, and CosMX.}
 }
 \value{
 A SpatialFeatureExperiment object. The images might need to be
