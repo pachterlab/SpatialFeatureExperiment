@@ -130,7 +130,7 @@ read10xVisiumSFE <- function(dirs,
     out
 }
 
-.read_hd_geometries <- function(sample, barcodes, flip, unit) {
+.read_hd_geometries <- function(sample, barcodes, flip, unit, e) {
     cell_seg <- st_read(file.path(sample, "cell_segmentations.geojson"), 
                         crs = NA, agr = "constant", quiet = TRUE)
     nuc_seg <- st_read(file.path(sample, "nucleus_segmentations.geojson"), 
@@ -162,15 +162,30 @@ read10xVisiumSFE <- function(dirs,
          common_cells = common_cells)
 }
 
-.read_hd_geometries_duckdb <- function(sample, barcodes, flip, unit) {
+.geojson2parquet <- function(fn) {
+    check_installed("duckspatial")
+    check_installed("dplyr")
+    d <- duckspatial::ddbs_open_dataset(fn, crs = NA)
+    d <- d |> 
+        dplyr::select(cell_id, geometry = !!sym(duckspatial::ddbs_geom_col(d)))
+    fn_out <- gsub("geojson$", "parquet", fn)
+    duckspatial::ddbs_write_dataset(data = d, path = fn_out, crs = NA)
+}
+
+.read_hd_geometries_duckdb <- function(sample, barcodes, flip, unit, e) {
     check_installed("DuckDBSpatial")
     cell_parquet <- file.path(sample, "cell_segmentations.parquet")
     nuc_parquet <- file.path(sample, "nucleus_segmentations.parquet")
-    cell_fn <- if (file.exists(cell_parquet)) cell_parquet 
-    else file.path(sample, "cell_segmentations.geojson")
-    nuc_fn <- if (file.exists(nuc_parquet)) nuc_parquet 
-    else file.path(sample, "nucleus_segmentations.geojson")
-    cell_seg <- DuckDBSpatial::readGeoParquet()
+    if (!file.exists(cell_parquet)) 
+        .geojson2parquet(file.path(sample, "cell_segmentations.geojson"))
+    if (!file.exists(nucleus_parquet)) 
+        .geojson2parquet(file.path(sample, "nucleus_segmentations.geojson"))
+    cell <- DuckDBSpatial::readGeoParquet(cell_parquet)
+    nuc <- DuckDBSpatial::readGeoParquet(nuc_parquet)
+    centroids <- DuckDBSpatial::st_centroid(cell)
+    common_cells <- intersect(as.vector(centroids$cell_id), barcodes)
+    list(cell_seg = cell_seg, nuc_seg = nuc_seg, centroids = centroids, 
+         common_cells = common_cells)
 }
 
 # Modified version of SpatialExperiment::read10xVisium to support VisiumHD
@@ -284,7 +299,7 @@ read10xVisiumSFE <- function(dirs,
         colnames(sce) <- sub("cellid_0*([0-9]+)-.*", "\\1", sce$Barcode)
         read_geometry_fun <- if (use_duckdb) .read_hd_geometries_duckdb else .read_hd_geometries
         c(cell_seg, nuc_seg, centroids, common_cells) %<-%
-            read_geometry_fun(sample, colnames(sce), flip = flip, unit = unit)
+            read_geometry_fun(sample, colnames(sce), flip = flip, unit = unit, e = e)
         
         sce <- sce[, colnames(sce) %in% common_cells]
         # Extract coordinates
