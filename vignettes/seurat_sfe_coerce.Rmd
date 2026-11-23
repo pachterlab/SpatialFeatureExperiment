@@ -12,6 +12,8 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+This vignette and the Seurat to SFE coercion function have been updated for Seurat v6, which has some breaking changes from v5.
+
 ## Setup
 ```{r setup}
 # set R options, paths, object params, names, functions, etc..
