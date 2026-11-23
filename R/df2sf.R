@@ -224,6 +224,7 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                   group_col = "group",
                   id_col = "ID",
                   subid_col = "subID", check = TRUE, ...) {
+    if (!nrow(df)) return(NULL)
     if (is.matrix(df)) df <- as.data.frame(df)
     if (any(!spatialCoordsNames %in% names(df))) {
         cols_absent <- setdiff(spatialCoordsNames, names(df))
