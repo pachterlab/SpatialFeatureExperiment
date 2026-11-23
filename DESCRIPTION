@@ -90,6 +90,7 @@ Suggests:
     DuckDBSpatial,
     duckspatial,
     gmp,
+    glmGamPoi,
     knitr,
     nanoparquet,
     OSTA.data,
