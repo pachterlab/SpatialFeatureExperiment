@@ -1,7 +1,7 @@
 Package: SpatialFeatureExperiment
 Type: Package
 Title: Integrating SpatialExperiment with Simple Features in sf
-Version: 1.15.1
+Version: 1.99.0
 Authors@R: 
     c(person("Lambda", "Moses", email = "lambda.calc29@gmail.com", 
     role = c("aut", "cre"),
