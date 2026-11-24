@@ -850,6 +850,6 @@ test_that("readXenium, flip image", {
 
     # That the image was actually flipped
     bfi <- getImg(sfe)
-    expect_equal(transformation(bfi), list(name = "mirror", direction = "vertical"))
+    expect_equal(transformation(bfi), ct_mirror(direction = "vertical"))
     unlink(fn, recursive = TRUE)
 })
