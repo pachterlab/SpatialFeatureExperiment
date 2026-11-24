@@ -16,8 +16,9 @@ readVisiumHD(
   style = "W",
   zero.policy = TRUE,
   row.names = c("id", "symbol"),
-  flip = c("geometry", "image"),
-  add_graph = FALSE
+  flip = c("geometry", "image", "none"),
+  add_graph = FALSE,
+  use_duckdb = TRUE
 )
 }
 \arguments{
@@ -68,6 +69,11 @@ coordinate system.}
 spots and only if \code{c(data = "filtered")}. Default is \code{FALSE}.
 This is optional because for larger datasets, the graph can take a while to
 compute.}
+
+\item{use_duckdb}{Logical, whether to use DuckDB for the geometries. If
+\code{TRUE}, then GeoParquet files for the spot polygons and centroids will
+be written to \code{dirs} if not already present. Defaults to \code{FALSE}
+for Visium but \code{TRUE} for Visium HD, Vizgen, Xenium, and CosMX.}
 }
 \value{
 An SFE object if \code{length(bin_size) == 1L}, otherwise a list of SFE

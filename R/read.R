@@ -139,7 +139,7 @@ read10xVisiumSFE <- function(dirs,
     rownames(nuc_seg) <- nuc_seg$cell_id
     centroids <- st_centroid(cell_seg)
     centroids$cell_id <- as.character(centroids$cell_id)
-    common_cells <- intersect(centroids$cell_id, barcodes)
+    common_cells <- intersect(centroids$cell_id, as.integer(barcodes))
     
     cell_seg <- cell_seg[cell_seg$cell_id %in% common_cells, ]
     nuc_seg <- nuc_seg[nuc_seg$cell_id %in% common_cells, ]
@@ -158,46 +158,56 @@ read10xVisiumSFE <- function(dirs,
         st_geometry(cell_seg) <- st_geometry(cell_seg) * scale_fct
         st_geometry(nuc_seg) <- st_geometry(nuc_seg) * scale_fct
     }
-    list(cell_seg = cell_seg, nuc_seg = nuc_seg, centroids = centroids, 
-         common_cells = common_cells)
-}
-
-.geojson2parquet <- function(fn) {
-    check_installed("duckspatial")
-    check_installed("dplyr")
-    d <- duckspatial::ddbs_open_dataset(fn, crs = NA)
-    d <- d |> 
-        dplyr::select(cell_id, geometry = !!sym(duckspatial::ddbs_geom_col(d)))
-    fn_out <- gsub("geojson$", "parquet", fn)
-    duckspatial::ddbs_write_dataset(data = d, path = fn_out, crs = NA)
+    list(cell_seg = cell_seg, nuc_seg = nuc_seg, centroids = centroids)
 }
 
 .read_hd_geometries_duckdb <- function(sample, barcodes, flip, unit, e, scale_fct) {
     check_installed("DuckDBSpatial")
+    # From now on, the parquet written will be scaled, flipped, and filtered
+    # So this preprocessing won't be done again
     cell_parquet <- file.path(sample, "cell_segmentations.parquet")
     nuc_parquet <- file.path(sample, "nucleus_segmentations.parquet")
-    if (!file.exists(cell_parquet)) 
-        .geojson2parquet(file.path(sample, "cell_segmentations.geojson"))
-    if (!file.exists(nucleus_parquet)) 
-        .geojson2parquet(file.path(sample, "nucleus_segmentations.geojson"))
-    cell <- DuckDBSpatial::readGeoParquet(cell_parquet)
-    nuc <- DuckDBSpatial::readGeoParquet(nuc_parquet)
-    centroids <- DuckDBSpatial::st_centroid(cell)
-    common_cells <- intersect(as.vector(centroids$cell_id), barcodes)
-    if (flip == "geometry") {
-        mv <- .get_mv(ct_mirror("vertical"), bbox = e)
-        centroids <- .transform_geometry(centroids, mv$M, mv$v)
-        cell <- .transform_geometry(cell, mv$M, mv$v)
-        nuc <- .transform_geometry(nuc, mv$M, mv$v)
+    centroid_parquet <- file.path(sample, "centroids.parquet")
+    if (flip == "geometry") mv1 <- .get_mv(ct_mirror("vertical"), bbox = e)
+    else mv1 <- ct_identity()
+    if (unit == "micron") mv2 <- .get_mv(ct_scale(scale_fct), bbox = NULL)
+    else mv2 <- ct_identity()
+    # Not equivalent to mv1, mv2 because the translation should not be scaled
+    mv <- combineTransforms(mv2, mv1, NULL)
+    if (!file.exists(cell_parquet)) {
+        cell <- DuckDBSpatial::readSpatialFile(file.path(sample, "cell_segmentations.geojson"), crs = NA)
+        if (flip == "geometry" || unit == "micron") 
+            cell <- .transform_geometry(cell, mv$M, mv$v)
+    } else cell <- DuckDBSpatial::readGeoParquet(cell_parquet)
+    if (!file.exists(nuc_parquet)) {
+        nuc <- DuckDBSpatial::readSpatialFile(file.path(sample, "nucleus_segmentations.geojson"), crs = NA)
+        if (flip == "geometry" || unit == "micron") 
+            nuc <- .transform_geometry(nuc, mv$M, mv$v)
+    } else nuc <- DuckDBSpatial::readGeoParquet(nuc_parquet)
+    if (!file.exists(centroid_parquet)) {
+        centroids <- st_centroid(cell)
+    } else centroids <- DuckDBSpatial::readGeoParquet(centroid_parquet)
+    
+    
+    if (any(!file.exists(cell_parquet, nuc_parquet, centroid_parquet))) {
+        common_cells <- intersect(as.vector(cell$cell_id), as.integer(barcodes))
+        if (!file.exists(cell_parquet)) {
+            cell <- cell[cell$cell_id %in% common_cells,]
+            DuckDBSpatial::writeGeoParquet(cell, cell_parquet)
+            cell <- DuckDBSpatial::readGeoParquet(cell_parquet)
+        }
+        if (!file.exists(nuc_parquet)) {
+            nuc <- nuc[nuc$cell_id %in% common_cells,]
+            DuckDBSpatial::writeGeoParquet(nuc, nuc_parquet)
+            nuc <- DuckDBSpatial::readGeoParquet(nuc_parquet)
+        }
+        if (!file.exists(centroid_parquet)) {
+            centroids <- centroids[centroids$cell_id %in% common_cells,]
+            DuckDBSpatial::writeGeoParquet(centroids, centroid_parquet)
+            centroids <- DuckDBSpatial::readGeoParquet(centroid_parquet)
+        }
     }
-    if (unit == "micron") {
-        mv <- .get_mv(ct_scale(scale_fct), bbox = NULL)
-        centroids <- .transform_geometry(centroids, mv$M, mv$v)
-        cell <- .transform_geometry(cell, mv$M, mv$v)
-        nuc <- .transform_geometry(nuc, mv$M, mv$v)
-    }
-    list(cell_seg = cell_seg, nuc_seg = nuc_seg, centroids = centroids, 
-         common_cells = common_cells)
+    list(cell_seg = cell, nuc_seg = nuc, centroids = centroids)
 }
 
 # Modified version of SpatialExperiment::read10xVisium to support VisiumHD
@@ -311,13 +321,13 @@ read10xVisiumSFE <- function(dirs,
     if (use_cellseg) {
         colnames(sce) <- sub("cellid_0*([0-9]+)-.*", "\\1", sce$Barcode)
         read_geometry_fun <- if (use_duckdb) .read_hd_geometries_duckdb else .read_hd_geometries
-        c(cell_seg, nuc_seg, centroids, common_cells) %<-%
+        c(cell_seg, nuc_seg, centroids) %<-%
             read_geometry_fun(sample, colnames(sce), flip = flip, unit = unit, e = e,
                               scale_fct = scale_fct)
         
-        sce <- sce[, colnames(sce) %in% common_cells]
+        sce <- sce[, as.character(centroids$cell_id)]
         # Extract coordinates
-        coords <- st_coordinates(centroids)
+        coords <- st_coordinates(centroids) |> as.matrix()
         colnames(coords) <- c("pxl_col_in_fullres", "pxl_row_in_fullres")
         sfe <- toSpatialFeatureExperiment(sce, 
                                           colGeometries = list(centroids = centroids,
@@ -427,8 +437,8 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
                          unit = c("full_res_image_pixel", "micron"),
                          style = "W", zero.policy = TRUE,
                          row.names = c("id", "symbol"),
-                         flip = c("geometry", "image"),
-                         add_graph = FALSE) {
+                         flip = c("geometry", "image", "none"),
+                         add_graph = FALSE, use_duckdb = TRUE) {
     type <- match.arg(type)
     data <- match.arg(data)
     unit <- match.arg(unit)
@@ -469,8 +479,8 @@ readVisiumHD <- function(data_dir, bin_size = 8L,
                        images = images, row.names = row.names, flip = flip,
                        add_graph = add_graph, VisiumHD = TRUE, unit = unit,
                        style = style, zero.policy = zero.policy,
-                       add_centroids = TRUE, 
-                       use_cellseg = use_cellseg)
+                       add_centroids = TRUE, use_cellseg = use_cellseg, 
+                       use_duckdb = use_duckdb)
     })
     if (length(sfes) == 1L) return(sfes[[1]])
     sfes

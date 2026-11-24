@@ -2,6 +2,7 @@ library(SFEData)
 library(sfarrow)
 library(S4Vectors)
 library(spdep)
+library(DuckDBSpatial)
 set.SubgraphOption(FALSE) # I don't care in this case
 # Read Visium=============
 outdir <- system.file("extdata", package = "SpatialFeatureExperiment")
@@ -148,7 +149,7 @@ if (!is.null(pa)) {
 test_that("readVisiumHD, one resolution, not segmented", {
     skip_if(is.null(pa))
     sfe <- readVisiumHD(dir, bin_size = 16, sample_id = "UW", use_cellseg = FALSE,
-                        add_graph = TRUE)
+                        add_graph = TRUE, use_duckdb = FALSE)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), "UW")
     expect_setequal(colGeometryNames(sfe), c("centroids", "spotPoly"))
@@ -173,7 +174,8 @@ test_that("readVisiumHD, one resolution, not segmented", {
 
 test_that("Read multiple resolutions", {
     skip_if(is.null(pa))
-    sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW", use_cellseg = FALSE)
+    sfes <- readVisiumHD(dir, bin_size = c(8, 16), sample_id = "UW", 
+                         use_cellseg = FALSE, use_duckdb = FALSE)
     expect_type(sfes, "list")
     classes <- vapply(sfes, class, FUN.VALUE = character(1))
     expect_true(all(classes == "SpatialFeatureExperiment"))
@@ -183,14 +185,16 @@ test_that("Read multiple resolutions", {
 
 test_that("When sample_id is not set", {
     skip_if(is.null(pa))
-    sfes <- readVisiumHD(dir, sample_id = "foo", bin_size = c(8, 16), use_cellseg = FALSE)
+    sfes <- readVisiumHD(dir, sample_id = "foo", bin_size = c(8, 16), 
+                         use_cellseg = FALSE, use_duckdb = FALSE)
     expect_equal(sampleIDs(sfes[[1]]), "foo_8um")
     expect_equal(sampleIDs(sfes[[2]]), "foo_16um")
 })
 
 test_that("Micron space, including image alignment", {
     skip_if(is.null(pa))
-    sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron", use_cellseg = FALSE)
+    sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron", 
+                        use_cellseg = FALSE, use_duckdb = FALSE)
     expect_equal(SpatialFeatureExperiment::unit(sfe), "micron")
     areas <- st_area(spotPoly(sfe))
     expect_true(max(abs(areas - 256)) < sqrt(.Machine$double.eps))
@@ -206,7 +210,7 @@ test_that("Micron space, including image alignment", {
 
 test_that("Use cell segmentation", {
     skip_if(is.null(pa))
-    sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = TRUE)
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = TRUE, use_duckdb = FALSE)
     expect_s4_class(sfe, "SpatialFeatureExperiment")
     expect_equal(sampleIDs(sfe), "sample01")
     expect_setequal(colGeometryNames(sfe), c("centroids", "cellSeg", "nucSeg"))
@@ -222,8 +226,47 @@ test_that("Use cell segmentation", {
 
 test_that("Use microns", {
     skip_if(is.null(pa))
-    sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron")
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, unit = "micron", use_duckdb = FALSE)
     expect_equal(unit(sfe), "micron")
+})
+
+test_that("Use DuckDB, cell segmentation", {
+    skip_if(is.null(pa))
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = FALSE, use_duckdb = TRUE)
+    expect_setequal(colGeometryNames(sfe), c("centroids", "cellSeg", "nucSeg"))
+    classes <- vapply(colGeometries(sfe), class, FUN.VALUE = character(1))
+    expect_all_true(classes == "DuckDBDataFrame")
+    # Make sure the geometries are aligned
+    centroids(sfe) <- st_as_sf(centroids(sfe)) # TODO: change getTissueBoundaryConcave as well for DuckDB
+    tb_img <- getTissueBoundaryImg(sfe, image_id = "lowres", fill_holes = TRUE)
+    tb_concave <- getTissueBoundaryConcave(sfe, colGeometryName = "centroids",
+                                           allow_holes = FALSE)
+    expect_true(st_area(st_intersection(tb_concave, tb_img))/st_area(tb_concave) > 0.95)
+    
+    # Second time reading
+    time_note <- Sys.time()
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = FALSE, use_duckdb = TRUE)
+    fn <- file.path(dir, "segmented_outputs", "cell_segmentations.parquet")
+    time_check <- file.info(fn)$mtime
+    expect_true(time_note > time_check)
+    file.remove(list.files(dirname(fn), pattern = "parquet$", full.names = TRUE))
+})
+
+test_that("Use DuckDB, cell segmentation, microns", {
+    skip_if(is.null(pa))
+    sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = FALSE, 
+                        use_duckdb = TRUE, unit = "micron")
+    # Make sure the geometries are aligned
+    centroids(sfe) <- st_as_sf(centroids(sfe)) # TODO: change getTissueBoundaryConcave as well for DuckDB
+    tb_img <- getTissueBoundaryImg(sfe, image_id = "lowres", fill_holes = TRUE)
+    tb_concave <- getTissueBoundaryConcave(sfe, colGeometryName = "centroids",
+                                           allow_holes = FALSE)
+    area_intersect <- st_area(st_intersection(tb_concave, tb_img))
+    expect_true(area_intersect/st_area(tb_concave) > 0.95)
+    expect_true(area_intersect/st_area(tb_img) > 0.25)
+    # The latter in case the concave hull is fully contained in the tissue due 
+    # to scaling problems and misaligned. But this is hard to test because in
+    # the ground truth, the profiled area is a small part of the tissue.
 })
 
 unlink(dir, recursive = TRUE)
