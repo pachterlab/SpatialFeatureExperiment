@@ -130,7 +130,7 @@ read10xVisiumSFE <- function(dirs,
     out
 }
 
-.read_hd_geometries <- function(sample, barcodes, flip, unit, e) {
+.read_hd_geometries <- function(sample, barcodes, flip, unit, e, scale_fct) {
     cell_seg <- st_read(file.path(sample, "cell_segmentations.geojson"), 
                         crs = NA, agr = "constant", quiet = TRUE)
     nuc_seg <- st_read(file.path(sample, "nucleus_segmentations.geojson"), 
@@ -172,7 +172,7 @@ read10xVisiumSFE <- function(dirs,
     duckspatial::ddbs_write_dataset(data = d, path = fn_out, crs = NA)
 }
 
-.read_hd_geometries_duckdb <- function(sample, barcodes, flip, unit, e) {
+.read_hd_geometries_duckdb <- function(sample, barcodes, flip, unit, e, scale_fct) {
     check_installed("DuckDBSpatial")
     cell_parquet <- file.path(sample, "cell_segmentations.parquet")
     nuc_parquet <- file.path(sample, "nucleus_segmentations.parquet")
@@ -184,6 +184,18 @@ read10xVisiumSFE <- function(dirs,
     nuc <- DuckDBSpatial::readGeoParquet(nuc_parquet)
     centroids <- DuckDBSpatial::st_centroid(cell)
     common_cells <- intersect(as.vector(centroids$cell_id), barcodes)
+    if (flip == "geometry") {
+        mv <- .get_mv(ct_mirror("vertical"), bbox = e)
+        centroids <- .transform_geometry(centroids, mv$M, mv$v)
+        cell <- .transform_geometry(cell, mv$M, mv$v)
+        nuc <- .transform_geometry(nuc, mv$M, mv$v)
+    }
+    if (unit == "micron") {
+        mv <- .get_mv(ct_scale(scale_fct), bbox = NULL)
+        centroids <- .transform_geometry(centroids, mv$M, mv$v)
+        cell <- .transform_geometry(cell, mv$M, mv$v)
+        nuc <- .transform_geometry(nuc, mv$M, mv$v)
+    }
     list(cell_seg = cell_seg, nuc_seg = nuc_seg, centroids = centroids, 
          common_cells = common_cells)
 }
@@ -273,6 +285,7 @@ read10xVisiumSFE <- function(dirs,
     } else {
         scale_imgs <- scalefactors[names_use]
         spot_diam <- scalefactors$spot_diameter_fullres
+        scale_fct <- 1
     }
 
     # Set up ImgData
@@ -299,7 +312,8 @@ read10xVisiumSFE <- function(dirs,
         colnames(sce) <- sub("cellid_0*([0-9]+)-.*", "\\1", sce$Barcode)
         read_geometry_fun <- if (use_duckdb) .read_hd_geometries_duckdb else .read_hd_geometries
         c(cell_seg, nuc_seg, centroids, common_cells) %<-%
-            read_geometry_fun(sample, colnames(sce), flip = flip, unit = unit, e = e)
+            read_geometry_fun(sample, colnames(sce), flip = flip, unit = unit, e = e,
+                              scale_fct = scale_fct)
         
         sce <- sce[, colnames(sce) %in% common_cells]
         # Extract coordinates
