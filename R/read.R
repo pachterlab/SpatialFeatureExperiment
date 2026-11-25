@@ -188,7 +188,6 @@ read10xVisiumSFE <- function(dirs,
         centroids <- st_centroid(cell)
     } else centroids <- DuckDBSpatial::readGeoParquet(centroid_parquet)
     
-    
     if (any(!file.exists(cell_parquet, nuc_parquet, centroid_parquet))) {
         common_cells <- intersect(as.vector(cell$cell_id), as.integer(barcodes))
         if (!file.exists(cell_parquet)) {
@@ -358,7 +357,10 @@ read10xVisiumSFE <- function(dirs,
                            annotGeometryType = NULL, spatialGraphs = NULL,
                            spotDiameter = spot_diam,
                            unit = unit, endCapStyle = if (VisiumHD) "SQUARE" else "ROUND",
-                           add_centroids = add_centroids)
+                           add_centroids = add_centroids,
+                           use_duckdb = use_duckdb, 
+                           duckdb_out_path = file.path(sample, "spotPoly.parquet"),
+                           centroid_out_path = file.path(sample, "centroids.parquet"))
     }
     
     if (unit == "microns") spatialCoordsNames(sfe) <- c("x", "y")

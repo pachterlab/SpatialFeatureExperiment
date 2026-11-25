@@ -2,7 +2,9 @@
 .spe_to_sfe <- function(spe, colGeometries, rowGeometries, annotGeometries,
                         spatialCoordsNames, annotGeometryType, spatialGraphs,
                         spotDiameter, unit, endCapStyle = "ROUND", 
-                        add_centroids = FALSE, flip_geometry = FALSE) {
+                        add_centroids = FALSE, flip_geometry = FALSE,
+                        use_duckdb = FALSE, duckdb_out_path = "points.parquet",
+                        centroid_out_path = "centroids.parquet") {
     # It's unlikely that SPE objects have rowGeometries and annotGeometries anyway
     if (!is.null(rowGeometries)) {
         rowGeometries <- .df2sf_list(rowGeometries, spatialCoordsNames,
@@ -65,10 +67,13 @@
         }
         cg_name <- if (is.na(spotDiameter)) "centroids" else "spotPoly"
         colGeometries <- list(foo = .sc2cg(sc, spotDiameter, 
-                                           endCapStyle = endCapStyle))
+                                           endCapStyle = endCapStyle,
+                                           use_duckdb = use_duckdb,
+                                           out_path = duckdb_out_path))
         names(colGeometries) <- cg_name
         if (add_centroids && cg_name != "centroids") {
-            colGeometries$centroids <- .sc2cg(sc)
+            colGeometries$centroids <- .sc2cg(sc, use_duckdb = use_duckdb,
+                                              out_path = centroid_out_path)
         }
     }
     sfe <- new("SpatialFeatureExperiment", spe)
@@ -143,15 +148,17 @@
 #' # For coercing Seurat to SFE see this -> ./vignettes/seurat_sfe_coerce.Rmd
 NULL
 
-.sc2cg <- function(coords_use, spotDiameter = NA, ...) {
+.sc2cg <- function(coords_use, spotDiameter = NA, use_duckdb = FALSE, 
+                   out_path = "points.parquet", ...) {
     if (is.null(colnames(coords_use)))
         colnames(coords_use) <- paste0("V", seq_len(ncol(coords_use)))
     cg_sfc <- df2sf(coords_use, spatialCoordsNames = colnames(coords_use),
                     spotDiameter = spotDiameter,
-                    geometryType = "POINT",
+                    geometryType = "POINT", use_duckdb = use_duckdb,
+                    out_path = out_path,
                     ... # this arg goes to `sf::st_buffer`, see `df2sf`
                     )
-    rownames(cg_sfc) <- rownames(coords_use)
+    if (!use_duckdb) rownames(cg_sfc) <- rownames(coords_use)
     cg_sfc
 }
 setAs(

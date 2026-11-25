@@ -14,6 +14,8 @@ df2sf(
   id_col = "ID",
   subid_col = "subID",
   check = TRUE,
+  use_duckdb = FALSE,
+  out_path = "points.parquet",
   ...
 )
 }
@@ -47,11 +49,20 @@ related to constructing the geometry of interese such as number of vertices
 per geometry. If \code{FALSE}, it will save a bit of time, which is useful
 when the input is already known to be good.}
 
-\item{...}{Other arguments passed to \code{sf::st_buffer}, mainly to make polygon shapes,
-eg Visium spot \code{endCapStyle = "ROUND"} and VisiumHD bin \code{endCapStyle = "SQUARE"}}
+\item{use_duckdb}{Logical, whether to use save output as GeoParquet using
+DuckDB and return out of memory \code{DuckDBDataFrame}, ignored if
+\code{geometryType} is not POINT.}
+
+\item{out_path}{If \code{use_duckdb = TRUE} and the geometry type of POINT,
+the GeoParquet file name to write the geometry to disk.}
+
+\item{...}{Other arguments passed to \code{sf::st_buffer}, mainly to make polygon
+shapes, eg Visium spot \code{endCapStyle = "ROUND"} and VisiumHD bin
+\code{endCapStyle = "SQUARE"}}
 }
 \value{
-An \code{sf} object.
+An \code{sf} object, or for POINT geometry and with \code{use_duckdb
+  = TRUE}, a \code{DuckDBDataFrame}
 }
 \description{
 While the \code{SpatialFeatureExperiment} constructor and \code{*Geometry}

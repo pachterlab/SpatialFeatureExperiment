@@ -138,6 +138,23 @@ test_that("Micron spot spacing works when there're singletons", {
     expect_equal(unit(sfe), "micron")
 })
 
+test_that("Read Visium, DuckDB", {
+    sfe <- read10xVisiumSFE("ob", use_duckdb = TRUE, unit = "micron",
+                            add_centroids = TRUE)
+    expect_s4_class(spotPoly(sfe), "DuckDBDataFrame")
+    expect_s4_class(centroids(sfe), "DuckDBDataFrame")
+    nCounts <- Matrix::colSums(counts(sfe))
+    cg <- st_as_sf(centroids(sfe))
+    img_lo <- getImg(sfe, image_id = "lowres")
+    img_lo <- terra::mean(img_lo)
+    v_lo <- terra::extract(img_lo, cg)
+    expect_true(abs(cor(nCounts, v_lo$mean)) > 0.4)
+    # The spots are round
+    poly <- st_as_sf(spotPoly(sfe)[1,,drop=FALSE])
+    poly_coords <- st_coordinates(poly)
+    expect_true(nrow(poly_coords) > 32)
+})
+
 # Read Visium HD==================
 library(OSTA.data)
 id <- "VisiumHD_HumanColon_Oliveira"
@@ -237,10 +254,8 @@ test_that("Use DuckDB, cell segmentation", {
     classes <- vapply(colGeometries(sfe), class, FUN.VALUE = character(1))
     expect_all_true(classes == "DuckDBDataFrame")
     # Make sure the geometries are aligned
-    centroids(sfe) <- st_as_sf(centroids(sfe)) # TODO: change getTissueBoundaryConcave as well for DuckDB
     tb_img <- getTissueBoundaryImg(sfe, image_id = "lowres", fill_holes = TRUE)
-    tb_concave <- getTissueBoundaryConcave(sfe, colGeometryName = "centroids",
-                                           allow_holes = FALSE)
+    tb_concave <- getTissueBoundaryConcave(spatialCoords(sfe), allow_holes = FALSE)
     expect_true(st_area(st_intersection(tb_concave, tb_img))/st_area(tb_concave) > 0.95)
     
     # Second time reading
@@ -257,16 +272,31 @@ test_that("Use DuckDB, cell segmentation, microns", {
     sfe <- readVisiumHD(dir, use_cellseg = TRUE, add_graph = FALSE, 
                         use_duckdb = TRUE, unit = "micron")
     # Make sure the geometries are aligned
-    centroids(sfe) <- st_as_sf(centroids(sfe)) # TODO: change getTissueBoundaryConcave as well for DuckDB
     tb_img <- getTissueBoundaryImg(sfe, image_id = "lowres", fill_holes = TRUE)
-    tb_concave <- getTissueBoundaryConcave(sfe, colGeometryName = "centroids",
-                                           allow_holes = FALSE)
+    tb_concave <- getTissueBoundaryConcave(spatialCoords(sfe), allow_holes = FALSE)
     area_intersect <- st_area(st_intersection(tb_concave, tb_img))
     expect_true(area_intersect/st_area(tb_concave) > 0.95)
     expect_true(area_intersect/st_area(tb_img) > 0.25)
     # The latter in case the concave hull is fully contained in the tissue due 
     # to scaling problems and misaligned. But this is hard to test because in
     # the ground truth, the profiled area is a small part of the tissue.
+})
+
+test_that("Use DuckDB, read spots", {
+    skip_if(is.null(pa))
+    sfe <- readVisiumHD(dir, bin_size = 16, unit = "micron", 
+                        use_cellseg = FALSE, use_duckdb = TRUE)
+    expect_s4_class(spotPoly(sfe), "DuckDBDataFrame")
+    expect_s4_class(centroids(sfe), "DuckDBDataFrame")
+    # Make sure the geometries are aligned
+    tb_img <- getTissueBoundaryImg(sfe, image_id = "lowres", fill_holes = TRUE)
+    tb_concave <- getTissueBoundaryConcave(spatialCoords(sfe), allow_holes = FALSE)
+    area_intersect <- st_area(st_intersection(tb_concave, tb_img))
+    expect_true(area_intersect/st_area(tb_concave) > 0.9)
+    expect_true(area_intersect/st_area(tb_img) > 0.25)
+    # The spots are square
+    poly <- st_as_sf(spotPoly(sfe)[1,,drop=FALSE])
+    expect_true(st_equals(poly, st_bbox(poly) |> st_as_sfc(), sparse = FALSE))
 })
 
 unlink(dir, recursive = TRUE)

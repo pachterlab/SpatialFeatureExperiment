@@ -64,7 +64,15 @@
 }
 
 .df2sf_point <- function(df, spatialCoordsNames, spotDiameter, multi,
-                         group_col = "group", check = TRUE, ...) {
+                         group_col = "group", check = TRUE, use_duckdb = FALSE,
+                         out_path = "points.parquet", ...) {
+    if (use_duckdb) {
+        check_installed("DuckDBSpatial")
+        out_path <- normalizePath(out_path, mustWork = FALSE)
+        if (file.exists(out_path)) {
+            return(DuckDBSpatial::readGeoParquet(out_path))
+        }
+    }
     # Case 1: centroids, use POINT
     if (!is.na(spotDiameter)) {
         if (spotDiameter <= 0) {
@@ -72,6 +80,10 @@
         }
     }
     if (multi) {
+        if (use_duckdb) {
+            warning("Creating MULTIPOINT is not supported. Using in memory sf instead.")
+            use_duckdb <- FALSE
+        }
         if (check) df <- .df2sf_check(df, spatialCoordsNames, "MULTIPOINT",
                                       group_col = group_col)
         if (!is.data.table(df)) ..group_col <- group_col
@@ -87,8 +99,20 @@
         out <- sf::st_as_sf(df, coords = spatialCoordsNames, crs = NA,
                             row.names = rns) # in this case faster than sf_point
     }
+    if (use_duckdb && is.na(spotDiameter)) {
+        DuckDBSpatial::writeGeoParquet(out, out_path)
+        out <- DuckDBSpatial::readGeoParquet(out_path)
+    }
     if (!is.na(spotDiameter)) {
-      st_geometry(out) <- st_buffer(st_geometry(out), spotDiameter / 2, ...)
+        if (use_duckdb) {
+            tmp <- tempfile(fileext = ".parquet")
+            on.exit(file.remove(tmp))
+            DuckDBSpatial::writeGeoParquet(out, tmp)
+            out <- DuckDBSpatial::readGeoParquet(tmp)
+            out <- st_buffer(out, dist = spotDiameter / 2, ...)
+            DuckDBSpatial::writeGeoParquet(out, out_path)
+            out <- DuckDBSpatial::readGeoParquet(out_path)
+        } else st_geometry(out) <- st_buffer(st_geometry(out), spotDiameter / 2, ...)
     }
     out
 }
@@ -174,14 +198,22 @@
 #'   related to constructing the geometry of interese such as number of vertices
 #'   per geometry. If \code{FALSE}, it will save a bit of time, which is useful
 #'   when the input is already known to be good.
+#' @param use_duckdb Logical, whether to use save output as GeoParquet using
+#'   DuckDB and return out of memory \code{DuckDBDataFrame}, ignored if
+#'   \code{geometryType} is not POINT.
+#' @param out_path If \code{use_duckdb = TRUE} and the geometry type of POINT,
+#'   the GeoParquet file name to write the geometry to disk.
 #' @param subid_col Column to indicate coordinates for holes in polygons.
-#' @param ... Other arguments passed to `sf::st_buffer`, mainly to make polygon shapes,
-#'  eg Visium spot `endCapStyle = "ROUND"` and VisiumHD bin `endCapStyle = "SQUARE"`
-#' @return An \code{sf} object.
+#' @param ... Other arguments passed to `sf::st_buffer`, mainly to make polygon
+#'   shapes, eg Visium spot `endCapStyle = "ROUND"` and VisiumHD bin
+#'   `endCapStyle = "SQUARE"`
+#' @return An \code{sf} object, or for POINT geometry and with \code{use_duckdb
+#'   = TRUE}, a \code{DuckDBDataFrame}
 #' @export
 #' @concept Utilities
 #' @importFrom BiocParallel bplapply SerialParam
-#' @importFrom sfheaders sf_multipoint sf_polygon sf_multipolygon sf_linestring sf_multilinestring
+#' @importFrom sfheaders sf_multipoint sf_polygon sf_multipolygon sf_linestring
+#'   sf_multilinestring
 #' @examples
 #' # Points, use spotDiameter to convert to circle polygons
 #' # This is done to Visium spots
@@ -220,10 +252,9 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
                       "POINT", "LINESTRING", "POLYGON",
                       "MULTIPOINT", "MULTILINESTRING",
                       "MULTIPOLYGON"
-                  ),
-                  group_col = "group",
-                  id_col = "ID",
-                  subid_col = "subID", check = TRUE, ...) {
+                  ), group_col = "group", id_col = "ID", subid_col = "subID", 
+                  check = TRUE, use_duckdb = FALSE, 
+                  out_path = "points.parquet", ...) {
     if (!nrow(df)) return(NULL)
     if (is.matrix(df)) df <- as.data.frame(df)
     if (any(!spatialCoordsNames %in% names(df))) {
@@ -237,7 +268,8 @@ df2sf <- function(df, spatialCoordsNames = c("x", "y"), spotDiameter = NA,
     if (.is_de_facto_point(df, group_col, id_col)) geometryType <- "POINT"
     geometryType <- match.arg(geometryType)
     out <- switch(geometryType,
-        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE, ...),
+        POINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = FALSE, 
+                             use_duckdb = use_duckdb, out_path = out_path, ...),
         MULTIPOINT = .df2sf_point(df, spatialCoordsNames, spotDiameter, multi = TRUE,
                                   group_col = group_col, check = check, ...),
         LINESTRING = .df2sf_linestring(df, spatialCoordsNames, multi = FALSE,
