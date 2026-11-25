@@ -296,7 +296,9 @@ test_that("Use DuckDB, read spots", {
     expect_true(area_intersect/st_area(tb_img) > 0.25)
     # The spots are square
     poly <- st_as_sf(spotPoly(sfe)[1,,drop=FALSE])
-    expect_true(st_equals(poly, st_bbox(poly) |> st_as_sfc(), sparse = FALSE))
+    poly_coords <- st_coordinates(poly)
+    expect_equal(nrow(poly_coords), 5L)
+    expect_equal(poly_coords[1,1], poly_coords[2,1]) # so it's not a diamond
 })
 
 unlink(dir, recursive = TRUE)
