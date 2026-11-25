@@ -186,3 +186,20 @@ setMethod("getTissueBoundaryConcave", "sfc", .gtbc_sf)
 #' @rdname getTissueBoundaryConcave
 #' @export
 setMethod("getTissueBoundaryConcave", "sf", .gtbc_sf)
+
+#' @rdname getTissueBoundaryConcave
+#' @export
+setMethod("getTissueBoundaryConcave", "matrix", 
+          function(x, ratio = 0.01, allow_holes = TRUE, 
+                   multiple_pieces = FALSE, min_cells = 100, 
+                   distance_cutoff = 50,
+                   BNPARAM = NULL, BPPARAM = SerialParam()) {
+              # For spatialCoords
+              if (is.null(colnames(x))) colnames(x) <- paste0("V", seq_len(ncol(x)))
+              x <- as.data.frame(x)
+              x <- st_as_sf(x, coords = colnames(x), crs = NA)
+              .gtbc_sf(x, ratio = ratio, allow_holes = allow_holes,
+                       multiple_pieces = multiple_pieces, min_cells = min_cells,
+                       distance_cutoff = distance_cutoff, BNPARAM = BNPARAM,
+                       BPPARAM = BPPARAM)
+          })

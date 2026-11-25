@@ -52,6 +52,12 @@ test_that("Concave hull tissue boundary, 1 piece", {
     expect_true(prop_in_tissue > 0.95)
 })
 
+test_that("Concave hull from matrix of point coordinates", {
+    tb <- getTissueBoundaryConcave(spatialCoords(sfe), ratio = 0.12)
+    prop_in_tissue <- mean(st_intersects(tb, cellSeg(sfe), sparse = FALSE))
+    expect_true(prop_in_tissue > 0.95)
+})
+
 fn <- XeniumOutput("v2", file_path = fp)
 sfe <- readXenium(fn)
 test_that("Concave hull tissue boundary, multiple pieces", {
