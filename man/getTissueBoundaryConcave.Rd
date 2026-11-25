@@ -5,6 +5,7 @@
 \alias{getTissueBoundaryConcave,SpatialFeatureExperiment-method}
 \alias{getTissueBoundaryConcave,sfc-method}
 \alias{getTissueBoundaryConcave,sf-method}
+\alias{getTissueBoundaryConcave,matrix-method}
 \title{Get tissue boundary from concave hull of cell geometries}
 \usage{
 \S4method{getTissueBoundaryConcave}{SpatialFeatureExperiment}(
@@ -32,6 +33,17 @@
 )
 
 \S4method{getTissueBoundaryConcave}{sf}(
+  x,
+  ratio = 0.01,
+  allow_holes = TRUE,
+  multiple_pieces = FALSE,
+  min_cells = 100,
+  distance_cutoff = 50,
+  BNPARAM = NULL,
+  BPPARAM = SerialParam()
+)
+
+\S4method{getTissueBoundaryConcave}{matrix}(
   x,
   ratio = 0.01,
   allow_holes = TRUE,
